@@ -1,7 +1,7 @@
 ---
 description: Strict spec review for test implementer clarity
 allowed-tools: Read, Glob, Grep, WebSearch, WebFetch
-argument-hint: [feature-name] [--deep]
+argument-hint: [feature-name] [--deep] | [--cross-check] [--deep]
 ---
 
 # SDD Design Review for Test Implementer Clarity
@@ -30,16 +30,20 @@ Strict spec review from test implementer perspective.
 
 ## Mode Detection
 - **If `$ARGUMENTS` contains feature name**: Execute Single Review Mode
-- **If `$ARGUMENTS` is empty or only `--deep`**: Execute Cross-Check Mode
+- **If `$ARGUMENTS` is empty, `--cross-check`, or only `--deep`**: Execute Cross-Check Mode
 - **If `$ARGUMENTS` contains `--deep`**: Enable best practices research (WebSearch/WebFetch)
 
 ## Flag Parsing
 ```
-$ARGUMENTS = "{feature} --deep" → Single Review + Deep
-$ARGUMENTS = "{feature}"        → Single Review
-$ARGUMENTS = "--deep"           → Cross-Check + Deep
-$ARGUMENTS = ""                 → Cross-Check
+$ARGUMENTS = "{feature} --deep"    → Single Review + Deep
+$ARGUMENTS = "{feature}"           → Single Review
+$ARGUMENTS = "--cross-check --deep" → Cross-Check + Deep
+$ARGUMENTS = "--cross-check"       → Cross-Check
+$ARGUMENTS = "--deep"              → Cross-Check + Deep
+$ARGUMENTS = ""                    → Cross-Check
 ```
+
+**Note**: `--cross-check` is optional and equivalent to empty arguments. Use `--cross-check` for explicit documentation in procedures (e.g., flow.md).
 
 ---
 

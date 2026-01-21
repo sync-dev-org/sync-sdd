@@ -7,11 +7,24 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 ### Paths
 - Steering: `{{KIRO_DIR}}/steering/`
 - Specs: `{{KIRO_DIR}}/specs/`
+- Knowledge: `{{KIRO_DIR}}/knowledge/`
 
-### Steering vs Specification
+### Steering vs Specification vs Knowledge
+
+| Artifact | Scope | Purpose | Portable |
+|----------|-------|---------|----------|
+| **Steering** | Project-specific | Project-wide rules, context, decisions | No |
+| **Specs** | Feature-specific | Requirements, design, tasks for a feature | No |
+| **Knowledge** | Cross-project | Reusable insights, patterns, incidents | Yes |
 
 **Steering** (`{{KIRO_DIR}}/steering/`) - Guide AI with project-wide rules and context
 **Specs** (`{{KIRO_DIR}}/specs/`) - Formalize development process for individual features
+**Knowledge** (`{{KIRO_DIR}}/knowledge/`) - Capture reusable learnings across projects
+
+**When to use which**:
+- Project-specific decisions (tech stack, architecture) → Steering
+- Feature implementation details → Specs
+- Reusable patterns and lessons learned → Knowledge
 
 ### Active Specifications
 - Check `{{KIRO_DIR}}/specs/` for active specifications

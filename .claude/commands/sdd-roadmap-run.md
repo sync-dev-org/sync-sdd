@@ -1,0 +1,261 @@
+---
+description: Execute Wave-based implementation following the roadmap
+allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task, Skill
+argument-hint: "[wave-number]"
+---
+
+# Execute Roadmap Implementation
+
+<background_information>
+- **Mission**: Execute Wave-based implementation following the existing roadmap
+- **Prerequisite**: roadmap.md must exist (use `/sdd-roadmap` to create)
+</background_information>
+
+<instructions>
+
+## Execution Flow
+
+### Step 1: Load Roadmap State
+
+1. **Read roadmap.md**:
+   - Load `{{KIRO_DIR}}/specs/roadmap.md`
+   - Parse Wave structure and dependencies
+
+2. **Scan all specs**:
+   - Read all `{{KIRO_DIR}}/specs/*/spec.json`
+   - For each spec, check:
+     - Current phase
+     - tasks.md existence and completion status
+     - Implementation status
+
+3. **Build execution state**:
+   ```
+   Wave 1: [complete/in-progress/pending]
+     - spec-a: implementation-complete
+     - spec-b: tasks-generated (2/5 tasks done)
+   Wave 2: [pending]
+     - spec-c: requirements-pending
+     - spec-d: requirements-pending
+   ```
+
+### Step 2: Determine Resume Point
+
+1. **If wave argument provided**: Start from that wave
+2. **Otherwise**: Find first incomplete wave/spec
+
+**Resume point identification**:
+- Find first spec where phase != "implementation-complete"
+- Within that spec, determine next action:
+  - `requirements-pending` → `/sdd-requirements`
+  - `requirements-generated` → Review requirements, then `/sdd-design`
+  - `design-generated` → Review design, then `/sdd-tasks`
+  - `tasks-generated` → `/sdd-impl`
+
+### Step 3: Present Execution Plan
+
+```
+## Execution Plan
+
+**Resume from**: Wave [N], spec [name]
+**Current phase**: [phase]
+**Tasks status**: [X/Y complete] (if applicable)
+
+### Wave [N] Execution Order
+1. [spec-a]: [next action needed]
+2. [spec-b]: [next action needed]
+
+### Parallel Execution Opportunities
+- [spec-a] and [spec-b] can run in parallel after [dependency]
+
+Proceed with execution?
+```
+
+### Step 4: Execute Wave Flow
+
+Follow the 9-step Wave execution flow from roadmap.md:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Wave N Development Flow                       │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Identify specs in Wave                                      │
+│  2. Requirements existence check                                │
+│  3. Requirements Review (subagent parallel)                     │
+│  4. User Confirmation [REQUIRED]                                │
+│  5. Design Generation (subagent parallel)                       │
+│  6. Design Review (subagent parallel)                           │
+│  7. Task Generation                                             │
+│  8. Implementation (subagent parallel)                          │
+│  9. Implementation Review & Completion Report                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Step Execution Details
+
+**For each spec in current wave**:
+
+1. **Requirements Check**:
+   ```python
+   if not exists(requirements.md) or phase == "requirements-pending":
+       # Use Skill tool
+       /sdd-requirements {spec}
+   ```
+
+2. **Requirements Review** (subagent parallel):
+   ```python
+   # Launch via Task tool for context isolation
+   for spec in wave_specs:
+       Task("/sdd-review-requirement {spec}")
+   ```
+   - Evaluate results: GO / CONDITIONAL / NO-GO
+   - Auto-fix minor issues
+   - Report NO-GO to user
+
+3. **User Confirmation** [REQUIRED]:
+   - Present responsibility allocation table
+   - Show cross-check results
+   - Ask: "Proceed to design phase?"
+
+4. **Design Generation** (subagent parallel):
+   ```python
+   for spec in wave_specs:
+       if not exists(design.md):
+           Task("/sdd-design {spec} -y")
+   ```
+
+5. **Design Review** (subagent parallel):
+   ```python
+   for spec in wave_specs:
+       Task("/sdd-review-design {spec}")
+   ```
+
+6. **Task Generation**:
+   ```python
+   for spec in wave_specs:
+       /sdd-tasks {spec} -y
+   ```
+
+7. **Implementation** (subagent parallel):
+   ```python
+   # Group by dependencies for parallel execution
+   for spec in parallel_group:
+       Task("/sdd-impl {spec}")
+   ```
+
+8. **Implementation Review** (subagent parallel):
+   ```python
+   for spec in wave_specs:
+       Task("/sdd-review-impl {spec}")
+   ```
+
+9. **Wave Completion Report**:
+   ```
+   ## Wave [N] Complete
+
+   | Spec | Status | Test Coverage | Issues |
+   |------|--------|---------------|--------|
+   | spec-a | ✅ Complete | 85% | None |
+   | spec-b | ✅ Complete | 82% | 1 warning |
+
+   Proceed to Wave [N+1]?
+   ```
+
+### Step 5: Wave Transition
+
+After wave completion:
+1. Update spec.json phases
+2. Git commit checkpoint (recommend)
+3. Ask: "Proceed to next wave?"
+4. If yes, repeat from Step 4 with next wave
+
+</instructions>
+
+## Tool Guidance
+
+### Subagent Usage (Task tool)
+
+**Use Task tool for context isolation**:
+- All review commands (`/sdd-review-*`)
+- Design generation (`/sdd-design`)
+- Implementation (`/sdd-impl`)
+
+**Parallel execution**:
+- Launch multiple Task calls in single message for parallel specs
+- Example:
+  ```
+  Task("/sdd-design spec-a -y")
+  Task("/sdd-design spec-b -y")  # Same message = parallel
+  ```
+
+### Skill Invocation
+
+Use Skill tool for:
+- `/sdd-requirements`
+- `/sdd-tasks`
+
+### Checkpoints
+
+Recommend git commit after:
+- Requirements review completion
+- Design review completion
+- Each spec implementation completion
+- Wave completion
+
+## Error Handling
+
+### Review NO-GO
+
+1. Stop execution for that spec
+2. Report issue to user
+3. Options:
+   - Fix and re-review
+   - Skip spec (with warning)
+   - Abort wave execution
+
+### Implementation Error
+
+1. Log error
+2. Continue other parallel specs
+3. Report all errors at wave end
+4. User decides: fix, skip, or abort
+
+### Dependency Violation
+
+If spec depends on incomplete spec:
+1. Report dependency issue
+2. Execute dependency first
+3. Resume original spec
+
+## Output Description
+
+### Progress Indicators
+
+```
+## Wave 2 Execution Progress
+
+[████████░░] 80% - Implementing health-checker
+
+Completed:
+✅ slack-notifier: implementation-complete
+
+In Progress:
+🔄 health-checker: implementing (task 4/5)
+
+Pending:
+⏳ (none in this wave)
+```
+
+### Completion Summary
+
+```
+## Roadmap Execution Summary
+
+| Wave | Status | Specs | Time |
+|------|--------|-------|------|
+| 1 | ✅ Complete | 1/1 | - |
+| 2 | ✅ Complete | 2/2 | - |
+| 3 | 🔄 In Progress | 1/2 | - |
+| 4 | ⏳ Pending | 0/1 | - |
+
+Next: Continue with Wave 3, spec monitor-scheduler
+```
