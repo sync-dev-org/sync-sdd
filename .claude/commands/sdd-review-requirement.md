@@ -1,299 +1,285 @@
 ---
-description: Strict requirements review for steering alignment and clarity
-allowed-tools: Read, Glob, Grep, WebSearch, WebFetch
-argument-hint: [feature-name] [--deep]
+description: Comprehensive requirements review (rulebase + exploratory)
+allowed-tools: Glob, Read, Task
+argument-hint: [<feature-name>] [--rulebase-only] | [--explore-only]
 ---
 
-# SDD Requirements Review for Steering Alignment
+# SDD Requirements Review (Router)
 
 <background_information>
-- **Mission**: Review requirements for steering alignment, internal consistency, and clarity
-- **Two Modes** (each with optional --deep):
-  - **Single Review** (`/sdd-review-requirement {feature}`): Review one spec's requirements
-  - **Cross-Check** (`/sdd-review-requirement`): Consistency check across all requirements
-- **--deep flag**: Enables WebSearch/WebFetch for best practices research
-- **Primary Goals**:
-  - Ensure requirements align with steering documents (product.md, tech.md, structure.md)
-  - Detect contradictions and ambiguities within requirements
-  - Verify template conformance
-- **Critical Focus: Steering Alignment**:
-  - Requirements must reflect steering vision and constraints
-  - Detect drift from project goals and technical boundaries
-- **Success Criteria**:
-  - Requirements traceable to steering context
-  - No internal contradictions or ambiguities
-  - Template conformance verified
-  - Clear GO/CONDITIONAL/NO-GO verdict
+- **Mission**: Comprehensive requirements review combining verification and discovery
+- **Architecture**: Router dispatches to 6 independent agents via Task tool
+- **Context Isolation**: Each agent runs in separate context window (no cross-contamination)
+- **Two Phases**:
+  - **Phase 1**: 5 review agents run in parallel (rulebase + 4 exploratory)
+  - **Phase 2**: Verifier agent cross-checks and synthesizes results
+- **Philosophy**: Rules catch what we KNOW to check; exploration catches what we DON'T
+- **Router's Role**: Orchestrate agents, display final results (do NOT duplicate verification logic)
 </background_information>
 
 <instructions>
+
 ## Core Task
-Strict requirements review focusing on steering alignment and internal quality.
+
+Orchestrate comprehensive requirements review by:
+1. Launching 5 review agents in parallel (data collection)
+2. Passing results to verifier agent (cross-check and synthesis)
+3. Displaying verifier's unified report (output)
+
+**IMPORTANT**: Router only orchestrates and displays. All verification logic is in the verifier agent.
+
+---
 
 ## Mode Detection
-- **If `$ARGUMENTS` contains feature name**: Execute Single Review Mode
-- **If `$ARGUMENTS` is empty or only `--deep`**: Execute Cross-Check Mode
-- **If `$ARGUMENTS` contains `--deep`**: Enable best practices research (WebSearch/WebFetch)
 
-## Flag Parsing
 ```
-$ARGUMENTS = "{feature} --deep" → Single Review + Deep
-$ARGUMENTS = "{feature}"        → Single Review
-$ARGUMENTS = "--deep"           → Cross-Check + Deep
-$ARGUMENTS = ""                 → Cross-Check
+$ARGUMENTS = "{feature}"                 → Full Review (rulebase + explore)
+$ARGUMENTS = "{feature} --rulebase-only" → Rulebase only
+$ARGUMENTS = "{feature} --explore-only"  → Explore only (4 agents)
+$ARGUMENTS = ""                          → Cross-Check mode (all specs)
 ```
+
+**Note**: Cross-check mode runs all 6 agents across all specs.
 
 ---
 
-## Mode 1: Single Review
+## Pre-Flight: Load Context
 
-### Execution Steps
+Before launching agents, gather context to pass to them:
 
-1. **Load Context**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
+### Single Spec Mode
+
+1. **Target Spec**:
    - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
+   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
 
-2. **Load Steering Context** (CRITICAL):
-   - Read entire `{{KIRO_DIR}}/steering/` directory:
-     - `product.md` - Product vision, goals, user personas
-     - `tech.md` - Technical constraints, standards, patterns
-     - `structure.md` - Project structure, conventions
-     - Any custom steering files
+2. **Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Extract: product goals, user personas, technical constraints
 
-3. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/requirements.md` (template)
-   - Read `{{KIRO_DIR}}/settings/rules/requirement-review.md`
+3. **Related Specs** (if any):
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
+   - Identify specs that might interact with target
 
-4. **Execute Review** (three perspectives):
+### Cross-Check Mode
 
-   **A. Steering Alignment Check** (HIGHEST PRIORITY):
-   - Do requirements support product goals from product.md?
-   - Do requirements respect technical constraints from tech.md?
-   - Do requirements follow conventions from structure.md?
-   - Flag: Requirements contradicting steering vision
-   - Flag: Requirements outside declared scope
-   - Flag: Requirements violating technical boundaries
+1. **All Specs**:
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md` to list all specs
+   - Read ALL requirements.md files
+   - Read ALL spec.json files for metadata and dependencies
 
-   **B. Template Conformance Check**:
-   - Has Introduction section
-   - Has numbered Requirement sections (1, 2, 3...)
-   - Each requirement has Objective (user story format)
-   - Each requirement has Acceptance Criteria (EARS format)
-   - No implementation details (component names, API specs)
-
-   **C. Internal Quality Check**:
-   - Ambiguous language detection
-   - Contradictions between requirements
-   - Completeness (edge cases, error scenarios)
-   - Testability (can acceptance criteria be verified?)
-
-5. **Provide Verdict**:
-   - **GO**: Requirements ready for design phase
-   - **CONDITIONAL**: Minor issues, can proceed with clarifications
-   - **NO-GO**: Critical issues must be resolved first
-
----
-
-## Mode 2: Cross-Check
-
-### Execution Steps
-
-1. **Discover All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to find all specs
-   - Read all `requirements.md` files
-
-2. **Load Steering Context**:
+2. **Steering Context**:
    - Read entire `{{KIRO_DIR}}/steering/` directory
 
-3. **Load Rules**:
-   - Read `{{KIRO_DIR}}/settings/rules/requirement-review.md`
+---
 
-4. **Execute Cross-Check**:
+## Execution Flow
 
-   **A. Inter-Requirement Consistency**:
-   - Terminology unification across specs
-   - No conflicting expectations for same behavior
-   - Dependency clarity between specs
+### Phase 1: Parallel Review Agents
 
-   **B. Scope/Responsibility Separation**:
-   - Each spec has clear, non-overlapping scope
-   - No duplicate requirements across specs
-   - Shared concerns properly allocated
+Launch 5 agents **in parallel** using Task tool with `subagent_type: "general-purpose"`:
 
-   **C. Steering Coherence**:
-   - All requirements collectively support steering vision
-   - No spec contradicts another's steering alignment
-   - Technical constraints respected across all specs
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Router Process                               │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ↓                ↓                ↓
+    ┌─────────────────┐ ┌─────────────┐ ┌─────────────────────┐
+    │ Task: rulebase  │ │ Task:       │ │ Task: contradiction │
+    │ (independent    │ │ completeness│ │ (independent        │
+    │  context)       │ │ (independent│ │  context)           │
+    └─────────────────┘ │  context)   │ └─────────────────────┘
+                        └─────────────┘
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ↓                ↓                ↓
+    ┌─────────────────┐ ┌─────────────────────────────────────┐
+    │ Task: common-   │ │ Task: edge-case                     │
+    │ sense           │ │ (independent context)               │
+    │ (independent    │ └─────────────────────────────────────┘
+    │  context)       │
+    └─────────────────┘
+```
 
-   **D. Template Conformance**:
-   - All requirements.md follow template structure
+**Agent Invocation**: For each agent, include in the prompt:
+1. The agent's instructions (from `.claude/agents/sdd-review-requirement-*.md`)
+2. The gathered context (requirements, steering, related specs)
+3. Mode information (feature name or "cross-check")
 
-5. **Assess Development Readiness**:
-   - Independent specs (can design in parallel)
-   - Sequential dependencies
-   - Specs requiring coordination
+**CRITICAL**: Launch all 5 Task calls in a SINGLE message for true parallel execution.
+
+### Phase 2: Verification Agent
+
+After all 5 agents complete, launch verifier:
+
+```
+              ┌────────────────────────────────────────────────────┐
+              │ Collect results from 5 agents                       │
+              └───────────────────────┬────────────────────────────┘
+                                      │
+                                      ↓
+              ┌────────────────────────────────────────────────────┐
+              │ Task: verifier                                      │
+              │ - Receives all 5 agent results                      │
+              │ - Cross-checks findings                             │
+              │ - Produces unified report                           │
+              └───────────────────────┬────────────────────────────┘
+                                      │
+                                      ↓
+              ┌────────────────────────────────────────────────────┐
+              │ Router displays verifier's report                   │
+              └────────────────────────────────────────────────────┘
+```
+
+### Phase 3: Display Results
+
+Router displays the verifier's output directly. Do NOT modify or summarize.
 
 ---
 
-## --deep Flag: Best Practices Research
+## Agent Prompt Templates
 
-### Purpose
-Enhance review quality through requirements engineering best practices research.
+### Rulebase Agent
 
-**Key Goal**: Capture discovered knowledge into steering documents so future reviews don't need to re-search.
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-rulebase.md`.
 
-### Additional Steps (when --deep is enabled)
+Feature: {feature} (or "cross-check" for all specs)
 
-1. **Execute Base Review** (Single Review or Cross-Check)
+Context:
+- Requirements: {requirements content}
+- Steering: {steering content}
+- Spec metadata: {spec.json content}
 
-2. **Best Practices Research**:
-   - **WebSearch**: Search for industry best practices related to:
-     - Requirements writing standards (IEEE, INCOSE)
-     - Domain-specific requirement patterns
-     - Common requirement anti-patterns
-     - Latest domain knowledge and industry trends
-     - Known edge cases and failure modes
-   - **WebFetch**: Retrieve detailed information from:
-     - Requirements engineering guidelines
-     - Industry standards documentation
-     - Case studies on requirement quality
-
-3. **Enhanced Analysis**:
-   - Compare requirements against industry standards
-   - Identify improvement opportunities
-   - Flag potential issues from research insights
-
-4. **Steering Update Proposal** (CRITICAL for --deep):
-   - Identify domain knowledge that should be persisted for future reviews
-   - Propose updates to existing steering files (product.md, tech.md, structure.md)
-   - Propose new custom steering files for domain-specific knowledge
-   - Focus on: Business rules, edge cases, compliance requirements, user behavior patterns
-
-5. **Provide Enhanced Verdict**:
-   - Base verdict
-   - **Best Practices Alignment**: How well do requirements follow standards?
-   - **Improvement Opportunities**: Specific suggestions from research
-   - **Steering Proposals**: Recommended steering updates
-
-### Deep Review Output Additions
-```markdown
-## Best Practices Research
-
-### Standards Consulted
-- [Standard 1]: [Key findings]
-- [Standard 2]: [Key findings]
-
-### Alignment Assessment
-✅ **Aligned**: [Practices the requirements follow well]
-⚠️ **Consider**: [Practices worth adopting]
-❌ **Divergent**: [Areas where requirements deviate from best practices]
-
-### Recommended Improvements
-1. [Improvement based on research]
-2. [Improvement based on research]
-
-## Steering Update Proposals
-
-### Purpose
-Persist discovered domain knowledge so future reviews don't need to re-search.
-
-### Existing Steering Updates
-Proposed changes to existing steering files:
-
-#### product.md
-```markdown
-## [Section to add/update]
-[Content based on research - user behavior patterns, business rules, etc.]
+Execute the review and return your findings in the specified format.
 ```
 
-#### tech.md
-```markdown
-## [Section to add/update]
-[Content based on research - technical constraints, compliance requirements, etc.]
+### Completeness Agent
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-completeness.md`.
+
+Feature: {feature} (or "cross-check" for all specs)
+
+Context:
+- Requirements: {requirements content}
+- Steering: {steering content}
+- Related specs: {related specs if any}
+
+Execute the review and return your findings in the specified format.
 ```
 
-### New Custom Steering Proposals
-Recommended new steering files for domain-specific knowledge:
+### Contradiction Agent
 
-#### Proposed: `steering/{domain}-requirements.md`
-**Rationale**: [Why this knowledge should be captured]
-```markdown
-# [Domain] Requirements Knowledge
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-contradiction.md`.
 
-## Business Rules
-- [Rule discovered from research]
-- [Compliance requirement]
+Feature: {feature} (or "cross-check" for all specs)
 
-## Known Edge Cases
-- [Edge case 1]: [Expected behavior]
-- [Edge case 2]: [Expected behavior]
+Context:
+- Requirements: {requirements content}
+- Steering: {steering content}
+- Related specs: {related specs if any}
 
-## User Behavior Patterns
-- [Pattern]: [How to address in requirements]
-
-## Common Pitfalls
-- [Pitfall]: [How to avoid]
+Execute the review and return your findings in the specified format.
 ```
 
-### Knowledge Capture Summary
-| Knowledge Type | Source | Proposed Location | Priority |
-|---------------|--------|-------------------|----------|
-| [Business rule] | [URL] | product.md | High |
-| [Edge case] | [URL] | {domain}-requirements.md | Medium |
-| [Compliance req] | [URL] | tech.md | High |
+### Common Sense Agent
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-common-sense.md`.
+
+Feature: {feature} (or "cross-check" for all specs)
+
+Context:
+- Requirements: {requirements content}
+- Steering: {steering content}
+
+Execute the review and return your findings in the specified format.
+```
+
+### Edge Case Agent
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-edge-case.md`.
+
+Feature: {feature} (or "cross-check" for all specs)
+
+Context:
+- Requirements: {requirements content}
+- Technical constraints: {tech.md content}
+
+Execute the review and return your findings in the specified format.
+```
+
+### Verifier Agent
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-verifier.md`.
+
+Feature: {feature} (or "cross-check" for all specs)
+
+Agent Results:
+
+## Rulebase Review Results
+{rulebase agent output}
+
+## Completeness Review Results
+{completeness agent output}
+
+## Contradiction Review Results
+{contradiction agent output}
+
+## Common Sense Review Results
+{common sense agent output}
+
+## Edge Case Review Results
+{edge case agent output}
+
+Execute verification and return the unified report.
 ```
 
 ---
 
-## Important Constraints
+## Mode-Specific Behavior
 
-### Steering Alignment (Primary Focus)
-- **Vision alignment**: Requirements must support product goals
-- **Technical boundaries**: Requirements must respect tech constraints
-- **Scope discipline**: Requirements must stay within declared scope
-- **Traceability**: Every requirement should connect to steering context
+### --rulebase-only
+- Launch only the rulebase agent
+- Skip verifier (single agent doesn't need cross-check)
+- Display rulebase output directly
 
-### Template Conformance (Anti-Drift)
-- **Structure**: Must follow requirements.md template
-- **Format**: User stories + EARS acceptance criteria
-- **No HOW**: No implementation details in requirements
+### --explore-only
+- Launch only the 4 exploratory agents in parallel
+- Pass to verifier for synthesis
+- No formal verdict (exploration is advisory)
 
-### Quality Standards
-- **No ambiguity**: Every requirement must be testable
-- **No contradictions**: Requirements must be internally consistent
-- **Completeness**: Edge cases and errors addressed
-- **--deep only**: WebSearch/WebFetch ONLY when --deep flag is present
+### Cross-Check Mode (no feature specified)
+- All 5 agents run across ALL specs
+- Verifier synthesizes cross-spec findings
+- Especially powerful for discovering systemic gaps
+
+---
+
+## Error Handling
+
+- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` first."
+- **Agent failure**: Report partial results from successful agents, note which failed
+- **Timeout**: Set reasonable limits, proceed with available results
+- **No specs found** (Cross-Check): "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
+
+---
+
+## Output
+
+Display the verifier's unified report directly. The report includes:
+- Executive summary with verdicts
+- Prioritized issues (Critical → High → Medium → Low)
+- Verification notes (contradictions resolved, false positives removed)
+- Raw agent reports in collapsible sections
+- Recommended actions
+- Next steps based on verdict
+
 </instructions>
-
-## Tool Guidance
-- **Read**: Load specs, steering documents, templates, and rules
-- **Glob**: Discover all specs for cross-check mode
-- **Grep**: Search for terminology usage and pattern detection
-- **WebSearch** (--deep only): Research requirements engineering best practices
-- **WebFetch** (--deep only): Retrieve detailed standards and guidelines
-
-## Output Description
-Follow the output format defined in `{{KIRO_DIR}}/settings/rules/requirement-review.md`:
-- Single Review: Summary → Steering Alignment → Template Conformance → Issues → Verdict
-- Cross-Check: Specs Analyzed → Cross-Spec Issues → Scope Assessment → Development Readiness
-- With --deep: Add Best Practices Research + Enhanced Verdict to either mode
-
-## Safety & Fallback
-
-### Error Scenarios
-- **Missing Spec**: If spec directory doesn't exist, stop with message: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` to create it."
-- **No Specs Found** (Cross-Check): If no specs exist, stop with message: "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
-- **Missing Steering**: Warn that steering context is missing, review quality will be limited
-- **Missing Requirements**: If requirements.md doesn't exist, skip spec with warning
-
-### Next Steps
-
-**After Single Review**:
-- If GO: Proceed with `/sdd-design {feature}` to create design
-- If CONDITIONAL: Address minor issues, optionally re-review
-- If NO-GO: Fix critical issues and run `/sdd-review-requirement {feature}` again
-
-**After Cross-Check**:
-- Address any cross-requirement conflicts
-- Ensure scope separation before parallel design work
-- Use dependency information to sequence design phase
