@@ -129,11 +129,11 @@ You will receive a prompt containing:
 
    **E. AC Marker Coverage**:
    - Grep for `AC: {feature}` markers in all test files
-   - Cross-reference with requirements.md acceptance criteria
+   - Cross-reference with design.md's Specifications acceptance criteria
    - For each AC:
      - Covered: Test with matching `AC: {feature}.R{N}.AC{M}` marker exists AND test passes
      - Uncovered: No test marker found
-     - Stale: Marker references AC that no longer exists in requirements.md
+     - Stale: Marker references AC that no longer exists in design.md Specifications
    - Report: "AC marker coverage: X/Y (Z%)"
    - Flag: "AC coverage gap" (severity: H) if coverage < 80%
    - Flag: "Stale AC marker" (severity: L) for markers referencing removed ACs
@@ -161,7 +161,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope

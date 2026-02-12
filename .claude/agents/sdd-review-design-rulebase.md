@@ -14,11 +14,11 @@ You are a design review specialist focusing on **SDD compliance verification**.
 
 ## Mission
 
-Verify that design.md and requirements.md follow SDD templates, maintain WHAT/HOW separation, and have proper traceability.
+Verify that design.md follows SDD template structure, has proper specifications with testable acceptance criteria, and maintains traceability between specifications and design components.
 
 ## Constraints
 
-- Focus ONLY on SDD compliance (template, separation, traceability)
+- Focus ONLY on SDD compliance (template, specifications quality, traceability)
 - Do NOT evaluate architecture quality, testability, or best practices
 - Be strict and objective - flag violations without judgment calls
 - Compare against templates as source of truth
@@ -36,70 +36,55 @@ You will receive a prompt containing:
 
 1. **Load Context**:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
    - Read `{{KIRO_DIR}}/specs/{feature}/design.md`
 
 2. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/requirements.md` (template)
    - Read `{{KIRO_DIR}}/settings/templates/specs/design.md` (template)
    - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
 
 3. **Execute Review** (three perspectives):
 
-   **A. Template Conformance Check** (Section 0.1 of design-review.md):
+   **A. Template Conformance Check**:
 
-   **requirements.md Structure**:
-   - Has Introduction section
-   - Has numbered Requirement sections (1, 2, 3...)
-   - Each requirement has Objective (user story format)
-   - Each requirement has Acceptance Criteria (EARS format)
-   - No implementation details (component names, API specs)
+   **Specifications Section** (top of design.md):
+   - Has Introduction subsection
+   - Has numbered Spec sections (Spec 1, 2, 3...)
+   - Each spec has Goal description
+   - Each spec has numbered Acceptance Criteria
+   - Acceptance criteria are testable and specific (no vague language)
+   - Has Non-Goals subsection
 
-   **design.md Structure** (compare against template):
-   - Has Overview (Purpose, Users, Impact, Goals, Non-Goals)
+   **Design Sections** (below Specifications):
+   - Has Overview (Purpose, Users, Impact)
    - Has Architecture section
    - Has Components and Interfaces section
    - Has Data Models section (if applicable)
    - Has Error Handling section
    - Has Testing Strategy section
-   - No user stories or acceptance criteria
 
    **Drift Indicators** (Critical):
    - Sections missing from template → Structural drift
    - Extra sections not in template → Ad-hoc additions
    - Incorrect section nesting → Template violation
 
-   **B. Responsibility Separation Check** (Section 0.2 of design-review.md):
+   **B. Specifications Quality Check**:
 
-   **requirements.md should contain (WHAT)**:
-   - User objectives and goals
-   - Acceptance criteria (observable behaviors)
-   - Business rules and constraints
-   - User-facing error messages
-   - NOT: Component names, class names, function signatures
-   - NOT: Database schemas, API endpoints
-   - NOT: Technology choices, libraries
+   **Acceptance criteria should be**:
+   - Testable (clear expected behavior and conditions)
+   - Specific (no vague language like "appropriately", "quickly", "etc.")
+   - Complete (covers happy path and error cases)
+   - Non-contradictory (no ACs that conflict with each other)
 
-   **design.md should contain (HOW)**:
-   - Architecture decisions and rationale
-   - Component responsibilities and interfaces
-   - Data models and schemas
-   - Error handling strategies
-   - Technology stack and choices
-   - NOT: New acceptance criteria
-   - NOT: User stories ("As a user, I want...")
-   - NOT: Business rules not derived from requirements.md
+   **Flag**:
+   - ACs with ambiguous or untestable language
+   - Missing error/edge case coverage
+   - Contradictory criteria within or across specs
 
-   **Drift Indicators** (Critical):
-   - Implementation details in requirements.md → Premature design
-   - New acceptance criteria in design.md → Scope creep
-   - User stories in design.md → Responsibility leak
-
-   **C. Traceability Check** (Section 0.3 of design-review.md):
-   - Every design component should trace to requirement(s)
-   - No orphan components (design without requirement backing)
-   - No orphan requirements (requirement without design coverage)
-   - Requirements Traceability matrix is accurate (if present)
+   **C. Traceability Check**:
+   - Every design component should trace to spec(s)
+   - No orphan components (design without spec backing)
+   - No orphan specs (spec without design coverage)
+   - Specifications Traceability matrix is accurate (if present)
 
 4. **Provide Verdict**:
    - **GO**: SDD compliance confirmed
@@ -119,11 +104,11 @@ You will receive a prompt containing:
 3. **Load Roadmap Context** (advisory):
    - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
-   - Do NOT treat future wave plans as concrete requirements/designs
+   - Do NOT treat future wave plans as concrete specs/designs
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md`
+     - Read `design.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope
@@ -138,13 +123,12 @@ You will receive a prompt containing:
    - For each spec, check if `design.md` exists
 
 2. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/requirements.md`
    - Read `{{KIRO_DIR}}/settings/templates/specs/design.md`
    - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
 
 3. **Execute Cross-Check**:
    - Template conformance across all specs
-   - Responsibility separation consistency
+   - Specifications quality consistency
    - Traceability patterns across specs
    - Detect systematic drift patterns
 
@@ -169,16 +153,16 @@ Example:
 VERDICT:CONDITIONAL
 SCOPE:my-feature
 ISSUES:
-H|responsibility-leak|design.md:Components|new acceptance criteria introduced not in requirements
+H|spec-quality|design.md:Spec 2.AC3|acceptance criterion is not testable - "responds quickly"
 M|template-drift|design.md|missing Testing Strategy section
-M|traceability-gap|Req 3.AC2|no design component covers this criterion
-L|orphan-component|design.md:CacheManager|no requirement traces to this
+M|traceability-gap|Spec 3.AC2|no design component covers this criterion
+L|orphan-component|design.md:CacheManager|no spec traces to this
 NOTES:
-Overall SDD structure is sound with minor drift in design.md
+Overall SDD structure is sound with minor drift in design sections
 ```
 
 ## Error Handling
 
 - **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`
-- **No Design**: Warn in output, review requirements only
+- **No Design**: Return error - design.md is required
 - **Missing Template**: Return `{"error": "Template not found at expected path"}`

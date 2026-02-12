@@ -36,8 +36,7 @@ Generate status report for feature **$1** showing progress across all phases.
      - `implementation-complete` → complete
      - `tasks-generated` with `approvals.tasks.approved: true` → ready for implementation
      - `design-generated` with `approvals.design.approved: true` → design approved, ready for tasks
-     - `requirements-generated` with `approvals.requirements.approved: true` → requirements approved, ready for design
-     - `requirements-generated` or `requirements-pending` → in progress
+     - `initialized` → spec created, design not yet generated
      - Other → not started
    - Determine blocked waves (all dependencies not complete)
 
@@ -48,21 +47,19 @@ Generate status report for feature **$1** showing progress across all phases.
 ### Step 1: Load Spec Context
 - If **no argument** ($1 is empty): Skip to Step 3 for overall roadmap status only
 - If **argument provided**: Read `{{KIRO_DIR}}/specs/$1/spec.json` for metadata and phase status
-- Read existing files: `requirements.md`, `design.md`, `tasks.md` (if they exist)
+- Read existing files: `design.md`, `tasks.md` (if they exist)
 - Check `{{KIRO_DIR}}/specs/$1/` directory for available files
 
 ### Step 2: Analyze Status
 
 **Parse each phase**:
-- **Requirements**: Count requirements and acceptance criteria
-- **Design**: Check for architecture, components, diagrams
+- **Design**: Check for specifications, architecture, components, diagrams
 - **Tasks**: Count completed vs total tasks (parse `- [x]` vs `- [ ]`)
 - **Approvals**: Check approval status in spec.json
 
-**Version analysis** (backward compatible — skip if `version` field not present):
+**Version analysis** (skip if `version` field not present):
 - Read `version`, `changelog`, `version_refs` from spec.json
 - Determine version_refs alignment:
-  - If `version_refs.design` < `version_refs.requirements` → design is stale
   - If `version_refs.tasks` < `version_refs.design` → tasks are stale
 
 ### Step 3: Generate Report
@@ -115,11 +112,10 @@ Provide status report in the language specified in spec.json:
 1. **Feature Overview**: Name, phase, last updated, wave assignment
 2. **Version Info** (if `version` field exists):
    - Current version: v{version}
-   - Requirements ref: v{version_refs.requirements}
-   - Design ref: v{version_refs.design} {STALE indicator if < requirements ref}
+   - Design ref: v{version_refs.design}
    - Tasks ref: v{version_refs.tasks} {STALE indicator if < design ref}
    - Recent changes (last 3 changelog entries)
-3. **Phase Status**: Requirements, Design, Tasks with completion %
+3. **Phase Status**: Design, Tasks with completion %
 4. **Task Progress**: If tasks exist, show X/Y completed
 5. **Next Action**: Specific command to run next
 6. **Issues**: Any blockers or missing elements (including version staleness warnings)

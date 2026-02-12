@@ -14,7 +14,7 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 | Artifact | Scope | Purpose | Portable |
 |----------|-------|---------|----------|
 | **Steering** | Project-specific | Project-wide rules, context, decisions | No |
-| **Specs** | Feature-specific | Requirements, design, tasks for a feature | No |
+| **Specs** | Feature-specific | Design (specifications + architecture), tasks for a feature | No |
 | **Knowledge** | Cross-project | Reusable insights, patterns, incidents | Yes |
 
 **Steering** (`{{KIRO_DIR}}/steering/`) - Guide AI with project-wide rules and context
@@ -34,26 +34,24 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Stage 0 (optional): `/sdd-steering`, `/sdd-steering-custom`
 - Stage 0.5 (optional): `/sdd-roadmap [-y]` - Generate product-wide specification roadmap and initialize multiple specs as skeletons
 - Stage 1 (Specification):
-  - `/sdd-requirements "description"` (new spec) or `/sdd-requirements {feature}` (edit existing)
-  - `/sdd-review-requirement {feature}` (optional: requirements review)
-  - `/sdd-impact-analysis {feature}` (optional: after editing existing requirements with downstream dependencies)
-  - `/sdd-analyze-gap {feature}` (optional: for existing codebase)
-  - `/sdd-design {feature} [-y]`
+  - `/sdd-design "description"` (new spec) or `/sdd-design {feature}` (edit existing)
   - `/sdd-review-design {feature}` (optional: design review)
+  - `/sdd-impact-analysis {feature}` (optional: after editing existing specs with downstream dependencies)
+  - `/sdd-analyze-gap {feature}` (optional: for existing codebase)
   - `/sdd-tasks {feature} [-y]`
 - Stage 2 (Implementation): `/sdd-impl {feature} [tasks]`
   - `/sdd-review-impl {feature}` (optional: after implementation)
 - Progress check: `/sdd-status {feature}` (use anytime)
 
 ## Development Rules
-- 3-gate approval workflow: Requirements → Design → Tasks → Implementation
+- 2-gate approval workflow: Design → Tasks → Implementation
 - Human review required at each approval gate; use `-y` only for intentional fast-track
 - Keep steering current and verify alignment with `/sdd-status`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
 ### SPEC-Code Atomicity Convention
-- SPEC changes (requirements.md, design.md, tasks.md) and corresponding code changes should be kept in the same logical change unit
-- When editing requirements triggers downstream changes, guide through the full cascade: requirements → design → tasks → implementation
+- SPEC changes (design.md, tasks.md) and corresponding code changes should be kept in the same logical change unit
+- When editing specifications triggers downstream changes, guide through the full cascade: design → tasks → implementation
 - Version consistency is enforced: `/sdd-impl` blocks if spec versions are misaligned (version_refs mismatch)
 - If `/sdd-review-impl` returns SPEC-UPDATE-NEEDED, fix the spec first — do not re-implement against a defective spec
 

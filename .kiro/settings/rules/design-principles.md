@@ -9,7 +9,7 @@
 - Specify generic constraints clearly
 
 ### 2. Design vs Implementation
-- **Focus on WHAT, not HOW**
+- **Separate WHAT (Specifications section) from HOW (Design sections)** within design.md
 - Define interfaces and contracts, not code
 - Specify behavior through pre/post conditions
 - Document architectural decisions, not algorithms
@@ -65,14 +65,14 @@
 ## Section Authoring Guidance
 
 ### Global Ordering
-- Default flow: Overview → Goals/Non-Goals → Requirements Traceability → Architecture → Technology Stack → System Flows → Components & Interfaces → Data Models → Optional sections.
+- Default flow: Specifications → Overview → Goals/Non-Goals → Specifications Traceability → Architecture → Technology Stack → System Flows → Components & Interfaces → Data Models → Optional sections.
 - Teams may swap Traceability earlier or place Data Models nearer Architecture when it improves clarity, but keep section headings intact.
 - Within each section, follow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
 
-### Requirement IDs
-- Reference requirements as `2.1, 2.3` without prefixes (no “Requirement 2.1”).
-- All requirements MUST have numeric IDs. If a requirement lacks a numeric ID, stop and fix `requirements.md` before continuing.
-- Use `N.M`-style numeric IDs where `N` is the top-level requirement number from requirements.md (for example, Requirement 1 → 1.1, 1.2; Requirement 2 → 2.1, 2.2).
+### Spec IDs
+- Reference specs as `1.1, 2.3` without prefixes (no "Spec 1.1").
+- All specs MUST have numeric IDs. If a spec lacks a numeric ID, stop and fix design.md's Specifications section before continuing.
+- Use `N.M`-style numeric IDs where `N` is the top-level Spec number from design.md Specifications section (for example, Spec 1 → 1.1, 1.2; Spec 2 → 2.1, 2.2).
 - Every component, task, and traceability row must reference the same canonical numeric ID.
 
 ### Technology Stack
@@ -87,11 +87,11 @@
   - **Data/Event** for pipelines or async patterns
 - Always use pure Mermaid. If no complex flow exists, omit the entire section.
 
-### Requirements Traceability
-- Use the standard table (`Requirement | Summary | Components | Interfaces | Flows`) to prove coverage.
-- Collapse to bullet form only when a single requirement maps 1:1 to a component.
-- Prefer the component summary table for simple mappings; reserve the full traceability table for complex or compliance-sensitive requirements.
-- Re-run this mapping whenever requirements or components change to avoid drift.
+### Specifications Traceability
+- Use the standard table (`Spec | Summary | Components | Interfaces | Flows`) to prove coverage.
+- Collapse to bullet form only when a single spec maps 1:1 to a component.
+- Prefer the component summary table for simple mappings; reserve the full traceability table for complex or compliance-sensitive specs.
+- Re-run this mapping whenever specs or components change to avoid drift.
 
 ### Components & Interfaces Authoring
 - Group components by domain/layer and provide one block per component.

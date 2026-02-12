@@ -27,8 +27,7 @@ argument-hint: ""
    - Glob `{{KIRO_DIR}}/specs/*/`
    - For each spec directory, read:
      - `spec.json` (phase, roadmap metadata)
-     - `requirements.md` (exists? content hash)
-     - `design.md` (exists? content hash)
+     - `design.md` (exists? content hash, Specifications section)
      - `tasks.md` (exists? completion status)
    - Note any directories not in roadmap
 
@@ -54,10 +53,10 @@ Build comprehensive diff report:
 
 | Type | Description |
 |------|-------------|
-| **Requirements Changed** | requirements.md modified after design/tasks generated |
-| **Design Changed** | design.md modified after tasks generated |
-| **Scope Expansion** | New requirements added to existing spec |
-| **Scope Reduction** | Requirements removed from existing spec |
+| **Specifications Changed** | design.md Specifications section modified after tasks generated |
+| **Design Changed** | design.md design sections modified after tasks generated |
+| **Scope Expansion** | New specs added to existing feature |
+| **Scope Reduction** | Specs removed from existing feature |
 
 ### Step 3: Impact Analysis
 
@@ -72,7 +71,7 @@ If spec moves to different wave:
 
 #### 3.2 Scope Change Impact
 
-If requirements/design changed:
+If specifications/design changed:
 - **Tasks**: Which tasks are invalidated?
 - **Implementation**: Which code needs update?
 - **Tests**: Which tests need rewrite?
@@ -122,10 +121,10 @@ If dependencies added/removed:
 
 ### Content Differences
 
-#### Requirements Modified After Design
+#### Specifications Modified After Tasks
 | Spec | Implication |
 |------|-------------|
-| spec-a | Design may be outdated, review needed |
+| spec-a | Tasks may be outdated, review needed |
 
 #### Design Modified After Tasks
 | Spec | Implication |
@@ -139,7 +138,7 @@ If dependencies added/removed:
 #### Tasks Potentially Invalidated
 | Spec | Task | Reason |
 |------|------|--------|
-| spec-a | Task 2 | Requirement REQ-003 changed |
+| spec-a | Task 2 | Spec 3 changed |
 | spec-a | Task 4 | Dependency interface changed |
 
 #### Implementation Potentially Affected
@@ -248,15 +247,15 @@ What would you like to do?
 
 ### Analysis Helpers
 
-**Detect requirements changes**:
+**Detect specification changes**:
 ```
-- Compare requirements.md mtime vs design.md mtime
-- Parse requirement IDs and compare
+- Compare design.md Specifications section content vs tasks.md generation time
+- Parse spec IDs and compare
 ```
 
 **Detect task invalidation**:
 ```
-- Map tasks to requirements/design sections
+- Map tasks to specs/design sections
 - If source section changed, task potentially invalid
 ```
 

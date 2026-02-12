@@ -1,5 +1,5 @@
 ---
-description: Analyze implementation gap between requirements and existing codebase
+description: Analyze implementation gap between specifications and existing codebase
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, MultiEdit, WebSearch, WebFetch
 argument-hint: <feature-name>
 ---
@@ -7,7 +7,7 @@ argument-hint: <feature-name>
 # SDD Implementation Gap Analysis
 
 <background_information>
-- **Mission**: Analyze the gap between requirements and existing codebase to inform implementation strategy
+- **Mission**: Analyze the gap between specifications and existing codebase to inform implementation strategy
 - **Success Criteria**:
   - Comprehensive understanding of existing codebase patterns and components
   - Clear identification of missing capabilities and integration challenges
@@ -17,13 +17,13 @@ argument-hint: <feature-name>
 
 <instructions>
 ## Core Task
-Analyze implementation gap for feature **$1** based on approved requirements and existing codebase.
+Analyze implementation gap for feature **$1** based on approved specifications and existing codebase.
 
 ## Execution Steps
 
 1. **Load Context**:
    - Read `{{KIRO_DIR}}/specs/$1/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/$1/requirements.md` for requirements
+   - Read `{{KIRO_DIR}}/specs/$1/design.md` for specifications and design
    - **Load ALL steering context**: Read entire `{{KIRO_DIR}}/steering/` directory including:
      - Default files: `structure.md`, `tech.md`, `product.md`
      - All custom steering files (regardless of mode settings)
@@ -72,8 +72,8 @@ Provide output in the language specified in spec.json with:
 ## Safety & Fallback
 
 ### Error Scenarios
-- **Missing Requirements**: If requirements.md doesn't exist, stop with message: "Run `/sdd-requirements \"description\"` to create a new specification first"
-- **Requirements Not Approved**: If requirements not approved, warn user but proceed (gap analysis can inform requirement revisions)
+- **Missing Design**: If design.md doesn't exist, stop with message: "Run `/sdd-design \"description\"` to create a new specification first"
+- **Design Not Approved**: If design not approved, warn user but proceed (gap analysis can inform design revisions)
 - **Empty Steering Directory**: Warn user that project context is missing and may affect analysis quality
 - **Complex Integration Unclear**: Flag for comprehensive research in design phase rather than blocking
 - **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
@@ -82,7 +82,7 @@ Provide output in the language specified in spec.json with:
 
 **If Gap Analysis Complete**:
 - Review gap analysis insights
-- Run `/sdd-design $1` to create technical design document
-- Or `/sdd-design $1 -y` to auto-approve requirements and proceed directly
+- Run `/sdd-design $1` to create or update technical design document
+- Or `/sdd-design $1 -y` to auto-approve and proceed directly
 
 **Note**: Gap analysis is optional but recommended for brownfield projects to inform design decisions.

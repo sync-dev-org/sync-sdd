@@ -35,7 +35,6 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
    - Read `{{KIRO_DIR}}/specs/{feature}/design.md`
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
 
@@ -50,7 +49,7 @@ You will receive a prompt containing:
 
 1. **All Specs**:
    - Glob `{{KIRO_DIR}}/specs/*/design.md`
-   - Read ALL requirements.md and design.md files
+   - Read ALL design.md files
    - Read ALL spec.json files
 
 2. **Steering Context**:
@@ -102,7 +101,7 @@ Flag any occurrence of:
 ## Single Spec Mode
 
 Deep investigation of single spec's testability:
-- Trace each acceptance criterion to design → Can you write a test?
+- Trace each acceptance criterion in the Specifications section → Can you write a test?
 - For each component interface → Are inputs/outputs unambiguous?
 - For each error case → Is the expected behavior clear?
 - For each state transition → Are all transitions testable?
@@ -124,7 +123,7 @@ Deep investigation of single spec's testability:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md`
+     - Read `design.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope

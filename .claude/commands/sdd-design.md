@@ -1,15 +1,16 @@
 ---
 description: Create comprehensive technical design for a specification
 allowed-tools: Bash, Glob, Grep, LS, Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch
-argument-hint: <feature-name> [-y]
+argument-hint: <feature-name-or-"description"> [-y]
 ---
 
 # SDD Technical Design Generator
 
 <background_information>
-- **Mission**: Generate comprehensive technical design document that translates requirements (WHAT) into architectural design (HOW)
+- **Mission**: Generate comprehensive design document including specifications (WHAT) and architectural design (HOW) in a single document
 - **Success Criteria**:
-  - All requirements mapped to technical components with clear interfaces
+  - All specifications defined with testable acceptance criteria
+  - Specifications mapped to technical components with clear interfaces
   - Appropriate architecture discovery and research completed
   - Design aligns with steering context and existing patterns
   - Visual diagrams included for complex architectures
@@ -17,45 +18,55 @@ argument-hint: <feature-name> [-y]
 
 <instructions>
 ## Core Task
-Generate technical design document for feature **$1** based on approved requirements.
+Generate design document for feature **$1** including specifications and technical design.
+
+## Input Mode Detection
+
+Determine mode from $1:
+- **New Spec**: $1 is a quoted description string (e.g., `"ユーザー認証機能"`) → Create new spec from scratch
+- **Existing Spec**: $1 is an existing feature name (e.g., `auth-flow`) → Edit/regenerate existing design
 
 ## Execution Steps
+
+### Step 0: Initialize Spec (New Spec mode only)
+
+If $1 is a description (not an existing feature directory):
+
+1. **Generate feature name**: Convert description to kebab-case feature name
+2. **Create spec directory**: `{{KIRO_DIR}}/specs/{feature-name}/`
+3. **Initialize spec.json** from `{{KIRO_DIR}}/settings/templates/specs/init.json`:
+   - Set `feature_name`, `created_at`, `updated_at`
+   - Detect language from steering context or default to user's language
+   - Set `phase: "initialized"`
+4. **Inform user**: Report the generated feature name
+5. **Continue to Step 1** with the generated feature name as $1
 
 ### Step 1: Load Context
 
 **Read all necessary context**:
-- `{{KIRO_DIR}}/specs/$1/spec.json`, `requirements.md`, `design.md` (if exists)
+- `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md` (if exists)
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 - `{{KIRO_DIR}}/settings/templates/specs/design.md` for document structure
 - `{{KIRO_DIR}}/settings/rules/design-principles.md` for design principles
 - `{{KIRO_DIR}}/settings/templates/specs/research.md` for discovery log structure
 
-**Validate requirements approval**:
-- If `-y` flag provided ($2 == "-y"): Auto-approve requirements in spec.json
-- Otherwise: Verify approval status (stop if unapproved, see Safety & Fallback)
+**Auto-approve** (if `-y` flag provided): Skip approval checks.
 
-**Version consistency check** (backward compatible — skip if `version_refs` not present):
+**Version consistency check** (skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
-- If `version_refs.design` exists and differs from `version_refs.requirements`:
-  - Warn: "Requirements updated since last design generation (design based on v{refs.design}, requirements now at v{refs.requirements}). Design will be based on the latest requirements."
+- If existing design.md has a Specifications section, note it for merge mode
 
 ### Step 2: Discovery & Analysis
 
 **Critical: This phase ensures design is based on complete, accurate information.**
 
-1. **Check Detail Level** (backward compatible — treat missing header as `normal`):
-   - Read `## Detail Level:` header from requirements.md
-   - If `interface`: Generate interface-only design (contracts, signatures, error categories). Skip detailed flow diagrams and implementation-level component internals.
-   - If `normal`: Standard full design generation.
-   - If `edge-cases`: Ensure error handling and edge case sections are comprehensive, including failure recovery flows and boundary condition handling.
-
-2. **Classify Feature Type**:
+1. **Classify Feature Type**:
    - **New Feature** (greenfield) → Full discovery required
    - **Extension** (existing system) → Integration-focused discovery
    - **Simple Addition** (CRUD/UI) → Minimal or no discovery
    - **Complex Integration** → Comprehensive analysis required
 
-3. **Execute Appropriate Discovery Process**:
+2. **Execute Appropriate Discovery Process**:
 
    **For Complex/New Features**:
    - Read and execute `{{KIRO_DIR}}/settings/rules/design-discovery-full.md`
@@ -73,7 +84,7 @@ Generate technical design document for feature **$1** based on approved requirem
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
-4. **Retain Discovery Findings for Step 3**:
+3. **Retain Discovery Findings for Step 3**:
 - External API contracts and constraints
 - Technology decisions with rationale
 - Existing patterns to follow or extend
@@ -82,7 +93,7 @@ Generate technical design document for feature **$1** based on approved requirem
 - Potential architecture patterns and boundary options (note details in `research.md`)
 - Parallelization considerations for future tasks (capture dependencies in `research.md`)
 
-5. **Persist Findings to Research Log**:
+4. **Persist Findings to Research Log**:
 - Create or update `{{KIRO_DIR}}/specs/$1/research.md` using the shared template
 - Summarize discovery scope and key findings (Summary section)
 - Record investigations in Research Log topics with sources and implications
@@ -96,21 +107,22 @@ Generate technical design document for feature **$1** based on approved requirem
 - Read `{{KIRO_DIR}}/settings/rules/design-principles.md` for principles
 
 2. **Generate Design Document**:
-- **Follow specs/design.md template structure and generation instructions strictly**
-- **Integrate all discovery findings**: Use researched information (APIs, patterns, technologies) throughout component definitions, architecture decisions, and integration points
+- **Follow specs/design.md template structure strictly**
+- **Specifications section**: Define numbered specs with goals and testable acceptance criteria in natural language
+- **Architecture and Components sections**: Translate specifications into technical design
+- **Integrate all discovery findings**: Use researched information throughout
 - If existing design.md found in Step 1, use it as reference context (merge mode)
 - Apply design rules: Type Safety, Visual Communication, Formal Tone
 - Use language specified in spec.json
-- Ensure sections reflect updated headings ("Architecture Pattern & Boundary Map", "Technology Stack & Alignment", "Components & Interface Contracts") and reference supporting details from `research.md`
+- Ensure Specifications Traceability maps spec IDs to components
 
 3. **Update Metadata** in spec.json:
 - Set `phase: "design-generated"`
 - Set `approvals.design.generated: true, approved: false`
-- Set `approvals.requirements.approved: true`
 - Update `updated_at` timestamp
-- **Version tracking** (backward compatible — initialize defaults if fields missing):
+- **Version tracking** (initialize defaults if fields missing):
   - Set `version_refs.design` to the current spec `version`
-  - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "design", "summary": "Design generated based on requirements v{version_refs.requirements}" }`
+  - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "design", "summary": "Design generated" }`
 
 ## Critical Constraints
  - **Type Safety**:
@@ -121,9 +133,9 @@ Generate technical design document for feature **$1** based on approved requirem
    - Document public interfaces and contracts clearly to ensure cross-component type safety.
 - **Latest Information**: Use WebSearch/WebFetch for external dependencies and best practices
 - **Steering Alignment**: Respect existing architecture patterns from steering context
-- **Template Adherence**: Follow specs/design.md template structure and generation instructions strictly
+- **Template Adherence**: Follow specs/design.md template structure strictly
 - **Design Focus**: Architecture and interfaces ONLY, no implementation code
-- **Requirements Traceability IDs**: Use numeric requirement IDs only (e.g. "1.1", "1.2", "3.1", "3.3") exactly as defined in requirements.md. Do not invent new IDs or use alphabetic labels.
+- **Spec Traceability IDs**: Use numeric spec IDs only (e.g. "1.1", "1.2", "3.1") as defined in the Specifications section. Do not invent new IDs or use alphabetic labels.
 </instructions>
 
 ## Tool Guidance
@@ -152,15 +164,10 @@ Provide brief summary in the language specified in spec.json:
 
 ### Error Scenarios
 
-**Requirements Not Approved**:
-- **Stop Execution**: Cannot proceed without approved requirements
-- **User Message**: "Requirements not yet approved. Approval required before design generation."
-- **Suggested Action**: "Run `/sdd-design $1 -y` to auto-approve requirements and proceed"
-
-**Missing Requirements**:
-- **Stop Execution**: Requirements document must exist
-- **User Message**: "No requirements.md found at `{{KIRO_DIR}}/specs/$1/requirements.md`"
-- **Suggested Action**: "Run `/sdd-requirements \"description\"` to create a new specification, or `/sdd-requirements $1` if the feature exists"
+**Missing Spec (Existing Spec mode)**:
+- **Stop Execution**: Spec directory must exist
+- **User Message**: "No spec found at `{{KIRO_DIR}}/specs/$1/`"
+- **Suggested Action**: "Run `/sdd-design \"description\"` to create a new specification"
 
 **Template Missing**:
 - **User Message**: "Template file missing at `{{KIRO_DIR}}/settings/templates/specs/design.md`"
@@ -174,8 +181,9 @@ Provide brief summary in the language specified in spec.json:
 **Discovery Complexity Unclear**:
 - **Default**: Use full discovery process (`{{KIRO_DIR}}/settings/rules/design-discovery-full.md`)
 - **Rationale**: Better to over-research than miss critical context
-- **Invalid Requirement IDs**:
-  - **Stop Execution**: If requirements.md is missing numeric IDs or uses non-numeric headings (for example, "Requirement A"), stop and instruct the user to fix requirements.md before continuing.
+
+**Invalid Spec IDs**:
+- **Stop Execution**: If Specifications section uses non-numeric headings (e.g., "Spec A"), stop and fix before continuing.
 
 ### Next Phase: Task Generation
 

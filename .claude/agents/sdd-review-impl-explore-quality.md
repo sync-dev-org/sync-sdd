@@ -149,7 +149,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope

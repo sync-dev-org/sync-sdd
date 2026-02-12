@@ -121,8 +121,7 @@ Provide output in the user's language:
 ### Integration with Reviews
 
 After creating knowledge:
-- `sdd-review-requirement` can filter by `Should Detect At: requirements`
-- `sdd-review-design` can filter by category matching current spec
+- `sdd-review-design` can filter by `Should Detect At: design` or by category matching current spec
 - `sdd-review-impl` can filter by `incident-*` for common pitfalls
 
 think

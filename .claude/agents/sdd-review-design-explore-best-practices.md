@@ -37,7 +37,6 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
    - Read `{{KIRO_DIR}}/specs/{feature}/design.md`
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
 
@@ -70,7 +69,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md`
+     - Read `design.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope
@@ -82,7 +81,7 @@ You will receive a prompt containing:
 
 1. **All Specs**:
    - Glob `{{KIRO_DIR}}/specs/*/design.md`
-   - Read ALL requirements.md and design.md files
+   - Read ALL design.md files
    - Read ALL spec.json files
 
 2. **Steering Context**:

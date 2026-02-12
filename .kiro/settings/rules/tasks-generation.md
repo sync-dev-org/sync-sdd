@@ -43,11 +43,11 @@ Focus on capabilities and outcomes, not code structure.
 
 **Don't force arbitrary numbers** - let logical grouping determine structure.
 
-### 4. Requirements Mapping
+### 4. Specifications Mapping
 
 **End each task detail section with**:
-- `_Requirements: X.X, Y.Y_` listing **only numeric requirement IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
-- For cross-cutting requirements, list every relevant requirement ID. All requirements MUST have numeric IDs in requirements.md. If an ID is missing, stop and correct requirements.md before generating tasks.
+- `_Requirements: X.X, Y.Y_` listing **only numeric spec IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+- For cross-cutting specs, list every relevant spec ID. All specs MUST have numeric IDs in design.md's Specifications section. If an ID is missing, stop and correct the Specifications section before generating tasks.
 - When task detail references specific acceptance criteria, optionally add `_ACs: R{N}.AC{M}, R{N}.AC{M}_` to enable direct traceability from task → AC → test via the `AC: {feature}.R{N}.AC{M}` test marker convention.
 - Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
 
@@ -67,7 +67,7 @@ Focus on capabilities and outcomes, not code structure.
 ### Optional Test Coverage Tasks
 
 - When the design already guarantees functional coverage and rapid MVP delivery is prioritized, mark purely test-oriented follow-up work (e.g., baseline rendering/unit tests) as **optional** using the `- [ ]*` checkbox form.
-- Only apply the optional marker when the sub-task directly references acceptance criteria from requirements.md in its detail bullets.
+- Only apply the optional marker when the sub-task directly references acceptance criteria from design.md's Specifications section in its detail bullets.
 - Never mark implementation work or integration-critical verification as optional—reserve `*` for auxiliary/deferrable test coverage that can be revisited post-MVP.
 
 ## Task Hierarchy Rules
@@ -119,14 +119,14 @@ Focus on capabilities and outcomes, not code structure.
 - [ ] 2.1 Sub-task...
 ```
 
-## Requirements Coverage
+## Specifications Coverage
 
 **Mandatory Check**:
-- ALL requirements from requirements.md MUST be covered
-- Cross-reference every requirement ID with task mappings
-- If gaps found: Return to requirements or design phase
-- No requirement should be left without corresponding tasks
+- ALL specs from design.md's Specifications section MUST be covered
+- Cross-reference every spec ID with task mappings
+- If gaps found: Return to design phase
+- No spec should be left without corresponding tasks
 
-Use `N.M`-style numeric requirement IDs where `N` is the top-level requirement number from requirements.md (for example, Requirement 1 → 1.1, 1.2; Requirement 2 → 2.1, 2.2), and `M` is a local index within that requirement group.
+Use `N.M`-style numeric spec IDs where `N` is the top-level Spec number from design.md's Specifications section (for example, Spec 1 → 1.1, 1.2; Spec 2 → 2.1, 2.2), and `M` is a local index within that spec group.
 
-Document any intentionally deferred requirements with rationale.
+Document any intentionally deferred specs with rationale.

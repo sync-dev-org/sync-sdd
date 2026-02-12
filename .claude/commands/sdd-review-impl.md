@@ -1,5 +1,5 @@
 ---
-description: Validate implementation against requirements, design, and tasks
+description: Validate implementation against design, specifications, and tasks
 allowed-tools: Glob, Read, Task
 argument-hint: [feature-name] [task-numbers] | --cross-check | --wave N
 ---
@@ -7,7 +7,7 @@ argument-hint: [feature-name] [task-numbers] | --cross-check | --wave N
 # SDD Implementation Review (Router)
 
 <background_information>
-- **Mission**: Verify implementation aligns with approved requirements, design, and tasks
+- **Mission**: Verify implementation aligns with approved design (specifications + architecture) and tasks
 - **Architecture**: Router dispatches to 6 agents (5 parallel review + 1 sequential verifier) via Task tool
 - **Context Isolation**: Each agent runs in separate context window (no cross-contamination)
 - **Two Phases**:
@@ -56,7 +56,7 @@ Before launching agents, validate target existence and parse task scope only:
    - If only feature name: scope to all completed tasks `[x]` in tasks.md
 
 2. **Validate Spec Exists**:
-   - Check `{{KIRO_DIR}}/specs/{feature}/requirements.md` exists
+   - Check `{{KIRO_DIR}}/specs/{feature}/design.md` exists
    - Check `{{KIRO_DIR}}/specs/{feature}/tasks.md` exists
    - If spec not found, report error and stop
    - If no tasks.md, report error and stop
@@ -236,7 +236,7 @@ Execute verification and return the unified report.
 
 ## Error Handling
 
-- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` first."
+- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-design \"description\"` first."
 - **No tasks.md**: "No tasks found for '{feature}'. Run `/sdd-tasks {feature}` first."
 - **No design.md**: Proceed with review (agents will note missing design), warn user
 - **No completed tasks**: "No completed tasks found. Run `/sdd-impl {feature}` first."
@@ -263,7 +263,6 @@ Router formats the verifier's compact output into a human-readable markdown repo
 - If NO-GO: Fix critical issues, re-run `/sdd-impl {feature} [tasks]`, then re-review
 - If SPEC-UPDATE-NEEDED: The specification itself has defects. Display SPEC_FEEDBACK details prominently:
   - For each feedback entry: "Spec defect in **{phase}** for **{spec}**: {description}"
-  - If phase=requirements: "Run `/sdd-requirements {spec}` to update requirements, then re-run `/sdd-design` and `/sdd-tasks`"
   - If phase=design: "Run `/sdd-design {spec}` to update design, then re-run `/sdd-tasks`"
   - Do NOT suggest re-implementation until spec is fixed
 

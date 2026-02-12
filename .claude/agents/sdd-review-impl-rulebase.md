@@ -38,8 +38,7 @@ You will receive a prompt containing:
 
 1. **Load Context**:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md`
+   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` (includes Specifications section)
    - Read `{{KIRO_DIR}}/specs/{feature}/tasks.md`
 
 2. **Task Completion Check**:
@@ -50,13 +49,13 @@ You will receive a prompt containing:
    - Check subtasks are also completed
    - Cross-reference with spec.json implementation status
 
-3. **Requirements Traceability**:
+3. **Specifications Traceability**:
 
-   For EACH EARS requirement in requirements.md:
-   - Identify which implementation files should cover this requirement
-   - Use Grep to search implementation for evidence of requirement coverage
+   For EACH specification in design.md's Specifications section:
+   - Identify which implementation files should cover this spec
+   - Use Grep to search implementation for evidence of spec coverage
    - Check that acceptance criteria behaviors are reflected in code
-   - Flag: "Requirement not implemented" if no evidence found
+   - Flag: "Spec not implemented" if no evidence found
    - Flag: "Partial implementation" if only some criteria are covered
 
 4. **File Structure Verification**:
@@ -69,11 +68,11 @@ You will receive a prompt containing:
 
 5. **AC-Test Traceability**:
 
-   For EACH acceptance criterion in requirements.md:
+   For EACH acceptance criterion in design.md's Specifications section:
    - Use Grep to search for `AC: {feature}` pattern in test files
    - Verify at least one test references each AC via `AC: {feature}.R{N}.AC{M}` marker
    - Flag: "AC not covered by any test" (severity: H) if no marker found for an AC
-   - Flag: "Test references non-existent AC" (severity: M) if marker references AC not in requirements.md
+   - Flag: "Test references non-existent AC" (severity: M) if marker references AC not in design.md Specifications
    - Report coverage ratio: "AC Traceability: X/Y ACs covered by test markers"
    - Note: If no AC markers are found at all, report as advisory (project may predate this convention)
 
@@ -100,7 +99,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `requirements.md` + `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.md`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope

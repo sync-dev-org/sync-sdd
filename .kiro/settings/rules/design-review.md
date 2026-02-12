@@ -16,30 +16,32 @@
 
 #### 0.1 Template Conformance
 
-**requirements.md Structure Check**:
-- Has Introduction section
-- Has Requirements section with numbered requirement headings (1, 2, 3...)
-- Each requirement has Objective (user story format)
-- Each requirement has Acceptance Criteria (EARS format: When/If/While/Where/The system shall)
-- No implementation details (component names, API specs, data structures)
+**design.md Specifications Section Check**:
+- Has Introduction subsection
+- Has numbered Spec headings (Spec 1, Spec 2, ...)
+- Each Spec has Goal statement
+- Each Spec has Acceptance Criteria (numbered list, natural language)
+- ACs are testable and specific (no vague qualifiers)
+- Has Non-Goals subsection
+- No implementation details in Specifications section (component names, API specs, data structures)
 
-**design.md Structure Check** (compare against template):
+**design.md Design Sections Check** (compare against template):
 - Has Overview (Purpose, Users, Impact, Goals, Non-Goals)
 - Has Architecture section
 - Has Components and Interfaces section
 - Has Data Models section (if applicable)
 - Has Error Handling section
 - Has Testing Strategy section
-- No user stories or acceptance criteria
 
 **Drift Indicators** (🔴 Critical):
 - Sections missing from template → Structural drift
 - Extra sections not in template → Ad-hoc additions
 - Incorrect section nesting → Template violation
+- Missing Specifications section entirely → Critical structural gap
 
-#### 0.2 Responsibility Separation (WHAT vs HOW)
+#### 0.2 Section Responsibility Separation (WHAT vs HOW)
 
-**requirements.md should contain (WHAT)**:
+**Specifications section should contain (WHAT)**:
 - ✅ User objectives and goals
 - ✅ Acceptance criteria (observable behaviors)
 - ✅ Business rules and constraints
@@ -48,27 +50,27 @@
 - ❌ NOT: Database schemas, API endpoints
 - ❌ NOT: Technology choices, libraries
 
-**design.md should contain (HOW)**:
+**Design sections (Overview, Architecture, Components, etc.) should contain (HOW)**:
 - ✅ Architecture decisions and rationale
 - ✅ Component responsibilities and interfaces
 - ✅ Data models and schemas
 - ✅ Error handling strategies
 - ✅ Technology stack and choices
-- ❌ NOT: New acceptance criteria
+- ❌ NOT: New acceptance criteria beyond Specifications section
 - ❌ NOT: User stories ("As a user, I want...")
-- ❌ NOT: Business rules not derived from requirements.md
+- ❌ NOT: Business rules not derived from Specifications section
 
-**Drift Indicators** (🔴 Critical):
-- Implementation details in requirements.md → Premature design
-- New acceptance criteria in design.md → Scope creep
-- User stories in design.md → Responsibility leak
+**Drift Indicators** (🟡 Warning):
+- Implementation details leaking into Specifications section → Premature design
+- New acceptance criteria appearing in design sections → Scope creep
+- Specifications section missing testable criteria → Incomplete specs
 
 #### 0.3 Traceability Check
 
-- Every design component should trace to requirement(s)
-- No orphan components (design without requirement backing)
-- No orphan requirements (requirement without design coverage)
-- Requirements Traceability matrix is accurate (if present)
+- Every design component should trace to spec(s) in the Specifications section
+- No orphan components (design without spec backing)
+- No orphan specs (spec without design coverage)
+- Specifications Traceability matrix is accurate (if present)
 
 ---
 
@@ -195,25 +197,25 @@ Flag any occurrence of:
 ## SDD Compliance Check
 
 ### Template Conformance
-| Document | Status | Issues |
-|----------|--------|--------|
-| requirements.md | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
-| design.md | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
+| Section | Status | Issues |
+|---------|--------|--------|
+| Specifications | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
+| Design sections | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
 
-### Responsibility Separation
+### Section Responsibility Separation
 | Issue | Location | Content | Should Be In |
 |-------|----------|---------|--------------|
-| [type] | [file:section] | [problematic content] | [correct file] |
+| [type] | [design.md:section] | [problematic content] | [correct section] |
 
 ### Traceability
-- Orphan requirements: [list or "None"]
+- Orphan specs: [list or "None"]
 - Orphan components: [list or "None"]
 
 ## Critical Issues (テスト実装を阻害)
 [Issues that make test implementation impossible or unreliable]
 
 🔴 **Issue 1**: [Concise title]
-- **Location**: requirements.md Section X / design.md Component Y
+- **Location**: design.md Spec X / design.md Component Y
 - **Problem**: [Quote or describe the problematic content]
 - **Test Impact**: Test implementer cannot determine [what exactly]
 - **Suggested Fix**: [Specific, actionable change]
@@ -249,16 +251,16 @@ Flag any occurrence of:
 # Cross-Spec Review
 
 ## Specs Analyzed
-| Spec | Requirements | Design | Status |
-|------|--------------|--------|--------|
+| Spec | Specifications | Design | Status |
+|------|---------------|--------|--------|
 | feature-a | ✓ | ✓ | Reviewed |
-| feature-b | ✓ | - | Requirements only |
+| feature-b | ✓ | - | Specs only |
 | feature-c | ✓ | ✓ | Reviewed |
 
 ## Cross-Spec Issues
 
-### Requirement Conflicts
-[Contradictions between specs' requirements]
+### Specification Conflicts
+[Contradictions between specs' specifications]
 
 🔴 **Conflict 1**: [feature-A] vs [feature-B]
 - **Content**: [What contradicts]
@@ -313,8 +315,8 @@ Test implementation is **blocked** or **unreliable**:
 - Multiple valid interpretations exist
 - Missing essential information
 - **SDD Drift**: Major template violation or responsibility leak
-- **SDD Drift**: New requirements added in design.md (scope creep)
-- **SDD Drift**: Implementation details in requirements.md
+- **SDD Drift**: New acceptance criteria in design sections outside Specifications (scope creep)
+- **SDD Drift**: Implementation details in Specifications section
 
 ### Warning (🟡)
 Test implementation is **possible but risky**:
@@ -322,7 +324,7 @@ Test implementation is **possible but risky**:
 - Edge case handling unclear
 - Potential for misinterpretation
 - **SDD Drift**: Minor structural deviation from template
-- **SDD Drift**: Orphan component or requirement
+- **SDD Drift**: Orphan component or spec
 
 ### CPF Severity Mapping
 When outputting in CPF format, map as follows:

@@ -1,5 +1,5 @@
 ---
-description: Generate product-wide specification roadmap and initialize multiple specs with skeleton requirements
+description: Generate product-wide specification roadmap and initialize multiple specs with skeleton design documents
 allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task
 argument-hint: [-y]
 ---
@@ -7,7 +7,7 @@ argument-hint: [-y]
 # Create Specification Roadmap
 
 <background_information>
-- **Mission**: Generate a product-wide specification roadmap and initialize multiple specs with skeleton requirements documents
+- **Mission**: Generate a product-wide specification roadmap and initialize multiple specs with skeleton design documents
 - **Success Criteria**:
   - **Product understanding verified with user** (prevent domain misunderstanding)
   - Spec candidates proposed from steering documents
@@ -16,8 +16,8 @@ argument-hint: [-y]
     - Research conducted only when needed to answer specific questions
   - Comprehensive spec inventory with dependencies mapped
   - Clear implementation waves with parallel execution opportunities
-  - **Multiple spec directories created with skeleton requirements.md files**
-  - Ready for requirements refinement via `/sdd-requirements`
+  - **Multiple spec directories created with skeleton design.md files**
+  - Ready for design refinement via `/sdd-design`
 </background_information>
 
 <instructions>
@@ -28,7 +28,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 - **Phase 2**: Propose spec candidates from steering documents
 - **Phase 3**: Propose initial wave organization
 - **Phase 4**: Refine wave organization through dialogue (research as needed, not by default)
-- **Phase 5**: Create spec directories with skeleton requirements
+- **Phase 5**: Create spec directories with skeleton design documents
 - Focus on "discovering together" rather than "outputting answers"
 
 **CRITICAL - Details Before Confirmation**:
@@ -42,7 +42,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 **If `-y` flag is provided**:
 - Skip Phase 4 dialogue (use initial wave organization as-is)
 - Auto-approve spec candidates and wave organization
-- Create spec directories and skeleton requirements without confirmation prompts
+- Create spec directories and skeleton design documents without confirmation prompts
 - Still provide summary of what was done
 
 ## Execution Steps
@@ -53,7 +53,6 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
    **Rules**:
    - Read `{{KIRO_DIR}}/settings/rules/steering-principles.md` (for understanding steering update criteria)
-   - Read `{{KIRO_DIR}}/settings/rules/ears-format.md` (for requirements generation)
 
    **Steering Templates** (understand what each file should contain):
    - Read `{{KIRO_DIR}}/settings/templates/steering/product.md`
@@ -68,13 +67,13 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - (and others if relevant to the domain)
 
    **Spec Templates** (for skeleton generation in Phase 5):
-   - Read `{{KIRO_DIR}}/settings/templates/specs/requirements.md`
+   - Read `{{KIRO_DIR}}/settings/templates/specs/design.md`
    - Read `{{KIRO_DIR}}/settings/templates/specs/research.md`
    - Read `{{KIRO_DIR}}/settings/templates/specs/init.json`
 
    **Purpose**:
    - Understand what content is appropriate for each steering file
-   - Understand how to generate proper skeleton requirements.md and research.md
+   - Understand how to generate proper skeleton design.md and research.md
 
 2. **Read ALL steering documents**:
    - Read entire `{{KIRO_DIR}}/steering/` directory:
@@ -85,7 +84,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
 3. **Scan existing specs**:
    - Glob `{{KIRO_DIR}}/specs/*/spec.json` to understand existing features
-   - Read each spec's `requirements.md` (if exists) to understand scope
+   - Read each spec's `design.md` (if exists) to understand scope
    - Build inventory of existing specs with their phases
 
 ### Phase 2: Product Understanding and Spec Candidate Inference
@@ -269,7 +268,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
 ### Phase 5: Spec Initialization
 
-**Purpose**: Create spec directories with skeleton requirements for all planned specs.
+**Purpose**: Create spec directories with skeleton design documents for all planned specs.
 
 1. **Prepare spec list**:
    - Combine existing specs (from Phase 1) with new spec candidates (from Phase 3)
@@ -279,16 +278,16 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 2. **For each NEW spec candidate, create directory and spec.json**:
    - Create `{{KIRO_DIR}}/specs/[spec-name]/`
    - Generate spec.json with roadmap metadata
-   - Set `phase: "requirements-pending"`
+   - Set `phase: "initialized"`
 
-3. **Generate skeleton requirements.md for each spec**:
-   - Read template: requirements.md, ears-format.md
-   - Generate requirements.md skeleton based on steering documents
+3. **Generate skeleton design.md for each spec**:
+   - Read template: design.md
+   - Generate design.md skeleton with Specifications section based on steering documents
    - Include spec description, wave info, and dependencies
-   - **Requirements will be refined via `/sdd-requirements` command**
+   - **Design will be refined via `/sdd-design` command**
 
 4. **Present creation summary** (unless `-y`):
-   - Show table of created specs with wave assignments
+   - Show table of created specs with skeleton design documents
    - Ask: "Proceed with spec initialization?"
 
 8. **Generate roadmap.md** (project-wide roadmap file):
@@ -346,7 +345,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
      ## Wave Execution Flow
 
-     Each Wave follows these 9 steps.
+     Each Wave follows these 7 steps.
 
      ```
      ┌─────────────────────────────────────────────────────────────────┐
@@ -356,37 +355,29 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
      │  1. Identify specs in Wave                                      │
      │     └─→ Check spec.json roadmap.wave                            │
      │                                                                 │
-     │  2. Requirements existence check                                │
-     │     ├─→ Not exists: Run /sdd-requirements {spec}               │
+     │  2. Design existence check                                      │
+     │     ├─→ Not exists: Run /sdd-design {spec}                     │
      │     └─→ Exists: Continue                                        │
      │                                                                 │
-     │  3. Requirements Review (subagent parallel)                     │
-     │     ├─→ 3.1 Individual: /sdd-review-requirement {spec}         │
+     │  3. Design Review (subagent parallel)                           │
+     │     ├─→ 3.1 Individual: /sdd-review-design {spec}              │
      │     │       ├─→ GO: Continue                                    │
      │     │       ├─→ CONDITIONAL (minor): Auto-fix and continue     │
      │     │       └─→ NO-GO / Decision needed: Report to user        │
-     │     └─→ 3.2 Cross-check: Responsibility allocation & alignment │
+     │     └─→ 3.2 Cross-check: Wave alignment & interface consistency│
      │                                                                 │
      │  4. User Confirmation [REQUIRED]                                │
      │     └─→ Present spec positioning & responsibility to user      │
      │                                                                 │
-     │  5. Design Generation (subagent parallel)                       │
-     │     ├─→ Not exists: Task tool /sdd-design {spec} -y            │
-     │     └─→ Exists: Skip                                            │
-     │                                                                 │
-     │  6. Design Review (subagent parallel)                           │
-     │     ├─→ 6.1 Individual: /sdd-review-design {spec}              │
-     │     └─→ 6.2 Cross-check                                         │
-     │                                                                 │
-     │  7. Task Generation                                             │
+     │  5. Task Generation                                             │
      │     └─→ Run /sdd-tasks {spec} -y for each spec in Wave         │
      │                                                                 │
-     │  8. Implementation (subagent parallel)                          │
+     │  6. Implementation (subagent parallel)                          │
      │     └─→ Run /sdd-impl {spec} considering parallelism           │
      │                                                                 │
-     │  9. Implementation Review & Completion Report                   │
-     │     ├─→ 9.1 Individual: /sdd-review-impl {spec}                │
-     │     ├─→ 9.2 Cross-check                                         │
+     │  7. Implementation Review & Completion Report                   │
+     │     ├─→ 7.1 Individual: /sdd-review-impl {spec}                │
+     │     ├─→ 7.2 Cross-check                                         │
      │     └─→ Wave N Complete → Wave N+1                              │
      │                                                                 │
      └─────────────────────────────────────────────────────────────────┘
@@ -397,34 +388,27 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
      2. List specs where `roadmap.wave == N`
      3. Build dependency graph from `roadmap.dependencies`
 
-     ### Step 2: Requirements existence check
-     - Not exists: Generate with `/sdd-requirements {spec}` (referencing roadmap info)
+     ### Step 2: Design existence check
+     - Not exists: Generate with `/sdd-design {spec}` (referencing roadmap info)
      - Exists: Skip (already generated by sdd-roadmap)
 
-     ### Step 3: Requirements Review (subagent parallel)
+     ### Step 3: Design Review (subagent parallel)
      **Individual Review**: GO / CONDITIONAL / NO-GO
-     **Cross-check**: Responsibility overlap/gaps, interface alignment, dependency validity
+     **Cross-check**: Wave alignment, interface consistency, dependency validity
 
      ### Step 4: User Confirmation [REQUIRED]
-     After completing requirements review for all specs in Wave, present:
+     After completing design review for all specs in Wave, present:
      - Positioning in overall architecture (dependent Waves, downstream Waves)
      - Responsibility allocation for each spec (primary responsibility, inputs, outputs)
      - Cross-check results
 
-     ### Step 5: Design Generation (subagent parallel)
-     **IMPORTANT**: Use Task tool for context isolation
-
-     ### Step 6: Design Review (subagent parallel)
-     **Individual Review**: Alignment with requirements, technical feasibility
-     **Cross-check**: Interface alignment, pattern consistency
-
-     ### Step 7: Task Generation
+     ### Step 5: Task Generation
      Run `/sdd-tasks {spec} -y` for each spec in Wave
 
-     ### Step 8: Implementation (subagent parallel)
+     ### Step 6: Implementation (subagent parallel)
      Group specs for parallel execution based on dependencies
 
-     ### Step 9: Implementation Review & Completion Report
+     ### Step 7: Implementation Review & Completion Report
      **Individual Review + Cross-check** → Wave completion report
 
      ---
@@ -433,28 +417,22 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
      ### Wave 1: [Wave Name]
      ```bash
-     # Step 2: Requirements (if not exists)
-     /sdd-requirements [spec-name]
+     # Step 2: Design (if not exists)
+     /sdd-design [spec-name]
 
-     # Step 3: Requirements Review (subagent)
-     # → Task tool: /sdd-review-requirement [spec-name]
+     # Step 3: Design Review (subagent)
+     # → Task tool: /sdd-review-design [spec-name]
 
      # Step 4: User Confirmation
      # → Present responsibility allocation & positioning to user
 
-     # Step 5: Design (subagent)
-     # → Task tool: /sdd-design [spec-name] -y
-
-     # Step 6: Design Review (subagent)
-     # → Task tool: /sdd-review-design [spec-name]
-
-     # Step 7: Tasks
+     # Step 5: Tasks
      /sdd-tasks [spec-name] -y
 
-     # Step 8: Implementation (subagent)
+     # Step 6: Implementation (subagent)
      # → Task tool: /sdd-impl [spec-name]
 
-     # Step 9: Implementation Review (subagent)
+     # Step 7: Implementation Review (subagent)
      # → Task tool: /sdd-review-impl [spec-name]
      ```
 
@@ -464,11 +442,6 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
      ---
 
      ## Error Handling
-
-     ### Requirements Review NO-GO
-     1. Present review results to user
-     2. Request user decision on fix approach
-     3. After fix, re-run /sdd-review-requirement
 
      ### Design Review NO-GO
      1. Present review results to user
@@ -507,7 +480,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 ### File Operations
 - **Read**: Load all steering, existing specs, and templates before analysis
 - **Glob**: Find existing spec directories and config files
-- **Write**: Create spec.json, requirements.md (skeleton), and roadmap.md for each spec
+- **Write**: Create spec.json, design.md (skeleton), and roadmap.md for each spec
 
 ### Dialogue
 - **AskUserQuestion**: Use at each phase transition for confirmation
@@ -566,9 +539,8 @@ For each NEW spec, create the following files in `{{KIRO_DIR}}/specs/[spec-name]
      "created_at": "2024-01-01T00:00:00Z",
      "updated_at": "2024-01-01T00:00:00Z",
      "language": "en",
-     "phase": "requirements-pending",
+     "phase": "initialized",
      "approvals": {
-       "requirements": { "generated": false, "approved": false },
        "design": { "generated": false, "approved": false },
        "tasks": { "generated": false, "approved": false }
      },
@@ -584,10 +556,10 @@ For each NEW spec, create the following files in `{{KIRO_DIR}}/specs/[spec-name]
    }
    ```
 
-2. **requirements.md**: Skeleton requirements document
+2. **design.md**: Skeleton design document
    - Introduction with spec context and wave information
-   - Placeholder requirement areas based on steering documents
-   - **To be refined via `/sdd-requirements` command**
+   - Placeholder Specifications section based on steering documents
+   - **To be refined via `/sdd-design` command**
 
 ### Console Output
 
@@ -601,13 +573,13 @@ Provide conversational summary with:
    - OR "No critical findings that significantly impact spec breakdown"
    - Spec candidates refined based on findings (if any)
 6. **Phase 5: Spec initialization**:
-   - Created spec directories with skeleton requirements
+   - Created spec directories with skeleton design documents
 7. **Created specs summary table**:
    | Spec Name | Wave | Dependencies | Status |
    |-----------|------|--------------|--------|
    | foundation | 1 | - | Skeleton created |
    | feature-a | 2 | foundation | Skeleton created |
-8. Next steps guidance: "Skeleton requirements created. Refine with `/sdd-requirements [spec-name]` or proceed to `/sdd-design [spec-name]`."
+8. Next steps guidance: "Skeleton design documents created. Refine with `/sdd-design [spec-name]` or proceed to `/sdd-tasks [spec-name]`."
 
 **Language**: Use the language the user writes in (auto-detect).
 
@@ -621,8 +593,8 @@ Provide conversational summary with:
 | **Phase 2 candidates** | Show: full table with name, description, rationale, source for each spec | "Proceed with these specs?" / "Modify candidates" |
 | **Phase 3** | Show: mermaid dependency graph, wave breakdown with parallel markers | "Does this wave organization make sense? Any adjustments needed?" |
 | **Phase 4** | Dialogue: respond to user feedback, adjust waves, research if needed | (Iterative dialogue until user confirms) |
-| **Before Phase 5** | Show: final wave organization and summary table of specs to create | "Create these spec directories with skeleton requirements?" |
-| **After Phase 5** | Show: created specs table | "Specs initialized. Refine with `/sdd-requirements` or proceed to `/sdd-design`" |
+| **Before Phase 5** | Show: final wave organization and summary table of specs to create | "Create these spec directories with skeleton design documents?" |
+| **After Phase 5** | Show: created specs table | "Specs initialized. Refine with `/sdd-design` or proceed to `/sdd-tasks`" |
 
 ## Safety & Fallback
 
@@ -635,23 +607,21 @@ Provide conversational summary with:
 
 ### Session Boundaries
 
-- This command creates multiple spec directories with skeleton requirements
+- This command creates multiple spec directories with skeleton design documents
 - **Phase 2**: Proposes spec candidates from steering documents
 - **Phase 3**: Proposes initial wave organization
 - **Phase 4**: Refines wave organization through dialogue (research only when needed)
-- **Phase 5**: Creates spec directories with skeleton requirements
-- Creates **skeleton** requirements.md files to be refined via `/sdd-requirements`
+- **Phase 5**: Creates spec directories with skeleton design documents
+- Creates **skeleton** design.md files to be refined via `/sdd-design`
 - **No steering updates** (use `/sdd-steering` for that)
 
 ### Integration with Other Skills
 
 **Typical flow**:
 ```
-/sdd-roadmap → Create multiple specs with skeleton requirements
+/sdd-roadmap → Create multiple specs with skeleton design documents
     ↓
-/sdd-requirements [spec-name] → Refine requirements (optional)
-    ↓
-/sdd-design [spec-name] → Generate design from requirements
+/sdd-design [spec-name] → Refine design (optional)
     ↓
 /sdd-tasks [spec-name] → Generate implementation tasks
     ↓
@@ -659,8 +629,8 @@ Provide conversational summary with:
 ```
 
 **After roadmap initialization**:
-- Each spec has skeleton requirements.md
-- Use `/sdd-requirements [spec-name]` to refine requirements if needed
-- Proceed to `/sdd-design [spec-name]` when requirements are ready
+- Each spec has skeleton design.md
+- Use `/sdd-design [spec-name]` to refine design if needed
+- Proceed to `/sdd-tasks [spec-name]` when design is ready
 - Follow wave order for implementation priority
 

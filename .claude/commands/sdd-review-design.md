@@ -50,9 +50,8 @@ Before launching agents, validate target existence only:
 ### Single Spec Mode
 
 1. **Validate Spec Exists**:
-   - Check `{{KIRO_DIR}}/specs/{feature}/requirements.md` exists
-   - Check `{{KIRO_DIR}}/specs/{feature}/design.md` exists (warn if missing)
-   - If spec not found, report error and stop
+   - Check `{{KIRO_DIR}}/specs/{feature}/design.md` exists
+   - If not found, report error and stop
 
 ### Cross-Check Mode
 
@@ -228,8 +227,8 @@ Execute verification and return the unified report.
 
 ## Error Handling
 
-- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` first."
-- **No design.md**: Proceed with review (agents will note missing design), warn user
+- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-design \"description\"` first."
+- **No design.md**: Report error - design.md is required
 - **Agent failure**: Report partial results from successful agents, note which failed
 - **No specs found** (Cross-Check): "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
 

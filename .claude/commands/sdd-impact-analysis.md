@@ -26,7 +26,7 @@ Analyze the downstream impact of recent changes to feature **$1**'s specificatio
 
 1. **Read target spec**:
    - `{{KIRO_DIR}}/specs/$1/spec.json` — version, changelog, version_refs, roadmap metadata
-   - `{{KIRO_DIR}}/specs/$1/requirements.md` — current requirements with stability tags
+   - `{{KIRO_DIR}}/specs/$1/design.md` — Specifications section with stability tags
 
 2. **Read roadmap**:
    - `{{KIRO_DIR}}/specs/roadmap.md` — dependency graph and wave structure
@@ -45,9 +45,9 @@ Analyze the downstream impact of recent changes to feature **$1**'s specificatio
 ### Step 3: Identify Changes
 
 1. **Read spec.json changelog** for recent changes to the target feature
-   - If no changelog or version fields: Report "Version tracking not available for {feature}. Run `/sdd-requirements {feature}` to initialize." — proceed with limited analysis.
-2. **Identify changed requirements** from changelog entries (especially `affected_requirements` field if present)
-3. **Classify change severity** using stability tags from requirements.md:
+   - If no changelog or version fields: Report "Version tracking not available for {feature}. Run `/sdd-design {feature}` to initialize." — proceed with limited analysis.
+2. **Identify changed specs** from changelog entries (especially `affected_specs` field if present)
+3. **Classify change severity** using stability tags from design.md Specifications section:
    - `[constraint]` change → **BREAKING** (all downstream affected, full re-review required)
    - `[contract]` change → **INTERFACE** (design-level downstream affected)
    - `[behavior]` change → **COMPATIBLE** (minimal downstream impact)
@@ -90,7 +90,7 @@ Present report in the language specified in spec.json:
 
 | Spec | Wave | Impact | Stale? | Action Needed |
 |------|------|--------|--------|---------------|
-| spec-a | 2 | BREAKING | Yes | Re-review requirements, re-generate design and tasks |
+| spec-a | 2 | BREAKING | Yes | Re-review specs, re-generate design and tasks |
 | spec-b | 3 | INTERFACE | Yes | Re-generate design |
 | spec-c | 3 | COMPATIBLE | No | No action required |
 | spec-d | 4 | UNKNOWN | - | Manual review recommended |
@@ -108,7 +108,7 @@ Present report in the language specified in spec.json:
 </instructions>
 
 ## Tool Guidance
-- **Read**: All spec files, roadmap, requirements
+- **Read**: All spec files, roadmap, design documents
 - **Glob**: Discover all specs
 - **Grep**: Search for cross-references in design files
 - **AskUserQuestion**: Clarify scope if changelog is ambiguous
@@ -141,4 +141,4 @@ Provide impact analysis report in the language specified in spec.json:
 
 **No stability tags**:
 - All impact classifications default to UNKNOWN.
-- Recommend: "Add stability tags (`[constraint]`, `[contract]`, `[behavior]`) to requirements for more precise impact analysis."
+- Recommend: "Add stability tags (`[constraint]`, `[contract]`, `[behavior]`) to specs in design.md for more precise impact analysis."

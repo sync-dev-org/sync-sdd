@@ -24,21 +24,19 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 ### Step 1: Load Context
 
 **Read all necessary context**:
-- `{{KIRO_DIR}}/specs/$1/spec.json`, `requirements.md`, `design.md`, `tasks.md`
+- `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md`, `tasks.md`
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 
 **Validate and approve tasks**:
 - Verify all spec files exist (stop if not, see Safety & Fallback)
 - Set `approvals.tasks.approved: true` in spec.json (starting implementation implicitly approves tasks)
 
-**Version consistency check** (backward compatible — skip if `version_refs` not present in spec.json):
+**Version consistency check** (skip if `version_refs` not present in spec.json):
 - Read `version_refs` from spec.json
 - If `version_refs` exists:
-  - If `version_refs.requirements` != `version_refs.design`:
-    - **BLOCK**: "Design is based on requirements v{design_ref} but requirements are now v{req_ref}. Re-run `/sdd-design $1` to update design before implementation."
   - If `version_refs.design` != `version_refs.tasks`:
     - **BLOCK**: "Tasks are based on design v{task_ref} but design is now v{design_ref}. Re-run `/sdd-tasks $1` to update tasks before implementation."
-- If `version_refs` is absent or all values are null: Skip check (backward compatible with pre-versioning specs)
+- If `version_refs` is absent or all values are null: Skip check
 
 ### Step 2: Select Tasks
 
@@ -119,8 +117,8 @@ Provide brief summary in the language specified in spec.json:
 ### Error Scenarios
 
 **Missing Spec Files**:
-- **Stop Execution**: All spec files (spec.json, requirements.md, design.md, tasks.md) must exist
-- **Suggested Action**: "Complete previous phases: `/sdd-requirements`, `/sdd-design`, `/sdd-tasks`"
+- **Stop Execution**: All spec files (spec.json, design.md, tasks.md) must exist
+- **Suggested Action**: "Complete previous phases: `/sdd-design`, `/sdd-tasks`"
 
 **Test Failures**:
 - **Stop Implementation**: Fix failing tests before continuing

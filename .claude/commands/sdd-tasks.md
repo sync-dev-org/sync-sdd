@@ -24,16 +24,16 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 ### Step 1: Load Context
 
 **Read all necessary context**:
-- `{{KIRO_DIR}}/specs/$1/spec.json`, `requirements.md`, `design.md`
+- `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md`
 - `{{KIRO_DIR}}/specs/$1/tasks.md` (if exists, for merge mode)
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 
 **Validate approvals**:
-- If `-y` flag provided ($2 == "-y"): Auto-approve requirements and design in spec.json
-- Otherwise: Verify both approved (stop if not, see Safety & Fallback)
+- If `-y` flag provided ($2 == "-y"): Auto-approve design in spec.json
+- Otherwise: Verify design approved (stop if not, see Safety & Fallback)
 - Determine sequential mode based on presence of `--sequential`
 
-**Version consistency check** (backward compatible — skip if `version_refs` not present):
+**Version consistency check** (skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
 - If `version_refs.tasks` exists and differs from `version_refs.design`:
   - Warn: "Design updated since last task generation (tasks based on v{refs.tasks}, design now at v{refs.design}). Tasks will be based on the latest design."
@@ -47,8 +47,8 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 
 **Generate task list following all rules**:
 - Use language specified in spec.json
-- Map all requirements to tasks
-- When documenting requirement coverage, list numeric requirement IDs only (comma-separated) without descriptive suffixes, parentheses, translations, or free-form labels
+- Map all specifications from design.md's Specifications section to tasks
+- When documenting spec coverage, list numeric spec IDs only (comma-separated) without descriptive suffixes, parentheses, translations, or free-form labels
 - Ensure all design components included
 - Verify task progression is logical and incremental
 - Collapse single-subtask structures by promoting them to major tasks and avoid duplicating details on container-only major tasks (use template patterns accordingly)
@@ -63,7 +63,6 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 - Update spec.json metadata:
   - Set `phase: "tasks-generated"`
   - Set `approvals.tasks.generated: true, approved: false`
-  - Set `approvals.requirements.approved: true`
   - Set `approvals.design.approved: true`
   - Update `updated_at` timestamp
   - **Version tracking** (backward compatible — initialize defaults if fields missing):
@@ -73,7 +72,7 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 ## Critical Constraints
 - **Follow rules strictly**: All principles in tasks-generation.md are mandatory
 - **Natural Language**: Describe what to do, not code structure details
-- **Complete Coverage**: ALL requirements must map to tasks
+- **Complete Coverage**: ALL specifications from design.md must map to tasks
 - **Maximum 2 Levels**: Major tasks and sub-tasks only (no deeper nesting)
 - **Sequential Numbering**: Major tasks increment (1, 2, 3...), never repeat
 - **Task Integration**: Every task must connect to the system (no orphaned work)
@@ -104,26 +103,26 @@ Provide brief summary in the language specified in spec.json:
 
 ### Error Scenarios
 
-**Requirements or Design Not Approved**:
-- **Stop Execution**: Cannot proceed without approved requirements and design
-- **User Message**: "Requirements and design must be approved before task generation"
-- **Suggested Action**: "Run `/sdd-tasks $1 -y` to auto-approve both and proceed"
+**Design Not Approved**:
+- **Stop Execution**: Cannot proceed without approved design
+- **User Message**: "Design must be approved before task generation"
+- **Suggested Action**: "Run `/sdd-tasks $1 -y` to auto-approve design and proceed"
 
-**Missing Requirements or Design**:
-- **Stop Execution**: Both documents must exist
-- **User Message**: "Missing requirements.md or design.md at `{{KIRO_DIR}}/specs/$1/`"
-- **Suggested Action**: "Complete requirements and design phases first"
+**Missing Design**:
+- **Stop Execution**: Design document must exist
+- **User Message**: "Missing design.md at `{{KIRO_DIR}}/specs/$1/`"
+- **Suggested Action**: "Run `/sdd-design $1` or `/sdd-design \"description\"` first"
 
-**Incomplete Requirements Coverage**:
-- **Warning**: "Not all requirements mapped to tasks. Review coverage."
+**Incomplete Spec Coverage**:
+- **Warning**: "Not all specifications mapped to tasks. Review coverage."
 - **User Action Required**: Confirm intentional gaps or regenerate tasks
 
 **Template/Rules Missing**:
 - **User Message**: "Template or rules files missing in `{{KIRO_DIR}}/settings/`"
 - **Fallback**: Use inline basic structure with warning
 - **Suggested Action**: "Check repository setup or restore template files"
-- **Missing Numeric Requirement IDs**:
-  - **Stop Execution**: All requirements in requirements.md MUST have numeric IDs. If any requirement lacks a numeric ID, stop and request that requirements.md be fixed before generating tasks.
+- **Missing Numeric Spec IDs**:
+  - **Stop Execution**: All specifications in design.md's Specifications section MUST have numeric IDs. If any spec lacks a numeric ID, stop and request that design.md be fixed before generating tasks.
 
 ### Next Phase: Implementation
 

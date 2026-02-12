@@ -55,7 +55,7 @@ argument-hint: "[-y]"
    | Spec | Phase | Tasks | Status |
    |------|-------|-------|--------|
    | slack-notifier | design-generated | - | Ready for tasks |
-   | health-checker | requirements-pending | - | Not started |
+   | health-checker | initialized | - | Not started |
    ```
 
 ### Step 3: Present Options

@@ -12,24 +12,43 @@
 **Warning**: Approaching 1000 lines indicates excessive feature complexity that may require design simplification.
 ---
 
-> Sections may be reordered (e.g., surfacing Requirements Traceability earlier or moving Data Models nearer Architecture) when it improves clarity. Within each section, keep the flow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
+> Sections may be reordered (e.g., surfacing Specifications Traceability earlier or moving Data Models nearer Architecture) when it improves clarity. Within each section, keep the flow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
 
-## Overview 
-2-3 paragraphs max
-**Purpose**: This feature delivers [specific value] to [target users].
-**Users**: [Target user groups] will utilize this for [specific workflows].
-**Impact** (if applicable): Changes the current [system state] by [specific modifications].
+## Specifications
 
+<!-- This section defines WHAT the feature must achieve. Acceptance criteria must be testable and specific. Free-form natural language is preferred; no specific syntax pattern is required. -->
+<!-- Specification headings MUST include a leading numeric ID (e.g., "Spec 1: ...", "Spec 2: ..."). -->
 
-### Goals
-- Primary objective 1
-- Primary objective 2  
-- Success criteria
+### Introduction
+{{INTRODUCTION}}
+
+### Spec 1: {{SPEC_AREA_1}}
+**Goal:** {{GOAL_1}}
+
+**Acceptance Criteria:**
+1. {{TESTABLE_CRITERION}}
+2. {{TESTABLE_CRITERION}}
+3. {{TESTABLE_CRITERION}}
+
+### Spec 2: {{SPEC_AREA_2}}
+**Goal:** {{GOAL_2}}
+
+**Acceptance Criteria:**
+1. {{TESTABLE_CRITERION}}
+2. {{TESTABLE_CRITERION}}
+
+<!-- Additional specs follow the same pattern -->
 
 ### Non-Goals
 - Explicitly excluded functionality
 - Future considerations outside current scope
 - Integration points deferred
+
+## Overview
+2-3 paragraphs max
+**Purpose**: This feature delivers [specific value] to [target users].
+**Users**: [Target user groups] will utilize this for [specific workflows].
+**Impact** (if applicable): Changes the current [system state] by [specific modifications].
 
 ## Architecture
 
