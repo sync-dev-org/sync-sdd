@@ -94,18 +94,18 @@ Provide only the diagrams needed to explain non-trivial flows. Use pure Mermaid 
 Skip this section entirely for simple CRUD changes.
 > Describe flow-level decisions (e.g., gating conditions, retries) briefly after the diagram instead of restating each step.
 
-## Requirements Traceability
+## Specifications Traceability
 
-Use this section for complex or compliance-sensitive features where requirements span multiple domains. Straightforward 1:1 mappings can rely on the Components summary table.
+Use this section for complex or compliance-sensitive features where specifications span multiple domains. Straightforward 1:1 mappings can rely on the Components summary table.
 
-Map each requirement ID (e.g., `2.1`) to the design elements that realize it.
+Map each specification ID (e.g., `2.1`) to the design elements that realize it.
 
-| Requirement | Summary | Components | Interfaces | Flows |
+| Specification | Summary | Components | Interfaces | Flows |
 |-------------|---------|------------|------------|-------|
 | 1.1 | | | | |
 | 1.2 | | | | |
 
-> Omit this section only when a single component satisfies a single requirement without cross-cutting concerns.
+> Omit this section only when a single component satisfies a single specification without cross-cutting concerns.
 
 ## Components and Interfaces
 

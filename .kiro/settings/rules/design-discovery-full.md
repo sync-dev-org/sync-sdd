@@ -5,9 +5,9 @@ Conduct comprehensive research and analysis to ensure the technical design is ba
 
 ## Discovery Steps
 
-### 1. Requirements Analysis
-**Map Requirements to Technical Needs**
-- Extract all functional requirements from EARS format
+### 1. Specifications Analysis
+**Map Specifications to Technical Needs**
+- Extract all functional specifications from the Specifications section of design.md
 - Identify non-functional requirements (performance, security, scalability)
 - Determine technical constraints and dependencies
 - List core technical challenges

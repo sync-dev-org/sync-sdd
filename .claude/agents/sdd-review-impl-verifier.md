@@ -65,11 +65,11 @@ Key cross-checks:
 - Consistency says pattern deviation → Does Quality agree it violates conventions?
 
 **Spec Defect Detection** (distinguishes spec defects from implementation defects):
-- Multiple agents flag same requirement as unimplementable or contradictory → likely **requirements defect**
+- Multiple agents flag same specification as unimplementable or contradictory → likely **specifications defect**
 - Interface agent finds design contract impossible to implement correctly → likely **design defect**
-- Test agent finds actual behavior contradicts a requirement → likely **requirements defect**
+- Test agent finds actual behavior contradicts a specification → likely **specifications defect**
 - Consistency agent finds cross-feature assumption violated that traces back to spec → likely **spec dependency defect**
-- If spec defect is detected, classify the affected phase (`requirements` or `design`) for SPEC_FEEDBACK output
+- If spec defect is detected, classify the affected phase (`specifications` or `design`) for SPEC_FEEDBACK output
 
 ### Step 2: Contradiction Detection
 
@@ -194,7 +194,7 @@ Based on VERIFIED findings:
 ```
 IF any Critical issues remain after verification:
     Verdict = NO-GO
-ELSE IF spec defect detected in Step 1 (requirements or design is the root cause, not implementation):
+ELSE IF spec defect detected in Step 1 (specifications or design is the root cause, not implementation):
     Verdict = SPEC-UPDATE-NEEDED
 ELSE IF >3 High issues OR test failures OR interface mismatches:
     Verdict = CONDITIONAL
@@ -234,7 +234,7 @@ Rules:
 - Agents: use + separator (e.g. rulebase+edge-case)
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
-- SPEC_FEEDBACK: `phase` is `requirements` or `design`; `spec` is the feature name; `description` explains the spec defect
+- SPEC_FEEDBACK: `phase` is `specifications` or `design`; `spec` is the feature name; `description` explains the spec defect
 
 Example:
 ```

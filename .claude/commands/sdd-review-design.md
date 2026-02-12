@@ -99,7 +99,7 @@ Launch 5 agents **in parallel** using Task tool with `subagent_type: "general-pu
     ┌─────────────────┐ ┌─────────────────────────────────────┐
     │ Task:           │ │ Task: best-practices                │
     │ consistency     │ │ (industry standards)                │
-    │ (req↔design)    │ └─────────────────────────────────────┘
+    │ (specs↔design)   │ └─────────────────────────────────────┘
     └─────────────────┘
 ```
 
