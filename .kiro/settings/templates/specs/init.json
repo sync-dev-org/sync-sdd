@@ -25,7 +25,10 @@
       "approved": false
     }
   },
-  "ready_for_implementation": false
+  "implementation": {
+    "files_created": []
+  },
+  "roadmap": null
 }
 
 

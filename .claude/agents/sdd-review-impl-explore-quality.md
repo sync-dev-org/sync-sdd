@@ -51,6 +51,10 @@ You will receive a prompt containing:
    - Use Glob to verify which files exist
    - Read ALL implementation files for quality analysis
 
+4. **Knowledge Context** (if available):
+   - Glob `{{KIRO_DIR}}/knowledge/incident-*.md` for past quality incidents
+   - Read relevant entries to inform quality checks
+
 ### Cross-Check Mode
 
 1. **All Specs**:

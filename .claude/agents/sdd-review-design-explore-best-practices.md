@@ -48,6 +48,11 @@ You will receive a prompt containing:
      - `structure.md` - Project structure
      - Any custom steering files (especially technology-related)
 
+3. **Knowledge Context** (if available):
+   - Glob `{{KIRO_DIR}}/knowledge/pattern-*.md` for established patterns
+   - Glob `{{KIRO_DIR}}/knowledge/reference-*.md` for reference material
+   - Read relevant entries to inform best practice evaluation
+
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:

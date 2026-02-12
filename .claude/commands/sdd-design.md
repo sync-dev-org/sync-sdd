@@ -36,8 +36,8 @@ Generate technical design document for feature **$1** based on approved requirem
 
 **Version consistency check** (backward compatible — skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
-- If `version_refs.requirements` exists and differs from current `version`:
-  - Warn: "Requirements updated since last design generation (design based on v{refs.requirements}, requirements now at v{version}). Design will be based on the latest requirements."
+- If `version_refs.design` exists and differs from `version_refs.requirements`:
+  - Warn: "Requirements updated since last design generation (design based on v{refs.design}, requirements now at v{refs.requirements}). Design will be based on the latest requirements."
 
 ### Step 2: Discovery & Analysis
 

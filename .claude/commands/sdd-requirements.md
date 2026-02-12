@@ -60,7 +60,7 @@ Persist these defaults on next write.
      - `{{FEATURE_NAME}}` → generated feature name
      - `{{TIMESTAMP}}` → current ISO 8601 timestamp
      - `{{LANG_CODE}}` → detect from user input or default to `en`
-   - Set `phase: "requirements-generated"` (skip `initialized` phase)
+   - Set `phase: "requirements-generated"`
    - Set `approvals.requirements.generated: true`
    - **Version initialization**:
      - Set `version: "1.0.0"`
@@ -148,7 +148,8 @@ Update `{{KIRO_DIR}}/specs/$1/spec.json`:
 **Version management** (Case B edits only — Case A uses initial "1.0.0" set in Step 2):
 - Increment `version` (minor bump: 1.0.0 → 1.1.0 for additions, patch bump: 1.0.0 → 1.0.1 for refinements)
 - Update `version_refs.requirements` to the new version
-- Append changelog entry: `{ "version": "{NEW_VER}", "date": "{ISO_DATE}", "phase": "requirements", "summary": "{brief description of change}" }`
+- Append changelog entry: `{ "version": "{NEW_VER}", "date": "{ISO_DATE}", "phase": "requirements", "summary": "{brief description of change}", "affected_requirements": ["{N.M}", ...] }`
+  - `affected_requirements`: List numeric IDs of changed/added/removed ACs (e.g., `["1.1", "2.3"]`)
 - **Downstream staleness warning**: If `version_refs.design` or `version_refs.tasks` exist and reference an older version than the new `version_refs.requirements`:
   - Warn: "Design is based on requirements v{design_ref} but requirements are now v{new_ver}. Consider re-running `/sdd-design $1`."
   - Warn: "Tasks are based on requirements v{tasks_ref} but requirements are now v{new_ver}. Consider re-running `/sdd-tasks $1`."

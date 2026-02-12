@@ -62,7 +62,6 @@ Generate status report for feature **$1** showing progress across all phases.
 **Version analysis** (backward compatible — skip if `version` field not present):
 - Read `version`, `changelog`, `version_refs` from spec.json
 - Determine version_refs alignment:
-  - If `version_refs.requirements` < `version` after requirements edit → design/tasks may be stale
   - If `version_refs.design` < `version_refs.requirements` → design is stale
   - If `version_refs.tasks` < `version_refs.design` → tasks are stale
 

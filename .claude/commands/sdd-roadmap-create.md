@@ -572,7 +572,9 @@ For each NEW spec, create the following files in `{{KIRO_DIR}}/specs/[spec-name]
        "design": { "generated": false, "approved": false },
        "tasks": { "generated": false, "approved": false }
      },
-     "ready_for_implementation": false,
+     "implementation": {
+       "files_created": []
+     },
      "roadmap": {
        "wave": 1,
        "dependencies": [],

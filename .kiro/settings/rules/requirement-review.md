@@ -335,6 +335,11 @@ Design possible but **risky**:
 - Terminology inconsistency
 - Boundary condition unclear
 
+### CPF Severity Mapping
+When outputting in CPF format, map as follows:
+- Critical (🔴) → `C` (steering violation, blocker) or `H` (ambiguity, contradiction)
+- Warning (🟡) → `M` (minor drift, unclear edge case) or `L` (terminology, cosmetic)
+
 ---
 
 ## Review Guidelines

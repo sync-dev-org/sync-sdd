@@ -35,8 +35,8 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 
 **Version consistency check** (backward compatible — skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
-- If `version_refs.design` exists and differs from current `version`:
-  - Warn: "Design is based on an older spec version (design: v{refs.design}, current: v{version}). Consider re-running `/sdd-design $1` first."
+- If `version_refs.tasks` exists and differs from `version_refs.design`:
+  - Warn: "Design updated since last task generation (tasks based on v{refs.tasks}, design now at v{refs.design}). Tasks will be based on the latest design."
 
 ### Step 2: Generate Implementation Tasks
 

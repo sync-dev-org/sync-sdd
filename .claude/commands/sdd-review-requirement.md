@@ -8,7 +8,7 @@ argument-hint: [<feature-name>] [--rulebase-only] | [--explore-only] | [--wave N
 
 <background_information>
 - **Mission**: Comprehensive requirements review combining verification and discovery
-- **Architecture**: Router dispatches to 6 independent agents via Task tool
+- **Architecture**: Router dispatches to 6 agents (5 parallel review + 1 sequential verifier) via Task tool
 - **Context Isolation**: Each agent runs in separate context window (no cross-contamination)
 - **Two Phases**:
   - **Phase 1**: 5 review agents run in parallel (rulebase + 4 exploratory)

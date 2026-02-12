@@ -47,6 +47,10 @@ You will receive a prompt containing:
      - `structure.md` - Project structure
      - Any custom steering files
 
+3. **Knowledge Context** (if available):
+   - Glob `{{KIRO_DIR}}/knowledge/incident-*.md` for past incident learnings
+   - Read relevant entries to inform common sense checks
+
 ### Cross-Check Mode
 
 1. **All Specs**:

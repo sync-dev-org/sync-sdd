@@ -27,8 +27,9 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 - `{{KIRO_DIR}}/specs/$1/spec.json`, `requirements.md`, `design.md`, `tasks.md`
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 
-**Validate approvals**:
-- Verify tasks are approved in spec.json (stop if not, see Safety & Fallback)
+**Validate and approve tasks**:
+- Verify all spec files exist (stop if not, see Safety & Fallback)
+- Set `approvals.tasks.approved: true` in spec.json (starting implementation implicitly approves tasks)
 
 **Version consistency check** (backward compatible — skip if `version_refs` not present in spec.json):
 - Read `version_refs` from spec.json
@@ -37,7 +38,7 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
     - **BLOCK**: "Design is based on requirements v{design_ref} but requirements are now v{req_ref}. Re-run `/sdd-design $1` to update design before implementation."
   - If `version_refs.design` != `version_refs.tasks`:
     - **BLOCK**: "Tasks are based on design v{task_ref} but design is now v{design_ref}. Re-run `/sdd-tasks $1` to update tasks before implementation."
-- If `version_refs` is absent: Skip check (backward compatible with pre-versioning specs)
+- If `version_refs` is absent or all values are null: Skip check (backward compatible with pre-versioning specs)
 
 ### Step 2: Select Tasks
 
@@ -78,6 +79,10 @@ For each selected task, follow Kent Beck's TDD cycle:
    - Update checkbox from `- [ ]` to `- [x]` in tasks.md
    - **AC coverage validation**: Verify that all ACs referenced by this task (from `_Requirements:_` and `_ACs:_` annotations in tasks.md) have at least one test with a matching `AC: {feature}.R{N}.AC{M}` marker
 
+6. **TRACK FILES**:
+   - Append created/modified file paths to spec.json `implementation.files_created` array
+   - Include both implementation files and test files
+
 ### Step 4: Update Completion Status
 
 After all selected tasks are executed:
@@ -85,6 +90,7 @@ After all selected tasks are executed:
 - If all tasks complete:
   - Set spec.json `phase: "implementation-complete"`
   - Update `updated_at` timestamp
+  - Verify `implementation.files_created` is populated in spec.json
 
 ## Critical Constraints
 - **TDD Mandatory**: Tests MUST be written before implementation code
@@ -112,8 +118,8 @@ Provide brief summary in the language specified in spec.json:
 
 ### Error Scenarios
 
-**Tasks Not Approved or Missing Spec Files**:
-- **Stop Execution**: All spec files must exist and tasks must be approved
+**Missing Spec Files**:
+- **Stop Execution**: All spec files (spec.json, requirements.md, design.md, tasks.md) must exist
 - **Suggested Action**: "Complete previous phases: `/sdd-requirements`, `/sdd-design`, `/sdd-tasks`"
 
 **Test Failures**:
