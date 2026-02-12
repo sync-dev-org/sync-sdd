@@ -30,6 +30,15 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 **Validate approvals**:
 - Verify tasks are approved in spec.json (stop if not, see Safety & Fallback)
 
+**Version consistency check** (backward compatible — skip if `version_refs` not present in spec.json):
+- Read `version_refs` from spec.json
+- If `version_refs` exists:
+  - If `version_refs.requirements` != `version_refs.design`:
+    - **BLOCK**: "Design is based on requirements v{design_ref} but requirements are now v{req_ref}. Re-run `/sdd-design $1` to update design before implementation."
+  - If `version_refs.design` != `version_refs.tasks`:
+    - **BLOCK**: "Tasks are based on design v{task_ref} but design is now v{design_ref}. Re-run `/sdd-tasks $1` to update tasks before implementation."
+- If `version_refs` is absent: Skip check (backward compatible with pre-versioning specs)
+
 ### Step 2: Select Tasks
 
 **Determine which tasks to execute**:
@@ -44,6 +53,10 @@ For each selected task, follow Kent Beck's TDD cycle:
    - Write test for the next small piece of functionality
    - Test should fail (code doesn't exist yet)
    - Use descriptive test names
+   - **Add traceability marker**: Include `AC: {feature}.R{N}.AC{M}` in the test docstring or comment, where R{N} is the Requirement number and AC{M} is the Acceptance Criteria number
+     - Python: `def test_login_redirects(): """AC: auth-flow.R1.AC1"""`
+     - TypeScript: `it('redirects to login', () => { // AC: auth-flow.R1.AC1`
+     - One test may reference multiple ACs if it covers a combined scenario
 
 2. **GREEN - Write Minimal Code**:
    - Implement simplest solution to make test pass
@@ -63,6 +76,15 @@ For each selected task, follow Kent Beck's TDD cycle:
 
 5. **MARK COMPLETE**:
    - Update checkbox from `- [ ]` to `- [x]` in tasks.md
+   - **AC coverage validation**: Verify that all ACs referenced by this task (from `_Requirements:_` and `_ACs:_` annotations in tasks.md) have at least one test with a matching `AC: {feature}.R{N}.AC{M}` marker
+
+### Step 4: Update Completion Status
+
+After all selected tasks are executed:
+- Check if ALL tasks in tasks.md are now marked `[x]` (completed)
+- If all tasks complete:
+  - Set spec.json `phase: "implementation-complete"`
+  - Update `updated_at` timestamp
 
 ## Critical Constraints
 - **TDD Mandatory**: Tests MUST be written before implementation code

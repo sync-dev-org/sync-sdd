@@ -27,9 +27,37 @@ Find requirements that CONFLICT with each other, with steering, or with related 
 
 You will receive a prompt containing:
 - **Feature name** (for single spec) OR **"cross-check"** (for all specs)
-- **Context**: Requirements content, steering documents, related specs
 
-Parse the provided context and proceed with investigation.
+**You are responsible for loading your own context.** Follow the Load Context section below.
+
+## Load Context
+
+### Single Spec Mode (feature name provided)
+
+1. **Target Spec**:
+   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
+   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
+
+2. **Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory:
+     - `product.md` - Product vision, goals, user personas
+     - `tech.md` - Technical constraints
+     - `structure.md` - Project structure
+     - Any custom steering files
+
+3. **Related Specs** (for cross-reference):
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
+   - Read specs that might interact with target
+
+### Cross-Check Mode
+
+1. **All Specs**:
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
+   - Read ALL requirements.md files
+   - Read ALL spec.json files
+
+2. **Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
 
 ## Investigation Approaches
 
@@ -60,6 +88,31 @@ Hunt for contradictions within the spec:
 - Stated goal vs implied behavior
 - Performance expectations vs functional requirements
 
+## Wave-Scoped Cross-Check Mode (wave number provided)
+
+1. **Resolve Wave Scope**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read each spec.json
+   - Filter specs where `roadmap.wave <= N`
+
+2. **Load Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
+
+3. **Load Roadmap Context** (advisory):
+   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Treat future wave descriptions as "planned, not yet specified"
+   - Do NOT treat future wave plans as concrete requirements
+
+4. **Load Wave-Scoped Specs**:
+   - For each spec where wave <= N:
+     - Read `requirements.md`
+
+5. **Execute Wave-Scoped Cross-Check**:
+   - Same analysis as Cross-Check Mode, limited to wave scope
+   - Do NOT flag missing functionality planned for future waves
+   - DO flag current specs incorrectly assuming future wave capabilities
+   - Use roadmap.md to understand what future waves will provide
+
 ## Cross-Check Mode
 
 Hunt for cross-spec contradictions:
@@ -85,62 +138,30 @@ Consider web research when:
 
 ## Output Format
 
-```markdown
-# Contradiction Review: {feature or "Cross-Check"}
+Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
 
-## Investigation Summary
-[Brief description of investigation approach taken]
+```
+VERDICT:{GO|CONDITIONAL|NO-GO}
+SCOPE:{feature} | cross-check | wave-1..{N}
+ISSUES:
+{sev}|{category}|{location}|{description}
+NOTES:
+{any advisory observations}
+```
 
-## Contradictions Found (High Confidence)
+Severity: C=Critical, H=High, M=Medium, L=Low
+Omit empty sections entirely.
 
-### C-1: [Title]
-- **Type**: Direct | Implicit | Temporal | Resource | State | Priority
-- **Source A**: [Requirement/Statement 1]
-- **Source B**: [Requirement/Statement 2]
-- **Conflict**: [How they contradict]
-- **Severity**: Critical | High | Medium | Low
-- **Resolution Options**:
-  1. [Option A]
-  2. [Option B]
-
-### C-2: [Title]
-...
-
-## Potential Conflicts (Needs Human Review)
-
-### PC-1: [Title]
-- **Type**: [Suspected type]
-- **Source A**: [Statement 1]
-- **Source B**: [Statement 2]
-- **Concern**: [Why this might be a conflict]
-- **Questions**: [What to clarify]
-
-### PC-2: [Title]
-...
-
-## Cross-Spec Contradictions (Cross-Check Mode only)
-
-### XC-1: [Title]
-- **Spec A**: {spec1} - [Statement]
-- **Spec B**: {spec2} - [Statement]
-- **Conflict Type**: Data format | Timing | Terminology | State | Priority
-- **Impact**: [What breaks]
-- **Resolution Owner**: [Which spec should change]
-
-## Assumption Conflicts
-
-### AC-1: [Title]
-- **Assumption in A**: [What A assumes]
-- **Assumption in B**: [What B assumes]
-- **Incompatibility**: [Why these can't both be true]
-
-## Domain Research Insights (if conducted)
-[Findings from web research that informed analysis]
-
-## Summary
-- High Confidence Contradictions: X items
-- Potential Conflicts: X items
-- Cross-Spec Contradictions: X items (cross-check only)
+Example:
+```
+VERDICT:CONDITIONAL
+SCOPE:my-feature
+ISSUES:
+C|direct-contradiction|Req 2 vs Req 5|Req 2 requires sync processing but Req 5 mandates async
+H|implicit-conflict|Req 1.AC2 vs Req 3.AC1|fast response contradicts complete validation
+M|assumption-conflict|Req 4 vs Req 6|conflicting assumptions about user auth state
+NOTES:
+Temporal conflicts between batch processing and real-time notification may need architecture decision
 ```
 
 ## Error Handling

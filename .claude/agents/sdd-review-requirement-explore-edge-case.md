@@ -27,9 +27,33 @@ Find boundary conditions and edge cases that are NOT addressed in requirements.
 
 You will receive a prompt containing:
 - **Feature name** (for single spec) OR **"cross-check"** (for all specs)
-- **Context**: Requirements content, technical constraints
 
-Parse the provided context and proceed with investigation.
+**You are responsible for loading your own context.** Follow the Load Context section below.
+
+## Load Context
+
+### Single Spec Mode (feature name provided)
+
+1. **Target Spec**:
+   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
+   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
+
+2. **Technical Context**:
+   - Read `{{KIRO_DIR}}/steering/tech.md` - Technical constraints, patterns
+   - Read `{{KIRO_DIR}}/steering/structure.md` - Project structure
+
+3. **Steering Context** (optional but recommended):
+   - Read remaining `{{KIRO_DIR}}/steering/` files for additional context
+
+### Cross-Check Mode
+
+1. **All Specs**:
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
+   - Read ALL requirements.md files
+   - Read ALL spec.json files
+
+2. **Technical Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
 
 ## Investigation Approaches
 
@@ -81,6 +105,31 @@ Explore edge cases within the spec:
 - Error recovery scenarios
 - Concurrent usage scenarios
 
+## Wave-Scoped Cross-Check Mode (wave number provided)
+
+1. **Resolve Wave Scope**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read each spec.json
+   - Filter specs where `roadmap.wave <= N`
+
+2. **Load Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
+
+3. **Load Roadmap Context** (advisory):
+   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Treat future wave descriptions as "planned, not yet specified"
+   - Do NOT treat future wave plans as concrete requirements
+
+4. **Load Wave-Scoped Specs**:
+   - For each spec where wave <= N:
+     - Read `requirements.md`
+
+5. **Execute Wave-Scoped Cross-Check**:
+   - Same analysis as Cross-Check Mode, limited to wave scope
+   - Do NOT flag missing functionality planned for future waves
+   - DO flag current specs incorrectly assuming future wave capabilities
+   - Use roadmap.md to understand what future waves will provide
+
 ## Cross-Check Mode
 
 Explore cross-boundary edge cases:
@@ -106,66 +155,31 @@ Consider web research when:
 
 ## Output Format
 
-```markdown
-# Edge Case Review: {feature or "Cross-Check"}
+Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
 
-## Investigation Summary
-[Brief description of investigation approach taken]
+```
+VERDICT:{GO|CONDITIONAL|NO-GO}
+SCOPE:{feature} | cross-check | wave-1..{N}
+ISSUES:
+{sev}|{category}|{location}|{description}
+NOTES:
+{any advisory observations}
+```
 
-## Unhandled Edge Cases (High Confidence)
+Severity: C=Critical, H=High, M=Medium, L=Low
+Omit empty sections entirely.
 
-### EC-1: [Title]
-- **Category**: Data | Timing | User | System
-- **Scenario**: [Description of edge case]
-- **Current Handling**: [None | Partial | Unclear]
-- **Potential Impact**: [What could go wrong]
-- **Severity**: Critical | High | Medium | Low
-- **Recommendation**: [How to address]
-
-### EC-2: [Title]
-...
-
-## Suspicious Boundaries (Needs Human Review)
-
-### SB-1: [Title]
-- **Category**: [Category]
-- **Boundary**: [What boundary condition]
-- **Concern**: [Why it might be unhandled]
-- **Test Suggestion**: [How to verify]
-
-### SB-2: [Title]
-...
-
-## Cross-Boundary Edge Cases (Cross-Check Mode only)
-
-### XB-1: [Title]
-- **Boundary Between**: {spec1} ↔ {spec2}
-- **Scenario**: [Edge case at the boundary]
-- **Failure Mode**: [What breaks]
-- **Owner**: [Which spec should handle]
-
-## Security-Relevant Edge Cases
-
-### SE-1: [Title]
-- **Attack Vector**: [Type of attack]
-- **Unhandled Input**: [What's not validated]
-- **Risk**: [Potential exploit]
-
-## Concurrency Edge Cases
-
-### CE-1: [Title]
-- **Operations**: [What operations]
-- **Race Condition**: [Potential race]
-- **Impact**: [Data corruption, deadlock, etc.]
-
-## Domain Research Insights (if conducted)
-[Findings from web research that informed analysis]
-
-## Summary
-- Unhandled Edge Cases: X items
-- Suspicious Boundaries: X items
-- Security-Relevant: X items
-- Concurrency Issues: X items
+Example:
+```
+VERDICT:CONDITIONAL
+SCOPE:my-feature
+ISSUES:
+C|security-edge|Req 3.AC2|no input validation for unicode injection
+H|edge-case-timing|Req 1|concurrent access to shared resource not addressed
+M|edge-case-data|Req 2.AC1|empty string input behavior undefined
+L|edge-case-user|Req 5|power user with 10k+ items not considered
+NOTES:
+Domain research shows similar systems commonly fail on timezone edge cases
 ```
 
 ## Error Handling

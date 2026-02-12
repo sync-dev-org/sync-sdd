@@ -67,3 +67,34 @@ Keep EARS trigger keywords and fixed phrases in English (`When`, `If`, `While`, 
 - Requirements must be testable, verifiable, and describe a single behavior.
 - Use objective language: "shall" for mandatory behavior, "should" for recommendations; avoid ambiguous terms.
 - Follow EARS syntax: [condition], the [system] shall [response/action].
+
+## AC Stability Classification
+
+Each acceptance criterion SHOULD include a stability tag to indicate its change tolerance. Prefix the EARS pattern with the tag in square brackets:
+
+- **`[constraint]`**: Near-immutable invariant. Changing this requires full downstream re-review (design + tasks + implementation).
+  - Example: `[constraint] The JWT shall be signed with HS256 algorithm`
+  - Typical use: Security algorithms, protocol versions, regulatory compliance
+- **`[contract]`**: Interface agreement. Changing this requires design re-generation.
+  - Example: `[contract] The JWT payload shall contain sub, email, exp claims`
+  - Typical use: API shapes, data schemas, inter-service contracts
+- **`[behavior]`**: Implementation behavior. Can be changed with tasks re-generation only.
+  - Example: `[behavior] The Cookie shall have HttpOnly=True, SameSite=Lax attributes`
+  - Typical use: UI behaviors, configuration defaults, non-critical business rules
+
+**Default**: If no tag is provided, ACs are treated as `[behavior]` (most flexible).
+
+**Impact rules for change**:
+- `[constraint]` change → re-run `/sdd-design`, `/sdd-tasks`, `/sdd-impl`
+- `[contract]` change → re-run `/sdd-design`, `/sdd-tasks`
+- `[behavior]` change → re-run `/sdd-tasks` only
+
+## Incremental Detail Levels
+
+Requirements can be authored at three progressive detail levels. Each level builds on the previous:
+
+- **interface**: Inputs, outputs, and error categories only. No edge cases or detailed flows. Suitable for early-stage exploration when contracts are more important than behavior.
+- **normal**: Full happy-path behavior with standard error handling. Default level for most requirements.
+- **edge-cases**: Boundary conditions, race conditions, failure recovery, and all error scenarios. Used when comprehensive coverage is needed before implementation.
+
+EARS patterns apply at all levels. The detail level is recorded in the requirements.md header as `## Detail Level: {level}`.

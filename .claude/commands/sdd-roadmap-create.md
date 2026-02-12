@@ -526,6 +526,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 **How to delegate**:
 - Use Task tool with `subagent_type="sdd-researcher"`
 - Focus prompt on the **specific question** raised by user
+- Results return in CPF format (FINDINGS/SOURCES/CAVEATS sections)
 - Share findings with user and discuss implications together
 
 **Research philosophy**:

@@ -3,6 +3,13 @@
   "created_at": "{{TIMESTAMP}}",
   "updated_at": "{{TIMESTAMP}}",
   "language": "{{LANG_CODE}}",
+  "version": "1.0.0",
+  "changelog": [],
+  "version_refs": {
+    "requirements": null,
+    "design": null,
+    "tasks": null
+  },
   "phase": "requirements-generated",
   "approvals": {
     "requirements": {

@@ -1,7 +1,7 @@
 ---
 description: Comprehensive requirements review (rulebase + exploratory)
 allowed-tools: Glob, Read, Task
-argument-hint: [<feature-name>] [--rulebase-only] | [--explore-only]
+argument-hint: [<feature-name>] [--rulebase-only] | [--explore-only] | [--wave N]
 ---
 
 # SDD Requirements Review (Router)
@@ -36,40 +36,42 @@ Orchestrate comprehensive requirements review by:
 $ARGUMENTS = "{feature}"                 → Full Review (rulebase + explore)
 $ARGUMENTS = "{feature} --rulebase-only" → Rulebase only
 $ARGUMENTS = "{feature} --explore-only"  → Explore only (4 agents)
+$ARGUMENTS = "--wave N"                  → Wave-Scoped Cross-Check (waves 1..N)
 $ARGUMENTS = ""                          → Cross-Check mode (all specs)
 ```
 
-**Note**: Cross-check mode runs all 6 agents across all specs.
+**Note**: Cross-check mode runs all 6 agents across all specs. Wave-scoped mode limits scope to specs in waves 1..N.
 
 ---
 
-## Pre-Flight: Load Context
+## Pre-Flight: Validate Target
 
-Before launching agents, gather context to pass to them:
+Before launching agents, validate target existence only:
 
 ### Single Spec Mode
 
-1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
-
-2. **Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
-   - Extract: product goals, user personas, technical constraints
-
-3. **Related Specs** (if any):
-   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
-   - Identify specs that might interact with target
+1. **Validate Spec Exists**:
+   - Check `{{KIRO_DIR}}/specs/{feature}/requirements.md` exists
+   - If not found, report error and stop
 
 ### Cross-Check Mode
 
-1. **All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/requirements.md` to list all specs
-   - Read ALL requirements.md files
-   - Read ALL spec.json files for metadata and dependencies
+1. **Validate Specs Exist**:
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md` to confirm specs exist
+   - If none found, report error and stop
 
-2. **Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+### Wave-Scoped Cross-Check Mode
+
+1. **Parse Wave Number**:
+   - Extract N from `--wave N` argument
+   - If N is not a positive integer, report error and stop
+
+2. **Validate Wave Specs Exist**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read each spec.json, filter where `roadmap.wave <= N`
+   - If no specs found for waves 1..N, report error and stop
+
+**IMPORTANT**: Do NOT read file contents here. Each agent loads its own context independently (context isolation principle).
 
 ---
 
@@ -106,8 +108,9 @@ Launch 5 agents **in parallel** using Task tool with `subagent_type: "general-pu
 
 **Agent Invocation**: For each agent, include in the prompt:
 1. The agent's instructions (from `.claude/agents/sdd-review-requirement-*.md`)
-2. The gathered context (requirements, steering, related specs)
-3. Mode information (feature name or "cross-check")
+2. Mode information (feature name, "cross-check", or "wave-scoped-cross-check" with wave number)
+
+**NOTE**: Do NOT pass context content. Each agent loads its own context independently.
 
 **CRITICAL**: Launch all 5 Task calls in a SINGLE message for true parallel execution.
 
@@ -136,91 +139,72 @@ After all 5 agents complete, launch verifier:
 
 ### Phase 3: Display Results
 
-Router displays the verifier's output directly. Do NOT modify or summarize.
+Router transforms verifier's compact output into human-readable report:
+
+1. **Parse verifier output**:
+   - Metadata lines: `KEY:VALUE` format (VERDICT, SCOPE, WAVE_SCOPE, SPECS_IN_SCOPE)
+   - VERIFIED lines: split by `|` → agents, sev, cat, loc, desc
+   - REMOVED lines: split by `|` → agent, reason, original
+   - RESOLVED lines: split by `|` → agents, resolution, findings
+   - NOTES/ROADMAP_ADVISORY: freeform text lines
+   - Missing sections = no findings of that type
+   - Agents field: split by `+` for agent list
+
+2. **Format as markdown report**:
+   - Executive Summary (verdict + issue counts by severity)
+   - Prioritized Issues table (Critical → High → Medium → Low)
+   - Verification Notes (removed false positives, resolved conflicts)
+   - Wave Scope info (if wave-scoped mode)
+   - Roadmap advisory (if wave-scoped mode)
+   - Recommended actions based on verdict
+
+3. **Display formatted report** to user
+
+**IMPORTANT**: All formatting logic lives in the router. Agents NEVER produce markdown tables, headers, or human-readable prose in their output.
 
 ---
 
 ## Agent Prompt Templates
 
-### Rulebase Agent
+### Review Agents (Rulebase + 4 Exploratory)
 
+All 5 review agents use the same minimal prompt format:
+
+**Single Spec or Cross-Check Mode**:
 ```
-Read and follow the instructions in `.claude/agents/sdd-review-requirement-rulebase.md`.
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-{agent-name}.md`.
 
 Feature: {feature} (or "cross-check" for all specs)
-
-Context:
-- Requirements: {requirements content}
-- Steering: {steering content}
-- Spec metadata: {spec.json content}
 
 Execute the review and return your findings in the specified format.
 ```
 
-### Completeness Agent
-
+**Wave-Scoped Cross-Check Mode**:
 ```
-Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-completeness.md`.
+Read and follow the instructions in `.claude/agents/sdd-review-requirement-{agent-name}.md`.
 
-Feature: {feature} (or "cross-check" for all specs)
+Mode: wave-scoped-cross-check
+Wave: {N}
 
-Context:
-- Requirements: {requirements content}
-- Steering: {steering content}
-- Related specs: {related specs if any}
-
-Execute the review and return your findings in the specified format.
+Execute the wave-scoped cross-check review and return your findings.
 ```
 
-### Contradiction Agent
+Where `{agent-name}` is one of:
+- `rulebase`
+- `explore-completeness`
+- `explore-contradiction`
+- `explore-common-sense`
+- `explore-edge-case`
 
-```
-Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-contradiction.md`.
-
-Feature: {feature} (or "cross-check" for all specs)
-
-Context:
-- Requirements: {requirements content}
-- Steering: {steering content}
-- Related specs: {related specs if any}
-
-Execute the review and return your findings in the specified format.
-```
-
-### Common Sense Agent
-
-```
-Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-common-sense.md`.
-
-Feature: {feature} (or "cross-check" for all specs)
-
-Context:
-- Requirements: {requirements content}
-- Steering: {steering content}
-
-Execute the review and return your findings in the specified format.
-```
-
-### Edge Case Agent
-
-```
-Read and follow the instructions in `.claude/agents/sdd-review-requirement-explore-edge-case.md`.
-
-Feature: {feature} (or "cross-check" for all specs)
-
-Context:
-- Requirements: {requirements content}
-- Technical constraints: {tech.md content}
-
-Execute the review and return your findings in the specified format.
-```
+**IMPORTANT**: Do NOT embed context content in the prompt. Each agent reads its own context files.
 
 ### Verifier Agent
 
 ```
 Read and follow the instructions in `.claude/agents/sdd-review-requirement-verifier.md`.
 
-Feature: {feature} (or "cross-check" for all specs)
+Feature: {feature} (or "cross-check" or "wave-scoped-cross-check")
+Wave: {N} (wave-scoped mode only)
 
 Agent Results:
 
@@ -261,6 +245,13 @@ Execute verification and return the unified report.
 - Verifier synthesizes cross-spec findings
 - Especially powerful for discovering systemic gaps
 
+### Wave-Scoped Cross-Check Mode (--wave N)
+- All 5+1 agents run across specs in waves 1..N only
+- Each agent independently resolves wave scope via spec.json
+- Specs in future waves (wave > N) are excluded from review
+- roadmap.md is readable as advisory context (future plans, not requirements)
+- Especially useful during incremental roadmap execution
+
 ---
 
 ## Error Handling
@@ -274,12 +265,11 @@ Execute verification and return the unified report.
 
 ## Output
 
-Display the verifier's unified report directly. The report includes:
-- Executive summary with verdicts
-- Prioritized issues (Critical → High → Medium → Low)
-- Verification notes (contradictions resolved, false positives removed)
-- Raw agent reports in collapsible sections
-- Recommended actions
-- Next steps based on verdict
+Router formats the verifier's compact output into a human-readable markdown report including:
+- Executive summary with verdict and issue counts by severity
+- Prioritized issues table (Critical → High → Medium → Low)
+- Verification notes (removed false positives, resolved conflicts)
+- Wave scope info and roadmap advisory (if wave-scoped mode)
+- Recommended actions and next steps based on verdict
 
 </instructions>

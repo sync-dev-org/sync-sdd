@@ -34,17 +34,28 @@ Generate technical design document for feature **$1** based on approved requirem
 - If `-y` flag provided ($2 == "-y"): Auto-approve requirements in spec.json
 - Otherwise: Verify approval status (stop if unapproved, see Safety & Fallback)
 
+**Version consistency check** (backward compatible — skip if `version_refs` not present):
+- Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
+- If `version_refs.requirements` exists and differs from current `version`:
+  - Warn: "Requirements updated since last design generation (design based on v{refs.requirements}, requirements now at v{version}). Design will be based on the latest requirements."
+
 ### Step 2: Discovery & Analysis
 
 **Critical: This phase ensures design is based on complete, accurate information.**
 
-1. **Classify Feature Type**:
+1. **Check Detail Level** (backward compatible — treat missing header as `normal`):
+   - Read `## Detail Level:` header from requirements.md
+   - If `interface`: Generate interface-only design (contracts, signatures, error categories). Skip detailed flow diagrams and implementation-level component internals.
+   - If `normal`: Standard full design generation.
+   - If `edge-cases`: Ensure error handling and edge case sections are comprehensive, including failure recovery flows and boundary condition handling.
+
+2. **Classify Feature Type**:
    - **New Feature** (greenfield) → Full discovery required
    - **Extension** (existing system) → Integration-focused discovery
    - **Simple Addition** (CRUD/UI) → Minimal or no discovery
    - **Complex Integration** → Comprehensive analysis required
 
-2. **Execute Appropriate Discovery Process**:
+3. **Execute Appropriate Discovery Process**:
 
    **For Complex/New Features**:
    - Read and execute `{{KIRO_DIR}}/settings/rules/design-discovery-full.md`
@@ -62,7 +73,7 @@ Generate technical design document for feature **$1** based on approved requirem
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
-3. **Retain Discovery Findings for Step 3**:
+4. **Retain Discovery Findings for Step 3**:
 - External API contracts and constraints
 - Technology decisions with rationale
 - Existing patterns to follow or extend
@@ -71,7 +82,7 @@ Generate technical design document for feature **$1** based on approved requirem
 - Potential architecture patterns and boundary options (note details in `research.md`)
 - Parallelization considerations for future tasks (capture dependencies in `research.md`)
 
-4. **Persist Findings to Research Log**:
+5. **Persist Findings to Research Log**:
 - Create or update `{{KIRO_DIR}}/specs/$1/research.md` using the shared template
 - Summarize discovery scope and key findings (Summary section)
 - Record investigations in Research Log topics with sources and implications
@@ -97,6 +108,9 @@ Generate technical design document for feature **$1** based on approved requirem
 - Set `approvals.design.generated: true, approved: false`
 - Set `approvals.requirements.approved: true`
 - Update `updated_at` timestamp
+- **Version tracking** (backward compatible — initialize defaults if fields missing):
+  - Set `version_refs.design` to the current spec `version`
+  - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "design", "summary": "Design generated based on requirements v{version_refs.requirements}" }`
 
 ## Critical Constraints
  - **Type Safety**:

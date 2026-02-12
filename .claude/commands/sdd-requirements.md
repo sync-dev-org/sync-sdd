@@ -26,6 +26,18 @@ input = $1
 is_existing_feature = {{KIRO_DIR}}/specs/$1/ directory exists
 ```
 
+**Backward Compatibility**: When reading an existing spec.json, if the `version` field is missing, treat as:
+```
+version = spec_json.version ?? "1.0.0"
+changelog = spec_json.changelog ?? []
+version_refs = spec_json.version_refs ?? {
+  requirements: version,
+  design: approvals.design.generated ? version : null,
+  tasks: approvals.tasks.generated ? version : null
+}
+```
+Persist these defaults on next write.
+
 ---
 
 ## Step 2: Route Based on Input
@@ -50,6 +62,10 @@ is_existing_feature = {{KIRO_DIR}}/specs/$1/ directory exists
      - `{{LANG_CODE}}` → detect from user input or default to `en`
    - Set `phase: "requirements-generated"` (skip `initialized` phase)
    - Set `approvals.requirements.generated: true`
+   - **Version initialization**:
+     - Set `version: "1.0.0"`
+     - Set `version_refs.requirements: "1.0.0"`
+     - Append changelog entry: `{ "version": "1.0.0", "date": "{ISO_DATE}", "phase": "requirements", "summary": "Initial requirements" }`
    - Write to spec directory
 
 4. **Generate Requirements Document**:
@@ -59,6 +75,8 @@ is_existing_feature = {{KIRO_DIR}}/specs/$1/ directory exists
    - Generate complete requirements based on project description
    - Group related functionality into logical requirement areas
    - Apply EARS format to all acceptance criteria
+   - Assign stability tags to each AC: `[constraint]` for immutable invariants, `[contract]` for interface agreements, `[behavior]` for changeable behavior (default)
+   - Set `## Detail Level: normal` header (or `interface` if user provides a brief/sketch description)
    - Write to `{{KIRO_DIR}}/specs/[feature-name]/requirements.md`
 
 ---
@@ -74,6 +92,7 @@ A. Regenerate requirements (fresh generation from description)
 B. Edit requirements (dialogue-driven modifications)
 C. Update description and regenerate
 D. View current status (no changes)
+E. Deepen detail level (interface → normal → edge-cases)
 ```
 
 #### Option A: Regenerate Requirements
@@ -105,6 +124,18 @@ D. View current status (no changes)
 2. Display current state summary
 3. No file modifications
 
+#### Option E: Deepen Detail Level
+
+1. Read current `## Detail Level:` header from `{{KIRO_DIR}}/specs/$1/requirements.md`
+2. Advance to next level: `interface` → `normal` → `edge-cases`
+   - If already at `edge-cases`, inform user and suggest Option B for targeted edits instead
+3. Preserve all existing ACs, then add new ACs appropriate for the deeper level:
+   - `interface` → `normal`: Add happy-path behavior details and standard error handling
+   - `normal` → `edge-cases`: Add boundary conditions, race conditions, failure recovery, concurrency scenarios
+4. Update the `## Detail Level:` header in requirements.md
+5. For each new or modified AC, assign appropriate stability tag: `[constraint]`, `[contract]`, or `[behavior]`
+6. Follow version increment logic (Step 3)
+
 ---
 
 ## Step 3: Update Metadata (for Options A, B, C)
@@ -113,6 +144,17 @@ Update `{{KIRO_DIR}}/specs/$1/spec.json`:
 - Set `phase: "requirements-generated"`
 - Set `approvals.requirements.generated: true`
 - Update `updated_at` timestamp
+
+**Version management** (Case B edits only — Case A uses initial "1.0.0" set in Step 2):
+- Increment `version` (minor bump: 1.0.0 → 1.1.0 for additions, patch bump: 1.0.0 → 1.0.1 for refinements)
+- Update `version_refs.requirements` to the new version
+- Append changelog entry: `{ "version": "{NEW_VER}", "date": "{ISO_DATE}", "phase": "requirements", "summary": "{brief description of change}" }`
+- **Downstream staleness warning**: If `version_refs.design` or `version_refs.tasks` exist and reference an older version than the new `version_refs.requirements`:
+  - Warn: "Design is based on requirements v{design_ref} but requirements are now v{new_ver}. Consider re-running `/sdd-design $1`."
+  - Warn: "Tasks are based on requirements v{tasks_ref} but requirements are now v{new_ver}. Consider re-running `/sdd-tasks $1`."
+- **Impact analysis suggestion** (if roadmap.md exists and feature has downstream dependencies):
+  - If `[constraint]`-tagged ACs were changed: "A [constraint]-level AC was changed. Running `/sdd-impact-analysis $1` is strongly recommended."
+  - Otherwise: "This feature has downstream dependencies. Consider running `/sdd-impact-analysis $1` to assess impact."
 
 </instructions>
 

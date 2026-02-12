@@ -10,9 +10,10 @@ argument-hint: "[-y]"
 - **Mission**: Route to appropriate roadmap action based on current state
 - **This is a router command**: Detects roadmap state and presents options
 - **Subcommands**:
-  - `/sdd-roadmap-init` - Create new roadmap from steering
+  - `/sdd-roadmap-create` - Create new roadmap from steering
   - `/sdd-roadmap-run` - Execute Wave-based implementation
   - `/sdd-roadmap-update` - Sync roadmap with spec states
+  - `/sdd-roadmap-delete` - Delete and reinitialize roadmap
 </background_information>
 
 <instructions>
@@ -26,7 +27,7 @@ argument-hint: "[-y]"
 
 2. **If roadmap.md does NOT exist**:
    - Inform user: "No roadmap found. Initializing new roadmap..."
-   - Execute `/sdd-roadmap-init` via Skill tool
+   - Execute `/sdd-roadmap-create` via Skill tool
    - END
 
 3. **If roadmap.md EXISTS**:
@@ -94,27 +95,7 @@ Execute `/sdd-roadmap-update` via Skill tool.
 
 #### If "Reset" selected:
 
-**Handle reset inline** (simple operation):
-
-1. **Confirm deletion**:
-   ```
-   ## Reset Confirmation
-
-   This will DELETE:
-   - {{KIRO_DIR}}/specs/roadmap.md
-   - All spec directories: {{KIRO_DIR}}/specs/*/
-
-   Steering documents in {{KIRO_DIR}}/steering/ will be PRESERVED.
-
-   Type "RESET" to confirm.
-   ```
-
-2. **If confirmed** (user types "RESET"):
-   - Delete `{{KIRO_DIR}}/specs/roadmap.md`
-   - Delete all directories in `{{KIRO_DIR}}/specs/*/` (but not specs/ itself)
-   - Execute `/sdd-roadmap-init` via Skill tool
-
-3. **If not confirmed**: Return to options
+Execute `/sdd-roadmap-delete` via Skill tool.
 
 </instructions>
 
@@ -131,27 +112,15 @@ Execute `/sdd-roadmap-update` via Skill tool.
 
 | Action | Command |
 |--------|---------|
-| Initialize | `/sdd-roadmap-init` |
+| Initialize | `/sdd-roadmap-create` |
 | Run | `/sdd-roadmap-run` |
 | Update | `/sdd-roadmap-update` |
+| Reset | `/sdd-roadmap-delete` |
 
 ### File Operations
 
 - **Read**: roadmap.md, spec.json files (for status)
 - **Glob**: Find spec directories
-- **Bash**: Delete files for Reset action only
-
-### Reset Deletion
-
-Use Bash for deletion:
-```bash
-rm {{KIRO_DIR}}/specs/roadmap.md
-rm -rf {{KIRO_DIR}}/specs/*/
-```
-
-**NEVER delete**:
-- `{{KIRO_DIR}}/steering/`
-- `{{KIRO_DIR}}/settings/`
 
 ## Output Description
 

@@ -33,6 +33,11 @@ Generate implementation tasks for feature **$1** based on approved requirements 
 - Otherwise: Verify both approved (stop if not, see Safety & Fallback)
 - Determine sequential mode based on presence of `--sequential`
 
+**Version consistency check** (backward compatible — skip if `version_refs` not present):
+- Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
+- If `version_refs.design` exists and differs from current `version`:
+  - Warn: "Design is based on an older spec version (design: v{refs.design}, current: v{version}). Consider re-running `/sdd-design $1` first."
+
 ### Step 2: Generate Implementation Tasks
 
 **Load generation rules and template**:
@@ -61,6 +66,9 @@ Generate implementation tasks for feature **$1** based on approved requirements 
   - Set `approvals.requirements.approved: true`
   - Set `approvals.design.approved: true`
   - Update `updated_at` timestamp
+  - **Version tracking** (backward compatible — initialize defaults if fields missing):
+    - Set `version_refs.tasks` to the current spec `version`
+    - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "tasks", "summary": "Tasks generated based on design v{version_refs.design}" }`
 
 ## Critical Constraints
 - **Follow rules strictly**: All principles in tasks-generation.md are mandatory

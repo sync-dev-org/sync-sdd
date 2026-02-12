@@ -106,10 +106,11 @@ Follow the 9-step Wave execution flow from roadmap.md:
    # Launch via Task tool for context isolation
    for spec in wave_specs:
        Task("/sdd-review-requirement {spec}")
+   # Wave-Scoped Cross-Check
+   Task("/sdd-review-requirement --wave {N}")
    ```
-   - Evaluate results: GO / CONDITIONAL / NO-GO
-   - Auto-fix minor issues
-   - Report NO-GO to user
+   - Report ALL results (GO/CONDITIONAL/NO-GO) to user
+   - User decides how to proceed for every case
 
 3. **User Confirmation** [REQUIRED]:
    - Present responsibility allocation table
@@ -127,7 +128,11 @@ Follow the 9-step Wave execution flow from roadmap.md:
    ```python
    for spec in wave_specs:
        Task("/sdd-review-design {spec}")
+   # Wave-Scoped Cross-Check
+   Task("/sdd-review-design --wave {N}")
    ```
+   - Report ALL results (GO/CONDITIONAL/NO-GO) to user
+   - User decides how to proceed for every case
 
 6. **Task Generation**:
    ```python
@@ -146,6 +151,32 @@ Follow the 9-step Wave execution flow from roadmap.md:
    ```python
    for spec in wave_specs:
        Task("/sdd-review-impl {spec}")
+   # Wave-Scoped Cross-Check
+   Task("/sdd-review-impl --wave {N}")
+   ```
+   - Report ALL results (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED) to user
+   - User decides how to proceed for every case
+
+8.5. **SPEC Feedback Loop** (if any review returned SPEC-UPDATE-NEEDED):
+   ```
+   a. Identify affected specs from SPEC_FEEDBACK sections in review results
+   b. For each affected spec:
+      - Read spec.json version_refs
+      - If phase=requirements: Roll back spec phase to "requirements-generated"
+      - If phase=design: Roll back spec phase to "design-generated"
+      - Mark version_refs as stale (downstream refs outdated)
+   c. Present feedback to user:
+      "SPEC feedback detected for: {spec_list}. Specs need updating before proceeding."
+   d. User options (via AskUserQuestion):
+      - Fix specs now (re-run /sdd-requirements or /sdd-design for affected specs, then cascade downstream)
+      - Defer to next wave iteration (record in Wave Completion Report)
+      - Override and proceed (with warning about known spec defects)
+   e. If specs are fixed:
+      - Re-run affected downstream phases (design, tasks, impl) for the fixed specs
+      - Re-run implementation review
+   f. If deferred:
+      - Record deferred feedback in Wave Completion Report
+      - Add to next wave's prerequisites
    ```
 
 9. **Wave Completion Report**:
@@ -203,14 +234,15 @@ Recommend git commit after:
 
 ## Error Handling
 
-### Review NO-GO
+### Review Results (CONDITIONAL or NO-GO)
 
 1. Stop execution for that spec
-2. Report issue to user
-3. Options:
+2. Report ALL review results to user (never auto-fix)
+3. User decides how to proceed:
    - Fix and re-review
    - Skip spec (with warning)
    - Abort wave execution
+4. Do NOT automatically fix any issues - user must explicitly instruct fixes
 
 ### Implementation Error
 

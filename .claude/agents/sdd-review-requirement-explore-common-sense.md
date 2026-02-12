@@ -29,9 +29,33 @@ Japanese: "普通に考えたらそうはならんやろ" を発見する
 
 You will receive a prompt containing:
 - **Feature name** (for single spec) OR **"cross-check"** (for all specs)
-- **Context**: Requirements content, steering documents
 
-Parse the provided context and proceed with investigation.
+**You are responsible for loading your own context.** Follow the Load Context section below.
+
+## Load Context
+
+### Single Spec Mode (feature name provided)
+
+1. **Target Spec**:
+   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
+   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
+
+2. **Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory:
+     - `product.md` - Product vision, goals, user personas
+     - `tech.md` - Technical constraints
+     - `structure.md` - Project structure
+     - Any custom steering files
+
+### Cross-Check Mode
+
+1. **All Specs**:
+   - Glob `{{KIRO_DIR}}/specs/*/requirements.md`
+   - Read ALL requirements.md files
+   - Read ALL spec.json files
+
+2. **Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
 
 ## Investigation Approaches
 
@@ -63,6 +87,31 @@ Audit the single spec for common sense:
 - Are the constraints reasonable?
 - Would this feature be competitive?
 
+## Wave-Scoped Cross-Check Mode (wave number provided)
+
+1. **Resolve Wave Scope**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read each spec.json
+   - Filter specs where `roadmap.wave <= N`
+
+2. **Load Steering Context**:
+   - Read entire `{{KIRO_DIR}}/steering/` directory
+
+3. **Load Roadmap Context** (advisory):
+   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Treat future wave descriptions as "planned, not yet specified"
+   - Do NOT treat future wave plans as concrete requirements
+
+4. **Load Wave-Scoped Specs**:
+   - For each spec where wave <= N:
+     - Read `requirements.md`
+
+5. **Execute Wave-Scoped Cross-Check**:
+   - Same analysis as Cross-Check Mode, limited to wave scope
+   - Do NOT flag missing functionality planned for future waves
+   - DO flag current specs incorrectly assuming future wave capabilities
+   - Use roadmap.md to understand what future waves will provide
+
 ## Cross-Check Mode
 
 Audit integration common sense:
@@ -87,64 +136,30 @@ Consider web research when:
 
 ## Output Format
 
-```markdown
-# Common Sense Review: {feature or "Cross-Check"}
+Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
 
-## Investigation Summary
-[Brief description of investigation approach taken]
+```
+VERDICT:{GO|CONDITIONAL|NO-GO}
+SCOPE:{feature} | cross-check | wave-1..{N}
+ISSUES:
+{sev}|{category}|{location}|{description}
+NOTES:
+{any advisory observations}
+```
 
-## Common Sense Violations (High Confidence)
+Severity: C=Critical, H=High, M=Medium, L=Low
+Omit empty sections entirely.
 
-### CSV-1: [Title]
-- **Requirement**: [The problematic requirement]
-- **Issue**: [Why this doesn't make sense]
-- **User Impact**: [How users would be affected]
-- **Severity**: Critical | High | Medium | Low
-- **Suggestion**: [What would make sense instead]
-
-### CSV-2: [Title]
-...
-
-## Questionable Design (Needs Human Review)
-
-### QD-1: [Title]
-- **Observation**: [What seems odd]
-- **Concern**: [Why it might be problematic]
-- **Alternative**: [What others typically do]
-- **Questions**: [What to clarify with stakeholders]
-
-### QD-2: [Title]
-...
-
-## User Perspective Issues
-
-### UPI-1: [Title]
-- **User Expectation**: [What users would expect]
-- **Spec Says**: [What the spec actually requires]
-- **Gap**: [The mismatch]
-
-## Integration Concerns (Cross-Check Mode only)
-
-### IC-1: [Title]
-- **Specs Involved**: {spec1}, {spec2}
-- **Individual Sense**: [Why each makes sense alone]
-- **Combined Nonsense**: [Why together they don't]
-- **User Experience**: [How this affects users]
-
-## "Solving Wrong Problem" Candidates
-
-### SWP-1: [Title]
-- **Stated Problem**: [What the spec tries to solve]
-- **Actual Problem**: [What users probably need]
-- **Evidence**: [Why we think this]
-
-## Domain Research Insights (if conducted)
-[Findings from web research that informed analysis]
-
-## Summary
-- Common Sense Violations: X items
-- Questionable Design: X items
-- User Perspective Issues: X items
+Example:
+```
+VERDICT:CONDITIONAL
+SCOPE:my-feature
+ISSUES:
+H|common-sense-violation|Req 2|requires 3-step confirmation for trivial action
+M|user-expectation-gap|Req 4.AC1|users expect auto-save but spec requires manual save
+L|questionable-design|Req 6|complexity unjustified for target persona
+NOTES:
+Competitor products in this domain all offer single-click workflows
 ```
 
 ## Error Handling

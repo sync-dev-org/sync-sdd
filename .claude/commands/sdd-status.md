@@ -32,11 +32,12 @@ Generate status report for feature **$1** showing progress across all phases.
    - Extract `phase` field from each
 
 3. **Calculate Wave progress dynamically**:
-   - For each Wave, count specs by phase:
-     - `implemented` or `ready_for_implementation: true` → complete
-     - `tasks-approved` → ready for implementation
-     - `design-approved` → in design phase
-     - `requirements-approved` → in requirements phase
+   - For each Wave, count specs by phase and approval status:
+     - `implementation-complete` → complete
+     - `tasks-generated` with `approvals.tasks.approved: true` → ready for implementation
+     - `design-generated` with `approvals.design.approved: true` → design approved, ready for tasks
+     - `requirements-generated` with `approvals.requirements.approved: true` → requirements approved, ready for design
+     - `requirements-generated` or `requirements-pending` → in progress
      - Other → not started
    - Determine blocked waves (all dependencies not complete)
 
@@ -57,6 +58,13 @@ Generate status report for feature **$1** showing progress across all phases.
 - **Design**: Check for architecture, components, diagrams
 - **Tasks**: Count completed vs total tasks (parse `- [x]` vs `- [ ]`)
 - **Approvals**: Check approval status in spec.json
+
+**Version analysis** (backward compatible — skip if `version` field not present):
+- Read `version`, `changelog`, `version_refs` from spec.json
+- Determine version_refs alignment:
+  - If `version_refs.requirements` < `version` after requirements edit → design/tasks may be stale
+  - If `version_refs.design` < `version_refs.requirements` → design is stale
+  - If `version_refs.tasks` < `version_refs.design` → tasks are stale
 
 ### Step 3: Generate Report
 
@@ -106,11 +114,17 @@ Provide status report in the language specified in spec.json:
 
 **Part 2: Individual Spec** (if $1 provided):
 1. **Feature Overview**: Name, phase, last updated, wave assignment
-2. **Phase Status**: Requirements, Design, Tasks with completion %
-3. **Task Progress**: If tasks exist, show X/Y completed
-4. **Next Action**: Specific command to run next
-5. **Issues**: Any blockers or missing elements
-6. **Dependencies**: Status of specs this one depends on
+2. **Version Info** (if `version` field exists):
+   - Current version: v{version}
+   - Requirements ref: v{version_refs.requirements}
+   - Design ref: v{version_refs.design} {STALE indicator if < requirements ref}
+   - Tasks ref: v{version_refs.tasks} {STALE indicator if < design ref}
+   - Recent changes (last 3 changelog entries)
+3. **Phase Status**: Requirements, Design, Tasks with completion %
+4. **Task Progress**: If tasks exist, show X/Y completed
+5. **Next Action**: Specific command to run next
+6. **Issues**: Any blockers or missing elements (including version staleness warnings)
+7. **Dependencies**: Status of specs this one depends on
 
 **Format**: Clear, scannable format with emojis (✅/⏳/❌) for status and progress bars (████░░) for waves
 

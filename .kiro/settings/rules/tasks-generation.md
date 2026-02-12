@@ -48,6 +48,7 @@ Focus on capabilities and outcomes, not code structure.
 **End each task detail section with**:
 - `_Requirements: X.X, Y.Y_` listing **only numeric requirement IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
 - For cross-cutting requirements, list every relevant requirement ID. All requirements MUST have numeric IDs in requirements.md. If an ID is missing, stop and correct requirements.md before generating tasks.
+- When task detail references specific acceptance criteria, optionally add `_ACs: R{N}.AC{M}, R{N}.AC{M}_` to enable direct traceability from task → AC → test via the `AC: {feature}.R{N}.AC{M}` test marker convention.
 - Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
 
 ### 5. Code-Only Focus

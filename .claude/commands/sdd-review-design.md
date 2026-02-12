@@ -1,267 +1,258 @@
 ---
 description: Strict spec review for test implementer clarity
-allowed-tools: Read, Glob, Grep, WebSearch, WebFetch
-argument-hint: [feature-name] [--deep] | [--cross-check] [--deep]
+allowed-tools: Glob, Read, Task
+argument-hint: [feature-name] | [--cross-check] | [--wave N]
 ---
 
-# SDD Design Review for Test Implementer Clarity
+# SDD Design Review (Router)
 
 <background_information>
-- **Mission**: Review specs from a test implementer's perspective to ensure clarity, testability, and SDD compliance
-- **Two Modes** (each with optional --deep):
-  - **Single Review** (`/sdd-review-design {feature}`): Deep review of one spec
-  - **Cross-Check** (`/sdd-review-design`): Consistency check across all specs
-- **--deep flag**: Enables WebSearch/WebFetch for best practices research
-- **Critical Focus: Prevent Spec Drift**:
-  - Ensure specs remain compliant with SDD templates
-  - Detect ad-hoc changes made outside SDD workflow
-  - Pull drifted specs back into SDD compliance
-- **Success Criteria**:
-  - Test implementers can work without ambiguity
-  - Specs follow SDD templates (no structural drift)
-  - Clear separation: requirements.md = WHAT, design.md = HOW
-  - Clear GO/CONDITIONAL/NO-GO verdict
-  - Actionable feedback for improvements
+- **Mission**: Comprehensive design review combining SDD compliance and exploratory analysis
+- **Architecture**: Router dispatches to 6 independent agents via Task tool
+- **Context Isolation**: Each agent runs in separate context window (no cross-contamination)
+- **Two Phases**:
+  - **Phase 1**: 5 review agents run in parallel (rulebase + 4 exploratory)
+  - **Phase 2**: Verifier agent cross-checks and synthesizes results
+- **Philosophy**: Rulebase catches structural violations; exploration catches quality issues
+- **Router's Role**: Orchestrate agents, display final results (do NOT duplicate verification logic)
 </background_information>
 
 <instructions>
+
 ## Core Task
-Strict spec review from test implementer perspective.
+
+Orchestrate comprehensive design review by:
+1. Launching 5 review agents in parallel (data collection)
+2. Passing results to verifier agent (cross-check and synthesis)
+3. Displaying verifier's unified report (output)
+
+**IMPORTANT**: Router only orchestrates and displays. All verification logic is in the verifier agent.
+
+---
 
 ## Mode Detection
-- **If `$ARGUMENTS` contains feature name**: Execute Single Review Mode
-- **If `$ARGUMENTS` is empty, `--cross-check`, or only `--deep`**: Execute Cross-Check Mode
-- **If `$ARGUMENTS` contains `--deep`**: Enable best practices research (WebSearch/WebFetch)
 
-## Flag Parsing
 ```
-$ARGUMENTS = "{feature} --deep"    → Single Review + Deep
-$ARGUMENTS = "{feature}"           → Single Review
-$ARGUMENTS = "--cross-check --deep" → Cross-Check + Deep
-$ARGUMENTS = "--cross-check"       → Cross-Check
-$ARGUMENTS = "--deep"              → Cross-Check + Deep
-$ARGUMENTS = ""                    → Cross-Check
+$ARGUMENTS = "{feature}"              → Single Review (5+1 agents)
+$ARGUMENTS = "--wave N"               → Wave-Scoped Cross-Check (waves 1..N)
+$ARGUMENTS = "--cross-check"          → Cross-Check (all specs)
+$ARGUMENTS = ""                       → Cross-Check (all specs)
 ```
 
-**Note**: `--cross-check` is optional and equivalent to empty arguments. Use `--cross-check` for explicit documentation in procedures (e.g., flow.md).
+**Note**: `--cross-check` is optional and equivalent to empty arguments. Wave-scoped mode limits scope to specs in waves 1..N.
 
 ---
 
-## Mode 1: Single Review
+## Pre-Flight: Validate Target
 
-### Execution Steps
+Before launching agents, validate target existence only:
 
-1. **Load Context**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/{feature}/requirements.md`
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` (if exists)
+### Single Spec Mode
 
-2. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/requirements.md` (template)
-   - Read `{{KIRO_DIR}}/settings/templates/specs/design.md` (template)
-   - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
+1. **Validate Spec Exists**:
+   - Check `{{KIRO_DIR}}/specs/{feature}/requirements.md` exists
+   - Check `{{KIRO_DIR}}/specs/{feature}/design.md` exists (warn if missing)
+   - If spec not found, report error and stop
 
-3. **Execute Review** (three perspectives):
+### Cross-Check Mode
 
-   **A. SDD Compliance Check** (HIGHEST PRIORITY):
-   - Compare actual spec structure against templates
-   - Flag missing required sections
-   - Flag extra sections not in template
-   - Detect requirements.md content leaked into design.md (and vice versa)
+1. **Validate Specs Exist**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to confirm specs exist
+   - If none found, report error and stop
 
-   **B. Responsibility Separation Check**:
-   - requirements.md should contain WHAT (objectives, acceptance criteria)
-   - design.md should contain HOW (architecture, components, interfaces)
-   - Flag: Implementation details in requirements.md
-   - Flag: New acceptance criteria in design.md
-   - Flag: User stories or business rules in design.md
+### Wave-Scoped Cross-Check Mode
 
-   **C. Test Implementer Clarity Check**:
-   - Apply Single Review Checklist from design-review.md
-   - Evaluate from test implementer perspective
-   - Focus on: "Would I know exactly what to test?"
+1. **Parse Wave Number**:
+   - Extract N from `--wave N` argument
+   - If N is not a positive integer, report error and stop
 
-4. **Provide Verdict**:
-   - **GO**: Test implementation can proceed
-   - **CONDITIONAL**: Minor clarifications needed, can proceed with caution
-   - **NO-GO**: Critical ambiguities must be resolved first
+2. **Validate Wave Specs Exist**:
+   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read each spec.json, filter where `roadmap.wave <= N`
+   - If no specs found for waves 1..N, report error and stop
+
+**IMPORTANT**: Do NOT read file contents here. Each agent loads its own context independently (context isolation principle).
 
 ---
 
-## Mode 2: Cross-Check
+## Execution Flow
 
-### Execution Steps
+### Phase 1: Parallel Review Agents
 
-1. **Discover All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to find all specs
-   - For each spec, check if `design.md` exists
+Launch 5 agents **in parallel** using Task tool with `subagent_type: "general-purpose"`:
 
-2. **Load Review Rules**:
-   - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Router Process                               │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ↓                ↓                ↓
+    ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────────┐
+    │ Task: rulebase  │ │ Task:           │ │ Task: architecture  │
+    │ (SDD compliance)│ │ testability     │ │ (design quality)    │
+    └─────────────────┘ │ (test clarity)  │ └─────────────────────┘
+                        └─────────────────┘
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ↓                ↓                ↓
+    ┌─────────────────┐ ┌─────────────────────────────────────┐
+    │ Task:           │ │ Task: best-practices                │
+    │ consistency     │ │ (industry standards)                │
+    │ (req↔design)    │ └─────────────────────────────────────┘
+    └─────────────────┘
+```
 
-3. **Execute Cross-Check**:
-   - Apply Cross-Check Checklist from design-review.md
-   - Compare requirements across specs
-   - Compare designs across specs (where available)
-   - Identify overlaps, conflicts, and dependencies
+**Agent Invocation**: For each agent, include in the prompt:
+1. The agent's instructions (from `.claude/agents/sdd-review-design-*.md`)
+2. Mode information (feature name, "cross-check", or "wave-scoped-cross-check" with wave number)
 
-4. **Assess Parallel Development**:
-   - Identify independent specs (can develop in parallel)
-   - Identify sequential dependencies
-   - Identify specs requiring coordination
+**NOTE**: Do NOT pass context content. Each agent loads its own context independently.
+
+**CRITICAL**: Launch all 5 Task calls in a SINGLE message for true parallel execution.
+
+### Phase 2: Verification Agent
+
+After all 5 agents complete, launch verifier:
+
+```
+              ┌────────────────────────────────────────────────────┐
+              │ Collect results from 5 agents                       │
+              └───────────────────────┬────────────────────────────┘
+                                      │
+                                      ↓
+              ┌────────────────────────────────────────────────────┐
+              │ Task: verifier                                      │
+              │ - Receives all 5 agent results                      │
+              │ - Cross-checks findings                             │
+              │ - Produces unified report with GO/COND/NO-GO        │
+              └───────────────────────┬────────────────────────────┘
+                                      │
+                                      ↓
+              ┌────────────────────────────────────────────────────┐
+              │ Router displays verifier's report                   │
+              └────────────────────────────────────────────────────┘
+```
+
+### Phase 3: Display Results
+
+Router transforms verifier's compact output into human-readable report:
+
+1. **Parse verifier output**:
+   - Metadata lines: `KEY:VALUE` format (VERDICT, SCOPE, WAVE_SCOPE, SPECS_IN_SCOPE)
+   - VERIFIED lines: split by `|` → agents, sev, cat, loc, desc
+   - REMOVED lines: split by `|` → agent, reason, original
+   - RESOLVED lines: split by `|` → agents, resolution, findings
+   - NOTES/ROADMAP_ADVISORY: freeform text lines
+   - Missing sections = no findings of that type
+   - Agents field: split by `+` for agent list
+
+2. **Format as markdown report**:
+   - Executive Summary (verdict + issue counts by severity)
+   - Prioritized Issues table (Critical → High → Medium → Low)
+   - Verification Notes (removed false positives, resolved conflicts)
+   - Wave Scope info (if wave-scoped mode)
+   - Roadmap advisory (if wave-scoped mode)
+   - Recommended actions based on verdict
+
+3. **Display formatted report** to user
+
+**IMPORTANT**: All formatting logic lives in the router. Agents NEVER produce markdown tables, headers, or human-readable prose in their output.
 
 ---
 
-## --deep Flag: Best Practices Research
+## Agent Prompt Templates
 
-### Purpose
-Enhance review quality through thorough best practices research. Applies to both Single Review and Cross-Check modes.
+### Review Agents (Rulebase + 4 Exploratory)
 
-**Key Goal**: Capture discovered knowledge into steering documents so future reviews don't need to re-search.
+All 5 review agents use the same minimal prompt format:
 
-### Additional Steps (when --deep is enabled)
+**Single Spec or Cross-Check Mode**:
+```
+Read and follow the instructions in `.claude/agents/sdd-review-design-{agent-name}.md`.
 
-1. **Execute Base Review** (Single Review or Cross-Check)
+Feature: {feature} (or "cross-check" for all specs)
 
-2. **Best Practices Research**:
-   - **WebSearch**: Search for industry best practices related to:
-     - Key technologies/patterns mentioned in design.md
-     - Similar problem domains and proven solutions
-     - Common pitfalls and anti-patterns to avoid
-     - Latest API changes, deprecations, migration guides
-     - Known edge cases and gotchas
-   - **WebFetch**: Retrieve detailed information from:
-     - Official documentation
-     - Authoritative technical resources
-     - Case studies and reference implementations
-
-3. **Enhanced Analysis**:
-   - Compare design decisions against discovered best practices
-   - Identify opportunities for improvement based on industry standards
-   - Flag potential issues not covered in standard checklist
-
-4. **Steering Update Proposal** (CRITICAL for --deep):
-   - Identify knowledge that should be persisted for future reviews
-   - Propose updates to existing steering files (tech.md, product.md, structure.md)
-   - Propose new custom steering files for domain-specific knowledge
-   - Focus on: Latest APIs, edge cases, implementation gotchas, best practices
-
-5. **Provide Enhanced Verdict**:
-   - Base verdict (GO/CONDITIONAL/NO-GO for Single Review, or Summary for Cross-Check)
-   - **Best Practices Alignment**: How well do the design(s) follow industry standards?
-   - **Improvement Opportunities**: Specific suggestions from research
-   - **Steering Proposals**: Recommended steering updates
-
-### Deep Review Output Additions
-```markdown
-## Best Practices Research
-
-### Technologies Researched
-- [Technology 1]: [Key findings]
-- [Technology 2]: [Key findings]
-
-### Alignment Assessment
-✅ **Aligned**: [Practices the design follows well]
-⚠️ **Consider**: [Practices worth adopting]
-❌ **Divergent**: [Areas where design contradicts best practices]
-
-### Recommended Improvements
-1. [Improvement based on research]
-2. [Improvement based on research]
-
-## Steering Update Proposals
-
-### Purpose
-Persist discovered knowledge so future reviews don't need to re-search.
-
-### Existing Steering Updates
-Proposed changes to existing steering files:
-
-#### tech.md
-```markdown
-## [Section to add/update]
-[Content based on research - latest API patterns, constraints, etc.]
+Execute the review and return your findings in the specified format.
 ```
 
-#### product.md / structure.md
-[If applicable]
+**Wave-Scoped Cross-Check Mode**:
+```
+Read and follow the instructions in `.claude/agents/sdd-review-design-{agent-name}.md`.
 
-### New Custom Steering Proposals
-Recommended new steering files for domain-specific knowledge:
+Mode: wave-scoped-cross-check
+Wave: {N}
 
-#### Proposed: `steering/{domain}-patterns.md`
-**Rationale**: [Why this knowledge should be captured]
-```markdown
-# [Domain] Patterns and Best Practices
-
-## Latest API Considerations
-- [API change discovered]
-- [Deprecation warning]
-
-## Known Edge Cases
-- [Edge case 1]: [How to handle]
-- [Edge case 2]: [How to handle]
-
-## Implementation Gotchas
-- [Gotcha 1]: [What to avoid and why]
-
-## Recommended Patterns
-- [Pattern]: [When and how to use]
+Execute the wave-scoped cross-check review and return your findings.
 ```
 
-### Knowledge Capture Summary
-| Knowledge Type | Source | Proposed Location | Priority |
-|---------------|--------|-------------------|----------|
-| [API update] | [URL] | tech.md | High |
-| [Edge case] | [URL] | {domain}-patterns.md | Medium |
-| [Best practice] | [URL] | {domain}-patterns.md | Medium |
+Where `{agent-name}` is one of:
+- `rulebase`
+- `explore-testability`
+- `explore-architecture`
+- `explore-consistency`
+- `explore-best-practices`
+
+**IMPORTANT**: Do NOT embed context content in the prompt. Each agent reads its own context files.
+
+### Verifier Agent
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-design-verifier.md`.
+
+Feature: {feature} (or "cross-check" or "wave-scoped-cross-check")
+Wave: {N} (wave-scoped mode only)
+
+Agent Results:
+
+## Rulebase Review Results
+{rulebase agent output}
+
+## Testability Review Results
+{testability agent output}
+
+## Architecture Review Results
+{architecture agent output}
+
+## Consistency Review Results
+{consistency agent output}
+
+## Best Practices Review Results
+{best practices agent output}
+
+Execute verification and return the unified report.
 ```
 
 ---
 
-## Important Constraints
+## Error Handling
 
-### SDD Compliance (Anti-Drift)
-- **Template conformance**: Specs MUST follow SDD template structure
-- **Responsibility separation**: requirements.md = WHAT, design.md = HOW
-- **No ad-hoc additions**: Flag content that bypasses SDD workflow
-- **Pull back to SDD**: Recommend moving misplaced content to correct location
+- **Missing spec**: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` first."
+- **No design.md**: Proceed with review (agents will note missing design), warn user
+- **Agent failure**: Report partial results from successful agents, note which failed
+- **No specs found** (Cross-Check): "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
 
-### Review Quality
-- **Test implementer perspective**: Always ask "Can I write unambiguous tests?"
-- **Specific, not vague**: Flag any imprecise language
-- **Actionable feedback**: Every issue must have a clear fix
-- **Severity classification**: Distinguish critical vs. warning issues
-- **--deep only**: WebSearch/WebFetch are ONLY allowed when --deep flag is present
-</instructions>
+---
 
-## Tool Guidance
-- **Read**: Load specs, requirements, designs, and rules
-- **Glob**: Discover all specs for cross-check mode
-- **Grep**: Search for terminology usage across specs
-- **WebSearch** (--deep only): Research best practices and industry standards
-- **WebFetch** (--deep only): Retrieve detailed documentation and resources
+## Output
 
-## Output Description
-Follow the output format defined in `{{KIRO_DIR}}/settings/rules/design-review.md`:
-- Single Review: Summary → Critical Issues → Warnings → Verdict
-- Cross-Check: Specs Analyzed → Cross-Spec Issues → Parallel Development Assessment
-- With --deep: Add Best Practices Research + Enhanced Verdict to either mode
-
-## Safety & Fallback
-
-### Error Scenarios
-- **Missing Spec**: If spec directory doesn't exist, stop with message: "Spec '{feature}' not found. Run `/sdd-requirements \"description\"` to create it."
-- **No Specs Found** (Cross-Check): If no specs exist, stop with message: "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
-- **Missing Requirements**: If requirements.md doesn't exist, skip spec with warning
+Router formats the verifier's compact output into a human-readable markdown report including:
+- Executive summary with verdict and issue counts by severity
+- Prioritized issues table (Critical → High → Medium → Low)
+- Verification notes (removed false positives, resolved conflicts)
+- Wave scope info and roadmap advisory (if wave-scoped mode)
+- Recommended actions and next steps based on verdict
 
 ### Next Steps
 
-**After Single/Deep Review**:
-- If GO: Proceed with `/sdd-impl {feature}` or test implementation
+**After Single Review**:
+- If GO: Proceed with `/sdd-tasks {feature}` or implementation
 - If CONDITIONAL: Address minor issues, optionally re-review
 - If NO-GO: Fix critical issues and run `/sdd-review-design {feature}` again
 
-**After Cross-Check**:
+**After Cross-Check / Wave-Scoped Cross-Check**:
 - Address any cross-spec conflicts before parallel development
 - Use dependency information to sequence implementation
+
+</instructions>

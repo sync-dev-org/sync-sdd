@@ -1,5 +1,11 @@
 # Requirements Document
 
+## Detail Level: normal
+<!-- interface | normal | edge-cases -->
+<!-- interface: Inputs/outputs and error categories only (contracts focus) -->
+<!-- normal: Full happy-path behavior with standard error handling (default) -->
+<!-- edge-cases: Boundary conditions, race conditions, failure recovery -->
+
 ## Introduction
 {{INTRODUCTION}}
 
@@ -11,9 +17,10 @@
 
 #### Acceptance Criteria
 <!-- For localized examples (JA, ZH, etc.), see ears-format.md -->
-1. When [event], the [system] shall [response/action]
-2. If [trigger], then the [system] shall [response/action]
-3. While [precondition], the [system] shall [response/action]
+<!-- Stability tags: [constraint] = immutable, [contract] = interface agreement, [behavior] = changeable (default if omitted) -->
+1. [constraint] When [event], the [system] shall [response/action]
+2. [contract] If [trigger], then the [system] shall [response/action]
+3. [behavior] While [precondition], the [system] shall [response/action]
 4. Where [feature is included], the [system] shall [response/action]
 5. The [system] shall [response/action]
 
