@@ -1,7 +1,7 @@
 ---
 description: Execute Wave-based implementation following the roadmap
-allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task, Skill
-argument-hint: "[wave-number]"
+allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task, Skill, TeamCreate, TaskCreate, TaskUpdate, TaskList, SendMessage, TeamDelete
+argument-hint: "[wave-number] [--team]"
 ---
 
 # Execute Roadmap Implementation
@@ -79,11 +79,11 @@ Follow the 7-step Wave execution flow from roadmap.md:
 ├─────────────────────────────────────────────────────────────────┤
 │  1. Identify specs in Wave                                      │
 │  2. Design existence check                                      │
-│  3. Design Review (subagent parallel)                           │
+│  3. Design Review (subagent or --team)                          │
 │  4. User Confirmation [REQUIRED]                                │
 │  5. Task Generation                                             │
-│  6. Implementation (subagent parallel)                          │
-│  7. Implementation Review & Completion Report                   │
+│  6. Implementation (subagent or --team)                         │
+│  7. Implementation Review (subagent or --team) & Completion     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -98,13 +98,14 @@ Follow the 7-step Wave execution flow from roadmap.md:
        /sdd-design {spec}
    ```
 
-2. **Design Review** (subagent parallel):
+2. **Design Review** (propagate `--team` if present):
    ```python
+   team_flag = " --team" if team_mode else ""
    # Launch via Task tool for context isolation
    for spec in wave_specs:
-       Task("/sdd-review-design {spec}")
+       Task(f"/sdd-review-design {spec}{team_flag}")
    # Wave-Scoped Cross-Check
-   Task("/sdd-review-design --wave {N}")
+   Task(f"/sdd-review-design --wave {N}{team_flag}")
    ```
    - Report ALL results (GO/CONDITIONAL/NO-GO) to user
    - User decides how to proceed for every case
@@ -127,12 +128,13 @@ Follow the 7-step Wave execution flow from roadmap.md:
        Task("/sdd-impl {spec}")
    ```
 
-6. **Implementation Review** (subagent parallel):
+6. **Implementation Review** (propagate `--team` if present):
    ```python
+   team_flag = " --team" if team_mode else ""
    for spec in wave_specs:
-       Task("/sdd-review-impl {spec}")
+       Task(f"/sdd-review-impl {spec}{team_flag}")
    # Wave-Scoped Cross-Check
-   Task("/sdd-review-impl --wave {N}")
+   Task(f"/sdd-review-impl --wave {N}{team_flag}")
    ```
    - Report ALL results (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED) to user
    - User decides how to proceed for every case

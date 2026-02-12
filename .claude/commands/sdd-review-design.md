@@ -1,20 +1,19 @@
 ---
 description: Strict spec review for test implementer clarity
-allowed-tools: Glob, Read, Task
-argument-hint: [feature-name] | [--cross-check] | [--wave N]
+allowed-tools: Glob, Read, Task, TeamCreate, TaskCreate, TaskUpdate, TaskList, SendMessage, TeamDelete
+argument-hint: [feature-name] [--team] | [--cross-check] [--team] | [--wave N] [--team]
 ---
 
 # SDD Design Review (Router)
 
 <background_information>
 - **Mission**: Comprehensive design review combining SDD compliance and exploratory analysis
-- **Architecture**: Router dispatches to 6 agents (5 parallel review + 1 sequential verifier) via Task tool
-- **Context Isolation**: Each agent runs in separate context window (no cross-contamination)
-- **Two Phases**:
-  - **Phase 1**: 5 review agents run in parallel (rulebase + 4 exploratory)
-  - **Phase 2**: Verifier agent cross-checks and synthesizes results
+- **Dual Architecture**:
+  - **Subagent mode** (default): Router dispatches to 6 agents (5 parallel + 1 verifier) via Task tool
+  - **Agent Team mode** (`--team`): Router creates team with 5 Sonnet teammates + Lead synthesis
+- **Context Isolation**: Each agent/teammate runs in separate context window (no cross-contamination)
 - **Philosophy**: Rulebase catches structural violations; exploration catches quality issues
-- **Router's Role**: Orchestrate agents, display final results (do NOT duplicate verification logic)
+- **Router's Role**: Orchestrate agents/teammates, synthesize (Team mode), display final results
 </background_information>
 
 <instructions>
@@ -48,8 +47,8 @@ $ARGUMENTS = ""                       → Cross-Check (Subagent mode)
 
 If `--team` flag is present in arguments:
 1. Remove `--team` from arguments before further processing
-2. Display: "Agent Team mode selected. (Execution flow TBD — falling back to Subagent mode)"
-3. Proceed with Subagent execution flow below
+2. Display: "Agent Team mode — spawning review team"
+3. Skip Subagent Execution Flow, go to **Agent Team Execution Flow** section
 
 ---
 
@@ -84,7 +83,7 @@ Before launching agents, validate target existence only:
 
 ---
 
-## Execution Flow
+## Subagent Execution Flow (default, without --team)
 
 ### Phase 1: Parallel Review Agents
 
@@ -235,12 +234,119 @@ Execute verification and return the unified report.
 
 ---
 
+## Agent Team Execution Flow (when --team flag detected)
+
+Skip the Subagent Execution Flow above. Use the following flow instead.
+
+### Team Phase 1: Team Creation & Independent Review
+
+1. **Create team**: `TeamCreate` with team name `sdd-review-design-{feature}` (or `sdd-review-design-cross-check`)
+2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with prompt:
+   ```
+   You are a WORKER agent. Do NOT spawn new teammates or subagents.
+   Read `.claude/agents/sdd-review-design-{agent-name}.md` and follow all instructions.
+   Feature: {feature} (or "cross-check" / "wave-scoped-cross-check" with Wave: {N})
+   After completing your review, send your complete CPF output to the team lead.
+   Do NOT format as markdown. Use the exact CPF format specified in the agent file.
+   ```
+   Where `{agent-name}` is: `rulebase`, `explore-testability`, `explore-architecture`, `explore-consistency`, `explore-best-practices`
+3. **Wait** for all 5 teammates to send findings (idle notifications with CPF output)
+
+### Team Phase 2: Cross-Check Broadcast
+
+4. **Collect** all 5 CPF outputs from teammate messages
+5. **Broadcast** to all teammates:
+   ```
+   All review findings are below. Follow the Cross-Check Protocol section in your
+   agent instructions. Send REFINED findings back to the team lead.
+   This is a single round — do NOT request further discussion.
+
+   == Rulebase Findings ==
+   {rulebase CPF}
+   == Testability Findings ==
+   {testability CPF}
+   == Architecture Findings ==
+   {architecture CPF}
+   == Consistency Findings ==
+   {consistency CPF}
+   == Best Practices Findings ==
+   {best-practices CPF}
+   ```
+6. **Wait** for all 5 refined responses (REFINED + CROSS-REF format)
+
+### Team Phase 3: Lead Synthesis
+
+The Lead (this router) performs synthesis directly — no separate verifier agent.
+
+**Step 1: Merge refined findings**
+- `confirmed` by 2+ teammates → high confidence, keep
+- `withdrawn` → remove from final report
+- `upgraded` → use new severity
+- `downgraded` → use new severity
+
+**Step 2: Deduplicate**
+- Same issue from multiple teammates → single finding, list all agents with `+` separator
+- Use CROSS-REF data to identify correlated findings
+
+**Step 3: Resolve contradictions**
+- If teammates disagree on a finding, use majority rule
+- If no majority, err on side of caution (keep finding, note conflict)
+
+**Step 4: Over-engineering check**
+Guard against AI complexity bias:
+- If a finding recommends adding abstractions, patterns, or layers, ask: "Does a concrete requirement demand this?"
+- Premature abstraction, speculative extensibility, pattern overuse, unnecessary indirection → downgrade or remove
+- The simplest design satisfying all requirements is the best design
+
+**Step 5: Decision suggestions**
+Identify findings that represent conscious design choices rather than defects:
+- Style/approach-dependent issues → suggest documenting as Decision in `steering/` (project-wide) or `design.md` (feature-specific)
+
+**Step 6: Verdict**
+```
+IF any Critical issues remain:          → VERDICT = NO-GO
+ELSE IF >3 High OR unresolved conflicts: → VERDICT = CONDITIONAL
+ELSE:                                    → VERDICT = GO
+```
+You MAY override with justification.
+
+**Step 7: Generate CPF output**
+Produce the same CPF format as the verifier would:
+```
+VERDICT:{GO|CONDITIONAL|NO-GO}
+SCOPE:{feature} | cross-check | wave-scoped-cross-check
+WAVE_SCOPE:{range} (wave-scoped mode only)
+SPECS_IN_SCOPE:{spec-a},{spec-b} (wave-scoped mode only)
+VERIFIED:
+{agents}|{sev}|{category}|{location}|{description}
+REMOVED:
+{agent}|{reason}|{original issue}
+RESOLVED:
+{agents}|{resolution}|{conflicting findings}
+NOTES:
+{synthesis observations}
+ROADMAP_ADVISORY: (wave-scoped mode only)
+{future wave considerations}
+```
+
+**Step 8: Clean up**
+- Send shutdown requests to all 5 teammates
+- `TeamDelete` to clean up team resources
+
+### Team Phase 4: Display Results
+
+Use the **same Phase 3: Display Results** logic as the Subagent flow — parse the CPF output and format as human-readable markdown report.
+
+---
+
 ## Error Handling
 
 - **Missing spec**: "Spec '{feature}' not found. Run `/sdd-design \"description\"` first."
 - **No design.md**: Report error - design.md is required
-- **Agent failure**: Report partial results from successful agents, note which failed
+- **Agent failure** (Subagent mode): Report partial results from successful agents, note which failed
+- **Teammate failure** (Team mode): If a teammate fails to respond, proceed with available results, note incomplete review
 - **No specs found** (Cross-Check): "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
+- **Agent Team unavailable**: If TeamCreate fails, fall back to Subagent Execution Flow with warning
 
 ---
 
