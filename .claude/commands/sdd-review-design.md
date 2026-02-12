@@ -33,13 +33,23 @@ Orchestrate comprehensive design review by:
 ## Mode Detection
 
 ```
-$ARGUMENTS = "{feature}"              → Single Review (5+1 agents)
-$ARGUMENTS = "--wave N"               → Wave-Scoped Cross-Check (waves 1..N)
-$ARGUMENTS = "--cross-check"          → Cross-Check (all specs)
-$ARGUMENTS = ""                       → Cross-Check (all specs)
+$ARGUMENTS = "{feature}"              → Single Review (Subagent mode)
+$ARGUMENTS = "{feature} --team"       → Single Review (Agent Team mode)
+$ARGUMENTS = "--wave N"               → Wave-Scoped Cross-Check (Subagent mode)
+$ARGUMENTS = "--wave N --team"        → Wave-Scoped Cross-Check (Agent Team mode)
+$ARGUMENTS = "--cross-check"          → Cross-Check (Subagent mode)
+$ARGUMENTS = "--cross-check --team"   → Cross-Check (Agent Team mode)
+$ARGUMENTS = ""                       → Cross-Check (Subagent mode)
 ```
 
 **Note**: `--cross-check` is optional and equivalent to empty arguments. Wave-scoped mode limits scope to specs in waves 1..N.
+
+### Agent Team Mode Detection
+
+If `--team` flag is present in arguments:
+1. Remove `--team` from arguments before further processing
+2. Display: "Agent Team mode selected. (Execution flow TBD — falling back to Subagent mode)"
+3. Proceed with Subagent execution flow below
 
 ---
 
