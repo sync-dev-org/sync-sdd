@@ -1,7 +1,7 @@
 ---
 description: Roadmap router - initialize, run, update, or reset the specification roadmap
 allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task, Skill, Bash
-argument-hint: "[-y]"
+argument-hint: "[-y] [--team]"
 ---
 
 # Specification Roadmap Router
@@ -87,7 +87,7 @@ Discard roadmap and all specs, reinitialize from steering.
 
 #### If "Run" selected:
 
-Execute `/sdd-roadmap-run` via Skill tool.
+Execute `/sdd-roadmap-run` via Skill tool. Pass `--team` flag if present in original arguments.
 
 #### If "Update" selected:
 
@@ -99,12 +99,19 @@ Execute `/sdd-roadmap-delete` via Skill tool.
 
 </instructions>
 
-## Auto-Approve Mode
+## Flag Handling
 
-**If `-y` flag is provided**:
+**`-y` flag (auto-approve)**:
 - Skip option selection
 - Automatically select "Run" action
 - Pass `-y` to `/sdd-roadmap-run`
+
+**`--team` flag (Agent Team mode)**:
+- Preserve flag through routing
+- Pass `--team` to `/sdd-roadmap-run` when "Run" is selected
+- Example: `/sdd-roadmap --team` → `/sdd-roadmap-run --team`
+
+**Combined**: `/sdd-roadmap -y --team` → automatically runs `/sdd-roadmap-run --team`
 
 ## Tool Guidance
 
