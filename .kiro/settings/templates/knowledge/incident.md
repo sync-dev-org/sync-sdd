@@ -5,7 +5,7 @@
 
 **Usage**:
 - Record issues found during implementation that should have been caught earlier.
-- Document detection points for each SDD phase (requirements, design, tasks, impl).
+- Document detection points for each SDD phase (specifications, design, tasks, impl).
 - Enable context-aware knowledge retrieval during `sdd-review-*` commands.
 
 **Naming Convention**: `{category}-{pattern-name}.md`
@@ -24,8 +24,8 @@
 | Severity | {{SEVERITY}} |
 
 <!--
-DISCOVERED_PHASE: requirements / design / tasks / impl
-SHOULD_DETECT_PHASE: requirements / design / tasks / impl
+DISCOVERED_PHASE: specifications / design / tasks / impl
+SHOULD_DETECT_PHASE: specifications / design / tasks / impl
 CATEGORY: state / api / async / data / security / integration
 KEYWORDS: Comma-separated search terms
 SEVERITY: high / medium / low
@@ -60,7 +60,7 @@ SEVERITY: high / medium / low
 
 ## Detection Points by Phase
 
-### requirements
+### specifications
 <!-- Most effective detection timing for specification-level issues -->
 - [ ] {{CHECK_ITEM_1}}
 - [ ] {{CHECK_ITEM_2}}

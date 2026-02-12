@@ -122,6 +122,7 @@ If $1 is a description (not an existing feature directory):
 - Update `updated_at` timestamp
 - **Version tracking** (initialize defaults if fields missing):
   - Set `version_refs.design` to the current spec `version`
+  - Set `version_refs.tasks` to `null` (invalidate stale task reference)
   - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "design", "summary": "Design generated" }`
 
 ## Critical Constraints

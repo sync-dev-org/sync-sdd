@@ -12,7 +12,7 @@ argument-hint: <feature-name> [task-numbers]
   - All tests written before implementation code
   - Code passes all tests with no regressions
   - Tasks marked as completed in tasks.md
-  - Implementation aligns with design and requirements
+  - Implementation aligns with design specifications
 </background_information>
 
 <instructions>
@@ -29,6 +29,8 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 
 **Validate and approve tasks**:
 - Verify all spec files exist (stop if not, see Safety & Fallback)
+- **Phase check**: If `phase` is not `tasks-generated` and not `implementation-complete`:
+  - **BLOCK**: "Phase is '{phase}'. Tasks must be generated before implementation. Run `/sdd-tasks $1` first."
 - Set `approvals.tasks.approved: true` in spec.json (starting implementation implicitly approves tasks)
 
 **Version consistency check** (skip if `version_refs` not present in spec.json):
