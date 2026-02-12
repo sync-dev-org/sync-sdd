@@ -9,11 +9,35 @@ argument-hint: "[wave-number] [--team]"
 <background_information>
 - **Mission**: Execute Wave-based implementation following the existing roadmap
 - **Prerequisite**: roadmap.md must exist (use `/sdd-roadmap` to create)
+- **Dual Architecture**:
+  - **Subagent mode** (default): Sequential spec execution via Task tool subagents
+  - **Agent Team mode** (`--team`): Parallel spec execution via Sonnet teammates with file ownership
+- **Router's Role**: Orchestrate wave execution, manage teammates (Team mode), report progress
 </background_information>
 
 <instructions>
 
-## Execution Flow
+## Mode Detection
+
+```
+$ARGUMENTS = ""                → Execute next incomplete wave (Subagent mode)
+$ARGUMENTS = "{N}"             → Execute from wave N (Subagent mode)
+$ARGUMENTS = "--team"          → Execute next incomplete wave (Agent Team mode)
+$ARGUMENTS = "{N} --team"      → Execute from wave N (Agent Team mode)
+```
+
+### Agent Team Mode Detection
+
+If `--team` flag is present in arguments:
+1. Remove `--team` from arguments before further processing
+2. Display: "Agent Team mode — parallel Wave execution"
+3. After Steps 1-3 (shared), go to **Agent Team Wave Execution Flow** instead of Step 4
+
+---
+
+## Shared Steps (both modes)
+
+### Execution Flow
 
 ### Step 1: Load Roadmap State
 
@@ -68,6 +92,10 @@ argument-hint: "[wave-number] [--team]"
 
 Proceed with execution?
 ```
+
+---
+
+## Subagent Execution Flow (default, without --team)
 
 ### Step 4: Execute Wave Flow
 
@@ -180,11 +208,144 @@ After wave completion:
 3. Ask: "Proceed to next wave?"
 4. If yes, repeat from Step 4 with next wave
 
+---
+
+## Agent Team Wave Execution Flow (when --team flag detected)
+
+Skip the Subagent Execution Flow above. After Shared Steps 1-3, use the following flow instead.
+
+### Wave Team Setup
+
+1. **Create team**: `TeamCreate` with team name `sdd-wave-{N}`
+2. **Identify specs**: Filter specs in current wave from roadmap
+
+### Step 4T: Design Check (Lead executes)
+
+Lead performs design checks directly (no teammates needed):
+
+```python
+for spec in wave_specs:
+    if not exists(design.md) or phase == "initialized":
+        /sdd-design {spec}
+```
+
+### Step 5T: Design Review (Team)
+
+Spawn review teammates per spec using Stage 2 Agent Team review flow:
+
+```python
+for spec in wave_specs:
+    Task(f"/sdd-review-design {spec} --team")
+# Wave-Scoped Cross-Check
+Task(f"/sdd-review-design --wave {N} --team")
+```
+
+- Report ALL results (GO/CONDITIONAL/NO-GO) to user
+- User decides how to proceed for every case
+
+### Step 6T: User Confirmation [REQUIRED]
+
+- Present design review results and responsibility allocation table
+- Show file ownership map (extracted from design.md Components sections)
+- Block until user confirms: "Proceed to task generation and implementation?"
+
+### Step 7T: File Ownership Analysis
+
+Before spawning implementation teammates, analyze file ownership:
+
+1. **Extract file ownership** from each spec's `design.md` Components section
+2. **Check for overlaps**: If any file appears in 2+ specs' component lists:
+   - Mark those specs as **conflicting** → must be serialized (not parallelized)
+   - Report to user: "Specs {X} and {Y} share files: {list}. These will execute sequentially."
+3. **Build ownership map**:
+   ```
+   spec-a owns: src/auth/*.ts, src/middleware/auth.ts
+   spec-b owns: src/api/health.ts, src/services/health.ts
+   spec-c owns: src/api/notify.ts (depends on spec-a, serialized)
+   ```
+
+### Step 8T: Task Generation & Parallel Implementation
+
+**Task Generation** (Lead executes sequentially):
+```python
+for spec in wave_specs:
+    /sdd-tasks {spec} -y
+```
+
+**Parallel Implementation** (Sonnet teammates):
+
+1. **Group specs by dependency**:
+   - Independent specs → parallel group
+   - Dependent specs → sequential (use TaskCreate with blockedBy)
+
+2. **Spawn teammates** for parallel group in a SINGLE message:
+   ```
+   For each spec in parallel_group, spawn teammate (model: sonnet):
+
+   "You are a WORKER agent. Do NOT spawn new teammates or subagents.
+    You own files: {file-list-from-ownership-map}. Do NOT modify files outside this list.
+    Execute the SDD implementation workflow for spec '{spec}':
+    1. Read `.claude/commands/sdd-impl.md` for the implementation process
+    2. Implement all tasks in `{{KIRO_DIR}}/specs/{spec}/tasks.md`
+    3. Follow TDD methodology: write tests first, then implement
+    4. When complete, send implementation summary to the team lead
+    Include: files modified, tests written, test results"
+   ```
+
+3. **Wait** for all parallel teammates to complete (idle notifications)
+
+4. **Handle dependent specs**: After blocking specs complete:
+   - Spawn next round of teammates for newly unblocked specs
+   - Repeat until all specs in wave are implemented
+
+### Step 9T: Implementation Review (Team)
+
+After all implementation teammates complete:
+
+```python
+for spec in wave_specs:
+    Task(f"/sdd-review-impl {spec} --team")
+# Wave-Scoped Cross-Check
+Task(f"/sdd-review-impl --wave {N} --team")
+```
+
+- Report ALL results (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED) to user
+- User decides how to proceed for every case
+
+### Step 9.5T: SPEC Feedback Loop
+
+Same as Subagent flow Step 6.5 — if any review returned SPEC-UPDATE-NEEDED:
+1. Identify affected specs from SPEC_FEEDBACK sections
+2. Present feedback to user with options (fix now / defer / override)
+3. If specs are fixed: re-run affected phases and re-review
+4. If deferred: record in Wave Completion Report
+
+### Step 10T: Wave Completion & Cleanup
+
+1. **Wave Completion Report** (same format as Subagent flow Step 7)
+2. **Clean up team**:
+   - Send shutdown requests to all teammates
+   - `TeamDelete` to clean up team resources
+3. **Update** spec.json phases
+4. **Git commit** checkpoint (recommend)
+5. **Wave Transition**: Ask "Proceed to next wave?"
+   - If yes: Create new team `sdd-wave-{N+1}` and repeat from Step 4T
+
+**IMPORTANT**: Each wave creates and destroys its own team. Do NOT reuse teams across waves (prevents stale context and Compact/Resume issues).
+
+### File Conflict Prevention
+
+- Before spawning implementation teammates, verify spec designs have non-overlapping file ownership
+- If design.md Components sections show shared files: serialize those specs (do not parallelize)
+- Each teammate's spawn prompt includes: "You own files: {list}. Do NOT modify files outside this list."
+- Lead operates in coordination-only mode: spawning, messaging, task management only — no direct file edits during teammate execution
+- If a teammate reports needing to modify a file outside its ownership: stop, report to Lead, Lead reassigns or serializes
+
 </instructions>
 
 ## Tool Guidance
 
-### Subagent Usage (Task tool)
+### Subagent Usage (Task tool) — Subagent mode
 
 **Use Task tool for context isolation**:
 - All review commands (`/sdd-review-*`)
@@ -198,6 +359,27 @@ After wave completion:
   Task("/sdd-design spec-a -y")
   Task("/sdd-design spec-b -y")  # Same message = parallel
   ```
+
+### Agent Team Usage — Team mode
+
+**Team lifecycle per wave**:
+- `TeamCreate` at wave start → `TeamDelete` at wave end
+- Do NOT reuse teams across waves
+
+**Teammate spawning**:
+- Use Task tool with `team_name` and `model: sonnet`
+- Always include WORKER preamble: "You are a WORKER agent. Do NOT spawn new teammates or subagents."
+- Always include file ownership list in spawn prompt
+- Spawn independent teammates in a SINGLE message for parallel execution
+
+**Lead coordination**:
+- Lead performs: design checks, task generation, review orchestration, progress reporting
+- Lead delegates: implementation (to teammates), review execution (via `--team` flag)
+- Lead does NOT edit implementation files directly during teammate execution
+
+**Review commands in Team mode**:
+- Reviews use `--team` flag: `/sdd-review-design {spec} --team`, `/sdd-review-impl {spec} --team`
+- Each review command creates its own sub-team internally (separate from Wave team)
 
 ### Skill Invocation
 
@@ -236,6 +418,22 @@ If spec depends on incomplete spec:
 1. Report dependency issue
 2. Execute dependency first
 3. Resume original spec
+
+### Agent Team Errors (Team mode only)
+
+**TeamCreate failure**:
+- Fall back to Subagent Execution Flow with warning
+- Display: "Agent Team unavailable. Falling back to Subagent mode."
+
+**Teammate failure** (crash or no response):
+- Continue with other teammates
+- Report failed spec at wave end
+- User decides: retry with new teammate, fall back to subagent, or skip
+
+**File ownership violation** (teammate modifies outside its scope):
+- Stop that teammate
+- Report violation to user
+- User decides: revert changes, reassign, or serialize specs
 
 ## Output Description
 
