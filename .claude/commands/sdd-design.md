@@ -106,7 +106,7 @@ If $1 is a description (not an existing feature directory):
 
 2. **Generate Design Document**:
 - **Follow specs/design.md template structure strictly**
-- **Specifications section**: Define numbered specs with goals and testable acceptance criteria in natural language
+- **Specifications section**: Define numbered specs with goals and testable acceptance criteria in natural language. **Do NOT include internal implementation identifiers** (function names, variable names, class names, method signatures, database column names). Describe observable behavior and outcomes only. External-facing technical requirements (e.g., "REST API", "WebSocket", "CLI command") are acceptable.
 - **Architecture and Components sections**: Translate specifications into technical design
 - **Integrate all discovery findings**: Use researched information throughout
 - If existing design.md found in Step 1, use it as reference context (merge mode)

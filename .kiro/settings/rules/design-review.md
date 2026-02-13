@@ -23,7 +23,7 @@
 - Each Spec has Acceptance Criteria (numbered list, natural language)
 - ACs are testable and specific (no vague qualifiers)
 - Has Non-Goals subsection
-- No implementation details in Specifications section (component names, API specs, data structures)
+- No internal design details in Specifications section (internal component names, class/function signatures, database schemas)
 
 **design.md Design Sections Check** (compare against template):
 - Has Overview (Purpose, Users, Impact, Goals, Non-Goals)
@@ -46,9 +46,10 @@
 - ✅ Acceptance criteria (observable behaviors)
 - ✅ Business rules and constraints
 - ✅ User-facing error messages
-- ❌ NOT: Component names, class names, function signatures
-- ❌ NOT: Database schemas, API endpoints
-- ❌ NOT: Technology choices, libraries
+- ✅ External-facing technical requirements (e.g., "REST API", "WebSocket notifications", "CLI command")
+- ❌ NOT: Internal component names, class names, function signatures
+- ❌ NOT: Database schemas, internal data structures
+- ❌ NOT: Library/framework choices (unless user-facing)
 
 **Design sections (Overview, Architecture, Components, etc.) should contain (HOW)**:
 - ✅ Architecture decisions and rationale
@@ -61,7 +62,7 @@
 - ❌ NOT: Business rules not derived from Specifications section
 
 **Drift Indicators** (🟡 Warning):
-- Implementation details leaking into Specifications section → Premature design
+- Internal design details leaking into Specifications section → Premature design (e.g., internal class names, database column names, internal method signatures — NOT external-facing technical requirements like "REST API" or "WebSocket")
 - New acceptance criteria appearing in design sections → Scope creep
 - Specifications section missing testable criteria → Incomplete specs
 
@@ -193,7 +194,6 @@ Test implementation is **blocked** or **unreliable**:
 - Missing essential information
 - **SDD Drift**: Major template violation or responsibility leak
 - **SDD Drift**: New acceptance criteria in design sections outside Specifications (scope creep)
-- **SDD Drift**: Implementation details in Specifications section
 
 ### Warning (🟡)
 Test implementation is **possible but risky**:
@@ -202,6 +202,7 @@ Test implementation is **possible but risky**:
 - Potential for misinterpretation
 - **SDD Drift**: Minor structural deviation from template
 - **SDD Drift**: Orphan component or spec
+- **SDD Drift**: Internal design details in Specifications section (premature design)
 
 ### CPF Severity Mapping
 When outputting in CPF format, map as follows:

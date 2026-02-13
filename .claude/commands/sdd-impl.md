@@ -45,6 +45,8 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 - If `$2` provided: Execute specified task numbers (e.g., "1.1" or "1,2,3")
 - Otherwise: Execute all pending tasks (unchecked `- [ ]` in tasks.md)
 
+**Parent task handling**: Tasks with subtasks (e.g., `1.` has `1.1`, `1.2`) are grouping headers, not work items. Do NOT attempt to "execute" parent tasks. Only execute leaf tasks (tasks with no subtasks). Parent checkboxes are managed in Step 4.
+
 ### Step 3: Execute with TDD
 
 For each selected task, follow Kent Beck's TDD cycle:
@@ -85,11 +87,16 @@ For each selected task, follow Kent Beck's TDD cycle:
 ### Step 4: Update Completion Status
 
 After all selected tasks are executed:
-- Check if ALL tasks in tasks.md are now marked `[x]` (completed)
-- If all tasks complete:
-  - Set spec.json `phase: "implementation-complete"`
-  - Update `updated_at` timestamp
-  - Verify `implementation.files_created` is populated in spec.json
+
+1. **Auto-complete parent tasks**: For each parent task (integer-numbered, e.g., `1.`), check if ALL its subtasks (e.g., `1.1`, `1.2`) are marked `[x]`. If so, mark the parent `[x]` too. Parent tasks are grouping headers — they are complete when all their children are complete.
+
+2. **Handle optional tasks**: Tasks marked `- [ ]*` (deferrable) do NOT block completion. Treat `[x]*` and `[ ]*` both as non-blocking for the phase check. Only regular `- [ ]` tasks block.
+
+3. **Check overall completion**: If ALL regular tasks (non-`*`) in tasks.md are now marked `[x]`:
+   - Set spec.json `phase: "implementation-complete"`
+   - Update `updated_at` timestamp
+   - Verify `implementation.files_created` is populated in spec.json
+   - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "implementation-complete", "summary": "Implementation complete — all tasks done" }`
 
 ## Critical Constraints
 - **TDD Mandatory**: Tests MUST be written before implementation code

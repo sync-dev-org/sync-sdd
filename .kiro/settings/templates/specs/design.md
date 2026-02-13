@@ -16,7 +16,7 @@
 
 ## Specifications
 
-<!-- This section defines WHAT the feature must achieve. Acceptance criteria must be testable and specific. Free-form natural language is preferred; no specific syntax pattern is required. -->
+<!-- This section defines WHAT the feature must achieve. Acceptance criteria must be testable and specific. Free-form natural language is preferred; no specific syntax pattern is required. Do NOT use internal implementation identifiers (function names, variable names, class names, method signatures). Describe observable behavior only. External-facing terms like "REST API" or "CLI command" are acceptable. -->
 <!-- Specification headings MUST include a leading numeric ID (e.g., "Spec 1: ...", "Spec 2: ..."). -->
 
 ### Introduction

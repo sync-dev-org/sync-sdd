@@ -163,7 +163,7 @@ graph TB
 ## Quality Metrics
 ### Design Completeness Checklist
 - All requirements addressed
-- No implementation details leaked
+- No internal design details leaked into Specifications section
 - Clear component boundaries
 - Explicit error handling
 - Comprehensive test strategy
