@@ -268,6 +268,9 @@ if [ -f .claude/settings.json ]; then
             install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
         else
             info "Kept existing .claude/settings.json"
+            echo ""
+            info "Ensure your settings.json includes the following for agent team features:"
+            echo "  {\"env\": {\"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS\": \"1\"}}"
         fi
     fi
 else
