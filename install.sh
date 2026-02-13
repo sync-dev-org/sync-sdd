@@ -28,6 +28,24 @@ warn()  { printf "${YELLOW}warn${RESET}: %s\n" "$1"; }
 error() { printf "${RED}error${RESET}: %s\n" "$1" >&2; }
 success() { printf "${GREEN}success${RESET}: %s\n" "$1"; }
 
+confirm() {
+    printf "%s [y/N] " "$1"
+    if [ -t 0 ]; then
+        read -r answer
+    elif [ -e /dev/tty ]; then
+        read -r answer < /dev/tty
+    else
+        return 1  # Non-interactive: default to no
+    fi
+    case "$answer" in
+        [yY]*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+SDD_MARKER_START="<!-- sdd:start -->"
+SDD_MARKER_END="<!-- sdd:end -->"
+
 usage() {
     cat <<EOF
 ${BOLD}sync-sdd installer${RESET}
@@ -48,8 +66,8 @@ ${BOLD}OPTIONS${RESET}:
 ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .claude/commands/sdd-*.md    Skill definitions
     .claude/agents/sdd-*.md      Agent definitions
-    .claude/CLAUDE.md            Framework instructions
-    .claude/settings.json        Default settings
+    .claude/CLAUDE.md            Framework instructions (appended between markers)
+    .claude/settings.json        Default settings (prompt before overwrite)
 
     .kiro/settings/rules/        Development rules
     .kiro/settings/templates/    Spec/steering/knowledge templates
@@ -87,16 +105,30 @@ if [ "$UNINSTALL" = true ]; then
     info "Removing SDD framework files..."
 
     # Remove framework-managed files only
-    rm -rf .claude/commands/sdd-*.md \
-           .claude/agents/sdd-*.md \
-           .claude/CLAUDE.md
+    rm -f .claude/commands/sdd-*.md
+    rm -f .claude/agents/sdd-*.md
     rm -rf .kiro/settings/rules/ \
            .kiro/settings/templates/
+
+    # Remove SDD section from CLAUDE.md (preserve user content)
+    if [ -f .claude/CLAUDE.md ] && grep -q "$SDD_MARKER_START" .claude/CLAUDE.md; then
+        awk -v start="$SDD_MARKER_START" -v end="$SDD_MARKER_END" \
+            '$0 == start { skip=1; next } $0 == end { skip=0; next } !skip { print }' \
+            .claude/CLAUDE.md > .claude/CLAUDE.md.tmp
+        # Remove trailing blank lines
+        sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' .claude/CLAUDE.md.tmp > .claude/CLAUDE.md
+        rm -f .claude/CLAUDE.md.tmp
+        # Delete file if it's now empty
+        if [ ! -s .claude/CLAUDE.md ]; then
+            rm -f .claude/CLAUDE.md
+        else
+            info "Removed SDD section from .claude/CLAUDE.md (your content preserved)"
+        fi
+    fi
 
     # Clean up empty directories
     rmdir .claude/commands .claude/agents .kiro/settings .kiro 2>/dev/null || true
 
-    # Remove settings.json only if it's unmodified (framework default)
     if [ -f .claude/settings.json ]; then
         warn ".claude/settings.json was left in place (may contain your customizations)"
     fi
@@ -171,7 +203,57 @@ info "Installing framework files..."
 # .claude/ framework files
 install_dir "$SRC/framework/claude/commands" ".claude/commands"
 install_dir "$SRC/framework/claude/agents"   ".claude/agents"
-install_file "$SRC/framework/claude/CLAUDE.md" ".claude/CLAUDE.md"
+
+# .claude/CLAUDE.md - marker-based section management
+install_claude_md() {
+    src_file="$1"
+    dest=".claude/CLAUDE.md"
+    mkdir -p .claude
+
+    # Build marked content block
+    marked_block="$SDD_MARKER_START
+$(cat "$src_file")
+$SDD_MARKER_END"
+
+    if [ ! -f "$dest" ]; then
+        # No existing file - create with markers
+        printf '%s\n' "$marked_block" > "$dest"
+        return
+    fi
+
+    if grep -q "$SDD_MARKER_START" "$dest"; then
+        # Markers exist - replace content between them
+        awk -v start="$SDD_MARKER_START" -v end="$SDD_MARKER_END" \
+            'BEGIN { skip=0 } $0 == start { skip=1; next } $0 == end { skip=0; next } !skip { print }' \
+            "$dest" > "$dest.tmp"
+        # Remove trailing blank lines then append new block
+        sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$dest.tmp" > "$dest"
+        rm -f "$dest.tmp"
+        printf '\n%s\n' "$marked_block" >> "$dest"
+        info "Updated SDD section in .claude/CLAUDE.md"
+        return
+    fi
+
+    # File exists without markers - user's own CLAUDE.md
+    if [ "$FORCE" = true ]; then
+        printf '\n%s\n' "$marked_block" >> "$dest"
+        info "Appended SDD section to existing .claude/CLAUDE.md"
+    elif [ "$UPDATE" = true ]; then
+        warn ".claude/CLAUDE.md exists but has no SDD markers - skipping"
+        warn "Run with --force to append SDD section"
+    else
+        echo ""
+        warn "Existing .claude/CLAUDE.md detected"
+        info "SDD instructions will be appended between markers (your content stays intact)"
+        if confirm "  Append SDD section to .claude/CLAUDE.md?"; then
+            printf '\n%s\n' "$marked_block" >> "$dest"
+            info "Appended SDD section to .claude/CLAUDE.md"
+        else
+            warn "Skipped .claude/CLAUDE.md — SDD commands may not work correctly without it"
+        fi
+    fi
+}
+install_claude_md "$SRC/framework/claude/CLAUDE.md"
 
 # .claude/settings.json - special handling
 if [ -f .claude/settings.json ]; then
@@ -180,7 +262,13 @@ if [ -f .claude/settings.json ]; then
     elif [ "$FORCE" = true ]; then
         install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
     else
-        warn "Skipping existing .claude/settings.json (use --force to overwrite)"
+        echo ""
+        warn "Existing .claude/settings.json detected"
+        if confirm "  Overwrite with SDD defaults?"; then
+            install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
+        else
+            info "Kept existing .claude/settings.json"
+        fi
     fi
 else
     install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
@@ -231,7 +319,7 @@ echo ""
 printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/commands/    $(find .claude/commands -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agents"
-echo "  .claude/CLAUDE.md    Framework instructions"
+echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
 echo "  .kiro/settings/      Rules + templates"
 
 if [ "$UPDATE" = false ]; then
