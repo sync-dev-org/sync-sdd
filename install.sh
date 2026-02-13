@@ -190,6 +190,32 @@ fi
 install_dir "$SRC/framework/kiro/settings/rules"     ".kiro/settings/rules"
 install_dir "$SRC/framework/kiro/settings/templates"  ".kiro/settings/templates"
 
+# --- Remove stale framework files on update ---
+if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
+    remove_stale() {
+        local_dir="$1"
+        src_dir="$2"
+        pattern="$3"
+
+        if [ ! -d "$local_dir" ]; then
+            return
+        fi
+
+        find "$local_dir" -name "$pattern" -type f | while read -r local_file; do
+            rel="${local_file#"$local_dir"/}"
+            if [ ! -f "$src_dir/$rel" ]; then
+                rm "$local_file"
+                warn "Removed stale file: $local_file"
+            fi
+        done
+    }
+
+    remove_stale ".claude/commands" "$SRC/framework/claude/commands" "sdd-*.md"
+    remove_stale ".claude/agents"   "$SRC/framework/claude/agents"   "sdd-*.md"
+    remove_stale ".kiro/settings/rules"     "$SRC/framework/kiro/settings/rules"     "*.md"
+    remove_stale ".kiro/settings/templates" "$SRC/framework/kiro/settings/templates"  "*"
+fi
+
 # --- Summary ---
 echo ""
 if [ "$UPDATE" = true ]; then
