@@ -78,14 +78,14 @@ Ask progressively using AskUserQuestion. If codebase was analyzed, present detec
 
 ### Step 4: Generate Steering Files
 
-1. **Load templates** from `{{KIRO_DIR}}/settings/templates/steering/`
+1. **Load templates** from `{{SDD_DIR}}/settings/templates/steering/`
 
 2. **Generate files**:
-   - `{{KIRO_DIR}}/steering/product.md` - Product info from Q1-Q3
-   - `{{KIRO_DIR}}/steering/tech.md` - Tech info from Q4, Q6
-   - `{{KIRO_DIR}}/steering/structure.md` - Architecture from Q5
+   - `{{SDD_DIR}}/project/steering/product.md` - Product info from Q1-Q3
+   - `{{SDD_DIR}}/project/steering/tech.md` - Tech info from Q4, Q6
+   - `{{SDD_DIR}}/project/steering/structure.md` - Architecture from Q5
 
-3. **Write files** to `{{KIRO_DIR}}/steering/`
+3. **Write files** to `{{SDD_DIR}}/project/steering/`
 
 ### Step 5: Present Summary
 
@@ -103,7 +103,7 @@ Ask progressively using AskUserQuestion. If codebase was analyzed, present detec
 - [Pattern 3]
 
 ### Next Steps
-- Review files in {{KIRO_DIR}}/steering/
+- Review files in {{SDD_DIR}}/project/steering/
 - Run `/sdd-steering` again to make changes
 - Use `/sdd-steering-custom` for specialized topics
 
@@ -136,7 +136,7 @@ Ready to guide development.
 
 ## Principles Reference
 
-Load `{{KIRO_DIR}}/settings/rules/steering-principles.md` for:
+Load `{{SDD_DIR}}/settings/rules/steering-principles.md` for:
 - Granularity guidelines
 - What to document vs avoid
 - Quality standards

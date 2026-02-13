@@ -41,8 +41,8 @@ git stash list                     # Stash list
 ```
 
 #### 1b. Roadmap & Spec State
-- Read `{{KIRO_DIR}}/specs/roadmap.md` to understand Wave structure
-- Read all `{{KIRO_DIR}}/specs/*/spec.json` to collect each spec's phase
+- Read `{{SDD_DIR}}/project/specs/roadmap.md` to understand Wave structure
+- Read all `{{SDD_DIR}}/project/specs/*/spec.json` to collect each spec's phase
 - Scan each spec's `tasks.md` to tally task completion (`- [x]` vs `- [ ]`)
 
 #### 1c. Test State
@@ -52,7 +52,7 @@ uv run pytest --tb=no -q 2>&1 | tail -5
 ```
 
 #### 1d. Steering Changes
-- Check file list and last modified dates in `{{KIRO_DIR}}/steering/`
+- Check file list and last modified dates in `{{SDD_DIR}}/project/steering/`
 
 ### Step 2: Collect Session Context
 
@@ -175,7 +175,7 @@ If `.claude/CLAUDE.md` does not already contain the following, append it:
 - Step 2 interactive collection should happen after Step 1 completes
 
 ### File Operations
-- **Glob**: Batch search for `{{KIRO_DIR}}/specs/*/spec.json`, `{{KIRO_DIR}}/specs/*/tasks.md`
+- **Glob**: Batch search for `{{SDD_DIR}}/project/specs/*/spec.json`, `{{SDD_DIR}}/project/specs/*/tasks.md`
 - **Read**: Read spec.json, tasks.md, roadmap.md
 - **Bash**: Execute git commands, run tests
 - **Write**: Write handover document

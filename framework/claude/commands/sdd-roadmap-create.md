@@ -52,38 +52,38 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 1. **Read rules and templates**:
 
    **Rules**:
-   - Read `{{KIRO_DIR}}/settings/rules/steering-principles.md` (for understanding steering update criteria)
+   - Read `{{SDD_DIR}}/settings/rules/steering-principles.md` (for understanding steering update criteria)
 
    **Steering Templates** (understand what each file should contain):
-   - Read `{{KIRO_DIR}}/settings/templates/steering/product.md`
-   - Read `{{KIRO_DIR}}/settings/templates/steering/tech.md`
-   - Read `{{KIRO_DIR}}/settings/templates/steering/structure.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering/product.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering/tech.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering/structure.md`
 
    **Custom Steering Templates** (understand more detailed patterns allowed):
-   - Read `{{KIRO_DIR}}/settings/templates/steering-custom/database.md`
-   - Read `{{KIRO_DIR}}/settings/templates/steering-custom/api-standards.md`
-   - Read `{{KIRO_DIR}}/settings/templates/steering-custom/testing.md`
-   - Read `{{KIRO_DIR}}/settings/templates/steering-custom/security.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering-custom/database.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering-custom/api-standards.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering-custom/testing.md`
+   - Read `{{SDD_DIR}}/settings/templates/steering-custom/security.md`
    - (and others if relevant to the domain)
 
    **Spec Templates** (for skeleton generation in Phase 5):
-   - Read `{{KIRO_DIR}}/settings/templates/specs/design.md`
-   - Read `{{KIRO_DIR}}/settings/templates/specs/research.md`
-   - Read `{{KIRO_DIR}}/settings/templates/specs/init.json`
+   - Read `{{SDD_DIR}}/settings/templates/specs/design.md`
+   - Read `{{SDD_DIR}}/settings/templates/specs/research.md`
+   - Read `{{SDD_DIR}}/settings/templates/specs/init.json`
 
    **Purpose**:
    - Understand what content is appropriate for each steering file
    - Understand how to generate proper skeleton design.md and research.md
 
 2. **Read ALL steering documents**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory:
+   - Read entire `{{SDD_DIR}}/project/steering/` directory:
      - `product.md` - Product vision, goals, user personas
      - `tech.md` - Technical constraints, standards, patterns
      - `structure.md` - Project structure, conventions
      - All custom steering files
 
 3. **Scan existing specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to understand existing features
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` to understand existing features
    - Read each spec's `design.md` (if exists) to understand scope
    - Build inventory of existing specs with their phases
 
@@ -125,7 +125,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
      - Source (steering section)
 
 3. **Check for duplicates** with existing specs:
-   - Compare against `{{KIRO_DIR}}/specs/*/` inventory
+   - Compare against `{{SDD_DIR}}/project/specs/*/` inventory
    - Mark overlaps or extensions
 
 4. **Present candidates to user in detail** (unless `-y`):
@@ -276,7 +276,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - For new specs: Create directories
 
 2. **For each NEW spec candidate, create directory and spec.json**:
-   - Create `{{KIRO_DIR}}/specs/[spec-name]/`
+   - Create `{{SDD_DIR}}/project/specs/[spec-name]/`
    - Generate spec.json with roadmap metadata
    - Set `phase: "initialized"`
 
@@ -294,7 +294,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - Ask: "Proceed with spec initialization?"
 
 8. **Generate roadmap.md** (project-wide roadmap file):
-   - Write to `{{KIRO_DIR}}/specs/roadmap.md`
+   - Write to `{{SDD_DIR}}/project/specs/roadmap.md`
    - **NOT in steering** (to avoid context pollution for individual spec implementers)
    - **Plan only, no progress tracking** (progress is dynamically calculated by `/sdd-status`)
    - **Format Contract**: The following sections are **required** and parsed by `/sdd-roadmap-run` and `/sdd-status`:
@@ -392,7 +392,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
      ```
 
      ### Step 1: Identify specs in Wave
-     1. Read `.kiro/specs/*/spec.json`
+     1. Read `{{SDD_DIR}}/project/specs/*/spec.json`
      2. List specs where `roadmap.wave == N`
      3. Build dependency graph from `roadmap.dependencies`
 
@@ -538,7 +538,7 @@ Language: [ja|en based on conversation context]
 
 ### Generated Files
 
-For each NEW spec, create the following files in `{{KIRO_DIR}}/specs/[spec-name]/`:
+For each NEW spec, create the following files in `{{SDD_DIR}}/project/specs/[spec-name]/`:
 
 1. **spec.json**: Metadata with roadmap information
    ```json

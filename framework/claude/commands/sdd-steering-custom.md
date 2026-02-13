@@ -45,7 +45,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 If user chose analysis:
 
 1. **Load template** (if exists):
-   - Check `{{KIRO_DIR}}/settings/templates/steering-custom/{topic}.md`
+   - Check `{{SDD_DIR}}/settings/templates/steering-custom/{topic}.md`
 
 2. **Scan for relevant patterns**:
    - **Glob**: Find files related to the topic
@@ -98,7 +98,7 @@ If user chose dialogue:
 
 ### Step 4: Generate Custom Steering
 
-1. **Apply principles** from `{{KIRO_DIR}}/settings/rules/steering-principles.md`:
+1. **Apply principles** from `{{SDD_DIR}}/settings/rules/steering-principles.md`:
    - Patterns over exhaustive lists
    - Single domain per file
    - Concrete examples with code
@@ -121,7 +121,7 @@ If user chose dialogue:
    [What to avoid]
    ```
 
-3. **Write file** to `{{KIRO_DIR}}/steering/{topic}.md`
+3. **Write file** to `{{SDD_DIR}}/project/steering/{topic}.md`
 
 ### Step 5: Present Summary
 
@@ -129,7 +129,7 @@ If user chose dialogue:
 ## Custom Steering Created
 
 ### Generated
-- {{KIRO_DIR}}/steering/{topic}.md
+- {{SDD_DIR}}/project/steering/{topic}.md
 
 ### Content Summary
 - [Key pattern 1]
@@ -151,7 +151,7 @@ Ready to guide development.
 
 ## Available Templates
 
-Templates in `{{KIRO_DIR}}/settings/templates/steering-custom/`:
+Templates in `{{SDD_DIR}}/settings/templates/steering-custom/`:
 
 | Template | Use For |
 |----------|---------|
@@ -183,7 +183,7 @@ Load as starting point when topic matches; customize for project.
 
 ## Steering Principles
 
-From `{{KIRO_DIR}}/settings/rules/steering-principles.md`:
+From `{{SDD_DIR}}/settings/rules/steering-principles.md`:
 
 - **Patterns over lists**: Document patterns, not every file/component
 - **Single domain**: One topic per file

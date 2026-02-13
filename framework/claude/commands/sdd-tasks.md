@@ -24,9 +24,9 @@ Generate implementation tasks for feature **$1** based on design (specifications
 ### Step 1: Load Context
 
 **Read all necessary context**:
-- `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md`
-- `{{KIRO_DIR}}/specs/$1/tasks.md` (if exists, for merge mode)
-- **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
+- `{{SDD_DIR}}/project/specs/$1/spec.json`, `design.md`
+- `{{SDD_DIR}}/project/specs/$1/tasks.md` (if exists, for merge mode)
+- **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
 
 **Validate phase**:
 - Verify design.md exists (stop if not, see Safety & Fallback)
@@ -43,9 +43,9 @@ Generate implementation tasks for feature **$1** based on design (specifications
 ### Step 2: Generate Implementation Tasks
 
 **Load generation rules and template**:
-- Read `{{KIRO_DIR}}/settings/rules/tasks-generation.md` for principles
-- If `sequential` is **false**: Read `{{KIRO_DIR}}/settings/rules/tasks-parallel-analysis.md` for parallel judgement criteria
-- Read `{{KIRO_DIR}}/settings/templates/specs/tasks.md` for format (supports `(P)` markers)
+- Read `{{SDD_DIR}}/settings/rules/tasks-generation.md` for principles
+- If `sequential` is **false**: Read `{{SDD_DIR}}/settings/rules/tasks-parallel-analysis.md` for parallel judgement criteria
+- Read `{{SDD_DIR}}/settings/templates/specs/tasks.md` for format (supports `(P)` markers)
 
 **Generate task list following all rules**:
 - Use language specified in spec.json
@@ -61,7 +61,7 @@ Generate implementation tasks for feature **$1** based on design (specifications
 ### Step 3: Finalize
 
 **Write and update**:
-- Create/update `{{KIRO_DIR}}/specs/$1/tasks.md`
+- Create/update `{{SDD_DIR}}/project/specs/$1/tasks.md`
 - Update spec.json metadata:
   - Set `phase: "tasks-generated"`
   - Update `updated_at` timestamp
@@ -86,7 +86,7 @@ Generate implementation tasks for feature **$1** based on design (specifications
 
 Provide brief summary in the language specified in spec.json:
 
-1. **Status**: Confirm tasks generated at `{{KIRO_DIR}}/specs/$1/tasks.md`
+1. **Status**: Confirm tasks generated at `{{SDD_DIR}}/project/specs/$1/tasks.md`
 2. **Task Summary**:
    - Total: X major tasks, Y sub-tasks
    - All Z specifications covered
@@ -105,7 +105,7 @@ Provide brief summary in the language specified in spec.json:
 
 **Missing Design**:
 - **Stop Execution**: Design document must exist
-- **User Message**: "Missing design.md at `{{KIRO_DIR}}/specs/$1/`"
+- **User Message**: "Missing design.md at `{{SDD_DIR}}/project/specs/$1/`"
 - **Suggested Action**: "Run `/sdd-design $1` or `/sdd-design \"description\"` first"
 
 **Incomplete Spec Coverage**:
@@ -113,7 +113,7 @@ Provide brief summary in the language specified in spec.json:
 - **User Action Required**: Confirm intentional gaps or regenerate tasks
 
 **Template/Rules Missing**:
-- **User Message**: "Template or rules files missing in `{{KIRO_DIR}}/settings/`"
+- **User Message**: "Template or rules files missing in `{{SDD_DIR}}/settings/`"
 - **Fallback**: Use inline basic structure with warning
 - **Suggested Action**: "Check repository setup or restore template files"
 - **Missing Numeric Spec IDs**:

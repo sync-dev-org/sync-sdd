@@ -32,25 +32,27 @@ curl -LsSf <url>/install.sh | sh -s -- --uninstall
 
 ```
 your-project/
-├── .claude/
-│   ├── CLAUDE.md              # Framework instructions (auto-loaded by Claude Code)
-│   ├── settings.json          # Default settings
-│   ├── commands/sdd-*.md      # 21 slash commands
-│   └── agents/sdd-*.md        # 13 review agents
-└── .kiro/
-    └── settings/
-        ├── rules/             # Development rules
-        └── templates/         # Spec/steering/knowledge templates
+└── .claude/
+    ├── CLAUDE.md                      # Framework instructions (auto-loaded)
+    ├── settings.json                  # Default settings
+    ├── commands/sdd-*.md              # 21 slash commands
+    ├── agents/sdd-*.md                # 13 review agents
+    └── sdd/
+        └── settings/                  # Framework-managed
+            ├── rules/
+            └── templates/
 ```
 
-Your project files (created by you through the workflow) are never touched by `--update`:
+Your project files (created through the workflow) are never touched by `--update`:
 
 ```
-.kiro/steering/      # Project context and decisions
-.kiro/specs/         # Feature specifications
-.kiro/knowledge/     # Reusable learnings
-.claude/handover.md  # Session continuity
+.claude/sdd/project/steering/      # Project context and decisions
+.claude/sdd/project/specs/         # Feature specifications
+.claude/sdd/project/knowledge/     # Reusable learnings
+.claude/handover.md                # Session continuity
 ```
+
+Reset all project files: `rm -rf .claude/sdd/project`
 
 ## Quick start
 

@@ -42,11 +42,11 @@ If `--team` flag is present in arguments:
 ### Step 1: Load Roadmap State
 
 1. **Read roadmap.md**:
-   - Load `{{KIRO_DIR}}/specs/roadmap.md`
+   - Load `{{SDD_DIR}}/project/specs/roadmap.md`
    - Parse Wave structure and dependencies
 
 2. **Scan all specs**:
-   - Read all `{{KIRO_DIR}}/specs/*/spec.json`
+   - Read all `{{SDD_DIR}}/project/specs/*/spec.json`
    - For each spec, check:
      - Current phase
      - tasks.md existence and completion status

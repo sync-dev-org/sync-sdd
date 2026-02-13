@@ -23,7 +23,7 @@ argument-hint: "[-y] [--team]"
 ### Step 1: Check Roadmap State
 
 1. **Check if roadmap.md exists**:
-   - Look for `{{KIRO_DIR}}/specs/roadmap.md`
+   - Look for `{{SDD_DIR}}/project/specs/roadmap.md`
 
 2. **If roadmap.md does NOT exist**:
    - Inform user: "No roadmap found. Initializing new roadmap..."
@@ -32,7 +32,7 @@ argument-hint: "[-y] [--team]"
 
 3. **If roadmap.md EXISTS**:
    - Read roadmap.md to understand current wave structure
-   - Scan all `{{KIRO_DIR}}/specs/*/spec.json` to get current spec states
+   - Scan all `{{SDD_DIR}}/project/specs/*/spec.json` to get current spec states
    - Proceed to Step 2
 
 ### Step 2: Build Status Summary

@@ -24,11 +24,11 @@ Generate status report for feature **$1** showing progress across all phases.
 ### Step 0: Load Roadmap and Calculate Progress (if roadmap.md exists)
 
 1. **Read roadmap.md** for Wave structure:
-   - `{{KIRO_DIR}}/specs/roadmap.md`
+   - `{{SDD_DIR}}/project/specs/roadmap.md`
    - Extract: Wave names, spec assignments, dependencies
 
 2. **Read ALL spec.json files** for current phase:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Extract `phase` field from each
 
 3. **Calculate Wave progress dynamically**:
@@ -49,9 +49,9 @@ Generate status report for feature **$1** showing progress across all phases.
 
 ### Step 1: Load Spec Context
 - If **no argument** ($1 is empty): Skip to Step 3 for overall roadmap status only
-- If **argument provided**: Read `{{KIRO_DIR}}/specs/$1/spec.json` for metadata and phase status
+- If **argument provided**: Read `{{SDD_DIR}}/project/specs/$1/spec.json` for metadata and phase status
 - Read existing files: `design.md`, `tasks.md` (if they exist)
-- Check `{{KIRO_DIR}}/specs/$1/` directory for available files
+- Check `{{SDD_DIR}}/project/specs/$1/` directory for available files
 
 ### Step 2: Analyze Status
 
@@ -134,7 +134,7 @@ Provide status report in the language specified in spec.json:
 ### Error Scenarios
 
 **Spec Not Found**:
-- **Message**: "No spec found for `$1`. Check available specs in `{{KIRO_DIR}}/specs/`"
+- **Message**: "No spec found for `$1`. Check available specs in `{{SDD_DIR}}/project/specs/`"
 - **Action**: List available spec directories
 
 **Incomplete Spec**:
@@ -146,4 +146,4 @@ Provide status report in the language specified in spec.json:
 To see overall roadmap progress:
 - Run with no argument: `/sdd-status`
 - If `roadmap.md` exists: Shows Wave-by-wave progress with blocked indicators
-- If no `roadmap.md`: Lists all specs in `{{KIRO_DIR}}/specs/` with their individual status
+- If no `roadmap.md`: Lists all specs in `{{SDD_DIR}}/project/specs/` with their individual status

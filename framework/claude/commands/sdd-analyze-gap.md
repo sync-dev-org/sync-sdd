@@ -22,15 +22,15 @@ Analyze implementation gap for feature **$1** based on design specifications and
 ## Execution Steps
 
 1. **Load Context**:
-   - Read `{{KIRO_DIR}}/specs/$1/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/$1/design.md` for specifications and design
-   - **Load ALL steering context**: Read entire `{{KIRO_DIR}}/steering/` directory including:
+   - Read `{{SDD_DIR}}/project/specs/$1/spec.json` for language and metadata
+   - Read `{{SDD_DIR}}/project/specs/$1/design.md` for specifications and design
+   - **Load ALL steering context**: Read entire `{{SDD_DIR}}/project/steering/` directory including:
      - Default files: `product.md`, `tech.md`, `structure.md`
      - All custom steering files (regardless of mode settings)
      - This provides complete project memory and context
 
 2. **Read Analysis Guidelines**:
-   - Read `{{KIRO_DIR}}/settings/rules/gap-analysis.md` for comprehensive analysis framework
+   - Read `{{SDD_DIR}}/settings/rules/gap-analysis.md` for comprehensive analysis framework
 
 3. **Execute Gap Analysis**:
    - Follow gap-analysis.md framework for thorough investigation

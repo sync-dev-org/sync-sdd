@@ -23,10 +23,10 @@ argument-hint: "[-y]"
 ### Step 1: Load Existing Steering
 
 1. **Read all steering files**:
-   - `{{KIRO_DIR}}/steering/product.md`
-   - `{{KIRO_DIR}}/steering/tech.md`
-   - `{{KIRO_DIR}}/steering/structure.md`
-   - Any custom files in `{{KIRO_DIR}}/steering/`
+   - `{{SDD_DIR}}/project/steering/product.md`
+   - `{{SDD_DIR}}/project/steering/tech.md`
+   - `{{SDD_DIR}}/project/steering/structure.md`
+   - Any custom files in `{{SDD_DIR}}/project/steering/`
 
 2. **Build current state summary**:
    ```
@@ -132,7 +132,7 @@ Based on user's selection, focus dialogue ONLY on those areas:
 - structure.md (no changes requested)
 
 ### Next Steps
-- Review changes in {{KIRO_DIR}}/steering/
+- Review changes in {{SDD_DIR}}/project/steering/
 - Use `/sdd-steering-custom` for specialized topics
 
 Ready to guide development.

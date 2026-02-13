@@ -37,11 +37,11 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` for integration points
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata and file paths
+   - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` for integration points
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata and file paths
 
 2. **Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory:
+   - Read entire `{{SDD_DIR}}/project/steering/` directory:
      - `tech.md` - Technical conventions
      - `structure.md` - Project structure, patterns
 
@@ -51,19 +51,19 @@ You will receive a prompt containing:
    - Read implementation files for this feature
 
 4. **Other Feature Designs** (for consistency comparison):
-   - Glob `{{KIRO_DIR}}/specs/*/design.md`
+   - Glob `{{SDD_DIR}}/project/specs/*/design.md`
    - Read other features' design docs to understand shared patterns
    - Use Grep to find usage of shared modules across codebase
 
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read ALL design.md files
    - Identify all implementation file paths for each feature
 
 2. **Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 ## Execution
 
@@ -111,15 +111,15 @@ In single spec mode, verify the feature's implementation is consistent with the 
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 3. **Load Roadmap Context** (advisory):
-   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
    - Do NOT treat future wave plans as concrete requirements/designs
 
@@ -138,7 +138,7 @@ In single spec mode, verify the feature's implementation is consistent with the 
 In cross-check mode, systematically verify consistency across ALL implemented features:
 
 1. **Discover All Implementations**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` for features
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` for features
    - Read design.md and implementation files for each
    - Map all shared module usage
 

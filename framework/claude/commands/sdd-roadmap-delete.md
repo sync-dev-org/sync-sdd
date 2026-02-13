@@ -18,8 +18,8 @@ allowed-tools: Bash, Read, Glob, AskUserQuestion, Skill
 ### Step 1: List Files to Delete
 
 1. **Scan specs directory**:
-   - Read `{{KIRO_DIR}}/specs/roadmap.md`
-   - Glob `{{KIRO_DIR}}/specs/*/` for spec directories
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md`
+   - Glob `{{SDD_DIR}}/project/specs/*/` for spec directories
 
 2. **Build deletion list**:
    ```
@@ -28,16 +28,16 @@ allowed-tools: Bash, Read, Glob, AskUserQuestion, Skill
    This will DELETE:
 
    ### Roadmap
-   - {{KIRO_DIR}}/specs/roadmap.md
+   - {{SDD_DIR}}/project/specs/roadmap.md
 
    ### Spec Directories ([N] specs)
-   - {{KIRO_DIR}}/specs/[spec-1]/
-   - {{KIRO_DIR}}/specs/[spec-2]/
+   - {{SDD_DIR}}/project/specs/[spec-1]/
+   - {{SDD_DIR}}/project/specs/[spec-2]/
    - ...
 
    ### Preserved
-   - {{KIRO_DIR}}/steering/ (all steering documents)
-   - {{KIRO_DIR}}/settings/ (templates and rules)
+   - {{SDD_DIR}}/project/steering/ (all steering documents)
+   - {{SDD_DIR}}/settings/ (templates and rules)
 
    ⚠️ This action cannot be undone (use git to recover if needed).
 
@@ -56,18 +56,18 @@ If confirmed:
 
 1. **Delete roadmap**:
    ```bash
-   rm {{KIRO_DIR}}/specs/roadmap.md
+   rm {{SDD_DIR}}/project/specs/roadmap.md
    ```
 
 2. **Delete all spec directories**:
    ```bash
-   rm -rf {{KIRO_DIR}}/specs/*/
+   rm -rf {{SDD_DIR}}/project/specs/*/
    ```
 
 3. **Preserve**:
-   - `{{KIRO_DIR}}/specs/` directory itself
-   - `{{KIRO_DIR}}/steering/`
-   - `{{KIRO_DIR}}/settings/`
+   - `{{SDD_DIR}}/project/specs/` directory itself
+   - `{{SDD_DIR}}/project/steering/`
+   - `{{SDD_DIR}}/settings/`
 
 ### Step 4: Reinitialize
 
@@ -101,13 +101,13 @@ After successful deletion:
 ### Deletion Commands
 
 ```bash
-rm {{KIRO_DIR}}/specs/roadmap.md
-rm -rf {{KIRO_DIR}}/specs/*/
+rm {{SDD_DIR}}/project/specs/roadmap.md
+rm -rf {{SDD_DIR}}/project/specs/*/
 ```
 
 **NEVER delete**:
-- `{{KIRO_DIR}}/steering/` (steering documents)
-- `{{KIRO_DIR}}/settings/` (templates and rules)
+- `{{SDD_DIR}}/project/steering/` (steering documents)
+- `{{SDD_DIR}}/settings/` (templates and rules)
 - The specs directory itself
 
 ## Safety Measures

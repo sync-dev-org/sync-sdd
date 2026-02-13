@@ -69,15 +69,15 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .claude/CLAUDE.md            Framework instructions (appended between markers)
     .claude/settings.json        Default settings (prompt before overwrite)
 
-    .kiro/settings/rules/        Development rules
-    .kiro/settings/templates/    Spec/steering/knowledge templates
+    .claude/sdd/settings/rules/      Development rules
+    .claude/sdd/settings/templates/  Spec/steering/knowledge templates
 
 ${BOLD}USER FILES${RESET} (never touched by installer):
-    .kiro/steering/              Project-specific steering
-    .kiro/specs/                 Feature specifications
-    .kiro/knowledge/             Knowledge base entries
-    .claude/handover.md          Session handover
-    .claude/settings.local.json  Local setting overrides
+    .claude/sdd/project/steering/    Project-specific steering
+    .claude/sdd/project/specs/       Feature specifications
+    .claude/sdd/project/knowledge/   Knowledge base entries
+    .claude/handover.md              Session handover
+    .claude/settings.local.json      Local setting overrides
 EOF
     exit 0
 }
@@ -107,8 +107,8 @@ if [ "$UNINSTALL" = true ]; then
     # Remove framework-managed files only
     rm -f .claude/commands/sdd-*.md
     rm -f .claude/agents/sdd-*.md
-    rm -rf .kiro/settings/rules/ \
-           .kiro/settings/templates/
+    rm -rf .claude/sdd/settings/rules/ \
+           .claude/sdd/settings/templates/
 
     # Remove SDD section from CLAUDE.md (preserve user content)
     if [ -f .claude/CLAUDE.md ] && grep -q "$SDD_MARKER_START" .claude/CLAUDE.md; then
@@ -127,14 +127,14 @@ if [ "$UNINSTALL" = true ]; then
     fi
 
     # Clean up empty directories
-    rmdir .claude/commands .claude/agents .kiro/settings .kiro 2>/dev/null || true
+    rmdir .claude/commands .claude/agents .claude/sdd/settings .claude/sdd 2>/dev/null || true
 
     if [ -f .claude/settings.json ]; then
         warn ".claude/settings.json was left in place (may contain your customizations)"
     fi
 
     success "SDD framework files removed"
-    info "User files (.kiro/steering/, .kiro/specs/, .kiro/knowledge/) were preserved"
+    info "User files (.claude/sdd/project/) were preserved"
     exit 0
 fi
 
@@ -143,6 +143,34 @@ if [ ! -d .git ] && [ "$FORCE" = false ]; then
     error "Not a git repository. Run this from your project root."
     error "Use --force to install anyway."
     exit 1
+fi
+
+# --- Migrate from .kiro/ to .claude/sdd/ ---
+if [ -d .kiro ] && [ "$UNINSTALL" = false ]; then
+    info "Detected legacy .kiro/ directory"
+
+    # Migrate user files
+    for dir in steering specs knowledge; do
+        if [ -d ".kiro/$dir" ]; then
+            if [ -d ".claude/sdd/project/$dir" ]; then
+                warn ".claude/sdd/project/$dir already exists, skipping .kiro/$dir migration"
+            else
+                mkdir -p .claude/sdd/project
+                mv ".kiro/$dir" ".claude/sdd/project/$dir"
+                info "Migrated .kiro/$dir -> .claude/sdd/project/$dir"
+            fi
+        fi
+    done
+
+    # Remove old framework-managed files
+    rm -rf .kiro/settings/rules/ .kiro/settings/templates/
+    rmdir .kiro/settings .kiro 2>/dev/null || true
+
+    if [ -d .kiro ]; then
+        warn ".kiro/ still has files; check manually"
+    else
+        success "Legacy .kiro/ directory fully migrated"
+    fi
 fi
 
 # --- Download ---
@@ -277,9 +305,9 @@ else
     install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
 fi
 
-# .kiro/ framework files
-install_dir "$SRC/framework/kiro/settings/rules"     ".kiro/settings/rules"
-install_dir "$SRC/framework/kiro/settings/templates"  ".kiro/settings/templates"
+# .claude/sdd/settings/ framework files
+install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
+install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
 
 # --- Remove stale framework files on update ---
 if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
@@ -303,11 +331,11 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
 
     remove_stale ".claude/commands" "$SRC/framework/claude/commands" "sdd-*.md"
     remove_stale ".claude/agents"   "$SRC/framework/claude/agents"   "sdd-*.md"
-    remove_stale ".kiro/settings/rules"     "$SRC/framework/kiro/settings/rules"     "*.md"
-    remove_stale ".kiro/settings/templates" "$SRC/framework/kiro/settings/templates"  "*"
+    remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
+    remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
 
     # Clean up empty directories left after stale file removal
-    find .kiro/settings/templates -depth -type d -empty -delete 2>/dev/null || true
+    find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
 fi
 
 # --- Summary ---
@@ -323,7 +351,7 @@ printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/commands/    $(find .claude/commands -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agents"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .kiro/settings/      Rules + templates"
+echo "  .claude/sdd/         Rules + templates"
 
 if [ "$UPDATE" = false ]; then
     echo ""

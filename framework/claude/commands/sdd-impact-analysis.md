@@ -25,15 +25,15 @@ Analyze the downstream impact of recent changes to feature **$1**'s specificatio
 ### Step 1: Load Context
 
 1. **Read target spec**:
-   - `{{KIRO_DIR}}/specs/$1/spec.json` — version, changelog, version_refs, roadmap metadata
-   - `{{KIRO_DIR}}/specs/$1/design.md` — Specifications section with stability tags
+   - `{{SDD_DIR}}/project/specs/$1/spec.json` — version, changelog, version_refs, roadmap metadata
+   - `{{SDD_DIR}}/project/specs/$1/design.md` — Specifications section with stability tags
 
 2. **Read roadmap**:
-   - `{{KIRO_DIR}}/specs/roadmap.md` — dependency graph and wave structure
+   - `{{SDD_DIR}}/project/specs/roadmap.md` — dependency graph and wave structure
    - If roadmap.md does not exist: Report "No roadmap found. Impact analysis requires `/sdd-roadmap` to be configured." and stop.
 
 3. **Read all specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to load all spec metadata
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` to load all spec metadata
 
 ### Step 2: Build Dependency Graph
 

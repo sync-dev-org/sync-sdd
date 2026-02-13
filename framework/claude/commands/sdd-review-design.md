@@ -59,13 +59,13 @@ Before launching agents, validate target existence only:
 ### Single Spec Mode
 
 1. **Validate Spec Exists**:
-   - Check `{{KIRO_DIR}}/specs/{feature}/design.md` exists
+   - Check `{{SDD_DIR}}/project/specs/{feature}/design.md` exists
    - If not found, report error and stop
 
 ### Cross-Check Mode
 
 1. **Validate Specs Exist**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to confirm specs exist
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` to confirm specs exist
    - If none found, report error and stop
 
 ### Wave-Scoped Cross-Check Mode
@@ -75,7 +75,7 @@ Before launching agents, validate target existence only:
    - If N is not a positive integer, report error and stop
 
 2. **Validate Wave Specs Exist**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json, filter where `roadmap.wave <= N`
    - If no specs found for waves 1..N, report error and stop
 
@@ -310,7 +310,7 @@ All teammates are flat members of the review team. Lead receives only the final 
 - **No design.md**: Report error - design.md is required
 - **Agent failure** (Subagent mode): Report partial results from successful agents, note which failed
 - **Teammate failure** (Team mode): If a teammate fails to respond, proceed with available results, note incomplete review
-- **No specs found** (Cross-Check): "No specs found in `{{KIRO_DIR}}/specs/`. Create specs first."
+- **No specs found** (Cross-Check): "No specs found in `{{SDD_DIR}}/project/specs/`. Create specs first."
 - **Agent Team unavailable**: If TeamCreate fails, fall back to Subagent Execution Flow with warning
 
 ---

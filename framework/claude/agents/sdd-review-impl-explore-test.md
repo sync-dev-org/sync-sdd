@@ -38,13 +38,13 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` (especially Testing Strategy section)
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata and file paths
+   - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (especially Testing Strategy section)
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata and file paths
 
 2. **Steering Context**:
-   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
-   - Read `{{KIRO_DIR}}/steering/tech.md` - Test commands, framework configuration
-   - Read `{{KIRO_DIR}}/steering/structure.md` - Test file conventions
+   - Read `{{SDD_DIR}}/project/steering/product.md` - Product purpose, users, domain context
+   - Read `{{SDD_DIR}}/project/steering/tech.md` - Test commands, framework configuration
+   - Read `{{SDD_DIR}}/project/steering/structure.md` - Test file conventions
 
 3. **Implementation Files**:
    - Extract implementation file paths from design.md
@@ -54,12 +54,12 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read design.md Testing Strategy for each feature
    - Identify all implementation and test file paths
 
 2. **Steering Context**:
-   - Read `{{KIRO_DIR}}/steering/tech.md` for test commands
+   - Read `{{SDD_DIR}}/project/steering/tech.md` for test commands
 
 ## Execution
 
@@ -148,15 +148,15 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 3. **Load Roadmap Context** (advisory):
-   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
    - Do NOT treat future wave plans as concrete requirements/designs
 

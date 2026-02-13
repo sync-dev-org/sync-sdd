@@ -18,7 +18,7 @@ allowed-tools: Bash, Read, Glob, AskUserQuestion, Skill
 ### Step 1: List Files to Delete
 
 1. **Scan steering directory**:
-   - Glob `{{KIRO_DIR}}/steering/*.md`
+   - Glob `{{SDD_DIR}}/project/steering/*.md`
 
 2. **Categorize files**:
    - Core files: `product.md`, `tech.md`, `structure.md`
@@ -31,13 +31,13 @@ allowed-tools: Bash, Read, Glob, AskUserQuestion, Skill
    This will DELETE the following steering files:
 
    ### Core Files
-   - {{KIRO_DIR}}/steering/product.md
-   - {{KIRO_DIR}}/steering/tech.md
-   - {{KIRO_DIR}}/steering/structure.md
+   - {{SDD_DIR}}/project/steering/product.md
+   - {{SDD_DIR}}/project/steering/tech.md
+   - {{SDD_DIR}}/project/steering/structure.md
 
    ### Custom Files
-   - {{KIRO_DIR}}/steering/[custom1].md
-   - {{KIRO_DIR}}/steering/[custom2].md
+   - {{SDD_DIR}}/project/steering/[custom1].md
+   - {{SDD_DIR}}/project/steering/[custom2].md
 
    ⚠️ This action cannot be undone (use git to recover if needed).
 
@@ -56,11 +56,11 @@ If confirmed:
 
 1. **Delete all steering files**:
    ```bash
-   rm {{KIRO_DIR}}/steering/*.md
+   rm {{SDD_DIR}}/project/steering/*.md
    ```
 
 2. **Preserve directory structure**:
-   - Keep `{{KIRO_DIR}}/steering/` directory
+   - Keep `{{SDD_DIR}}/project/steering/` directory
    - Only delete `.md` files
 
 ### Step 4: Reinitialize
@@ -71,7 +71,7 @@ After successful deletion:
    ```
    ## Steering Deleted
 
-   Removed [N] files from {{KIRO_DIR}}/steering/
+   Removed [N] files from {{SDD_DIR}}/project/steering/
 
    Starting reinitialization...
    ```
@@ -92,12 +92,12 @@ After successful deletion:
 ### Deletion Commands
 
 ```bash
-rm {{KIRO_DIR}}/steering/*.md
+rm {{SDD_DIR}}/project/steering/*.md
 ```
 
 **NEVER delete**:
-- `{{KIRO_DIR}}/settings/` (templates and rules)
-- `{{KIRO_DIR}}/specs/` (specifications)
+- `{{SDD_DIR}}/settings/` (templates and rules)
+- `{{SDD_DIR}}/project/specs/` (specifications)
 - The steering directory itself
 
 ## Safety Measures

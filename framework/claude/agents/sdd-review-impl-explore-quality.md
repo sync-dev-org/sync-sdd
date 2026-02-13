@@ -38,13 +38,13 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Target Spec**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` (error handling, patterns, architecture)
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata and file paths
+   - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (error handling, patterns, architecture)
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata and file paths
 
 2. **Steering Context**:
-   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
-   - Read `{{KIRO_DIR}}/steering/tech.md` - Technical conventions, logging patterns
-   - Read `{{KIRO_DIR}}/steering/structure.md` - Naming conventions, file organization
+   - Read `{{SDD_DIR}}/project/steering/product.md` - Product purpose, users, domain context
+   - Read `{{SDD_DIR}}/project/steering/tech.md` - Technical conventions, logging patterns
+   - Read `{{SDD_DIR}}/project/steering/structure.md` - Naming conventions, file organization
 
 3. **Implementation Files**:
    - Extract ALL implementation file paths from design.md
@@ -53,18 +53,18 @@ You will receive a prompt containing:
    - Read ALL implementation files for quality analysis
 
 4. **Knowledge Context** (if available):
-   - Glob `{{KIRO_DIR}}/knowledge/incident-*.md` for past quality incidents
+   - Glob `{{SDD_DIR}}/project/knowledge/incident-*.md` for past quality incidents
    - Read relevant entries to inform quality checks
 
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read design.md for each feature
    - Identify all implementation file paths
 
 2. **Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory for project-wide conventions
+   - Read entire `{{SDD_DIR}}/project/steering/` directory for project-wide conventions
 
 ## Execution
 
@@ -136,15 +136,15 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 3. **Load Roadmap Context** (advisory):
-   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
    - Do NOT treat future wave plans as concrete requirements/designs
 

@@ -24,8 +24,8 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 ### Step 1: Load Context
 
 **Read all necessary context**:
-- `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md`, `tasks.md`
-- **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
+- `{{SDD_DIR}}/project/specs/$1/spec.json`, `design.md`, `tasks.md`
+- **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
 
 **Validate phase**:
 - Verify all spec files exist (stop if not, see Safety & Fallback)

@@ -62,12 +62,12 @@ Ask sequentially:
 ```
 
 - Generate kebab-case name from description
-- Check for conflicts in `{{KIRO_DIR}}/knowledge/`
+- Check for conflicts in `{{SDD_DIR}}/project/knowledge/`
 - If conflict exists, append numeric suffix
 
 ## Step 4: Load Template and Generate Content
 
-1. Read template: `{{KIRO_DIR}}/settings/templates/knowledge/{type}.md`
+1. Read template: `{{SDD_DIR}}/settings/templates/knowledge/{type}.md`
 2. Present template structure to user
 3. Use dialogue to fill in key sections:
    - For incident: Focus on "What Happened", "Why Overlooked", "Detection Points"
@@ -77,8 +77,8 @@ Ask sequentially:
 
 ## Step 5: Write Files
 
-1. Write knowledge file to `{{KIRO_DIR}}/knowledge/{generated-filename}`
-2. Update `{{KIRO_DIR}}/knowledge/index.md`:
+1. Write knowledge file to `{{SDD_DIR}}/project/knowledge/{generated-filename}`
+2. Update `{{SDD_DIR}}/project/knowledge/index.md`:
    - Add entry to appropriate type section
    - Add entry to category section
    - Add entry to phase section (if applicable)

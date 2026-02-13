@@ -22,9 +22,9 @@ argument-hint: "[-y]"
 ### Step 1: Check Steering State
 
 1. **Check if core steering files exist**:
-   - Look for `{{KIRO_DIR}}/steering/product.md`
-   - Look for `{{KIRO_DIR}}/steering/tech.md`
-   - Look for `{{KIRO_DIR}}/steering/structure.md`
+   - Look for `{{SDD_DIR}}/project/steering/product.md`
+   - Look for `{{SDD_DIR}}/project/steering/tech.md`
+   - Look for `{{SDD_DIR}}/project/steering/structure.md`
 
 2. **If core files do NOT exist** (any missing):
    - Inform user: "No steering documents found. Initializing..."
@@ -116,7 +116,7 @@ Execute `/sdd-steering-delete` via Skill tool.
 ### File Operations
 
 - **Read**: Steering files (for status summary)
-- **Glob**: Find all files in `{{KIRO_DIR}}/steering/`
+- **Glob**: Find all files in `{{SDD_DIR}}/project/steering/`
 
 **NEVER modify files directly** - always route to subcommands.
 

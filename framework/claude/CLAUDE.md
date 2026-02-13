@@ -1,13 +1,16 @@
 # AI-DLC and Spec-Driven Development
 
-Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life Cycle)
+Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ## Project Context
 
 ### Paths
-- Steering: `{{KIRO_DIR}}/steering/`
-- Specs: `{{KIRO_DIR}}/specs/`
-- Knowledge: `{{KIRO_DIR}}/knowledge/`
+- **SDD Root**: `{{SDD_DIR}}` = `.claude/sdd`
+- Steering: `{{SDD_DIR}}/project/steering/`
+- Specs: `{{SDD_DIR}}/project/specs/`
+- Knowledge: `{{SDD_DIR}}/project/knowledge/`
+- Rules: `{{SDD_DIR}}/settings/rules/`
+- Templates: `{{SDD_DIR}}/settings/templates/`
 
 ### Steering vs Specification vs Knowledge
 
@@ -17,9 +20,9 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 | **Specs** | Feature-specific | Design (specifications + architecture), tasks for a feature | No |
 | **Knowledge** | Cross-project | Reusable insights, patterns, incidents | Yes |
 
-**Steering** (`{{KIRO_DIR}}/steering/`) - Guide AI with project-wide rules and context
-**Specs** (`{{KIRO_DIR}}/specs/`) - Formalize development process for individual features
-**Knowledge** (`{{KIRO_DIR}}/knowledge/`) - Capture reusable learnings across projects
+**Steering** (`{{SDD_DIR}}/project/steering/`) - Guide AI with project-wide rules and context
+**Specs** (`{{SDD_DIR}}/project/specs/`) - Formalize development process for individual features
+**Knowledge** (`{{SDD_DIR}}/project/knowledge/`) - Capture reusable learnings across projects
 
 **When to use which**:
 - Project-specific decisions (tech stack, architecture) → Steering
@@ -27,7 +30,7 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Reusable patterns and lessons learned → Knowledge
 
 ### Active Specifications
-- Check `{{KIRO_DIR}}/specs/` for active specifications
+- Check `{{SDD_DIR}}/project/specs/` for active specifications
 - Use `/sdd-status [feature-name]` to check progress
 
 ## Minimal Workflow (Stages)
@@ -102,7 +105,7 @@ No critical issues found
 ```
 
 ## Steering Configuration
-- Load entire `{{KIRO_DIR}}/steering/` as project memory
+- Load entire `{{SDD_DIR}}/project/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/sdd-steering-custom`)
 

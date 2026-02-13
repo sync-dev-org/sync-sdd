@@ -37,9 +37,9 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Load Context**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md` (includes Specifications section)
-   - Read `{{KIRO_DIR}}/specs/{feature}/tasks.md`
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for language and metadata
+   - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (includes Specifications section)
+   - Read `{{SDD_DIR}}/project/specs/{feature}/tasks.md`
 
 2. **Task Completion Check**:
 
@@ -85,15 +85,15 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 3. **Load Roadmap Context** (advisory):
-   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
    - Do NOT treat future wave plans as concrete requirements/designs
 
@@ -110,7 +110,7 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **Discover Implemented Features**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Identify features with completed tasks
 
 2. **Execute Cross-Check**:

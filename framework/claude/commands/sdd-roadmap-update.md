@@ -24,7 +24,7 @@ argument-hint: ""
    - Note dependencies
 
 2. **Scan actual specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/`
+   - Glob `{{SDD_DIR}}/project/specs/*/`
    - For each spec directory, read:
      - `spec.json` (phase, roadmap metadata)
      - `design.md` (exists? content hash, Specifications section)
@@ -304,9 +304,9 @@ Updated: {{TIMESTAMP}}
 [list of changes]
 
 ### Files Modified
-- {{KIRO_DIR}}/specs/roadmap.md
-- {{KIRO_DIR}}/specs/spec-a/spec.json
-- {{KIRO_DIR}}/specs/spec-b/tasks.md (review markers added)
+- {{SDD_DIR}}/project/specs/roadmap.md
+- {{SDD_DIR}}/project/specs/spec-a/spec.json
+- {{SDD_DIR}}/project/specs/spec-b/tasks.md (review markers added)
 
 ### Next Steps
 [recommended actions]

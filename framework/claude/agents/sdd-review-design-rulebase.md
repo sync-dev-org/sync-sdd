@@ -35,12 +35,12 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Load Context**:
-   - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for language and metadata
-   - Read `{{KIRO_DIR}}/specs/{feature}/design.md`
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for language and metadata
+   - Read `{{SDD_DIR}}/project/specs/{feature}/design.md`
 
 2. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/design.md` (template)
-   - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
+   - Read `{{SDD_DIR}}/settings/templates/specs/design.md` (template)
+   - Read `{{SDD_DIR}}/settings/rules/design-review.md`
 
 3. **Execute Review** (three perspectives):
 
@@ -94,15 +94,15 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
    - Read each spec.json
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
-   - Read entire `{{KIRO_DIR}}/steering/` directory
+   - Read entire `{{SDD_DIR}}/project/steering/` directory
 
 3. **Load Roadmap Context** (advisory):
-   - Read `{{KIRO_DIR}}/specs/roadmap.md` (if exists)
+   - Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
    - Treat future wave descriptions as "planned, not yet specified"
    - Do NOT treat future wave plans as concrete specs/designs
 
@@ -119,12 +119,12 @@ You will receive a prompt containing:
 ### Cross-Check Mode (no feature name)
 
 1. **Discover All Specs**:
-   - Glob `{{KIRO_DIR}}/specs/*/spec.json` to find all specs
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` to find all specs
    - For each spec, check if `design.md` exists
 
 2. **Load Templates and Rules**:
-   - Read `{{KIRO_DIR}}/settings/templates/specs/design.md`
-   - Read `{{KIRO_DIR}}/settings/rules/design-review.md`
+   - Read `{{SDD_DIR}}/settings/templates/specs/design.md`
+   - Read `{{SDD_DIR}}/settings/rules/design-review.md`
 
 3. **Execute Cross-Check**:
    - Template conformance across all specs
