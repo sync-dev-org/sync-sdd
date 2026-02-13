@@ -214,6 +214,9 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".claude/agents"   "$SRC/framework/claude/agents"   "sdd-*.md"
     remove_stale ".kiro/settings/rules"     "$SRC/framework/kiro/settings/rules"     "*.md"
     remove_stale ".kiro/settings/templates" "$SRC/framework/kiro/settings/templates"  "*"
+
+    # Clean up empty directories left after stale file removal
+    find .kiro/settings/templates -depth -type d -empty -delete 2>/dev/null || true
 fi
 
 # --- Summary ---
