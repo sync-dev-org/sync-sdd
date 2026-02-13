@@ -7,7 +7,7 @@ description: |
   **Input**: Results from 5 review agents embedded in prompt
   **Output**: Unified, verified implementation review report with final verdict
 tools: Read, Glob
-model: sonnet
+model: opus
 ---
 
 You are an implementation review verifier and synthesizer.

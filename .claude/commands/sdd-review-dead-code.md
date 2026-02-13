@@ -108,7 +108,7 @@ All teammates are flat members of the review team. Lead receives only the final 
 | Role | Model | Responsibility |
 |------|-------|---------------|
 | **Lead** (this router) | Opus | Team creation, final report display. Does NOT process individual findings. |
-| **audit-verifier** | Sonnet | Collects findings from 4 auditors, runs cross-validation, merges results. Sends only final CPF report to Lead. |
+| **audit-verifier** | Opus | Collects findings from 4 auditors, runs cross-validation, merges results. Sends only final CPF report to Lead. |
 | **audit-{category}** ×4 | Sonnet | Independent investigation. Sends findings to audit-verifier (NOT to Lead). |
 
 **Context savings**: Lead never sees raw auditor output. Only the verifier's final report enters Lead's context.
@@ -118,7 +118,7 @@ All teammates are flat members of the review team. Lead receives only the final 
 1. **Create team** "sdd-dead-code-review"
 2. **Spawn audit-verifier** AND **4 auditors** in a SINGLE message (all 5 in parallel):
 
-   **audit-verifier** (name: `audit-verifier`, model: sonnet):
+   **audit-verifier** (name: `audit-verifier`, model: opus):
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    Read `.claude/agents/sdd-review-dead-code-verifier.md` and follow all instructions.

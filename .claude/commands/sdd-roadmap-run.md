@@ -227,7 +227,7 @@ All teammates are flat members of the wave team. No nested teams.
 |------|-----------|---------------|
 | **Lead** | Opus | Dependency management, per-spec user approval, escalation handling. No file writes. |
 | **spec-pipeline-{spec}** | Sonnet | Full lifecycle per spec: `/sdd-design` → `/sdd-tasks` → `/sdd-impl`. File-scoped. |
-| **review-coordinator** | Sonnet | Persistent review service. Receives review requests, spawns 5 review Task subagents per request, synthesizes verdicts. Retains context across all reviews for wave cross-check. |
+| **review-coordinator** | Opus | Persistent review service. Receives review requests, spawns 5 review Task subagents per request, synthesizes verdicts. Retains context across all reviews for wave cross-check. |
 
 Note: review-coordinator uses the Task tool to spawn review subagents (same as current Subagent review mode). This is NOT a nested team — subagents are isolated Tasks, not teammates.
 
@@ -404,7 +404,7 @@ If any impl review returned SPEC-UPDATE-NEEDED:
 - Do NOT reuse teams across waves
 
 **Teammate spawning**:
-- Use Task tool with `team_name` and `model: sonnet`
+- Use Task tool with `team_name` and `model: sonnet` (except `review-coordinator`: use `model: opus`)
 - Always include WORKER preamble: "You are a WORKER agent. Do NOT spawn new teammates or subagents."
 - Always include file ownership list in spawn prompt
 - Spawn independent teammates in a SINGLE message for parallel execution

@@ -7,7 +7,7 @@ description: |
   **Input**: Results from 4 audit agents embedded in prompt
   **Output**: Unified, verified dead code review report with final verdict
 tools: Read, Glob
-model: sonnet
+model: opus
 ---
 
 You are a dead code review verifier and synthesizer.

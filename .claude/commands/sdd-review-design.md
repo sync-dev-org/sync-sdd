@@ -245,7 +245,7 @@ All teammates are flat members of the review team. Lead receives only the final 
 | Role | Model | Responsibility |
 |------|-------|---------------|
 | **Lead** (this router) | Opus | Team creation, final report display. Does NOT process individual findings. |
-| **review-verifier** | Sonnet | Collects findings from 5 reviewers, runs cross-check, synthesizes verdict. Sends only final CPF report to Lead. |
+| **review-verifier** | Opus | Collects findings from 5 reviewers, runs cross-check, synthesizes verdict. Sends only final CPF report to Lead. |
 | **review-{agent-name}** ×5 | Sonnet | Independent review. Sends findings to review-verifier (NOT to Lead). |
 
 **Context savings**: Lead never sees raw reviewer output. Only the verifier's synthesized report enters Lead's context.
@@ -255,7 +255,7 @@ All teammates are flat members of the review team. Lead receives only the final 
 1. **Create team**: `TeamCreate` with team name `sdd-review-design-{feature}` (or `sdd-review-design-cross-check`)
 2. **Spawn review-verifier** AND **5 reviewers** in a SINGLE message (all 6 in parallel):
 
-   **review-verifier** (name: `review-verifier`, model: sonnet):
+   **review-verifier** (name: `review-verifier`, model: opus):
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    Read `.claude/agents/sdd-review-design-verifier.md` and follow all instructions.
