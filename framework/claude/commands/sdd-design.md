@@ -23,7 +23,7 @@ Generate design document for feature **$1** including specifications and technic
 ## Input Mode Detection
 
 Determine mode from $1:
-- **New Spec**: $1 is a quoted description string (e.g., `"ユーザー認証機能"`) → Create new spec from scratch
+- **New Spec**: $1 is a quoted description string (e.g., `"user authentication"`) → Create new spec from scratch
 - **Existing Spec**: $1 is an existing feature name (e.g., `auth-flow`) → Edit/regenerate existing design
 
 ## Execution Steps

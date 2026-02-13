@@ -107,5 +107,5 @@ No critical issues found
 - Custom files are supported (managed via `/sdd-steering-custom`)
 
 ## Session Handover
-- セッション開始時: `.claude/handover.md` が存在すれば読み込み、前回の状態を復元する
-- セッション終了時: `/sdd-handover` でハンドオーバー文書を生成する
+- On session start: If `.claude/handover.md` exists, read it to restore previous state
+- On session end: Run `/sdd-handover` to generate a handover document

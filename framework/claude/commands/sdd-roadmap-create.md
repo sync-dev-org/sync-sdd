@@ -101,11 +101,11 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 
    Based on steering documents, I understand this product as:
 
-   **Domain**: [具体的なドメイン]
-   **Core Purpose**: [プロダクトの核心的目的]
-   **Target Users**: [想定ユーザー]
-   **Key Technical Areas**: [主要技術領域]
-   **Similar Products**: [類似と思われるプロダクト]
+   **Domain**: [specific domain]
+   **Core Purpose**: [core purpose of the product]
+   **Target Users**: [target users]
+   **Key Technical Areas**: [key technical areas]
+   **Similar Products**: [similar products]
 
    Is this understanding correct? Should I adjust?
    ```
