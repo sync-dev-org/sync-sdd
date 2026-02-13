@@ -26,7 +26,7 @@ Development knowledge catalog for review reference and team learning.
 | By type | `Glob: .kiro/knowledge/incident-*.md` |
 | By category | `Glob: .kiro/knowledge/*-state-*.md` |
 | By keyword | `Grep: "Keywords.*cache"` |
-| By phase | `Grep: "Should Detect At.*requirements"` |
+| By phase | `Grep: "Should Detect At.*specifications"` |
 
 ---
 
@@ -38,9 +38,9 @@ Problem patterns discovered during development. Learn from failures.
 
 | File | Category | Keywords | Should Detect At |
 |------|----------|----------|------------------|
-| [incident-state-cache-recovery-reset.md](./incident-state-cache-recovery-reset.md) | state | cache, dedup, state-transition, TTL, recovery | requirements |
-| [incident-integration-dry-misapplication-dedup.md](./incident-integration-dry-misapplication-dedup.md) | integration | DRY, 重複排除, deduplication, 仕様統合, コンテキスト分離 | requirements |
-| [incident-integration-mid-wave-spec-addition.md](./incident-integration-mid-wave-spec-addition.md) | integration | mid-wave, spec-addition, cross-cutting, consistency, scope, non-goals | requirements |
+| [incident-state-cache-recovery-reset.md](./incident-state-cache-recovery-reset.md) | state | cache, dedup, state-transition, TTL, recovery | specifications |
+| [incident-integration-dry-misapplication-dedup.md](./incident-integration-dry-misapplication-dedup.md) | integration | DRY, 重複排除, deduplication, 仕様統合, コンテキスト分離 | specifications |
+| [incident-integration-mid-wave-spec-addition.md](./incident-integration-mid-wave-spec-addition.md) | integration | mid-wave, spec-addition, cross-cutting, consistency, scope, non-goals | specifications |
 
 ### pattern
 
@@ -90,7 +90,7 @@ Technical summaries and quick-reference materials.
 
 Quick reference for `sdd-review-*` commands.
 
-### requirements
+### specifications
 - [incident-state-cache-recovery-reset.md](./incident-state-cache-recovery-reset.md)
 - [incident-integration-dry-misapplication-dedup.md](./incident-integration-dry-misapplication-dedup.md)
 - [incident-integration-mid-wave-spec-addition.md](./incident-integration-mid-wave-spec-addition.md)

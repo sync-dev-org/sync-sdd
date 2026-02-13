@@ -1,7 +1,7 @@
 ---
 description: Create comprehensive technical design for a specification
-allowed-tools: Bash, Glob, Grep, LS, Read, Write, Edit, MultiEdit, Update, WebSearch, WebFetch
-argument-hint: <feature-name-or-"description"> [-y]
+allowed-tools: Bash, Glob, Grep, LS, Read, Write, Edit, MultiEdit, WebSearch, WebFetch
+argument-hint: <feature-name-or-"description">
 ---
 
 # SDD Technical Design Generator
@@ -49,8 +49,6 @@ If $1 is a description (not an existing feature directory):
 - `{{KIRO_DIR}}/settings/templates/specs/design.md` for document structure
 - `{{KIRO_DIR}}/settings/rules/design-principles.md` for design principles
 - `{{KIRO_DIR}}/settings/templates/specs/research.md` for discovery log structure
-
-**Auto-approve** (if `-y` flag provided): Skip approval checks.
 
 **Version consistency check** (skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
@@ -118,10 +116,10 @@ If $1 is a description (not an existing feature directory):
 
 3. **Update Metadata** in spec.json:
 - Set `phase: "design-generated"`
-- Set `approvals.design.generated: true, approved: false`
 - Update `updated_at` timestamp
 - **Version tracking** (initialize defaults if fields missing):
-  - Set `version_refs.design` to the current spec `version`
+  - **Version bump** (on re-edit only): If `version_refs.design` already has a non-null value (i.e., design was previously generated), increment the spec `version` minor number (e.g., `"1.0.0"` → `"1.1.0"`, `"1.3.0"` → `"1.4.0"`). On first design generation, keep the initial version as-is.
+  - Set `version_refs.design` to the (possibly bumped) spec `version`
   - Set `version_refs.tasks` to `null` (invalidate stale task reference)
   - Append changelog entry: `{ "version": "{CURRENT_VER}", "date": "{ISO_DATE}", "phase": "design", "summary": "Design generated" }`
 
@@ -154,7 +152,7 @@ Provide brief summary in the language specified in spec.json:
 1. **Status**: Confirm design document generated at `{{KIRO_DIR}}/specs/$1/design.md`
 2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
 3. **Key Findings**: 2-3 critical insights from `research.md` that shaped the design
-4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
+4. **Next Action**: Next step guidance (see Safety & Fallback)
 5. **Research Log**: Confirm `research.md` updated with latest decisions
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
@@ -188,15 +186,12 @@ Provide brief summary in the language specified in spec.json:
 
 ### Next Phase: Task Generation
 
-**If Design Approved**:
 - Review generated design at `{{KIRO_DIR}}/specs/$1/design.md`
-- **Optional**: Run `/sdd-review-design $1` for interactive quality review
-- Then `/sdd-tasks $1 -y` to generate implementation tasks
+- **Optional**: Run `/sdd-review-design $1` for quality review
+- Then `/sdd-tasks $1` to generate implementation tasks
 
 **If Modifications Needed**:
 - Provide feedback and re-run `/sdd-design $1`
 - Existing design used as reference (merge mode)
-
-**Note**: Design approval is mandatory before proceeding to task generation.
 
 think hard

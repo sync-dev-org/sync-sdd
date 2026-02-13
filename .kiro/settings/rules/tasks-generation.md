@@ -46,9 +46,9 @@ Focus on capabilities and outcomes, not code structure.
 ### 4. Specifications Mapping
 
 **End each task detail section with**:
-- `_Requirements: X.X, Y.Y_` listing **only numeric spec IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+- `_Specs: X.X, Y.Y_` listing **only numeric spec IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
 - For cross-cutting specs, list every relevant spec ID. All specs MUST have numeric IDs in design.md's Specifications section. If an ID is missing, stop and correct the Specifications section before generating tasks.
-- When task detail references specific acceptance criteria, optionally add `_ACs: R{N}.AC{M}, R{N}.AC{M}_` to enable direct traceability from task → AC → test via the `AC: {feature}.R{N}.AC{M}` test marker convention.
+- When task detail references specific acceptance criteria, optionally add `_ACs: S{N}.AC{M}, S{N}.AC{M}_` to enable direct traceability from task → AC → test via the `AC: {feature}.S{N}.AC{M}` test marker convention.
 - Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
 
 ### 5. Code-Only Focus
@@ -105,15 +105,15 @@ Focus on capabilities and outcomes, not code structure.
 - [ ] 1.1 Sub-task description
   - Detail item 1
   - Detail item 2
-  - _Requirements: X.X_
+  - _Specs: X.X_
 
 - [ ] 1.2 Sub-task description
   - Detail items...
-  - _Requirements: Y.Y_
+  - _Specs: Y.Y_
 
 - [ ] 1.3 Sub-task description
   - Detail items...
-  - _Requirements: Z.Z, W.W_
+  - _Specs: Z.Z, W.W_
 
 - [ ] 2. Next major task (NOT 1 again!)
 - [ ] 2.1 Sub-task...

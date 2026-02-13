@@ -1,8 +1,8 @@
 ---
 name: sdd-review-design-explore-consistency
 description: |
-  Exploratory review agent for requirements-design consistency.
-  Verifies that design faithfully covers all requirements without overreach.
+  Exploratory review agent for specifications-design consistency.
+  Verifies that design faithfully covers all specifications without overreach.
 
   **Input**: Feature name and context embedded in prompt
   **Output**: Structured findings of consistency issues
@@ -168,11 +168,11 @@ Example:
 VERDICT:CONDITIONAL
 SCOPE:my-feature
 ISSUES:
-H|coverage-gap|Req 3.AC2|no design component handles error recovery
+H|coverage-gap|Spec 3.AC2|no design component handles error recovery
 H|internal-contradiction|design.md:Spec2 vs design.md:Components|sync vs async mismatch
 M|design-overreach|design.md:Analytics|no requirement traces to analytics component
 M|scope-violation|design.md:UserPrefs|belongs to user-profile spec not this one
-L|coverage-gap|Req 5.AC3|partial coverage, missing edge case handling
+L|coverage-gap|Spec 5.AC3|partial coverage, missing edge case handling
 NOTES:
 Coverage is 85% (17/20 AC fully covered)
 2 overreach items are legitimate design decisions (caching, logging)

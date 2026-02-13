@@ -17,7 +17,7 @@ argument-hint: <feature-name>
 
 <instructions>
 ## Core Task
-Analyze implementation gap for feature **$1** based on approved specifications and existing codebase.
+Analyze implementation gap for feature **$1** based on design specifications and existing codebase.
 
 ## Execution Steps
 
@@ -25,7 +25,7 @@ Analyze implementation gap for feature **$1** based on approved specifications a
    - Read `{{KIRO_DIR}}/specs/$1/spec.json` for language and metadata
    - Read `{{KIRO_DIR}}/specs/$1/design.md` for specifications and design
    - **Load ALL steering context**: Read entire `{{KIRO_DIR}}/steering/` directory including:
-     - Default files: `structure.md`, `tech.md`, `product.md`
+     - Default files: `product.md`, `tech.md`, `structure.md`
      - All custom steering files (regardless of mode settings)
      - This provides complete project memory and context
 
@@ -73,7 +73,7 @@ Provide output in the language specified in spec.json with:
 
 ### Error Scenarios
 - **Missing Design**: If design.md doesn't exist, stop with message: "Run `/sdd-design \"description\"` to create a new specification first"
-- **Design Not Approved**: If design not approved, warn user but proceed (gap analysis can inform design revisions)
+- **Design Incomplete**: If design.md exists but phase is still `initialized`, warn user but proceed (gap analysis can inform design revisions)
 - **Empty Steering Directory**: Warn user that project context is missing and may affect analysis quality
 - **Complex Integration Unclear**: Flag for comprehensive research in design phase rather than blocking
 - **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
@@ -83,6 +83,5 @@ Provide output in the language specified in spec.json with:
 **If Gap Analysis Complete**:
 - Review gap analysis insights
 - Run `/sdd-design $1` to create or update technical design document
-- Or `/sdd-design $1 -y` to auto-approve and proceed directly
 
 **Note**: Gap analysis is optional but recommended for brownfield projects to inform design decisions.

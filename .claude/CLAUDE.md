@@ -38,14 +38,14 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
   - `/sdd-review-design {feature}` (optional: design review)
   - `/sdd-impact-analysis {feature}` (optional: after editing existing specs with downstream dependencies)
   - `/sdd-analyze-gap {feature}` (optional: for existing codebase)
-  - `/sdd-tasks {feature} [-y]`
+  - `/sdd-tasks {feature} [--sequential]`
 - Stage 2 (Implementation): `/sdd-impl {feature} [tasks]`
   - `/sdd-review-impl {feature}` (optional: after implementation)
 - Progress check: `/sdd-status {feature}` (use anytime)
 
 ## Development Rules
-- 2-gate approval workflow: Design → Tasks → Implementation
-- Human review required at each approval gate; use `-y` only for intentional fast-track
+- Phase-driven workflow: `design-generated` → `tasks-generated` → `implementation-complete`
+- Each phase gate is enforced by the next command (e.g., `/sdd-tasks` blocks if design.md missing, `/sdd-impl` blocks if tasks not generated)
 - Keep steering current and verify alignment with `/sdd-status`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
@@ -68,9 +68,9 @@ Token-efficient structured text format used for inter-agent communication and to
 | Element | Format | Example |
 |---------|--------|---------|
 | Metadata | `KEY:VALUE` (no space) | `VERDICT:CONDITIONAL` |
-| Structured row | `field1\|field2\|field3` | `H\|ambiguity\|Req 1\|not quantified` |
+| Structured row | `field1\|field2\|field3` | `H\|ambiguity\|Spec 1\|not quantified` |
 | Freeform text | Plain lines (no decoration) | `Domain research suggests...` |
-| List identifiers | `+` separated | `rulebase+edge-case` |
+| List identifiers | `+` separated | `rulebase+consistency` |
 | Empty sections | Omit header entirely | _(do not output)_ |
 | Severity codes | C/H/M/L | C=Critical, H=High, M=Medium, L=Low |
 
@@ -96,7 +96,7 @@ Token-efficient structured text format used for inter-agent communication and to
 VERDICT:GO
 SCOPE:my-feature
 ISSUES:
-M|ambiguity|Req 1.AC1|"quickly" not quantified
+M|ambiguity|Spec 1.AC1|"quickly" not quantified
 NOTES:
 No critical issues found
 ```
@@ -105,3 +105,7 @@ No critical issues found
 - Load entire `{{KIRO_DIR}}/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/sdd-steering-custom`)
+
+## Session Handover
+- セッション開始時: `.claude/handover.md` が存在すれば読み込み、前回の状態を復元する
+- セッション終了時: `/sdd-handover` でハンドオーバー文書を生成する

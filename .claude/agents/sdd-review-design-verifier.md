@@ -36,7 +36,7 @@ You will receive a prompt containing:
   1. Rulebase Review results (SDD compliance)
   2. Testability Review results (test implementer clarity)
   3. Architecture Review results (design verifiability)
-  4. Consistency Review results (requirements↔design alignment)
+  4. Consistency Review results (specifications↔design alignment)
   5. Best Practices Review results (industry standards)
 
 Parse all agent outputs and proceed with verification.
@@ -189,7 +189,7 @@ ROADMAP_ADVISORY: (wave-scoped mode only)
 
 Rules:
 - Severity: C=Critical, H=High, M=Medium, L=Low
-- Agents: use + separator (e.g. rulebase+edge-case)
+- Agents: use + separator (e.g. rulebase+consistency)
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
 
@@ -199,7 +199,7 @@ VERDICT:CONDITIONAL
 SCOPE:my-feature
 VERIFIED:
 architecture+testability|C|interface-contract|AuthService→UserStore|missing error type
-consistency+rulebase|H|coverage-gap|Req 3.AC2|no design for error recovery
+consistency+rulebase|H|coverage-gap|Spec 3.AC2|no design for error recovery
 best-practices+architecture|M|anti-pattern|DataAccess|repository as god-object
 testability|L|ambiguous-language|Validation|"appropriately" not quantified
 REMOVED:

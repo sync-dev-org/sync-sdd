@@ -172,8 +172,8 @@ Follow the 7-step Wave execution flow from roadmap.md:
    a. Identify affected specs from SPEC_FEEDBACK sections in review results
    b. For each affected spec:
       - Read spec.json version_refs
-      - If phase=design: Roll back spec phase to "design-generated"
-      - Mark version_refs as stale (downstream refs outdated)
+      - Roll back spec phase to "design-generated" (regardless of SPEC_FEEDBACK phase value)
+      - Set version_refs.tasks to null in spec.json (invalidate stale task reference)
    c. Present feedback to user:
       "SPEC feedback detected for: {spec_list}. Specs need updating before proceeding."
    d. User options (via AskUserQuestion):
@@ -219,112 +219,148 @@ Skip the Subagent Execution Flow above. After Shared Steps 1-3, use the followin
 1. **Create team**: `TeamCreate` with team name `sdd-wave-{N}`
 2. **Identify specs**: Filter specs in current wave from roadmap
 
-### Step 4T: Design Check (Lead executes)
+### Teammate Roles
 
-Lead performs design checks directly (no teammates needed):
+All teammates are flat members of the wave team. No nested teams.
 
-```python
-for spec in wave_specs:
-    if not exists(design.md) or phase == "initialized":
-        /sdd-design {spec}
-```
+| Role | Agent Type | Responsibility |
+|------|-----------|---------------|
+| **Lead** | Opus | Dependency management, per-spec user approval, escalation handling. No file writes. |
+| **spec-pipeline-{spec}** | Sonnet | Full lifecycle per spec: `/sdd-design` → `/sdd-tasks` → `/sdd-impl`. File-scoped. |
+| **review-coordinator** | Sonnet | Persistent review service. Receives review requests, spawns 5 review Task subagents per request, synthesizes verdicts. Retains context across all reviews for wave cross-check. |
 
-### Step 5T: Design Review (Team)
+Note: review-coordinator uses the Task tool to spawn review subagents (same as current Subagent review mode). This is NOT a nested team — subagents are isolated Tasks, not teammates.
 
-Spawn review teammates per spec using Stage 2 Agent Team review flow:
+### Step 4T: Spawn Persistent Services
 
-```python
-for spec in wave_specs:
-    Task(f"/sdd-review-design {spec} --team")
-# Wave-Scoped Cross-Check
-Task(f"/sdd-review-design --wave {N} --team")
-```
+1. **Spawn review-coordinator** (1 teammate, persists for entire wave):
+   ```
+   "You are a WORKER agent. Do NOT create new teams or spawn teammates.
+    You are the review coordinator for wave {N}. You persist for the entire wave.
 
-- Report ALL results (GO/CONDITIONAL/NO-GO) to user
-- User decides how to proceed for every case
+    When you receive a review request, execute the review:
+    - For design review: Follow the Subagent Execution Flow in `.claude/commands/sdd-review-design.md`
+      (Phase 1: spawn 5 Task subagents, Phase 2: spawn verifier Task subagent)
+    - For impl review: Follow the Subagent Execution Flow in `.claude/commands/sdd-review-impl.md`
+      (Phase 1: spawn 5 Task subagents, Phase 2: spawn verifier Task subagent)
+    - For wave cross-check: Use --wave {N} mode in the relevant review command
 
-### Step 6T: User Confirmation [REQUIRED]
+    Send the final CPF verdict to the team lead.
+    Retain context from all reviews — you will need it for wave cross-checks."
+   ```
 
-- Present design review results and responsibility allocation table
-- Show file ownership map (extracted from design.md Components sections)
-- Block until user confirms: "Proceed to task generation and implementation?"
+### Step 5T: File Ownership Analysis
 
-### Step 7T: File Ownership Analysis
-
-Before spawning implementation teammates, analyze file ownership:
+Lead analyzes file ownership (read-only, no file writes):
 
 1. **Extract file ownership** from each spec's `design.md` Components section
 2. **Check for overlaps**: If any file appears in 2+ specs' component lists:
    - Mark those specs as **conflicting** → must be serialized (not parallelized)
    - Report to user: "Specs {X} and {Y} share files: {list}. These will execute sequentially."
-3. **Build ownership map**:
+3. **Build ownership map** for each spec
+
+### Step 6T: Spawn Spec Pipelines (Pipelined Execution)
+
+Spawn spec-pipeline teammates respecting dependencies AND file ownership conflicts (from Step 5T):
+
+A spec is **independent** only if it has NO roadmap dependencies on pending specs AND NO file conflicts with other specs.
+A spec is **dependent** if it has roadmap dependencies OR file conflicts (treat file-conflicting specs as implicitly dependent — serialize them).
+
+1. **Independent specs** — spawn in a SINGLE message (parallel):
    ```
-   spec-a owns: src/auth/*.ts, src/middleware/auth.ts
-   spec-b owns: src/api/health.ts, src/services/health.ts
-   spec-c owns: src/api/notify.ts (depends on spec-a, serialized)
-   ```
-
-### Step 8T: Task Generation & Parallel Implementation
-
-**Task Generation** (Lead executes sequentially):
-```python
-for spec in wave_specs:
-    /sdd-tasks {spec} -y
-```
-
-**Parallel Implementation** (Sonnet teammates):
-
-1. **Group specs by dependency**:
-   - Independent specs → parallel group
-   - Dependent specs → sequential (use TaskCreate with blockedBy)
-
-2. **Spawn teammates** for parallel group in a SINGLE message:
-   ```
-   For each spec in parallel_group, spawn teammate (model: sonnet):
-
-   "You are a WORKER agent. Do NOT spawn new teammates or subagents.
+   "You are a WORKER agent. Do NOT create new teams or spawn teammates.
     You own files: {file-list-from-ownership-map}. Do NOT modify files outside this list.
-    Execute the SDD implementation workflow for spec '{spec}':
-    1. Read `.claude/commands/sdd-impl.md` for the implementation process
-    2. Implement all tasks in `{{KIRO_DIR}}/specs/{spec}/tasks.md`
-    3. Follow TDD methodology: write tests first, then implement
-    4. When complete, send implementation summary to the team lead
-    Include: files modified, tests written, test results"
+
+    Execute the full SDD pipeline for spec '{spec}':
+    1. Run /sdd-design {spec}
+    2. Send to 'review-coordinator': 'Review design for spec {spec} in single mode'
+    3. WAIT for message from team lead (design approval or rejection)
+    4. If approved: Run /sdd-tasks {spec}
+    5. Run /sdd-impl {spec} (follow TDD per .claude/commands/sdd-impl.md)
+    6. Send to 'review-coordinator': 'Review impl for spec {spec}, task scope: all'
+    7. Send to team lead: 'Spec {spec} implementation complete, review submitted'
+    Include in all reports: files modified, tests written, test results"
    ```
 
-3. **Wait** for all parallel teammates to complete (idle notifications)
+2. **Dependent specs** — spawn after dependency completes implementation:
+   - Lead tracks which specs are complete
+   - When a dependency is satisfied, spawn the dependent spec-pipeline
+   - Dependent spec-pipeline prompt is identical but may include: "Note: {dep-spec} is already implemented. Its interfaces are available."
 
-4. **Handle dependent specs**: After blocking specs complete:
-   - Spawn next round of teammates for newly unblocked specs
-   - Repeat until all specs in wave are implemented
+### Step 7T: Pipeline Orchestration (Lead's Main Loop)
 
-### Step 9T: Implementation Review (Team)
+Lead processes messages as they arrive. Each spec progresses independently.
 
-After all implementation teammates complete:
-
-```python
-for spec in wave_specs:
-    Task(f"/sdd-review-impl {spec} --team")
-# Wave-Scoped Cross-Check
-Task(f"/sdd-review-impl --wave {N} --team")
+**Message: design review verdict from review-coordinator**
+```
+For the reviewed spec:
+- If GO/CONDITIONAL: Present to user (AskUserQuestion): "Approve design for {spec}? {verdict summary}"
+  - User approves → SendMessage to spec-pipeline-{spec}: "Design approved. Proceed."
+  - User rejects → SendMessage to spec-pipeline-{spec}: "Design rejected. {feedback}"
+    Spec-pipeline re-runs /sdd-design with feedback.
+- If NO-GO: Present issues to user. User decides: fix or skip spec.
 ```
 
-- Report ALL results (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED) to user
-- User decides how to proceed for every case
+**Message: spec implementation complete from spec-pipeline**
+```
+- Log progress: "{spec} implementation complete, review pending"
+- Check dependencies: if any blocked spec now has all deps satisfied → spawn its spec-pipeline
+```
 
-### Step 9.5T: SPEC Feedback Loop
+**Message: impl review verdict from review-coordinator**
+```
+- GO/CONDITIONAL: Mark spec complete. Log any warnings.
+- NO-GO: Escalate to user. User decides: fix or defer.
+- SPEC-UPDATE-NEEDED: Handle via Step 8T.
+```
 
-Same as Subagent flow Step 6.5 — if any review returned SPEC-UPDATE-NEEDED:
-1. Identify affected specs from SPEC_FEEDBACK sections
-2. Present feedback to user with options (fix now / defer / override)
-3. If specs are fixed: re-run affected phases and re-review
-4. If deferred: record in Wave Completion Report
+**Trigger: all designs submitted to review-coordinator**
+```
+- Send to review-coordinator: "Wave design cross-check for wave {N}, specs: {spec-list}"
+- When verdict arrives:
+  - GO: Log, no action (specs already proceeding — optimistic pipeline)
+  - Issues found: Halt affected spec-pipelines that haven't started impl yet.
+    For specs already in impl: continue, address at impl review.
+    For critical cross-spec conflicts: escalate to user.
+```
 
-### Step 10T: Wave Completion & Cleanup
+**Trigger: all specs complete (all impl reviews are GO/CONDITIONAL)**
+```
+- Send to review-coordinator: "Wave impl cross-check for wave {N}, specs: {spec-list}"
+- When verdict arrives: present to user → proceed to Step 9T
+```
+
+### Step 8T: SPEC Feedback Loop
+
+If any impl review returned SPEC-UPDATE-NEEDED:
+
+1. **Identify affected specs** from SPEC_FEEDBACK sections
+2. **Rollback affected specs**:
+   - Roll back spec phase to "design-generated"
+   - Set version_refs.tasks to null in spec.json
+3. **Present feedback to user** with options (fix now / defer / override)
+4. **If user chooses "Fix specs now"**:
+   a. Spawn spec-fixer teammates (one per affected spec, parallel if independent):
+      ```
+      "You are a WORKER agent. Do NOT create new teams or spawn teammates.
+       You own files: {file-list}. Do NOT modify files outside this list.
+       Fix spec '{spec}':
+       1. Run /sdd-design {spec} (apply SPEC_FEEDBACK: {description})
+       2. Run /sdd-tasks {spec}
+       3. Run /sdd-impl {spec}
+       4. Send to 'review-coordinator': 'Review impl for spec {spec}, task scope: all'
+       5. Send completion summary to team lead."
+      ```
+   b. review-coordinator reviews → verdict to Lead (same handling as Step 7T)
+   c. Unaffected specs remain at implementation-complete (do NOT re-implement)
+5. **If deferred**: record in Wave Completion Report
+6. **If override**: log warning, continue to Step 9T
+
+### Step 9T: Wave Completion & Cleanup
 
 1. **Wave Completion Report** (same format as Subagent flow Step 7)
 2. **Clean up team**:
-   - Send shutdown requests to all teammates
+   - Send shutdown requests to all remaining teammates (spec-pipelines, review-coordinator)
    - `TeamDelete` to clean up team resources
 3. **Update** spec.json phases
 4. **Git commit** checkpoint (recommend)
@@ -335,11 +371,12 @@ Same as Subagent flow Step 6.5 — if any review returned SPEC-UPDATE-NEEDED:
 
 ### File Conflict Prevention
 
-- Before spawning implementation teammates, verify spec designs have non-overlapping file ownership
-- If design.md Components sections show shared files: serialize those specs (do not parallelize)
-- Each teammate's spawn prompt includes: "You own files: {list}. Do NOT modify files outside this list."
-- Lead operates in coordination-only mode: spawning, messaging, task management only — no direct file edits during teammate execution
-- If a teammate reports needing to modify a file outside its ownership: stop, report to Lead, Lead reassigns or serializes
+- Step 5T extracts file ownership from design.md Components sections before any implementation
+- File-conflicting specs are serialized (never parallelized)
+- Each spec-pipeline's spawn prompt includes: "You own files: {list}. Do NOT modify files outside this list."
+- Lead operates in coordination-only mode: spawning, messaging, task management only — no file writes
+- If a spec-pipeline reports needing to modify a file outside its ownership: stop, report to Lead
+- **Post-hoc verification**: When a spec-pipeline reports completion, Lead checks `spec.json` `implementation.files_created` against the ownership map. Files outside scope → escalate to user before proceeding to impl review, Lead reassigns or serializes
 
 </instructions>
 
@@ -356,8 +393,8 @@ Same as Subagent flow Step 6.5 — if any review returned SPEC-UPDATE-NEEDED:
 - Launch multiple Task calls in single message for parallel specs
 - Example:
   ```
-  Task("/sdd-design spec-a -y")
-  Task("/sdd-design spec-b -y")  # Same message = parallel
+  Task("/sdd-design spec-a")
+  Task("/sdd-design spec-b")  # Same message = parallel
   ```
 
 ### Agent Team Usage — Team mode

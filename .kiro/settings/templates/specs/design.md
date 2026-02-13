@@ -30,6 +30,13 @@
 2. {{TESTABLE_CRITERION}}
 3. {{TESTABLE_CRITERION}}
 
+<!-- Optional: Add stability tags for impact analysis (/sdd-impact-analysis).
+     Tags classify how changes propagate to downstream specs:
+     - [constraint]: Breaking change — all downstream specs require full re-review
+     - [contract]: Interface change — downstream designs may need updates
+     - [behavior]: Compatible change — minimal downstream impact
+     Example: "[contract] API response format must include pagination metadata" -->
+
 ### Spec 2: {{SPEC_AREA_2}}
 **Goal:** {{GOAL_2}}
 

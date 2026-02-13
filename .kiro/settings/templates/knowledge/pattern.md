@@ -24,7 +24,7 @@
 <!--
 CATEGORY: state / api / async / data / security / integration
 KEYWORDS: Comma-separated search terms
-APPLICABLE_PHASES: requirements / design / tasks / impl (comma-separated)
+APPLICABLE_PHASES: design / tasks / impl (comma-separated)
 -->
 
 ## Pattern Summary

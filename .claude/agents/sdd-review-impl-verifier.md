@@ -65,11 +65,19 @@ Key cross-checks:
 - Consistency says pattern deviation → Does Quality agree it violates conventions?
 
 **Spec Defect Detection** (distinguishes spec defects from implementation defects):
-- Multiple agents flag same specification as unimplementable or contradictory → likely **specifications defect**
-- Interface agent finds design contract impossible to implement correctly → likely **design defect**
-- Test agent finds actual behavior contradicts a specification → likely **specifications defect**
-- Consistency agent finds cross-feature assumption violated that traces back to spec → likely **spec dependency defect**
-- If spec defect is detected, classify the affected phase (`specifications` or `design`) for SPEC_FEEDBACK output
+
+| Signal | Classified Phase | Rationale |
+|--------|-----------------|-----------|
+| Multiple agents flag same specification as unimplementable | `specifications` | AC is contradictory or impossible |
+| Interface finds design contract impossible to implement | `design` | Architecture/interface mismatch |
+| Test finds actual behavior contradicts a specification | `specifications` | AC doesn't match real-world behavior |
+| Design components reference non-existent spec ID | `design` | Traceability broken |
+| AC is ambiguous — implementation chose one interpretation, another is equally valid | `specifications` | AC needs tightening |
+| Design specifies interface but no spec requires it (orphan component) | `design` | Over-design without spec backing |
+| Consistency finds cross-feature assumption violated tracing back to spec | `specifications` | Spec dependency defect |
+
+If spec defect detected, classify affected phase (`specifications` or `design`) for SPEC_FEEDBACK output.
+When ambiguous, prefer `specifications` — fixing the WHAT is safer than fixing the HOW.
 
 ### Step 2: Contradiction Detection
 
@@ -231,7 +239,7 @@ ROADMAP_ADVISORY: (wave-scoped mode only)
 
 Rules:
 - Severity: C=Critical, H=High, M=Medium, L=Low
-- Agents: use + separator (e.g. rulebase+edge-case)
+- Agents: use + separator (e.g. rulebase+quality)
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
 - SPEC_FEEDBACK: `phase` is `specifications` or `design`; `spec` is the feature name; `description` explains the spec defect
@@ -242,7 +250,7 @@ VERDICT:CONDITIONAL
 SCOPE:my-feature
 VERIFIED:
 interface+test|C|signature-mismatch|module.create_app|param count mismatch causes crash
-rulebase|H|traceability-missing|Req 3.AC2|no implementation for error recovery
+rulebase|H|traceability-missing|Spec 3.AC2|no implementation for error recovery
 quality|M|error-handling-drift|src/api.ts:55|swallowed exception
 consistency|L|import-pattern|shared.logger|uses default import vs convention
 REMOVED:

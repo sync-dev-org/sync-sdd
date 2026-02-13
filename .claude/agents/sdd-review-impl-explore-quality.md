@@ -21,7 +21,7 @@ Evaluate implementation code quality against design specifications and steering 
 - Focus ONLY on implementation quality (error handling, naming, organization, patterns)
 - Do NOT verify function signatures or call sites (interface agent handles that)
 - Do NOT run tests or evaluate test quality (test agent handles that)
-- Do NOT check task completion or requirements traceability (rulebase agent handles that)
+- Do NOT check task completion or spec traceability (rulebase agent handles that)
 - Do NOT check cross-feature consistency (consistency agent handles that)
 - Evaluate against design.md specifications and steering conventions
 
@@ -42,6 +42,7 @@ You will receive a prompt containing:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata and file paths
 
 2. **Steering Context**:
+   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
    - Read `{{KIRO_DIR}}/steering/tech.md` - Technical conventions, logging patterns
    - Read `{{KIRO_DIR}}/steering/structure.md` - Naming conventions, file organization
 

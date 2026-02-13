@@ -7,7 +7,7 @@ argument-hint: <feature-name> [task-numbers]
 # SDD Implementation Task Executor
 
 <background_information>
-- **Mission**: Execute implementation tasks using Test-Driven Development methodology based on approved specifications
+- **Mission**: Execute implementation tasks using Test-Driven Development methodology based on design specifications
 - **Success Criteria**:
   - All tests written before implementation code
   - Code passes all tests with no regressions
@@ -27,11 +27,10 @@ Execute implementation tasks for feature **$1** using Test-Driven Development.
 - `{{KIRO_DIR}}/specs/$1/spec.json`, `design.md`, `tasks.md`
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 
-**Validate and approve tasks**:
+**Validate phase**:
 - Verify all spec files exist (stop if not, see Safety & Fallback)
 - **Phase check**: If `phase` is not `tasks-generated` and not `implementation-complete`:
   - **BLOCK**: "Phase is '{phase}'. Tasks must be generated before implementation. Run `/sdd-tasks $1` first."
-- Set `approvals.tasks.approved: true` in spec.json (starting implementation implicitly approves tasks)
 
 **Version consistency check** (skip if `version_refs` not present in spec.json):
 - Read `version_refs` from spec.json
@@ -54,9 +53,9 @@ For each selected task, follow Kent Beck's TDD cycle:
    - Write test for the next small piece of functionality
    - Test should fail (code doesn't exist yet)
    - Use descriptive test names
-   - **Add traceability marker**: Include `AC: {feature}.R{N}.AC{M}` in the test docstring or comment, where R{N} is the Requirement number and AC{M} is the Acceptance Criteria number
-     - Python: `def test_login_redirects(): """AC: auth-flow.R1.AC1"""`
-     - TypeScript: `it('redirects to login', () => { // AC: auth-flow.R1.AC1`
+   - **Add traceability marker**: Include `AC: {feature}.S{N}.AC{M}` in the test docstring or comment, where S{N} is the Spec number and AC{M} is the Acceptance Criteria number
+     - Python: `def test_login_redirects(): """AC: auth-flow.S1.AC1"""`
+     - TypeScript: `it('redirects to login', () => { // AC: auth-flow.S1.AC1`
      - One test may reference multiple ACs if it covers a combined scenario
 
 2. **GREEN - Write Minimal Code**:
@@ -77,7 +76,7 @@ For each selected task, follow Kent Beck's TDD cycle:
 
 5. **MARK COMPLETE**:
    - Update checkbox from `- [ ]` to `- [x]` in tasks.md
-   - **AC coverage validation**: Verify that all ACs referenced by this task (from `_Requirements:_` and `_ACs:_` annotations in tasks.md) have at least one test with a matching `AC: {feature}.R{N}.AC{M}` marker
+   - **AC coverage validation**: Verify that all ACs referenced by this task (from `_Specs:_` and `_ACs:_` annotations in tasks.md) have at least one test with a matching `AC: {feature}.S{N}.AC{M}` marker
 
 6. **TRACK FILES**:
    - Append created/modified file paths to spec.json `implementation.files_created` array

@@ -7,7 +7,7 @@ argument-hint: [feature-name] [task-numbers] [--team] | --cross-check [--team] |
 # SDD Implementation Review (Router)
 
 <background_information>
-- **Mission**: Verify implementation aligns with approved design (specifications + architecture) and tasks
+- **Mission**: Verify implementation aligns with design (specifications + architecture) and tasks
 - **Dual Architecture**:
   - **Subagent mode** (default): Router dispatches to 6 agents (5 parallel + 1 verifier) via Task tool
   - **Agent Team mode** (`--team`): Router creates team with 5 Sonnet teammates + Lead synthesis
@@ -251,7 +251,7 @@ Skip the Subagent Execution Flow above. Use the following flow instead.
 ### Team Phase 1: Team Creation & Independent Review
 
 1. **Create team**: `TeamCreate` with team name `sdd-review-impl-{feature}` (or `sdd-review-impl-cross-check`)
-2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with prompt:
+2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with `name: "review-{agent-name}"` and prompt:
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    Read `.claude/agents/sdd-review-impl-{agent-name}.md` and follow all instructions.
@@ -261,6 +261,7 @@ Skip the Subagent Execution Flow above. Use the following flow instead.
    Do NOT format as markdown. Use the exact CPF format specified in the agent file.
    ```
    Where `{agent-name}` is: `rulebase`, `explore-interface`, `explore-test`, `explore-quality`, `explore-consistency`
+   Teammate names: `review-rulebase`, `review-explore-interface`, `review-explore-test`, `review-explore-quality`, `review-explore-consistency`
 3. **Wait** for all 5 teammates to send findings (idle notifications with CPF output)
 
 ### Team Phase 2: Cross-Check Broadcast
@@ -308,10 +309,18 @@ Key impl-specific cross-checks:
 
 **Step 4: Spec defect detection**
 Distinguish spec defects from implementation defects:
-- Multiple teammates flag same specification as unimplementable → likely **specifications defect**
-- Interface finds design contract impossible to implement → likely **design defect**
-- Test finds actual behavior contradicts a specification → likely **specifications defect**
-- If spec defect detected, classify affected phase (`specifications` or `design`) for SPEC_FEEDBACK
+
+| Signal | Classified Phase | Rationale |
+|--------|-----------------|-----------|
+| Multiple teammates flag same specification as unimplementable | `specifications` | AC is contradictory or impossible |
+| Interface finds design contract impossible to implement | `design` | Architecture/interface mismatch |
+| Test finds actual behavior contradicts a specification | `specifications` | AC doesn't match real-world behavior |
+| Design components reference non-existent spec ID | `design` | Traceability broken |
+| AC is ambiguous — implementation chose one interpretation, another is equally valid | `specifications` | AC needs tightening |
+| Design specifies interface but no spec requires it (orphan component) | `design` | Over-design without spec backing |
+
+If spec defect detected, classify affected phase (`specifications` or `design`) for SPEC_FEEDBACK.
+When ambiguous, prefer `specifications` — fixing the WHAT is safer than fixing the HOW.
 
 **Step 5: Over-implementation check**
 Guard against AI complexity bias:
@@ -354,8 +363,13 @@ ROADMAP_ADVISORY: (wave-scoped mode only)
 ```
 
 **Step 9: Clean up**
-- Send shutdown requests to all 5 teammates
-- `TeamDelete` to clean up team resources
+- Send `shutdown_request` to each teammate by name:
+  ```
+  SendMessage(type: "shutdown_request", recipient: "review-rulebase", content: "Review complete")
+  SendMessage(type: "shutdown_request", recipient: "review-explore-interface", content: "Review complete")
+  ... (all 5 teammates)
+  ```
+- Wait for shutdown approvals, then `TeamDelete` to clean up team resources
 
 ### Team Phase 4: Display Results
 
@@ -394,8 +408,10 @@ Router formats the verifier's compact output into a human-readable markdown repo
 - If NO-GO: Fix critical issues, re-run `/sdd-impl {feature} [tasks]`, then re-review
 - If SPEC-UPDATE-NEEDED: The specification itself has defects. Display SPEC_FEEDBACK details prominently:
   - For each feedback entry: "Spec defect in **{phase}** for **{spec}**: {description}"
+  - If phase=specifications: "Run `/sdd-design {spec}` to fix specifications, then re-run `/sdd-tasks`"
   - If phase=design: "Run `/sdd-design {spec}` to update design, then re-run `/sdd-tasks`"
   - Do NOT suggest re-implementation until spec is fixed
+  - **Note**: This review command does not modify spec.json (reviews are read-only). Phase rollback occurs automatically when run via `/sdd-roadmap-run` (Step 6.5/8T). For standalone use, `/sdd-design {spec}` resets the phase when invoked.
 
 **After Cross-Check / Wave-Scoped Cross-Check**:
 - Address cross-feature compatibility issues before integration

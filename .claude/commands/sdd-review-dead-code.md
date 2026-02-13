@@ -1,7 +1,7 @@
 ---
 description: Detect dead code, unused settings, and orphaned specs
-allowed-tools: Bash, Glob, Grep, Read, Write, Task
-argument-hint: [--full] | [--settings] | [--code] | [--specs] | [--tests]
+allowed-tools: Bash, Glob, Grep, Read, Write, Task, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskList, TaskUpdate
+argument-hint: [--full] [--team] | [--settings] | [--code] | [--specs] | [--tests]
 ---
 
 # SDD Dead Code Review
@@ -31,12 +31,88 @@ For each agent:
 ## Mode Detection
 
 ```
-$ARGUMENTS = "--full" or ""  → 4 agents in parallel (Settings, Code, Specs, Tests)
-$ARGUMENTS = "--settings"    → Settings only
-$ARGUMENTS = "--code"        → Code only
-$ARGUMENTS = "--specs"       → Specs only
-$ARGUMENTS = "--tests"       → Tests only
+$ARGUMENTS = "--full" or ""        → 4 agents in parallel (Subagent mode)
+$ARGUMENTS = "--full --team"       → 4 agents in parallel (Agent Team mode)
+$ARGUMENTS = "--team"              → 4 agents in parallel (Agent Team mode)
+$ARGUMENTS = "--settings"          → Settings only (Subagent mode)
+$ARGUMENTS = "--code"              → Code only (Subagent mode)
+$ARGUMENTS = "--specs"             → Specs only (Subagent mode)
+$ARGUMENTS = "--tests"             → Tests only (Subagent mode)
 ```
+
+Note: `--team` is only applicable in full mode (all 4 agents). Individual category runs always use Subagent mode.
+
+---
+
+## Execution Flow
+
+### Subagent Execution Flow (default)
+
+Launch 4 Explore agents **in parallel** via Task tool using the Agent Prompts below. Collect results and aggregate into the Report format.
+
+### Agent Team Execution Flow (when --team flag detected)
+
+#### Phase 1: Team Creation & Independent Investigation
+
+1. **Create team** "sdd-dead-code-review"
+2. **Spawn 4 teammates** (model: sonnet) in a SINGLE message, each with `name` and prompt:
+
+   ```
+   You are a WORKER agent. Do NOT spawn new teammates or subagents.
+   {Agent Prompt from the corresponding section below}
+   After completing your investigation, send your complete findings to the team lead.
+   Format: Category name, then one finding per line with severity (C/H/M/L), location, and description.
+   ```
+
+   Teammate names: `audit-settings`, `audit-code`, `audit-specs`, `audit-tests`
+
+3. **Wait** for all 4 teammates to send findings (idle notifications)
+
+#### Phase 2: Cross-Validation Broadcast
+
+4. **Collect** all 4 findings
+5. **Broadcast** to all teammates:
+
+   ```
+   All audit findings are below. Check for cross-domain connections:
+   - Settings agent: Does a "dead config" actually appear in test fixtures?
+   - Code agent: Is an "unused function" referenced in specs but not yet implemented?
+   - Specs agent: Does a "drifted spec" correspond to dead code found by the code agent?
+   - Tests agent: Do "orphaned tests" test functions the code agent flagged as dead?
+
+   Review and refine your findings. Withdraw false positives, add cross-domain insights.
+   Send REFINED findings back to the team lead.
+
+   == Settings Findings ==
+   {settings output}
+   == Code Findings ==
+   {code output}
+   == Specs Findings ==
+   {specs output}
+   == Tests Findings ==
+   {tests output}
+   ```
+
+6. **Wait** for all 4 refined responses
+
+#### Phase 3: Lead Synthesis
+
+7. **Merge findings**:
+   - Cross-domain corroborations (e.g., dead code + orphaned test for same symbol) → high confidence
+   - Withdrawn findings → remove
+   - Deduplicate same issue found by multiple agents → single finding
+8. **Format** markdown report (same Report Aggregation format)
+
+#### Phase 4: Cleanup
+
+9. **Send shutdown_request** to each teammate by name:
+   ```
+   SendMessage(type: "shutdown_request", recipient: "audit-settings", content: "Audit complete")
+   SendMessage(type: "shutdown_request", recipient: "audit-code", content: "Audit complete")
+   SendMessage(type: "shutdown_request", recipient: "audit-specs", content: "Audit complete")
+   SendMessage(type: "shutdown_request", recipient: "audit-tests", content: "Audit complete")
+   ```
+10. Wait for shutdown approvals, then `TeamDelete` to clean up team resources
 
 ---
 
@@ -178,6 +254,24 @@ Project: {project_name}
 ```
 
 </instructions>
+
+## Error Handling
+
+### Agent Failures
+- **1 agent fails**: Proceed with results from remaining agents. Mark the failed category as "INCOMPLETE" in the summary table and note: "Agent for {category} failed. Re-run with `--{category}` flag to retry."
+- **2+ agents fail**: Report partial results from successful agents. Display warning: "Multiple agents failed ({list}). Results are incomplete. Consider re-running `/sdd-review-dead-code --full`."
+- **All agents fail**: Report error and suggest checking project structure or re-running individual categories.
+
+### Partial Results Display
+When displaying partial results, use the following in the summary table:
+```
+| Category | Issues | Critical | Warnings |
+|----------|--------|----------|----------|
+| Settings | 3 | 0 | 2 |
+| Code | INCOMPLETE | - | - |
+| Specs | 1 | 0 | 1 |
+| Tests | INCOMPLETE | - | - |
+```
 
 ## Important Notes
 

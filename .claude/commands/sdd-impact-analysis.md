@@ -46,7 +46,7 @@ Analyze the downstream impact of recent changes to feature **$1**'s specificatio
 
 1. **Read spec.json changelog** for recent changes to the target feature
    - If no changelog or version fields: Report "Version tracking not available for {feature}. Run `/sdd-design {feature}` to initialize." — proceed with limited analysis.
-2. **Identify changed specs** from changelog entries (especially `affected_specs` field if present)
+2. **Identify changed specs** from changelog entries
 3. **Classify change severity** using stability tags from design.md Specifications section:
    - `[constraint]` change → **BREAKING** (all downstream affected, full re-review required)
    - `[contract]` change → **INTERFACE** (design-level downstream affected)

@@ -1,6 +1,6 @@
 ---
 description: Show specification status and progress
-allowed-tools: Bash, Read, Glob, Write, Edit, MultiEdit, Update
+allowed-tools: Bash, Read, Glob
 argument-hint: <feature-name>
 ---
 
@@ -32,15 +32,18 @@ Generate status report for feature **$1** showing progress across all phases.
    - Extract `phase` field from each
 
 3. **Calculate Wave progress dynamically**:
-   - For each Wave, count specs by phase and approval status:
+   - For each Wave, count specs by phase:
      - `implementation-complete` → complete
-     - `tasks-generated` with `approvals.tasks.approved: true` → ready for implementation
-     - `design-generated` with `approvals.design.approved: true` → design approved, ready for tasks
+     - `tasks-generated` → ready for implementation
+     - `design-generated` → ready for tasks
      - `initialized` → spec created, design not yet generated
-     - Other → not started
    - Determine blocked waves (all dependencies not complete)
 
-4. **Identify next actionable specs**:
+4. **Identify standalone specs** (not in any wave):
+   - Specs where `roadmap` is `null` in spec.json
+   - These are created via `/sdd-design` directly, outside the roadmap flow
+
+5. **Identify next actionable specs**:
    - Specs whose dependencies are all complete
    - Not yet implemented
 
@@ -55,12 +58,13 @@ Generate status report for feature **$1** showing progress across all phases.
 **Parse each phase**:
 - **Design**: Check for specifications, architecture, components, diagrams
 - **Tasks**: Count completed vs total tasks (parse `- [x]` vs `- [ ]`)
-- **Approvals**: Check approval status in spec.json
+- **Phase**: Check current phase in spec.json
 
 **Version analysis** (skip if `version` field not present):
 - Read `version`, `changelog`, `version_refs` from spec.json
 - Determine version_refs alignment:
-  - If `version_refs.tasks` < `version_refs.design` → tasks are stale
+  - If `version_refs.tasks` is `null` → tasks are stale (design was re-edited)
+  - If `version_refs.tasks` != `version_refs.design` → tasks are stale (version mismatch)
 
 ### Step 3: Generate Report
 
@@ -74,6 +78,8 @@ Wave 3 (Integration): ░░░░░░░░░░ blocked by Wave 2
 Wave 4 (Interface):   ░░░░░░░░░░ blocked by Wave 3
 
 Next actionable specs: feature-a, feature-b (Wave 2)
+
+Standalone specs (not in roadmap): standalone-feature (design-generated)
 ```
 
 **Then, if specific spec requested ($1 provided)**:

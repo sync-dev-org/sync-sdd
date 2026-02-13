@@ -39,6 +39,7 @@ You will receive a prompt containing:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
 
 2. **Steering Context**:
+   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
    - Read `{{KIRO_DIR}}/steering/tech.md` - Technical constraints
    - Read `{{KIRO_DIR}}/steering/structure.md` - Project structure
 
@@ -57,7 +58,7 @@ You will receive a prompt containing:
 
 ## Investigation Approaches
 
-### 1. Ambiguous Language Detection (Section 1.1 of design-review.md)
+### 1. Ambiguous Language Detection (Specifications Clarity → Ambiguous Language)
 
 Flag any occurrence of:
 - "適切に" / "appropriately"
@@ -70,28 +71,28 @@ Flag any occurrence of:
 
 **Rule**: Every behavior must have explicit conditions and outcomes.
 
-### 2. Numeric/Condition Specificity (Section 1.2)
+### 2. Numeric/Condition Specificity (Specifications Clarity → Numeric/Condition)
 
 - Are timeouts, limits, and thresholds defined with exact values?
 - Are boundary conditions explicit (≤ vs <, inclusive vs exclusive)?
 - Are valid input ranges specified?
 - Are retry counts and intervals defined?
 
-### 3. Deterministic Outcomes (Section 4.1)
+### 3. Deterministic Outcomes (Test Observability → Deterministic Outcomes)
 
 - Does each input combination produce exactly one expected output?
 - Are side effects observable and verifiable?
 - Can success/failure be unambiguously determined?
 - Are ordering guarantees specified where relevant?
 
-### 4. Mockability (Section 4.2)
+### 4. Mockability (Test Observability → Mockability)
 
 - Can external dependencies be mocked?
 - Are dependency interfaces clearly defined?
 - Is time/randomness controllable for testing?
 - Are integration points well-defined enough to stub?
 
-### 5. Edge Case Coverage (Section 1.3)
+### 5. Edge Case Coverage (Specifications Clarity → Edge Cases)
 
 - Are null/empty/undefined cases addressed?
 - Are error scenarios enumerated with expected behavior?

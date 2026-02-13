@@ -241,7 +241,7 @@ Skip the Subagent Execution Flow above. Use the following flow instead.
 ### Team Phase 1: Team Creation & Independent Review
 
 1. **Create team**: `TeamCreate` with team name `sdd-review-design-{feature}` (or `sdd-review-design-cross-check`)
-2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with prompt:
+2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with `name: "review-{agent-name}"` and prompt:
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    Read `.claude/agents/sdd-review-design-{agent-name}.md` and follow all instructions.
@@ -250,6 +250,7 @@ Skip the Subagent Execution Flow above. Use the following flow instead.
    Do NOT format as markdown. Use the exact CPF format specified in the agent file.
    ```
    Where `{agent-name}` is: `rulebase`, `explore-testability`, `explore-architecture`, `explore-consistency`, `explore-best-practices`
+   Teammate names: `review-rulebase`, `review-explore-testability`, `review-explore-architecture`, `review-explore-consistency`, `review-explore-best-practices`
 3. **Wait** for all 5 teammates to send findings (idle notifications with CPF output)
 
 ### Team Phase 2: Cross-Check Broadcast
@@ -330,8 +331,13 @@ ROADMAP_ADVISORY: (wave-scoped mode only)
 ```
 
 **Step 8: Clean up**
-- Send shutdown requests to all 5 teammates
-- `TeamDelete` to clean up team resources
+- Send `shutdown_request` to each teammate by name:
+  ```
+  SendMessage(type: "shutdown_request", recipient: "review-rulebase", content: "Review complete")
+  SendMessage(type: "shutdown_request", recipient: "review-explore-testability", content: "Review complete")
+  ... (all 5 teammates)
+  ```
+- Wait for shutdown approvals, then `TeamDelete` to clean up team resources
 
 ### Team Phase 4: Display Results
 

@@ -1,6 +1,6 @@
 ---
 description: Initialize steering documents through interactive dialogue
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Task
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
 # Steering Initialization

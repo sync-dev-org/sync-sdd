@@ -17,7 +17,7 @@ argument-hint: <feature-name> [-y] [--sequential]
 
 <instructions>
 ## Core Task
-Generate implementation tasks for feature **$1** based on approved design (specifications and architecture).
+Generate implementation tasks for feature **$1** based on design (specifications and architecture).
 
 ## Execution Steps
 
@@ -28,15 +28,17 @@ Generate implementation tasks for feature **$1** based on approved design (speci
 - `{{KIRO_DIR}}/specs/$1/tasks.md` (if exists, for merge mode)
 - **Entire `{{KIRO_DIR}}/steering/` directory** for complete project memory
 
-**Validate approvals**:
-- If `-y` flag provided ($2 == "-y"): Auto-approve design in spec.json
-- Otherwise: Verify design approved (stop if not, see Safety & Fallback)
+**Validate phase**:
+- Verify design.md exists (stop if not, see Safety & Fallback)
+- Verify `phase` is `design-generated` or later (stop if `initialized`)
 - Determine sequential mode based on presence of `--sequential`
 
 **Version consistency check** (skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
 - If `version_refs.tasks` exists and differs from `version_refs.design`:
-  - Warn: "Design updated since last task generation (tasks based on v{refs.tasks}, design now at v{refs.design}). Tasks will be based on the latest design."
+  - **CONFIRM** (via AskUserQuestion): "Design updated since last task generation (tasks based on v{refs.tasks}, design now at v{refs.design}). Regenerate tasks based on the latest design?"
+  - If user declines: Stop execution
+  - If user confirms (or `-y` flag): Proceed with regeneration
 
 ### Step 2: Generate Implementation Tasks
 
@@ -62,8 +64,6 @@ Generate implementation tasks for feature **$1** based on approved design (speci
 - Create/update `{{KIRO_DIR}}/specs/$1/tasks.md`
 - Update spec.json metadata:
   - Set `phase: "tasks-generated"`
-  - Set `approvals.tasks.generated: true, approved: false`
-  - Set `approvals.design.approved: true`
   - Update `updated_at` timestamp
   - **Version tracking** (backward compatible — initialize defaults if fields missing):
     - Set `version_refs.tasks` to the current spec `version`
@@ -103,11 +103,6 @@ Provide brief summary in the language specified in spec.json:
 
 ### Error Scenarios
 
-**Design Not Approved**:
-- **Stop Execution**: Cannot proceed without approved design
-- **User Message**: "Design must be approved before task generation"
-- **Suggested Action**: "Run `/sdd-tasks $1 -y` to auto-approve design and proceed"
-
 **Missing Design**:
 - **Stop Execution**: Design document must exist
 - **User Message**: "Missing design.md at `{{KIRO_DIR}}/specs/$1/`"
@@ -131,7 +126,6 @@ Provide brief summary in the language specified in spec.json:
 - This applies when starting first task OR switching between tasks
 - Fresh context ensures clean state and proper task focus
 
-**If Tasks Approved**:
 - Execute specific task: `/sdd-impl $1 1.1` (recommended: clear context between each task)
 - Execute multiple tasks: `/sdd-impl $1 1.1,1.2` (use cautiously, clear context between tasks)
 - Without arguments: `/sdd-impl $1` (executes all pending tasks - NOT recommended due to context bloat)

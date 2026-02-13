@@ -39,14 +39,14 @@ C. reference - Technical summary (quick lookup)
 Ask sequentially:
 1. "What problem occurred? (brief description)"
 2. "What was the root cause?"
-3. "At which phase should this have been detected? (requirements/design/tasks/impl)"
+3. "At which phase should this have been detected? (specifications/design/tasks/impl)"
 4. "What category does this belong to? (state/api/async/data/security/integration)"
 
 ### For pattern:
 Ask sequentially:
 1. "What pattern are you documenting? (brief description)"
 2. "When should this pattern be applied?"
-3. "Which phases is this applicable to? (requirements/design/tasks/impl)"
+3. "Which phases is this applicable to? (specifications/design/tasks/impl)"
 4. "What category does this belong to? (state/api/async/data/security/integration)"
 
 ### For reference:

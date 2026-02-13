@@ -10,16 +10,6 @@
     "tasks": null
   },
   "phase": "initialized",
-  "approvals": {
-    "design": {
-      "generated": false,
-      "approved": false
-    },
-    "tasks": {
-      "generated": false,
-      "approved": false
-    }
-  },
   "implementation": {
     "files_created": []
   },

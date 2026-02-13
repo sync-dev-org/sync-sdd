@@ -40,6 +40,7 @@ You will receive a prompt containing:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata
 
 2. **Steering Context**:
+   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
    - Read `{{KIRO_DIR}}/steering/tech.md` - Technical constraints, patterns
    - Read `{{KIRO_DIR}}/steering/structure.md` - Project structure, conventions
 
@@ -59,14 +60,14 @@ You will receive a prompt containing:
 
 ## Investigation Approaches
 
-### 1. Component Responsibilities (Section 3.1 of design-review.md)
+### 1. Component Responsibilities (Design Verifiability → Component Responsibilities)
 
 - Is each component's responsibility clearly bounded?
 - Are there overlapping responsibilities between components?
 - Can each component be developed and tested in isolation?
 - Are there "god components" doing too much?
 
-### 2. Interface Contracts (Section 3.2)
+### 2. Interface Contracts (Design Verifiability → Interface Contracts)
 
 - Are all inputs defined with types and constraints?
 - Are all outputs defined with types and possible values?
@@ -74,7 +75,7 @@ You will receive a prompt containing:
 - Are optional vs required parameters clear?
 - Are validation rules specified at boundaries?
 
-### 3. State Transitions (Section 3.3)
+### 3. State Transitions (Design Verifiability → State Transitions)
 
 - Are all states enumerated?
 - Are all valid transitions defined?

@@ -1,6 +1,6 @@
 ---
 description: Update existing steering documents through targeted dialogue
-allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion, Task
+allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
 argument-hint: "[-y]"
 ---
 

@@ -251,7 +251,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - Dependency or compatibility questions arise
 
    **How to research**:
-   - Use Task tool with `subagent_type="sdd-researcher"`
+   - Use Task tool with `subagent_type="general-purpose"`
    - Focus on the specific question raised
    - Share findings with user and discuss implications
 
@@ -280,8 +280,11 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - Generate spec.json with roadmap metadata
    - Set `phase: "initialized"`
 
-3. **Generate skeleton design.md for each spec**:
+3. **Generate skeleton design.md for each spec** (new specs only):
    - Read template: design.md
+   - **Overwrite guard**: If `design.md` already exists AND spec phase is NOT `initialized`, SKIP skeleton generation for that spec (preserve existing refined design)
+   - If `design.md` exists AND spec phase IS `initialized`: overwrite with new skeleton (previous skeleton was never refined)
+   - If `design.md` does not exist: generate skeleton
    - Generate design.md skeleton with Specifications section based on steering documents
    - Include spec description, wave info, and dependencies
    - **Design will be refined via `/sdd-design` command**
@@ -294,6 +297,11 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
    - Write to `{{KIRO_DIR}}/specs/roadmap.md`
    - **NOT in steering** (to avoid context pollution for individual spec implementers)
    - **Plan only, no progress tracking** (progress is dynamically calculated by `/sdd-status`)
+   - **Format Contract**: The following sections are **required** and parsed by `/sdd-roadmap-run` and `/sdd-status`:
+     - `## Wave Overview` table: columns must include Wave number, Name, Specs list
+     - `## Implementation Order` with `### Wave N (Name)` subsections: each must contain a table with Spec, Dependencies columns
+     - Each spec's `spec.json` must have `roadmap.wave` and `roadmap.dependencies` fields set
+     - Other sections (Dependency Graph, Wave Execution Flow, Quick Reference) are informational and not parsed
    - Content structure:
      ```markdown
      # Specification Roadmap
@@ -497,7 +505,7 @@ This is an **exploratory, collaborative task**. Build the roadmap through dialog
 - Dependency or compatibility questions arise during wave refinement
 
 **How to delegate**:
-- Use Task tool with `subagent_type="sdd-researcher"`
+- Use Task tool with `subagent_type="general-purpose"`
 - Focus prompt on the **specific question** raised by user
 - Results return in CPF format (FINDINGS/SOURCES/CAVEATS sections)
 - Share findings with user and discuss implications together
@@ -539,11 +547,13 @@ For each NEW spec, create the following files in `{{KIRO_DIR}}/specs/[spec-name]
      "created_at": "2024-01-01T00:00:00Z",
      "updated_at": "2024-01-01T00:00:00Z",
      "language": "en",
-     "phase": "initialized",
-     "approvals": {
-       "design": { "generated": false, "approved": false },
-       "tasks": { "generated": false, "approved": false }
+     "version": "1.0.0",
+     "changelog": [],
+     "version_refs": {
+       "design": null,
+       "tasks": null
      },
+     "phase": "initialized",
      "implementation": {
        "files_created": []
      },
@@ -568,7 +578,7 @@ Provide conversational summary with:
 2. **Product understanding confirmed with user** (domain, purpose, corrections if any)
 3. **Phase 2: Spec candidates identified from steering**
 4. **Phase 3: Wave organization**
-5. **Phase 4 (if user requested): Domain research delegated to sdd-researcher subagent**:
+5. **Phase 4 (if user requested): Domain research delegated to general-purpose subagent**:
    - Critical findings: [innovative patterns / edge cases / breaking changes]
    - OR "No critical findings that significantly impact spec breakdown"
    - Spec candidates refined based on findings (if any)
@@ -579,7 +589,7 @@ Provide conversational summary with:
    |-----------|------|--------------|--------|
    | foundation | 1 | - | Skeleton created |
    | feature-a | 2 | foundation | Skeleton created |
-8. Next steps guidance: "Skeleton design documents created. Refine with `/sdd-design [spec-name]` or proceed to `/sdd-tasks [spec-name]`."
+8. Next steps guidance: "Skeleton design documents created. Run `/sdd-design [spec-name]` to refine each spec, then `/sdd-tasks [spec-name]` to generate tasks."
 
 **Language**: Use the language the user writes in (auto-detect).
 
@@ -594,7 +604,7 @@ Provide conversational summary with:
 | **Phase 3** | Show: mermaid dependency graph, wave breakdown with parallel markers | "Does this wave organization make sense? Any adjustments needed?" |
 | **Phase 4** | Dialogue: respond to user feedback, adjust waves, research if needed | (Iterative dialogue until user confirms) |
 | **Before Phase 5** | Show: final wave organization and summary table of specs to create | "Create these spec directories with skeleton design documents?" |
-| **After Phase 5** | Show: created specs table | "Specs initialized. Refine with `/sdd-design` or proceed to `/sdd-tasks`" |
+| **After Phase 5** | Show: created specs table | "Specs initialized. Run `/sdd-design [spec-name]` to refine each spec." |
 
 ## Safety & Fallback
 

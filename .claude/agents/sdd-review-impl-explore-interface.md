@@ -30,7 +30,7 @@ Verify that implementation code EXACTLY matches the contracts defined in design.
 - Focus ONLY on interface contract verification (signatures, call sites, imports)
 - Do NOT run tests or evaluate test quality
 - Do NOT check code style, naming conventions, or error handling patterns
-- Do NOT verify task completion or requirements traceability
+- Do NOT verify task completion or spec traceability
 - Be extremely precise - a single wrong parameter is a Critical issue
 
 ## Input Handling
@@ -56,6 +56,7 @@ You will receive a prompt containing:
    - Read EACH implementation file in full
 
 3. **Steering Context**:
+   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
    - Read `{{KIRO_DIR}}/steering/tech.md` - Technical patterns
    - Read `{{KIRO_DIR}}/steering/structure.md` - Project structure
 

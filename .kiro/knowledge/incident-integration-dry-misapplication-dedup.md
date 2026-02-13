@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Discovered Phase | impl |
-| Should Detect At | requirements |
+| Should Detect At | specifications |
 | Category | integration |
 | Keywords | DRY, 重複排除, deduplication, 仕様統合, コンテキスト分離 |
 | Severity | medium |
@@ -45,7 +45,7 @@
 
 ## Detection Points by Phase
 
-### requirements
+### specifications
 - [ ] 同じ機能名でも、異なるコンテキストで使われる場合は「同一性の定義」を明示しているか
 - [ ] DRY原則の適用を検討する際、「何が重複しているのか」を具体的に列挙しているか
 - [ ] 統合候補の機能について、入力の性質・頻度・目的の違いを分析しているか

@@ -20,7 +20,7 @@ Verify that tests exist, pass, provide meaningful coverage, and do not produce f
 
 - Focus ONLY on test existence, execution, and quality
 - Do NOT verify function signatures or interface contracts
-- Do NOT check requirements traceability or task completion
+- Do NOT check spec traceability or task completion
 - Do NOT evaluate code style or naming conventions
 - Use Bash to execute tests and gather results
 - Be skeptical of passing tests - investigate mock quality
@@ -42,6 +42,7 @@ You will receive a prompt containing:
    - Read `{{KIRO_DIR}}/specs/{feature}/spec.json` for metadata and file paths
 
 2. **Steering Context**:
+   - Read `{{KIRO_DIR}}/steering/product.md` - Product purpose, users, domain context
    - Read `{{KIRO_DIR}}/steering/tech.md` - Test commands, framework configuration
    - Read `{{KIRO_DIR}}/steering/structure.md` - Test file conventions
 
@@ -131,7 +132,7 @@ You will receive a prompt containing:
    - Grep for `AC: {feature}` markers in all test files
    - Cross-reference with design.md's Specifications acceptance criteria
    - For each AC:
-     - Covered: Test with matching `AC: {feature}.R{N}.AC{M}` marker exists AND test passes
+     - Covered: Test with matching `AC: {feature}.S{N}.AC{M}` marker exists AND test passes
      - Uncovered: No test marker found
      - Stale: Marker references AC that no longer exists in design.md Specifications
    - Report: "AC marker coverage: X/Y (Z%)"

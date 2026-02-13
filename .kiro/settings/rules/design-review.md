@@ -74,7 +74,7 @@
 
 ---
 
-### 1. Requirements Clarity
+### 1. Specifications Clarity
 
 #### 1.1 Ambiguous Language Detection
 Flag any occurrence of:
@@ -98,7 +98,7 @@ Flag any occurrence of:
 - Are error scenarios enumerated?
 - Are concurrent access scenarios considered (if applicable)?
 
-### 2. Requirements Consistency
+### 2. Specifications Consistency
 
 #### 2.1 Internal Contradictions
 - Do any requirements conflict with each other?
@@ -138,7 +138,7 @@ Flag any occurrence of:
 
 ## Mode 2: Cross-Check Checklist
 
-### 1. Requirements Consistency Across Specs
+### 1. Specifications Consistency Across Specs
 
 #### 1.1 Terminology Unification
 - Is the same term used consistently across specs?
@@ -184,129 +184,6 @@ Flag any occurrence of:
 
 ---
 
-## Output Formats
-
-### Single Review Output
-
-```markdown
-# Spec Review: {feature-name}
-
-## Summary
-[2-3 sentence overview: What does this spec cover? What is its testability status?]
-
-## SDD Compliance Check
-
-### Template Conformance
-| Section | Status | Issues |
-|---------|--------|--------|
-| Specifications | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
-| Design sections | ✅ Compliant / ⚠️ Minor drift / 🔴 Major drift | [details] |
-
-### Section Responsibility Separation
-| Issue | Location | Content | Should Be In |
-|-------|----------|---------|--------------|
-| [type] | [design.md:section] | [problematic content] | [correct section] |
-
-### Traceability
-- Orphan specs: [list or "None"]
-- Orphan components: [list or "None"]
-
-## Critical Issues (テスト実装を阻害)
-[Issues that make test implementation impossible or unreliable]
-
-🔴 **Issue 1**: [Concise title]
-- **Location**: design.md Spec X / design.md Component Y
-- **Problem**: [Quote or describe the problematic content]
-- **Test Impact**: Test implementer cannot determine [what exactly]
-- **Suggested Fix**: [Specific, actionable change]
-
-🔴 **Issue 2**: ...
-
-## Warnings (曖昧さ・改善推奨)
-[Issues that cause ambiguity but have reasonable defaults]
-
-🟡 **Warning 1**: [Concise title]
-- **Location**: [file and section]
-- **Problem**: [Description]
-- **Risk**: May lead to [potential issue]
-- **Suggested Fix**: [Recommendation]
-
-🟡 **Warning 2**: ...
-
-## Verdict
-
-**[GO / CONDITIONAL / NO-GO]**
-
-- **GO**: Test implementation can proceed without blockers
-- **CONDITIONAL**: Can proceed, but [specific items] should be clarified during implementation
-- **NO-GO**: Must resolve [critical issues] before test implementation
-
-### Next Steps
-[What the user should do based on the verdict]
-```
-
-### Cross-Check Output
-
-```markdown
-# Cross-Spec Review
-
-## Specs Analyzed
-| Spec | Specifications | Design | Status |
-|------|---------------|--------|--------|
-| feature-a | ✓ | ✓ | Reviewed |
-| feature-b | ✓ | - | Specs only |
-| feature-c | ✓ | ✓ | Reviewed |
-
-## Cross-Spec Issues
-
-### Specification Conflicts
-[Contradictions between specs' specifications]
-
-🔴 **Conflict 1**: [feature-A] vs [feature-B]
-- **Content**: [What contradicts]
-- **feature-A says**: [Quote]
-- **feature-B says**: [Quote]
-- **Resolution needed**: [Who needs to decide/what needs to change]
-
-### Design Incompatibilities
-[Technical conflicts between designs]
-
-🔴 **Incompatibility 1**: [feature-X] vs [feature-Y]
-- **Component**: [Shared component name]
-- **Conflict**: [How they differ]
-- **Risk**: [What breaks if not resolved]
-
-### Scope Overlaps
-[Areas where specs may interfere]
-
-🟡 **Overlap 1**: [title]
-- **Specs involved**: [feature-A], [feature-C]
-- **Shared area**: [What overlaps]
-- **Parallel development risk**: [Merge conflicts, integration issues, etc.]
-
-## Parallel Development Assessment
-
-### Independent (並行開発可能)
-Specs that can be developed simultaneously without coordination:
-- [feature-X]
-- [feature-Y]
-
-### Sequential (依存関係あり)
-Specs with dependencies that require ordering:
-1. [feature-A] (no dependencies)
-2. [feature-B] (depends on feature-A)
-3. [feature-C] (depends on feature-B)
-
-### Requires Coordination (同時作業に注意)
-Specs that can be developed in parallel but need communication:
-- [feature-P] + [feature-Q]: Share [component], coordinate on [interface]
-
-## Summary
-[2-3 sentences: Overall consistency status and recommended development approach]
-```
-
----
-
 ## Severity Classification
 
 ### Critical (🔴)
@@ -343,61 +220,3 @@ When outputting in CPF format, map as follows:
 6. **Pull back to SDD**: For drifted content, always recommend the correct location
 7. **Assume good intent**: Suggest improvements, don't criticize
 
----
-
-## Deep Review: Steering Update Proposals
-
-When `--deep` flag is used, include steering update proposals to persist discovered knowledge.
-
-### Purpose
-Capture best practices, API updates, edge cases, and implementation gotchas into steering documents so future reviews don't need to re-search the same information.
-
-### What to Capture
-
-| Knowledge Type | Proposed Location | Examples |
-|---------------|-------------------|----------|
-| Latest API patterns | tech.md | New API versions, deprecations, migration paths |
-| Technical constraints | tech.md | Rate limits, quotas, compatibility issues |
-| Implementation gotchas | Custom steering | Common bugs, workarounds, edge cases |
-| Design patterns | Custom steering | Proven patterns for the domain |
-| Security considerations | Custom steering | Vulnerabilities, best practices |
-
-### Output Format Addition (--deep only)
-
-```markdown
-## Steering Update Proposals
-
-### Existing Steering Updates
-
-#### tech.md
-```diff
-+ ## [Technology] Considerations
-+ - [Latest API change]: [Impact and how to handle]
-+ - [Known limitation]: [Workaround]
-```
-
-### New Custom Steering Proposals
-
-#### Proposed: `steering/{domain}-patterns.md`
-**Rationale**: [Why this knowledge needs to be persisted]
-
-**Content**:
-```markdown
-# [Domain] Patterns and Best Practices
-
-## Latest API Considerations
-- [Finding 1]
-- [Finding 2]
-
-## Known Edge Cases
-- [Edge case]: [How to handle]
-
-## Implementation Gotchas
-- [Gotcha]: [How to avoid]
-```
-
-### Knowledge Capture Summary
-| Knowledge | Source | Location | Priority |
-|-----------|--------|----------|----------|
-| [Item] | [URL] | [file] | High/Medium/Low |
-```

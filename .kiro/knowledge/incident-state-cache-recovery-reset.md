@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Discovered Phase | impl |
-| Should Detect At | requirements |
+| Should Detect At | specifications |
 | Category | state |
 | Keywords | キャッシュ, 重複抑制, 状態遷移, TTL, 回復, クリア |
 | Severity | high |
@@ -47,7 +47,7 @@
 
 ## Detection Points by Phase
 
-### requirements
+### specifications
 **最も効果的な検出タイミング**
 
 チェック質問:

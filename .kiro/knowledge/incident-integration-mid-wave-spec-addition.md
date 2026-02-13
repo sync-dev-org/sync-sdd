@@ -14,7 +14,7 @@
 | Field | Value |
 |-------|-------|
 | Discovered Phase | design |
-| Should Detect At | requirements |
+| Should Detect At | specifications |
 | Category | integration |
 | Keywords | mid-wave, spec-addition, cross-cutting, consistency, scope, non-goals, dependencies |
 | Severity | high |
@@ -56,7 +56,7 @@ Manual intervention required to resolve contradictions and update previous wave 
 
 ## Detection Points by Phase
 
-### requirements
+### specifications
 - [ ] When adding infrastructure spec: scan existing specs for contradictory Non-Goals
 - [ ] Check if new spec's "integration targets" have declared the feature out of scope
 - [ ] Validate that dependency direction matches wave ordering
