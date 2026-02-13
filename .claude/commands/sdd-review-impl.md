@@ -10,7 +10,7 @@ argument-hint: [feature-name] [task-numbers] [--team] | --cross-check [--team] |
 - **Mission**: Verify implementation aligns with design (specifications + architecture) and tasks
 - **Dual Architecture**:
   - **Subagent mode** (default): Router dispatches to 6 agents (5 parallel + 1 verifier) via Task tool
-  - **Agent Team mode** (`--team`): Router creates team with 5 Sonnet teammates + Lead synthesis
+  - **Agent Team mode** (`--team`): Router creates team with 5 Sonnet reviewers + 1 Sonnet verifier; verifier synthesizes and returns result to Lead
 - **Context Isolation**: Each agent/teammate runs in separate context window (no cross-contamination)
 - **Philosophy**: Each agent has a unique perspective; isolation enables independent discovery
 - **Router's Role**: Orchestrate agents/teammates, synthesize (Team mode), display final results
@@ -248,132 +248,74 @@ Execute verification and return the unified report.
 
 Skip the Subagent Execution Flow above. Use the following flow instead.
 
-### Team Phase 1: Team Creation & Independent Review
+### Teammate Roles
+
+All teammates are flat members of the review team. Lead receives only the final verdict.
+
+| Role | Model | Responsibility |
+|------|-------|---------------|
+| **Lead** (this router) | Opus | Team creation, final report display. Does NOT process individual findings. |
+| **review-verifier** | Sonnet | Collects findings from 5 reviewers, runs cross-check, synthesizes verdict. Sends only final CPF report to Lead. |
+| **review-{agent-name}** ×5 | Sonnet | Independent review. Sends findings to review-verifier (NOT to Lead). |
+
+**Context savings**: Lead never sees raw reviewer output. Only the verifier's synthesized report enters Lead's context.
+
+### Team Phase 1: Team Creation & Spawn All 6 Teammates
 
 1. **Create team**: `TeamCreate` with team name `sdd-review-impl-{feature}` (or `sdd-review-impl-cross-check`)
-2. **Spawn 5 teammates** (model: sonnet) in a SINGLE message, each with `name: "review-{agent-name}"` and prompt:
+2. **Spawn review-verifier** AND **5 reviewers** in a SINGLE message (all 6 in parallel):
+
+   **review-verifier** (name: `review-verifier`, model: sonnet):
+   ```
+   You are a WORKER agent. Do NOT spawn new teammates or subagents.
+   Read `.claude/agents/sdd-review-impl-verifier.md` and follow all instructions.
+   Feature: {feature} (or "cross-check" / "wave-scoped-cross-check" with Wave: {N})
+   Task Scope: {task_scope} (e.g., "1.1, 1.2" or "all completed tasks")
+
+   Your role in this team:
+   1. WAIT for 5 reviewer teammates to send you their CPF findings
+   2. Once all 5 received, broadcast all findings back to all reviewers for cross-check:
+      "All review findings below. Follow Cross-Check Protocol. Send REFINED findings to me.
+       This is a single round — do NOT request further discussion.
+       == Rulebase Findings ==
+       {rulebase CPF}
+       == Interface Findings ==
+       {interface CPF}
+       == Test Findings ==
+       ... (all 5)"
+   3. WAIT for 5 REFINED responses
+   4. Synthesize: merge, deduplicate, resolve contradictions, detect spec defects,
+      check over-implementation, determine verdict
+      (follow all verification steps in your agent file)
+   5. Send ONLY the final CPF report to the team lead. Do NOT send intermediate findings.
+   ```
+
+   **5 reviewers** (name: `review-{agent-name}`, model: sonnet), each with:
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    Read `.claude/agents/sdd-review-impl-{agent-name}.md` and follow all instructions.
    Feature: {feature} (or "cross-check" / "wave-scoped-cross-check" with Wave: {N})
    Task Scope: {task_scope} (e.g., "1.1, 1.2" or "all completed tasks")
-   After completing your review, send your complete CPF output to the team lead.
+   After completing your review, send your complete CPF output to 'review-verifier' (NOT to the team lead).
    Do NOT format as markdown. Use the exact CPF format specified in the agent file.
+   When review-verifier sends you all findings for cross-check, follow the Cross-Check Protocol
+   in your agent instructions and send REFINED findings back to 'review-verifier'.
    ```
    Where `{agent-name}` is: `rulebase`, `explore-interface`, `explore-test`, `explore-quality`, `explore-consistency`
-   Teammate names: `review-rulebase`, `review-explore-interface`, `review-explore-test`, `review-explore-quality`, `review-explore-consistency`
-3. **Wait** for all 5 teammates to send findings (idle notifications with CPF output)
 
-### Team Phase 2: Cross-Check Broadcast
+### Team Phase 2: Wait for Verifier Result
 
-4. **Collect** all 5 CPF outputs from teammate messages
-5. **Broadcast** to all teammates:
-   ```
-   All review findings are below. Follow the Cross-Check Protocol section in your
-   agent instructions. Send REFINED findings back to the team lead.
-   This is a single round — do NOT request further discussion.
+3. **Lead waits** for a single message from `review-verifier` containing the final CPF report
+   - The verifier handles all cross-check orchestration internally (peer-to-peer with reviewers)
+   - Lead does NOT interact with individual reviewers
 
-   == Rulebase Findings ==
-   {rulebase CPF}
-   == Interface Findings ==
-   {interface CPF}
-   == Test Findings ==
-   {test CPF}
-   == Quality Findings ==
-   {quality CPF}
-   == Consistency Findings ==
-   {consistency CPF}
-   ```
-6. **Wait** for all 5 refined responses (REFINED + CROSS-REF format)
+### Team Phase 3: Clean Up & Display
 
-### Team Phase 3: Lead Synthesis
+4. **Clean up team**:
+   - Send `shutdown_request` to all 6 teammates (`review-verifier` + 5 reviewers)
+   - Wait for shutdown approvals, then `TeamDelete`
 
-The Lead (this router) performs synthesis directly — no separate verifier agent.
-
-**Step 1: Merge refined findings**
-- `confirmed` by 2+ teammates → high confidence, keep
-- `withdrawn` → remove from final report
-- `upgraded` → use new severity
-- `downgraded` → use new severity
-
-**Step 2: Deduplicate**
-- Same issue from multiple teammates → single finding, list all agents with `+` separator
-- Use CROSS-REF data to identify correlated findings
-
-**Step 3: Resolve contradictions**
-Key impl-specific cross-checks:
-- Interface says signature mismatch → Does Test show related failures?
-- Rulebase says file missing → Does Interface/Quality confirm?
-- Test says passing → Does Interface confirm signatures are actually correct?
-- Quality says dead code → Does Rulebase show it's not required by any task?
-
-**Step 4: Spec defect detection**
-Distinguish spec defects from implementation defects:
-
-| Signal | Classified Phase | Rationale |
-|--------|-----------------|-----------|
-| Multiple teammates flag same specification as unimplementable | `specifications` | AC is contradictory or impossible |
-| Interface finds design contract impossible to implement | `design` | Architecture/interface mismatch |
-| Test finds actual behavior contradicts a specification | `specifications` | AC doesn't match real-world behavior |
-| Design components reference non-existent spec ID | `design` | Traceability broken |
-| AC is ambiguous — implementation chose one interpretation, another is equally valid | `specifications` | AC needs tightening |
-| Design specifies interface but no spec requires it (orphan component) | `design` | Over-design without spec backing |
-
-If spec defect detected, classify affected phase (`specifications` or `design`) for SPEC_FEEDBACK.
-When ambiguous, prefer `specifications` — fixing the WHAT is safer than fixing the HOW.
-
-**Step 5: Over-implementation check**
-Guard against AI complexity bias:
-- Code implements features not in design → flag as over-implementation
-- Error handling for cases design doesn't specify → downgrade or remove
-- Helper/utility extracted for single use → suggest inline
-- "Best practice" is not justification for exceeding design scope
-
-**Step 6: Decision suggestions**
-Identify implementation choices that are intentional rather than defects:
-- Suggest documenting as Decision in `steering/` (project-wide) or `design.md` (feature-specific)
-
-**Step 7: Verdict**
-```
-IF any Critical issues remain:                           → VERDICT = NO-GO
-ELSE IF spec defect detected (root cause is spec):       → VERDICT = SPEC-UPDATE-NEEDED
-ELSE IF >3 High OR test failures OR interface mismatches: → VERDICT = CONDITIONAL
-ELSE IF only Medium/Low AND tests pass:                  → VERDICT = GO
-```
-Precedence: NO-GO > SPEC-UPDATE-NEEDED > CONDITIONAL > GO. You MAY override with justification.
-
-**Step 8: Generate CPF output**
-```
-VERDICT:{GO|CONDITIONAL|NO-GO|SPEC-UPDATE-NEEDED}
-SCOPE:{feature} | cross-check | wave-scoped-cross-check
-WAVE_SCOPE:{range} (wave-scoped mode only)
-SPECS_IN_SCOPE:{spec-a},{spec-b} (wave-scoped mode only)
-VERIFIED:
-{agents}|{sev}|{category}|{location}|{description}
-REMOVED:
-{agent}|{reason}|{original issue}
-RESOLVED:
-{agents}|{resolution}|{conflicting findings}
-SPEC_FEEDBACK: (only when VERDICT is SPEC-UPDATE-NEEDED)
-{phase}|{spec}|{description}
-NOTES:
-{synthesis observations}
-ROADMAP_ADVISORY: (wave-scoped mode only)
-{future wave considerations}
-```
-
-**Step 9: Clean up**
-- Send `shutdown_request` to each teammate by name:
-  ```
-  SendMessage(type: "shutdown_request", recipient: "review-rulebase", content: "Review complete")
-  SendMessage(type: "shutdown_request", recipient: "review-explore-interface", content: "Review complete")
-  ... (all 5 teammates)
-  ```
-- Wait for shutdown approvals, then `TeamDelete` to clean up team resources
-
-### Team Phase 4: Display Results
-
-Use the **same Phase 3: Display Results** logic as the Subagent flow — parse the CPF output and format as human-readable markdown report.
+5. **Display results**: Use the **same Phase 3: Display Results** logic as the Subagent flow — parse the CPF output and format as human-readable markdown report.
 
 ---
 

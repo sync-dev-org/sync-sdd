@@ -48,71 +48,116 @@ Note: `--team` is only applicable in full mode (all 4 agents). Individual catego
 
 ### Subagent Execution Flow (default)
 
-Launch 4 Explore agents **in parallel** via Task tool using the Agent Prompts below. Collect results and aggregate into the Report format.
+#### Phase 1: Parallel Audit Agents
+
+Launch 4 agents **in parallel** via Task tool using the Agent Prompts below.
+
+**CRITICAL**: Launch all 4 Task calls in a SINGLE message for true parallel execution.
+
+#### Phase 2: Verification Agent
+
+After all 4 agents complete, launch verifier:
+
+```
+Read and follow the instructions in `.claude/agents/sdd-review-dead-code-verifier.md`.
+
+Agent Results:
+
+## Settings Audit Results
+{settings agent output}
+
+## Dead Code Detection Results
+{code agent output}
+
+## Spec Alignment Results
+{specs agent output}
+
+## Test Code Audit Results
+{tests agent output}
+
+Execute verification and return the unified report.
+```
+
+#### Phase 3: Display Results
+
+Router transforms verifier's compact output into human-readable report:
+
+1. **Parse verifier output**:
+   - Metadata lines: `KEY:VALUE` format (VERDICT)
+   - VERIFIED lines: split by `|` → agents, sev, cat, loc, desc
+   - REMOVED lines: split by `|` → agent, reason, original
+   - RESOLVED lines: split by `|` → agents, resolution, findings
+   - NOTES: freeform text lines
+   - Missing sections = no findings of that type
+   - Agents field: split by `+` for agent list
+
+2. **Format as markdown report** (using the Report Aggregation template below)
+
+3. **Display formatted report** to user
+
+**IMPORTANT**: All formatting logic lives in the router. Agents NEVER produce markdown tables, headers, or human-readable prose in their output.
+
+---
 
 ### Agent Team Execution Flow (when --team flag detected)
 
-#### Phase 1: Team Creation & Independent Investigation
+#### Teammate Roles
+
+All teammates are flat members of the review team. Lead receives only the final report.
+
+| Role | Model | Responsibility |
+|------|-------|---------------|
+| **Lead** (this router) | Opus | Team creation, final report display. Does NOT process individual findings. |
+| **audit-verifier** | Sonnet | Collects findings from 4 auditors, runs cross-validation, merges results. Sends only final CPF report to Lead. |
+| **audit-{category}** ×4 | Sonnet | Independent investigation. Sends findings to audit-verifier (NOT to Lead). |
+
+**Context savings**: Lead never sees raw auditor output. Only the verifier's final report enters Lead's context.
+
+#### Phase 1: Team Creation & Spawn All 5 Teammates
 
 1. **Create team** "sdd-dead-code-review"
-2. **Spawn 4 teammates** (model: sonnet) in a SINGLE message, each with `name` and prompt:
+2. **Spawn audit-verifier** AND **4 auditors** in a SINGLE message (all 5 in parallel):
 
+   **audit-verifier** (name: `audit-verifier`, model: sonnet):
+   ```
+   You are a WORKER agent. Do NOT spawn new teammates or subagents.
+   Read `.claude/agents/sdd-review-dead-code-verifier.md` and follow all instructions.
+
+   Your role in this team:
+   1. WAIT for 4 auditor teammates to send you their findings
+   2. Once all 4 received, broadcast all findings back to all auditors for cross-validation
+      (use the cross-domain questions from your Cross-Check Protocol section).
+      This is a single round — do NOT request further discussion.
+   3. WAIT for 4 REFINED responses
+   4. Synthesize: apply the full Verification Process from your agent file
+      (cross-domain correlation, false positive check, deduplication, verdict)
+   5. Send ONLY the final CPF report to the team lead. Do NOT send intermediate findings.
+   ```
+
+   **4 auditors** (name: `audit-{category}`, model: sonnet), each with:
    ```
    You are a WORKER agent. Do NOT spawn new teammates or subagents.
    {Agent Prompt from the corresponding section below}
-   After completing your investigation, send your complete findings to the team lead.
+   After completing your investigation, send your complete findings to 'audit-verifier' (NOT to the team lead).
    Format: Category name, then one finding per line with severity (C/H/M/L), location, and description.
+   When audit-verifier sends you all findings for cross-validation, review for cross-domain
+   connections and send REFINED findings back to 'audit-verifier'.
    ```
 
    Teammate names: `audit-settings`, `audit-code`, `audit-specs`, `audit-tests`
 
-3. **Wait** for all 4 teammates to send findings (idle notifications)
+#### Phase 2: Wait for Verifier Result
 
-#### Phase 2: Cross-Validation Broadcast
+3. **Lead waits** for a single message from `audit-verifier` containing the final CPF report
+   - The verifier handles all cross-validation internally (peer-to-peer with auditors)
+   - Lead does NOT interact with individual auditors
 
-4. **Collect** all 4 findings
-5. **Broadcast** to all teammates:
+#### Phase 3: Cleanup & Display
 
-   ```
-   All audit findings are below. Check for cross-domain connections:
-   - Settings agent: Does a "dead config" actually appear in test fixtures?
-   - Code agent: Is an "unused function" referenced in specs but not yet implemented?
-   - Specs agent: Does a "drifted spec" correspond to dead code found by the code agent?
-   - Tests agent: Do "orphaned tests" test functions the code agent flagged as dead?
-
-   Review and refine your findings. Withdraw false positives, add cross-domain insights.
-   Send REFINED findings back to the team lead.
-
-   == Settings Findings ==
-   {settings output}
-   == Code Findings ==
-   {code output}
-   == Specs Findings ==
-   {specs output}
-   == Tests Findings ==
-   {tests output}
-   ```
-
-6. **Wait** for all 4 refined responses
-
-#### Phase 3: Lead Synthesis
-
-7. **Merge findings**:
-   - Cross-domain corroborations (e.g., dead code + orphaned test for same symbol) → high confidence
-   - Withdrawn findings → remove
-   - Deduplicate same issue found by multiple agents → single finding
-8. **Format** markdown report (same Report Aggregation format)
-
-#### Phase 4: Cleanup
-
-9. **Send shutdown_request** to each teammate by name:
-   ```
-   SendMessage(type: "shutdown_request", recipient: "audit-settings", content: "Audit complete")
-   SendMessage(type: "shutdown_request", recipient: "audit-code", content: "Audit complete")
-   SendMessage(type: "shutdown_request", recipient: "audit-specs", content: "Audit complete")
-   SendMessage(type: "shutdown_request", recipient: "audit-tests", content: "Audit complete")
-   ```
-10. Wait for shutdown approvals, then `TeamDelete` to clean up team resources
+4. **Clean up team**:
+   - Send `shutdown_request` to all 5 teammates (`audit-verifier` + 4 auditors)
+   - Wait for shutdown approvals, then `TeamDelete`
+5. **Display** the verifier's report (parse CPF and format to markdown using Report Aggregation template)
 
 ---
 
