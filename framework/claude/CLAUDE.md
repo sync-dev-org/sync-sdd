@@ -1,4 +1,4 @@
-# AI-DLC and Spec-Driven Development
+# AI-DLC and Spec-Driven Development (v{{SDD_VERSION}})
 
 Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 

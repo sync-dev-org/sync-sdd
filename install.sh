@@ -28,6 +28,23 @@ warn()  { printf "${YELLOW}warn${RESET}: %s\n" "$1"; }
 error() { printf "${RED}error${RESET}: %s\n" "$1" >&2; }
 success() { printf "${GREEN}success${RESET}: %s\n" "$1"; }
 
+version_lt() {
+    # Returns 0 (true) if $1 < $2, semver comparison
+    v1_major=$(echo "$1" | cut -d. -f1)
+    v1_minor=$(echo "$1" | cut -d. -f2)
+    v1_patch=$(echo "$1" | cut -d. -f3)
+    v2_major=$(echo "$2" | cut -d. -f1)
+    v2_minor=$(echo "$2" | cut -d. -f2)
+    v2_patch=$(echo "$2" | cut -d. -f3)
+    : "${v1_patch:=0}" "${v2_patch:=0}"
+    [ "$v1_major" -lt "$v2_major" ] && return 0
+    [ "$v1_major" -gt "$v2_major" ] && return 1
+    [ "$v1_minor" -lt "$v2_minor" ] && return 0
+    [ "$v1_minor" -gt "$v2_minor" ] && return 1
+    [ "$v1_patch" -lt "$v2_patch" ] && return 0
+    return 1
+}
+
 confirm() {
     printf "%s [y/N] " "$1"
     if [ -t 0 ]; then
@@ -71,6 +88,7 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
 
     .claude/sdd/settings/rules/      Development rules
     .claude/sdd/settings/templates/  Spec/steering/knowledge templates
+    .claude/sdd/.version             Installed framework version
 
 ${BOLD}USER FILES${RESET} (never touched by installer):
     .claude/sdd/project/steering/    Project-specific steering
@@ -78,6 +96,9 @@ ${BOLD}USER FILES${RESET} (never touched by installer):
     .claude/sdd/project/knowledge/   Knowledge base entries
     .claude/handover.md              Session handover
     .claude/settings.local.json      Local setting overrides
+
+${BOLD}CHECK VERSION${RESET}:
+    cat .claude/sdd/.version
 EOF
     exit 0
 }
@@ -109,6 +130,7 @@ if [ "$UNINSTALL" = true ]; then
     rm -f .claude/agents/sdd-*.md
     rm -rf .claude/sdd/settings/rules/ \
            .claude/sdd/settings/templates/
+    rm -f .claude/sdd/.version
 
     # Remove SDD section from CLAUDE.md (preserve user content)
     if [ -f .claude/CLAUDE.md ] && grep -q "$SDD_MARKER_START" .claude/CLAUDE.md; then
@@ -145,34 +167,6 @@ if [ ! -d .git ] && [ "$FORCE" = false ]; then
     exit 1
 fi
 
-# --- Migrate from .kiro/ to .claude/sdd/ ---
-if [ -d .kiro ] && [ "$UNINSTALL" = false ]; then
-    info "Detected legacy .kiro/ directory"
-
-    # Migrate user files
-    for dir in steering specs knowledge; do
-        if [ -d ".kiro/$dir" ]; then
-            if [ -d ".claude/sdd/project/$dir" ]; then
-                warn ".claude/sdd/project/$dir already exists, skipping .kiro/$dir migration"
-            else
-                mkdir -p .claude/sdd/project
-                mv ".kiro/$dir" ".claude/sdd/project/$dir"
-                info "Migrated .kiro/$dir -> .claude/sdd/project/$dir"
-            fi
-        fi
-    done
-
-    # Remove old framework-managed files
-    rm -rf .kiro/settings/rules/ .kiro/settings/templates/
-    rmdir .kiro/settings .kiro 2>/dev/null || true
-
-    if [ -d .kiro ]; then
-        warn ".kiro/ still has files; check manually"
-    else
-        success "Legacy .kiro/ directory fully migrated"
-    fi
-fi
-
 # --- Download ---
 if [ -n "$VERSION" ]; then
     ARCHIVE_URL="https://github.com/${REPO}/archive/refs/tags/${VERSION}.tar.gz"
@@ -197,6 +191,58 @@ if [ -z "$SRC" ] || [ ! -d "$SRC/framework" ]; then
     error "Downloaded archive doesn't contain expected framework/ directory"
     exit 1
 fi
+
+# --- Read versions ---
+if [ -f "$SRC/VERSION" ]; then
+    NEW_VERSION=$(tr -d '[:space:]' < "$SRC/VERSION")
+else
+    NEW_VERSION="0.0.0"
+fi
+if [ -f .claude/sdd/.version ]; then
+    read -r INSTALLED_VERSION < .claude/sdd/.version
+else
+    INSTALLED_VERSION="0.0.0"
+fi
+if [ "$NEW_VERSION" != "0.0.0" ] && [ "$INSTALLED_VERSION" != "0.0.0" ]; then
+    info "Version: ${INSTALLED_VERSION} -> ${NEW_VERSION}"
+elif [ "$NEW_VERSION" != "0.0.0" ]; then
+    info "Version: ${NEW_VERSION}"
+fi
+
+# --- Migrations ---
+migrate_kiro_to_sdd() {
+    [ -d .kiro ] || return 0
+    info "Detected legacy .kiro/ directory"
+    for dir in steering specs knowledge; do
+        if [ -d ".kiro/$dir" ]; then
+            if [ -d ".claude/sdd/project/$dir" ]; then
+                warn ".claude/sdd/project/$dir already exists, skipping .kiro/$dir migration"
+            else
+                mkdir -p .claude/sdd/project
+                mv ".kiro/$dir" ".claude/sdd/project/$dir"
+                info "Migrated .kiro/$dir -> .claude/sdd/project/$dir"
+            fi
+        fi
+    done
+    rm -rf .kiro/settings/rules/ .kiro/settings/templates/
+    rmdir .kiro/settings .kiro 2>/dev/null || true
+    if [ -d .kiro ]; then
+        warn ".kiro/ still has files; check manually"
+    else
+        success "Legacy .kiro/ directory fully migrated"
+    fi
+    UPDATE=true
+    if [ -f .claude/CLAUDE.md ] && ! grep -q "$SDD_MARKER_START" .claude/CLAUDE.md; then
+        rm -f .claude/CLAUDE.md
+        info "Removed legacy CLAUDE.md (will be recreated with markers)"
+    fi
+}
+
+# Run migrations in version order
+if version_lt "$INSTALLED_VERSION" "0.4.0"; then
+    migrate_kiro_to_sdd
+fi
+# Future: if version_lt "$INSTALLED_VERSION" "0.5.0"; then migrate_xxx; fi
 
 # --- Install framework files ---
 install_file() {
@@ -238,9 +284,10 @@ install_claude_md() {
     dest=".claude/CLAUDE.md"
     mkdir -p .claude
 
-    # Build marked content block
+    # Inject version into content and build marked block
+    claude_content=$(sed "s/{{SDD_VERSION}}/${NEW_VERSION}/g" "$src_file")
     marked_block="$SDD_MARKER_START
-$(cat "$src_file")
+${claude_content}
 $SDD_MARKER_END"
 
     if [ ! -f "$dest" ]; then
@@ -309,6 +356,12 @@ fi
 install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
 
+# Write version file
+if [ "$NEW_VERSION" != "0.0.0" ]; then
+    mkdir -p .claude/sdd
+    printf '%s\n' "$NEW_VERSION" > .claude/sdd/.version
+fi
+
 # --- Remove stale framework files on update ---
 if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale() {
@@ -352,6 +405,9 @@ echo "  .claude/commands/    $(find .claude/commands -name 'sdd-*.md' 2>/dev/nul
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agents"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
 echo "  .claude/sdd/         Rules + templates"
+if [ "$NEW_VERSION" != "0.0.0" ]; then
+    echo "  Version:             ${NEW_VERSION}"
+fi
 
 if [ "$UPDATE" = false ]; then
     echo ""
