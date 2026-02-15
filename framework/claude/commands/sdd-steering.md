@@ -1,142 +1,76 @@
 ---
-description: Steering router - initialize, update, or reset steering documents
-allowed-tools: Glob, Grep, Read, AskUserQuestion, Skill
-argument-hint: "[-y]"
+description: Set up project-wide context (create, update, delete, custom)
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage
+argument-hint: [-y] [custom]
 ---
 
-# Steering Document Router
-
-<background_information>
-- **Mission**: Route to appropriate steering action based on current state
-- **This is a router command**: Detects steering state and presents options
-- **Subcommands**:
-  - `/sdd-steering-create` - Create new steering documents from scratch
-  - `/sdd-steering-update` - Update existing steering documents
-  - `/sdd-steering-delete` - Reset and reinitialize steering
-</background_information>
+# SDD Steering (Unified)
 
 <instructions>
 
-## Execution Flow
+## Core Task
 
-### Step 1: Check Steering State
+Manage project steering documents. Conductor handles this directly (no teammate delegation) since it requires user interaction.
 
-1. **Check if core steering files exist**:
-   - Look for `{{SDD_DIR}}/project/steering/product.md`
-   - Look for `{{SDD_DIR}}/project/steering/tech.md`
-   - Look for `{{SDD_DIR}}/project/steering/structure.md`
-
-2. **If core files do NOT exist** (any missing):
-   - Inform user: "No steering documents found. Initializing..."
-   - Execute `/sdd-steering-create` via Skill tool
-   - END
-
-3. **If core files EXIST**:
-   - Read all steering files to build summary
-   - Proceed to Step 2
-
-### Step 2: Build Status Summary
-
-1. **Read each steering file** and extract key points:
-   - `product.md`: Product name, purpose, target users
-   - `tech.md`: Primary stack, key frameworks
-   - `structure.md`: Organization pattern, key directories
-
-2. **List any custom steering files** in the directory
-
-3. **Build summary**:
-   ```
-   ## Current Steering Status
-
-   ### Product (product.md)
-   - Name: [product name]
-   - Purpose: [brief purpose]
-
-   ### Technology (tech.md)
-   - Stack: [primary technologies]
-   - Standards: [key standards]
-
-   ### Structure (structure.md)
-   - Pattern: [organization pattern]
-   - Key directories: [list]
-
-   ### Custom Files
-   - [custom1.md]: [brief description]
-   ```
-
-### Step 3: Present Options
-
-**Show status summary first**, then present two options:
+## Step 1: Detect Mode
 
 ```
-## Steering Actions
-
-### 1. Update - Modify Existing
-Make targeted changes to specific sections.
-→ Invokes `/sdd-steering-update`
-
-### 2. Reset - Start Fresh
-Delete all steering and reinitialize from scratch.
-⚠️ This deletes all steering documents!
+$ARGUMENTS = "custom"      → Custom steering creation
+$ARGUMENTS = "-y"           → Auto-approve update mode
+$ARGUMENTS = ""             → Auto-detect (create if missing, update if exists)
 ```
 
-**Use AskUserQuestion** with options:
-- "Update" - Modify existing steering
-- "Reset" - Delete and reinitialize
+## Step 2: Check Steering State
 
-### Step 4: Execute Selected Action
+1. Check if core steering files exist in `{{SDD_DIR}}/project/steering/`:
+   - `product.md`, `tech.md`, `structure.md`
+2. Scan for any custom steering files (`*.md` excluding core files)
 
-#### If "Update" selected:
+### If No Steering Exists → Create Mode
 
-Execute `/sdd-steering-update` via Skill tool.
+Execute full steering creation:
+1. Ask about codebase analysis preference
+2. If selected: Scan project structure, extract patterns, tech stack
+3. 6-question dialogue:
+   - Project purpose and domain
+   - Target users
+   - Key capabilities
+   - Technology stack
+   - Architecture approach
+   - Development standards
+4. Generate steering files from templates in `{{SDD_DIR}}/settings/templates/steering/`
+5. **Initialize User Intent** in `product.md`:
+   - Record user's Vision from dialogue
+   - Set initial Success Criteria and Anti-Goals
+6. Present summary
 
-#### If "Reset" selected:
+### If Steering Exists → Update/Reset Mode
 
-Execute `/sdd-steering-delete` via Skill tool.
+1. Build status summary from existing steering files
+2. Present options:
+   - **Update**: Targeted dialogue-driven changes (what to change: Product/Tech/Structure/Everything)
+   - **Reset**: Delete all and recreate (requires "RESET" confirmation)
+3. Execute selected action
+4. After update: update `{{SDD_DIR}}/handover/conductor.md`
+
+### Custom Mode (`custom` argument)
+
+1. Ask for custom steering topic (suggest: API standards, testing, security, DB, auth, etc.)
+2. Optional codebase analysis
+3. Topic-specific dialogue
+4. Generate custom steering file: `{{SDD_DIR}}/project/steering/{topic}.md`
+
+## Step 3: Post-Completion
+
+1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
+2. Report summary to user
+3. Suggest next action: `/sdd-design "description"` or `/sdd-roadmap`
 
 </instructions>
 
-## Auto-Approve Mode
+## Error Handling
 
-**If `-y` flag is provided**:
-- Skip option selection
-- Automatically select "Update" action
-- Pass `-y` to `/sdd-steering-update`
+- **Template missing**: Warn and use inline basic structure
+- **Steering directory missing**: Create it automatically
 
-## Tool Guidance
-
-### Skill Invocation
-
-| Action | Command |
-|--------|---------|
-| Initialize | `/sdd-steering-create` |
-| Update | `/sdd-steering-update` |
-| Reset | `/sdd-steering-delete` |
-
-### File Operations
-
-- **Read**: Steering files (for status summary)
-- **Glob**: Find all files in `{{SDD_DIR}}/project/steering/`
-
-**NEVER modify files directly** - always route to subcommands.
-
-## Output Description
-
-### Status Display
-
-```
-## Steering Status
-
-### Summary
-| File | Status | Key Content |
-|------|--------|-------------|
-| product.md | ✅ | [product name] - [purpose] |
-| tech.md | ✅ | [stack] |
-| structure.md | ✅ | [pattern] |
-| custom/*.md | ✅ | [N custom files] |
-
-## Actions
-[Update / Reset]
-```
-
-**Language**: Follow user's language setting.
+think

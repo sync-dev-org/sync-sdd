@@ -1,159 +1,115 @@
 ---
-description: Roadmap router - initialize, run, update, or reset the specification roadmap
-allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task, Skill, Bash
-argument-hint: "[-y] [--team]"
+description: Multi-feature roadmap (create, run, update, delete)
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage, WebSearch, WebFetch
+argument-hint: [run [--gate]] | [-y] | [create [-y]] | [update] | [delete]
 ---
 
-# Specification Roadmap Router
-
-<background_information>
-- **Mission**: Route to appropriate roadmap action based on current state
-- **This is a router command**: Detects roadmap state and presents options
-- **Subcommands**:
-  - `/sdd-roadmap-create` - Create new roadmap from steering
-  - `/sdd-roadmap-run` - Execute Wave-based implementation
-  - `/sdd-roadmap-update` - Sync roadmap with spec states
-  - `/sdd-roadmap-delete` - Delete and reinitialize roadmap
-</background_information>
+# SDD Roadmap (Unified)
 
 <instructions>
 
-## Execution Flow
+## Core Task
 
-### Step 1: Check Roadmap State
+Manage product-wide specification roadmap. Create/update/delete are handled by Conductor directly. Run dispatches to Coordinator for pipeline execution.
 
-1. **Check if roadmap.md exists**:
-   - Look for `{{SDD_DIR}}/project/specs/roadmap.md`
-
-2. **If roadmap.md does NOT exist**:
-   - Inform user: "No roadmap found. Initializing new roadmap..."
-   - Execute `/sdd-roadmap-create` via Skill tool
-   - END
-
-3. **If roadmap.md EXISTS**:
-   - Read roadmap.md to understand current wave structure
-   - Scan all `{{SDD_DIR}}/project/specs/*/spec.json` to get current spec states
-   - Proceed to Step 2
-
-### Step 2: Build Status Summary
-
-1. **For each spec in roadmap**, check:
-   - Does spec directory exist?
-   - What is current phase?
-   - Tasks completion status (if tasks.md exists)
-
-2. **Build status summary**:
-   ```
-   ## Current Roadmap Status
-
-   ### Wave 1 (Foundation)
-   | Spec | Phase | Tasks | Status |
-   |------|-------|-------|--------|
-   | config-management | tasks-generated | 3/5 | In progress |
-
-   ### Wave 2 (Core)
-   | Spec | Phase | Tasks | Status |
-   |------|-------|-------|--------|
-   | slack-notifier | design-generated | - | Ready for tasks |
-   | health-checker | initialized | - | Not started |
-   ```
-
-### Step 3: Present Options
-
-**Show status summary first**, then present three options:
+## Step 1: Detect Mode
 
 ```
-## Roadmap Actions
-
-### 1. Run - Execute Implementation
-Resume/start implementation following the roadmap.
-→ Invokes `/sdd-roadmap-run`
-
-### 2. Update - Sync with Specs
-Analyze differences between roadmap and specs, update roadmap.
-→ Invokes `/sdd-roadmap-update`
-
-### 3. Reset - Start Fresh
-Discard roadmap and all specs, reinitialize from steering.
-⚠️ This deletes all spec work!
+$ARGUMENTS = "run"              → Execute roadmap (full-auto mode)
+$ARGUMENTS = "run --gate"       → Execute roadmap (gate mode)
+$ARGUMENTS = "create" or "create -y" → Create roadmap
+$ARGUMENTS = "update"           → Sync roadmap with current spec states
+$ARGUMENTS = "delete"           → Delete roadmap and all specs
+$ARGUMENTS = "-y"               → Auto-detect: run if roadmap exists, create if not
+$ARGUMENTS = ""                 → Auto-detect with user choice
 ```
 
-**Use AskUserQuestion** with options:
-- "Run" - Execute implementation
-- "Update" - Sync roadmap with specs
-- "Reset" - Discard and reinitialize
+## Step 2: Auto-Detect (if no explicit mode)
 
-### Step 4: Execute Selected Action
+1. Check if `{{SDD_DIR}}/project/specs/roadmap.md` exists
+2. If exists: Present options (Run / Update / Reset)
+3. If not: Start creation flow
 
-#### If "Run" selected:
+---
 
-Execute `/sdd-roadmap-run` via Skill tool. Pass `--team` flag if present in original arguments.
+## Create Mode
 
-#### If "Update" selected:
+Conductor handles directly (user-interactive):
 
-Execute `/sdd-roadmap-update` via Skill tool.
+1. Load steering, rules, templates, existing specs
+2. Verify product understanding with user
+3. Propose spec candidates from steering analysis
+4. Organize into implementation waves (dependency-based)
+5. Refine wave organization through dialogue (unless `-y`)
+6. Create spec directories with skeleton design.md files
+7. Generate roadmap.md with Wave Overview, Dependencies, Execution Flow
+8. **Update product.md** User Intent → Spec Rationale section
+9. Update `{{SDD_DIR}}/handover/conductor.md`
 
-#### If "Reset" selected:
+## Run Mode
 
-Execute `/sdd-roadmap-delete` via Skill tool.
+Dispatch to Coordinator for pipeline execution:
+
+```
+roadmap 実行
+Mode: {auto|gate}
+Wave: {resume from or "all"}
+```
+
+### Full-Auto Mode (default)
+- GO/CONDITIONAL → auto-advance to next phase
+- NO-GO → auto-fix loop (max 3 retries), then escalate to user
+- SPEC-UPDATE-NEEDED → auto-fix from spec level, then escalate
+- Wave transitions → automatic
+
+### Gate Mode (`--gate`)
+- Pause at each Design Review completion → user approval
+- Pause at each Impl Review completion → user approval
+- Pause at Wave transitions → user approval
+
+### Pipeline Execution
+Each spec progresses independently through phases:
+```
+spec-a: [Architect] → [Review] → [Planner] → [Builder ×N] → [Impl Review]
+spec-b:   [Architect] → [Review] → ...
+spec-c:         (waiting on spec-a) → [Architect] → ...
+```
+
+Coordinator manages:
+- Dependency tracking between specs
+- File ownership analysis to prevent conflicts
+- Parallel vs sequential spec scheduling
+- Phase-by-phase teammate spawning (Opus for T3, Sonnet for T4)
+
+Follow Coordinator's spawn requests mechanically.
+
+## Update Mode
+
+Conductor handles directly:
+1. Load roadmap and scan all spec states
+2. Detect structural differences (missing specs, wave mismatches, dependency changes)
+3. Impact analysis (wave reordering, scope changes)
+4. Present update options (Apply All / Selective / Abort)
+5. Execute updates with preview
+
+## Delete Mode
+
+Conductor handles directly:
+1. Require explicit "RESET" confirmation
+2. Delete roadmap.md and all spec directories
+3. Optionally reinitialize via Create mode
+
+## Post-Completion
+
+1. Update `{{SDD_DIR}}/handover/conductor.md`
+2. Report results to user
 
 </instructions>
 
-## Flag Handling
+## Error Handling
 
-**`-y` flag (auto-approve)**:
-- Skip option selection
-- Automatically select "Run" action
-- Pass `-y` to `/sdd-roadmap-run`
+- **No roadmap for run/update**: "No roadmap found. Run `/sdd-roadmap create` first."
+- **No steering for create**: Warn and suggest `/sdd-steering` first
+- **Spec conflicts during run**: Coordinator handles file ownership resolution
 
-**`--team` flag (Agent Team mode)**:
-- Preserve flag through routing
-- Pass `--team` to `/sdd-roadmap-run` when "Run" is selected
-- Example: `/sdd-roadmap --team` → `/sdd-roadmap-run --team`
-
-**Combined**: `/sdd-roadmap -y --team` → automatically runs `/sdd-roadmap-run --team`
-
-## Tool Guidance
-
-### Skill Invocation
-
-| Action | Command |
-|--------|---------|
-| Initialize | `/sdd-roadmap-create` |
-| Run | `/sdd-roadmap-run` |
-| Update | `/sdd-roadmap-update` |
-| Reset | `/sdd-roadmap-delete` |
-
-### File Operations
-
-- **Read**: roadmap.md, spec.json files (for status)
-- **Glob**: Find spec directories
-
-## Output Description
-
-### Status Display
-
-```
-## Roadmap Status
-
-Generated: 2026-01-20
-Specs: 6 | Waves: 4
-
-### Progress
-| Wave | Name | Progress | Status |
-|------|------|----------|--------|
-| 1 | Foundation | 1/1 | ✅ Complete |
-| 2 | Core | 1/2 | 🔄 In Progress |
-| 3 | Integration | 0/2 | ⏳ Pending |
-| 4 | Application | 0/1 | ⏳ Pending |
-
-### Current Position
-Wave 2, spec: health-checker
-Phase: design-generated
-Next: /sdd-tasks
-
-## Actions
-[Run / Update / Reset]
-```
-
-**Language**: Follow user's language setting.
+think

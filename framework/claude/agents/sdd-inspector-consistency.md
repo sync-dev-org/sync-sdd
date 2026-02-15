@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-explore-consistency
+name: sdd-inspector-consistency
 description: |
   Exploratory review agent for specifications-design consistency.
   Verifies that design faithfully covers all specifications without overreach.

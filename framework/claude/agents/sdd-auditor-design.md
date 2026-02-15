@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-verifier
+name: sdd-auditor-design
 description: |
   Cross-check and synthesis agent for design review.
   Receives results from 5 parallel review agents and produces verified, integrated report.

@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-explore-interface
+name: sdd-inspector-interface
 description: |
   Implementation review agent for interface contract verification.
   Verifies actual source code matches design contracts character-by-character.

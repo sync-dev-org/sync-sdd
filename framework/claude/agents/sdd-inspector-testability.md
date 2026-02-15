@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-explore-testability
+name: sdd-inspector-testability
 description: |
   Exploratory review agent for test implementer clarity.
   Evaluates design from the perspective of someone who must write unambiguous tests.

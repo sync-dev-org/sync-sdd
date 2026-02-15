@@ -1,127 +1,99 @@
 ---
-description: Create knowledge entries from development experiences
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: [type] [description]
+description: Manage reusable knowledge entries and review auto-accumulated knowledge
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage
+argument-hint: [type] [description] | [--review] | [--skills]
 ---
 
-# SDD Knowledge Capture
-
-<background_information>
-- **Mission**: Capture development knowledge (incidents, patterns, references) for future review
-- **Success Criteria**:
-  - Create well-structured knowledge entry following template
-  - Update index.md with new entry
-  - Enable context-aware retrieval during `sdd-review-*` commands
-</background_information>
+# SDD Knowledge (Unified)
 
 <instructions>
 
-## Step 1: Determine Knowledge Type
+## Core Task
 
-### If $1 is provided (type specified):
-- Validate type is one of: `incident`, `pattern`, `reference`
-- If $2 is provided, use as initial description
+Manage knowledge entries: manual capture, auto-accumulated review, and Skill emergence. Conductor handles directly.
 
-### If no arguments:
-- Use AskUserQuestion to select type:
+## Step 1: Detect Mode
 
 ```
-What type of knowledge are you capturing?
-
-A. incident - Problem pattern discovered (learn from failure)
-B. pattern - Recommended approach (replicate success)
-C. reference - Technical summary (quick lookup)
+$ARGUMENTS = ""                    → Manual capture (interactive type selection)
+$ARGUMENTS = "{type} {description}" → Manual capture (type + description provided)
+$ARGUMENTS = "--review"            → Review auto-accumulated knowledge buffer
+$ARGUMENTS = "--skills"            → Review and manage Skill emergence candidates
 ```
 
-## Step 2: Gather Context via Dialogue
+## Manual Capture Mode
 
-### For incident:
-Ask sequentially:
-1. "What problem occurred? (brief description)"
-2. "What was the root cause?"
-3. "At which phase should this have been detected? (specifications/design/tasks/impl)"
-4. "What category does this belong to? (state/api/async/data/security/integration)"
+### Determine Knowledge Type
 
-### For pattern:
-Ask sequentially:
-1. "What pattern are you documenting? (brief description)"
-2. "When should this pattern be applied?"
-3. "Which phases is this applicable to? (specifications/design/tasks/impl)"
-4. "What category does this belong to? (state/api/async/data/security/integration)"
+If type provided, validate: `incident`, `pattern`, `reference`
+If not provided, ask user to select.
 
-### For reference:
-Ask sequentially:
-1. "What are you documenting? (brief description)"
-2. "What is the primary source URL?"
-3. "What category does this belong to? (state/api/async/data/security/integration)"
+### Gather Context via Dialogue
 
-## Step 3: Generate File Name
+**For incident**: What happened? Root cause? Detection phase? Category?
+**For pattern**: What pattern? When to apply? Applicable phases? Category?
+**For reference**: What to document? Source URL? Category?
 
-```
-{type}-{category}-{kebab-case-name}.md
-```
+Categories: `state`, `api`, `async`, `data`, `security`, `integration`
 
-- Generate kebab-case name from description
-- Check for conflicts in `{{SDD_DIR}}/project/knowledge/`
-- If conflict exists, append numeric suffix
+### Generate and Write
 
-## Step 4: Load Template and Generate Content
+1. Generate filename: `{type}-{category}-{kebab-case-name}.md`
+2. Check for conflicts in `{{SDD_DIR}}/project/knowledge/`
+3. Load template: `{{SDD_DIR}}/settings/templates/knowledge/{type}.md`
+4. Generate content via dialogue
+5. Write knowledge file
+6. Update `{{SDD_DIR}}/project/knowledge/index.md`
 
-1. Read template: `{{SDD_DIR}}/settings/templates/knowledge/{type}.md`
-2. Present template structure to user
-3. Use dialogue to fill in key sections:
-   - For incident: Focus on "What Happened", "Why Overlooked", "Detection Points"
-   - For pattern: Focus on "Solution", "Key Points", "Application Checklist"
-   - For reference: Focus on "Quick Reference", "Common Gotchas"
-4. Generate complete knowledge file
+## Auto-Accumulated Review Mode (`--review`)
 
-## Step 5: Write Files
+Review knowledge collected automatically by Coordinator from Builder/Inspector reports.
 
-1. Write knowledge file to `{{SDD_DIR}}/project/knowledge/{generated-filename}`
-2. Update `{{SDD_DIR}}/project/knowledge/index.md`:
-   - Add entry to appropriate type section
-   - Add entry to category section
-   - Add entry to phase section (if applicable)
+1. Read `{{SDD_DIR}}/handover/coordinator.md` → Knowledge Buffer section
+2. If buffer is empty: "No auto-accumulated knowledge to review."
+3. Present each buffered entry to user:
+   - Show tag (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`), source, content
+   - Options: **Accept** (write to knowledge/), **Edit** (modify before writing), **Discard**
+4. Write accepted entries using templates
+5. Update index.md
+6. Clear processed entries from Knowledge Buffer
+
+## Skill Emergence Mode (`--skills`)
+
+Review Skill candidates detected by Coordinator.
+
+1. Read Skill candidates from Coordinator's reports
+2. If none: "No Skill candidates detected yet."
+3. Present each candidate:
+   - Pattern description
+   - Specs where detected (2+ required)
+   - Proposed Skill name and purpose
+   - Options: **Approve** (generate Skill file), **Modify** (edit before generating), **Reject**
+4. For approved Skills:
+   - Generate command file in `.claude/commands/{skill-name}.md`
+   - Report to user: Skill created, available via `/{skill-name}`
+
+## Post-Completion
+
+1. Report summary:
+   - Created/reviewed entries count
+   - Index updated confirmation
+   - Skills created (if any)
+2. Suggest: knowledge is used during `/sdd-review` for context-aware checks
 
 </instructions>
 
-## Tool Guidance
+## Error Handling
 
-- **AskUserQuestion**: Primary tool for gathering knowledge details
-- **Glob**: Check for filename conflicts
-- **Read**: Load templates and existing index
-- **Write/Edit**: Create knowledge file and update index
+- **Invalid type**: Show available types and re-prompt
+- **Template missing**: Use inline basic structure with warning
+- **Index missing**: Create new index.md from scratch
+- **Empty knowledge buffer**: Inform user, suggest manual capture
 
-## Output Description
-
-Provide output in the user's language:
-
-1. **Created File**: Full path to new knowledge file
-2. **Summary**: Brief overview of captured knowledge
-3. **Index Updated**: Confirmation of index.md update
-4. **Next Steps**: How to use this knowledge in reviews
-
-**Format**: Concise (under 200 words)
-
-## Important Constraints
-
-- Knowledge must be project-independent (portable to other projects)
-- Focus on reusable insights, not project-specific details
-- Include detection points for each relevant SDD phase
-- Keep entries focused and actionable
-
-## Safety & Fallback
-
-### Error Scenarios
-
-- **Invalid Type**: Show available types and re-prompt
-- **Template Missing**: Use inline basic structure with warning
-- **Index Missing**: Create new index.md from scratch
-
-### Integration with Reviews
+## Integration with Reviews
 
 After creating knowledge:
-- `sdd-review-design` can filter by `Should Detect At: design` or by category matching current spec
-- `sdd-review-impl` can filter by `incident-*` for common pitfalls
+- `/sdd-review design` can filter by detection phase or category
+- `/sdd-review impl` can filter by `incident-*` for common pitfalls
 
 think

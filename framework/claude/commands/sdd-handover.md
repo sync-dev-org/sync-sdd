@@ -1,243 +1,79 @@
 ---
-description: Generate session handover document for cross-session continuity
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
-argument-hint: [output-path]
+description: Generate session handover document
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage
+argument-hint:
 ---
 
-# SDD Session Handover
-
-<background_information>
-- **Mission**: Generate a structured handover document at session end so the next session can seamlessly continue work
-- **Success Criteria**:
-  - Accurately auto-collect current project state
-  - Capture work done, decisions made, and unresolved items during the session
-  - Enable the next session to restore context just by reading the document
-  - Maintain sufficient information in a token-efficient format
-- **Design Principles** (Community Best Practices):
-  - **Goal-Directed Handoff**: Prioritize intent (what you're trying to do) over history (what happened)
-  - **Two-Layer Approach**: Strategic direction + technical details as a two-layer structure
-  - **External File Persistence**: Persist to file rather than relying on context window
-  - **Concise Over Complete**: Omit information recoverable by re-reading code; focus on what code alone cannot convey
-</background_information>
+# SDD Handover (Unified)
 
 <instructions>
 
 ## Core Task
-Collect and structure the current session state, then generate a handover document.
 
-## Execution Steps
+Generate high-quality session handover document. Conductor handles directly (requires user interaction for context gathering).
 
-### Step 1: Auto-collect Project State
+This is the **manual, high-quality** version of handover. It complements the **automatic incremental persistence** that Conductor and Coordinator maintain in `{{SDD_DIR}}/handover/`.
 
-Collect the following **in parallel**:
+## Step 1: Auto-Collect Project State
 
-#### 1a. Git State
-```bash
-git branch --show-current          # Current branch
-git status --short                 # Uncommitted changes
-git log --oneline -10              # Recent commits
-git diff --stat HEAD               # Unstaged changes summary
-git stash list                     # Stash list
-```
+Gather in parallel:
+- Git state (branch, recent commits, uncommitted changes)
+- Roadmap/spec progress (read all spec.json files)
+- Test results (if test commands available)
+- Steering changes (recent modifications)
+- Current `{{SDD_DIR}}/handover/conductor.md` and `coordinator.md` (if exist)
 
-#### 1b. Roadmap & Spec State
-- Read `{{SDD_DIR}}/project/specs/roadmap.md` to understand Wave structure
-- Read all `{{SDD_DIR}}/project/specs/*/spec.json` to collect each spec's phase
-- Scan each spec's `tasks.md` to tally task completion (`- [x]` vs `- [ ]`)
+## Step 2: Collect Session Context (Interactive)
 
-#### 1c. Test State
-```bash
-# Run tests and capture results (use the project's test command)
-uv run pytest --tb=no -q 2>&1 | tail -5
-```
+Ask user:
+1. "What was accomplished in this session?" (key deliverables)
+2. "What should be done next?" (immediate next action)
+3. "Any decisions or caveats to note?" (context for next session)
 
-#### 1d. Steering Changes
-- Check file list and last modified dates in `{{SDD_DIR}}/project/steering/`
+## Step 3: Generate Handover Document
 
-### Step 2: Collect Session Context
+Generate comprehensive markdown combining:
 
-**Collect interactively via AskUserQuestion** (some items are optional):
+### Direction Layer (from Conductor perspective)
+- Immediate Next Action (command form)
+- Active Goals
+- Key Decisions made this session
+- Caveats and warnings
 
-#### Question 1: Session Goal and Accomplishments
-```
-What did you accomplish in this session?
-(Present auto-inferred content from conversation history for user to confirm/correct)
-```
-- Present an auto-inferred list of accomplishments from conversation context
-- User confirms, corrects, or adds items
+### State Layer (from auto-collected data)
+- Pipeline State (all specs with phase, last action, next action)
+- Active/completed work items
+- Test status
+- Git state
 
-#### Question 2: Incomplete Tasks and Next Action
-```
-What should be done first in the next session?
-```
-- Options:
-  - A. "Continue with the next roadmap step" (show auto-detected next step)
-  - B. "Resume from a specific task" (specify task number)
-  - C. "Specify manually"
+### Context Layer (from user interaction)
+- Session accomplishments
+- User-provided context and nuances
 
-#### Question 3: Key Decisions and Caveats (optional)
-```
-Are there important decisions or caveats to carry over to the next session?
-(Skip if none)
-```
-- Options:
-  - A. "Nothing in particular"
-  - B. "Yes (describe)"
+## Step 4: Write Files
 
-### Step 3: Generate Handover Document
+1. Write handover to `{{SDD_DIR}}/handover/conductor.md` (overwrites incremental version)
+2. If Coordinator state exists in `{{SDD_DIR}}/handover/coordinator.md`, preserve it
 
-Generate a markdown document with the following structure:
+## Step 5: Post-Completion
 
-```markdown
-# Session Handover
-
-**Generated**: {ISO 8601 timestamp}
-**Branch**: {current branch}
-**Session Goal**: {one-sentence session goal}
-
-## Direction (Instructions for Next Session)
-
-### Immediate Next Action
-{Specific action the next session should execute first}
-{Include executable commands if possible: `/sdd-impl feature 3.1` etc.}
-
-### Active Goals
-{Current active goals, linked to roadmap wave progress}
-
-### Key Decisions
-{Important decisions made in this session and their rationale}
-{Explicitly mark decisions the next session should not overturn}
-
-### Warnings
-{Known issues, pitfalls, things to watch out for}
-{Omit section if none}
-
-## State (Project State Snapshot)
-
-### Roadmap Progress
-| Wave | Name | Progress | Status |
-|------|------|----------|--------|
-{Generate table from auto-collected data}
-
-### Spec Status
-| Spec | Phase | Tasks | Notes |
-|------|-------|-------|-------|
-{Generate table from auto-collected data}
-
-### Git State
-- **Branch**: {branch}
-- **Uncommitted Changes**: {count} files
-- **Recent Commits**:
-{Last 5 commit logs}
-
-### Test Status
-{Test execution result summary}
-
-## Session Log (Work Done)
-
-### Accomplished
-{Bulleted list of completed work}
-
-### Modified Files
-{Key modified files list - from git diff --stat}
-
-## Resume Instructions
-
-To resume in the next session:
-1. `Read .claude/handover.md` to restore context
-2. {Specific resume steps}
-```
-
-### Step 4: Write to File
-
-1. **Default output**: `.claude/handover.md` (always overwrite with the latest handover)
-2. **Custom output path**: If `$1` is specified, write to that path instead
-3. **Archive**: If `.claude/handover.md` already exists:
-   - If content differs, copy to `.claude/handovers/{YYYY-MM-DD-HHMM}.md` before overwriting
-   - Create the archive directory if it doesn't exist
-
-### Step 5: Add Reference to CLAUDE.md (first time only)
-
-If `.claude/CLAUDE.md` does not already contain the following, append it:
-
-```markdown
-## Session Handover
-- On session start: If `.claude/handover.md` exists, read it to restore previous state
-- On session end: Run `/sdd-handover` to generate a handover document
-```
+Report to user:
+- Handover file location
+- Key items captured
+- Reminder: next session will auto-load handover on start
 
 </instructions>
 
-## Tool Guidance
+## Relationship to Incremental Persistence
 
-### Parallel Execution
-- Git state collection, spec scanning, and test execution in Step 1 should be run **in parallel**
-- Step 2 interactive collection should happen after Step 1 completes
+| Aspect | Incremental (Automatic) | Manual (/sdd-handover) |
+|--------|------------------------|----------------------|
+| Trigger | Every phase transition / teammate completion | User runs command |
+| Content | State snapshot only | State + user context + direction |
+| Quality | Minimal (machine-generated) | High (user-validated) |
+| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites conductor.md |
 
-### File Operations
-- **Glob**: Batch search for `{{SDD_DIR}}/project/specs/*/spec.json`, `{{SDD_DIR}}/project/specs/*/tasks.md`
-- **Read**: Read spec.json, tasks.md, roadmap.md
-- **Bash**: Execute git commands, run tests
-- **Write**: Write handover document
-- **Edit**: Add reference to CLAUDE.md (first time only)
+## Error Handling
 
-### Interaction
-- **AskUserQuestion**: Collect session context
-- Auto-collect what can be automated; only ask interactively for information only the human knows
-- If the user is in a hurry, generate with minimal interaction (Question 1 only)
-
-## Output Description
-
-After generating the handover document, display:
-
-```
-## Handover Generated
-
-**File**: .claude/handover.md
-**Archive**: .claude/handovers/YYYY-MM-DD-HHMM.md (if applicable)
-
-### Summary
-- Wave N: X/Y specs complete
-- Next action: {specific next action}
-- Uncommitted changes: {count} files
-- Tests: {pass/fail status}
-
-### Resume in Next Session
-> Read .claude/handover.md to restore context
-```
-
-**Format**: Concise (200 words or less)
-
-## Safety & Fallback
-
-### Error Scenarios
-
-**Git repository not initialized**:
-- Skip git-related data collection
-- Display warning and continue
-
-**Roadmap not created**:
-- Omit Roadmap Progress section
-- Show only individual Spec Status
-
-**Test execution failure**:
-- Record error message as-is in Test Status
-- Do not abort generation
-
-**Conflict with existing handover**:
-- Always archive before overwriting
-- Archives are sorted by date, oldest first for reference
-
-### Integration
-
-**On session start (recommended flow for next session)**:
-1. Read `.claude/handover.md`
-2. Begin work following the Direction section
-3. Refer to State section if anything is unclear
-
-**On session end**:
-1. Run `/sdd-handover`
-2. Commit if needed
-3. End session
-
-think
+- **No active specs**: Still generate handover with available context
+- **No git repo**: Skip git state section

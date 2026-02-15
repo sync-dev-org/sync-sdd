@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-explore-test
+name: sdd-inspector-test
 description: |
   Implementation review agent for test execution and verification.
   Runs tests, checks coverage, and evaluates test quality.

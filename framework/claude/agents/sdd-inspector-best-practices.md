@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-explore-best-practices
+name: sdd-inspector-best-practices
 description: |
   Exploratory review agent for best practices and industry standards.
   Uses web research to evaluate design decisions against current best practices.

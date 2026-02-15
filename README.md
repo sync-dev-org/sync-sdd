@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-AI-DLC (AI Development Life Cycle) with phase-gated workflow, multi-agent review, and specification traceability.
+AI-DLC (AI Development Life Cycle) with 4-tier Agent Team architecture, phase-gated workflow, and specification traceability.
 
 ## Install
 
@@ -19,7 +19,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.3.0
+curl -LsSf <url>/install.sh | sh -s -- --version v0.5.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -35,8 +35,8 @@ your-project/
 └── .claude/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
-    ├── commands/sdd-*.md              # 21 slash commands
-    ├── agents/sdd-*.md                # 13 review agents
+    ├── commands/sdd-*.md              # 9 slash commands
+    ├── agents/sdd-*.md                # 21 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
             ├── rules/
@@ -49,10 +49,21 @@ Your project files (created through the workflow) are never touched by `--update
 .claude/sdd/project/steering/      # Project context and decisions
 .claude/sdd/project/specs/         # Feature specifications
 .claude/sdd/project/knowledge/     # Reusable learnings
-.claude/handover.md                # Session continuity
+.claude/sdd/handover/              # Session continuity (auto-persisted)
 ```
 
 Reset all project files: `rm -rf .claude/sdd/project`
+
+## Architecture
+
+```
+Tier 1: Command  ─── Conductor ──────────── (Lead, Opus)
+Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Sonnet)
+Tier 3: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
+Tier 4: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
+```
+
+All work is delegated through the Agent Team hierarchy. Conductor (Lead) handles user interaction and phase gates. Coordinator plans and manages all teammate operations.
 
 ## Quick start
 
@@ -65,12 +76,12 @@ claude                          # Start Claude Code
 
 # Stage 1: Specification
 /sdd-design "your feature description"
-/sdd-review-design feature-name     # Optional: design review
+/sdd-review design feature-name    # Optional: design review
 /sdd-tasks feature-name
 
 # Stage 2: Implementation
 /sdd-impl feature-name
-/sdd-review-impl feature-name       # Optional: implementation review
+/sdd-review impl feature-name     # Optional: implementation review
 
 # Anytime
 /sdd-status feature-name
@@ -88,24 +99,21 @@ steering → design → review → tasks → implement → review
 
 **Version tracking** prevents stale implementations: if a spec changes, tasks and implementation are re-validated.
 
+**Auto-fix loop**: NO-GO reviews trigger automatic spec/impl fixes (max 3 retries) before escalating to user.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/sdd-steering` | Set up project-wide context (product, tech, structure) |
-| `/sdd-steering-custom` | Add domain-specific steering (auth, API, DB, etc.) |
-| `/sdd-design` | Generate or edit a technical design from description |
-| `/sdd-review-design` | Multi-agent design quality review |
+| `/sdd-steering` | Set up project context (create/update/delete/custom) |
+| `/sdd-design` | Generate or edit a technical design |
+| `/sdd-review` | Multi-agent review (design/impl/dead-code) |
 | `/sdd-tasks` | Generate implementation tasks from design |
 | `/sdd-impl` | TDD implementation of tasks |
-| `/sdd-review-impl` | Multi-agent implementation review |
-| `/sdd-review-dead-code` | Detect unused code |
-| `/sdd-status` | Check progress of a feature |
-| `/sdd-analyze-gap` | Gap analysis for existing codebase |
-| `/sdd-impact-analysis` | Analyze downstream impact of spec changes |
-| `/sdd-knowledge` | Manage reusable knowledge entries |
-| `/sdd-roadmap` | Multi-feature roadmap planning and execution |
+| `/sdd-roadmap` | Multi-feature roadmap (create/run/update/delete) |
+| `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
+| `/sdd-knowledge` | Manage reusable knowledge entries |
 
 ## License
 

@@ -30,7 +30,7 @@
 2. {{TESTABLE_CRITERION}}
 3. {{TESTABLE_CRITERION}}
 
-<!-- Optional: Add stability tags for impact analysis (/sdd-impact-analysis).
+<!-- Optional: Add stability tags for impact analysis (/sdd-status --impact).
      Tags classify how changes propagate to downstream specs:
      - [constraint]: Breaking change — all downstream specs require full re-review
      - [contract]: Interface change — downstream designs may need updates

@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-explore-architecture
+name: sdd-inspector-architecture
 description: |
   Exploratory review agent for architecture quality and design verifiability.
   Evaluates component boundaries, interface contracts, and state transitions.

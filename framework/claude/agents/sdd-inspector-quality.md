@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-explore-quality
+name: sdd-inspector-quality
 description: |
   Implementation review agent for code quality assessment.
   Evaluates error handling, naming, code organization, and steering compliance.

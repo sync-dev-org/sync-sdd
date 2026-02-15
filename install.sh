@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v0.3.0
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v0.5.0
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -94,7 +94,7 @@ ${BOLD}USER FILES${RESET} (never touched by installer):
     .claude/sdd/project/steering/    Project-specific steering
     .claude/sdd/project/specs/       Feature specifications
     .claude/sdd/project/knowledge/   Knowledge base entries
-    .claude/handover.md              Session handover
+    .claude/sdd/handover/            Session continuity (auto-persisted)
     .claude/settings.local.json      Local setting overrides
 
 ${BOLD}CHECK VERSION${RESET}:
@@ -401,7 +401,7 @@ fi
 
 echo ""
 printf "${BOLD}Installed:${RESET}\n"
-echo "  .claude/commands/    $(find .claude/commands -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') skills"
+echo "  .claude/commands/    $(find .claude/commands -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') commands"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agents"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
 echo "  .claude/sdd/         Rules + templates"

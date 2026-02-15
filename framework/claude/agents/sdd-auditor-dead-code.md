@@ -1,5 +1,5 @@
 ---
-name: sdd-review-dead-code-verifier
+name: sdd-auditor-dead-code
 description: |
   Cross-check and synthesis agent for dead code review.
   Receives results from 4 parallel audit agents and produces verified, integrated report.

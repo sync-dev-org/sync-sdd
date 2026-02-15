@@ -1,149 +1,66 @@
 ---
-description: Show specification status and progress
-allowed-tools: Bash, Read, Glob
-argument-hint: <feature-name>
+description: Check progress and analyze downstream impact
+allowed-tools: Read, Glob, Grep
+argument-hint: [feature-name] [--impact]
 ---
 
-# SDD Specification Status
-
-<background_information>
-- **Mission**: Display comprehensive status and progress for specifications
-- **Success Criteria**:
-  - Show overall roadmap progress (Wave-level) when no argument or when roadmap.md exists
-  - Show current phase and completion status for individual specs
-  - Identify next actions and blockers
-  - Provide clear visibility into progress
-</background_information>
+# SDD Status (Unified)
 
 <instructions>
+
 ## Core Task
-Generate status report for feature **$1** showing progress across all phases.
 
-## Execution Steps
+Display comprehensive status for specifications and optionally analyze downstream impact of changes. Conductor handles directly (read-only, no teammate needed).
 
-### Step 0: Load Roadmap and Calculate Progress (if roadmap.md exists)
+## Step 1: Parse Arguments
 
-1. **Read roadmap.md** for Wave structure:
-   - `{{SDD_DIR}}/project/specs/roadmap.md`
-   - Extract: Wave names, spec assignments, dependencies
-
-2. **Read ALL spec.json files** for current phase:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Extract `phase` field from each
-
-3. **Calculate Wave progress dynamically**:
-   - For each Wave, count specs by phase:
-     - `implementation-complete` → complete
-     - `tasks-generated` → ready for implementation
-     - `design-generated` → ready for tasks
-     - `initialized` → spec created, design not yet generated
-   - Determine blocked waves (all dependencies not complete)
-
-4. **Identify standalone specs** (not in any wave):
-   - Specs where `roadmap` is `null` in spec.json
-   - These are created via `/sdd-design` directly, outside the roadmap flow
-
-5. **Identify next actionable specs**:
-   - Specs whose dependencies are all complete
-   - Not yet implemented
-
-### Step 1: Load Spec Context
-- If **no argument** ($1 is empty): Skip to Step 3 for overall roadmap status only
-- If **argument provided**: Read `{{SDD_DIR}}/project/specs/$1/spec.json` for metadata and phase status
-- Read existing files: `design.md`, `tasks.md` (if they exist)
-- Check `{{SDD_DIR}}/project/specs/$1/` directory for available files
-
-### Step 2: Analyze Status
-
-**Parse each phase**:
-- **Design**: Check for specifications, architecture, components, diagrams
-- **Tasks**: Count completed vs total tasks (parse `- [x]` vs `- [ ]`)
-- **Phase**: Check current phase in spec.json
-
-**Version analysis** (skip if `version` field not present):
-- Read `version`, `changelog`, `version_refs` from spec.json
-- Determine version_refs alignment:
-  - If `version_refs.tasks` is `null` → tasks are stale (design was re-edited)
-  - If `version_refs.tasks` != `version_refs.design` → tasks are stale (version mismatch)
-
-### Step 3: Generate Report
-
-**If roadmap.md exists, show Overall Progress first**:
 ```
-## Overall Roadmap Progress
-
-Wave 1 (Foundation): ████████░░ 2/2 specs complete
-Wave 2 (Core):       ██░░░░░░░░ 1/4 specs complete
-Wave 3 (Integration): ░░░░░░░░░░ blocked by Wave 2
-Wave 4 (Interface):   ░░░░░░░░░░ blocked by Wave 3
-
-Next actionable specs: feature-a, feature-b (Wave 2)
-
-Standalone specs (not in roadmap): standalone-feature (design-generated)
+$ARGUMENTS = ""                    → Overall roadmap + all specs progress
+$ARGUMENTS = "{feature}"           → Individual spec status
+$ARGUMENTS = "{feature} --impact"  → Individual spec status + downstream impact analysis
+$ARGUMENTS = "--impact {feature}"  → Same as above
 ```
 
-**Then, if specific spec requested ($1 provided)**:
+## Step 2: Load Context
 
-Create report in the language specified in spec.json covering:
-1. **Current Phase & Progress**: Where the spec is in the workflow
-2. **Completion Status**: Percentage complete for each phase
-3. **Task Breakdown**: If tasks exist, show completed/remaining counts
-4. **Next Actions**: What needs to be done next
-5. **Blockers**: Any issues preventing progress
-6. **Wave Context**: Which wave this spec belongs to, dependencies status
+1. Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
+2. Scan `{{SDD_DIR}}/project/specs/*/spec.json` for all specs
 
-## Critical Constraints
-- Use language from spec.json
-- Calculate accurate completion percentages
-- Identify specific next action commands
+## Step 3: Generate Report
+
+### Overall Progress (always shown)
+
+For each wave in roadmap:
+- Wave completion percentage
+- Specs in each phase (design-generated / tasks-generated / implementation-complete)
+- Blocked specs and their dependencies
+
+### Individual Spec Status (when feature specified)
+
+- Current phase and version
+- Design status (exists, version)
+- Tasks status (total, completed, pending, optional)
+- Implementation status (files created, test results)
+- Version alignment check (design ↔ tasks ↔ impl)
+
+### Impact Analysis (when `--impact` flag)
+
+1. Build dependency graph from roadmap (forward and reverse maps)
+2. Identify changes in target spec (changelog, version bumps)
+3. Classify change stability: BREAKING / INTERFACE / COMPATIBLE / UNKNOWN
+4. Trace downstream impact:
+   - For each dependent spec: check version alignment, design references
+   - Identify specs that need re-review or re-implementation
+5. Generate impact report with action recommendations
+
+## Step 4: Display
+
+Format as human-readable markdown report.
+
 </instructions>
 
-## Tool Guidance
-- **Read**: Load spec.json first, then other spec files as needed
-- **Parse carefully**: Extract completion data from tasks.md checkboxes
-- Use **Glob** to check which spec files exist
+## Error Handling
 
-## Output Description
-
-Provide status report in the language specified in spec.json:
-
-**Report Structure**:
-
-**Part 1: Overall Roadmap** (if roadmap.md exists):
-- Wave-by-wave progress bars
-- Blocked waves indication
-- Next actionable specs
-
-**Part 2: Individual Spec** (if $1 provided):
-1. **Feature Overview**: Name, phase, last updated, wave assignment
-2. **Version Info** (if `version` field exists):
-   - Current version: v{version}
-   - Design ref: v{version_refs.design}
-   - Tasks ref: v{version_refs.tasks} {STALE indicator if < design ref}
-   - Recent changes (last 3 changelog entries)
-3. **Phase Status**: Design, Tasks with completion %
-4. **Task Progress**: If tasks exist, show X/Y completed
-5. **Next Action**: Specific command to run next
-6. **Issues**: Any blockers or missing elements (including version staleness warnings)
-7. **Dependencies**: Status of specs this one depends on
-
-**Format**: Clear, scannable format with emojis (✅/⏳/❌) for status and progress bars (████░░) for waves
-
-## Safety & Fallback
-
-### Error Scenarios
-
-**Spec Not Found**:
-- **Message**: "No spec found for `$1`. Check available specs in `{{SDD_DIR}}/project/specs/`"
-- **Action**: List available spec directories
-
-**Incomplete Spec**:
-- **Warning**: Identify which files are missing
-- **Suggested Action**: Point to next phase command
-
-### List All Specs / Overall Progress
-
-To see overall roadmap progress:
-- Run with no argument: `/sdd-status`
-- If `roadmap.md` exists: Shows Wave-by-wave progress with blocked indicators
-- If no `roadmap.md`: Lists all specs in `{{SDD_DIR}}/project/specs/` with their individual status
+- **No specs found**: "No specs found. Run `/sdd-design \"description\"` to create."
+- **Feature not found**: "Spec '{feature}' not found."
+- **No roadmap**: Show individual spec statuses without wave context

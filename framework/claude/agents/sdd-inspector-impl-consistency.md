@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-explore-consistency
+name: sdd-inspector-impl-consistency
 description: |
   Implementation review agent for cross-feature consistency.
   Verifies interface, type, error handling, and pattern consistency across features.

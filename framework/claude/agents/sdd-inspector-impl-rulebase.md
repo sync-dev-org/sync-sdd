@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-rulebase
+name: sdd-inspector-impl-rulebase
 description: |
   Implementation review agent for spec compliance verification.
   Checks task completion, spec traceability, and file structure.

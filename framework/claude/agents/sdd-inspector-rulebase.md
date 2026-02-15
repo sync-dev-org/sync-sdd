@@ -1,5 +1,5 @@
 ---
-name: sdd-review-design-rulebase
+name: sdd-inspector-rulebase
 description: |
   Design review agent for SDD compliance verification.
   Operates independently as part of parallel review process.

@@ -1,5 +1,5 @@
 ---
-name: sdd-review-impl-verifier
+name: sdd-auditor-impl
 description: |
   Cross-check and synthesis agent for implementation review.
   Receives results from 5 parallel review agents and produces verified, integrated report.
