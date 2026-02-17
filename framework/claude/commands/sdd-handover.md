@@ -41,8 +41,7 @@ Generate comprehensive markdown combining:
 - Caveats and warnings
 
 ### State Layer (from auto-collected data)
-- Pipeline State (all specs with phase, last action, next action)
-- Active/completed work items
+- Pipeline State: reference `{{SDD_DIR}}/handover/coordinator.md` (do NOT duplicate its content)
 - Test status
 - Git state
 
@@ -53,7 +52,8 @@ Generate comprehensive markdown combining:
 ## Step 4: Write Files
 
 1. Write handover to `{{SDD_DIR}}/handover/conductor.md` (overwrites incremental version)
-2. If Coordinator state exists in `{{SDD_DIR}}/handover/coordinator.md`, preserve it
+2. If Coordinator state exists in `{{SDD_DIR}}/handover/coordinator.md`, preserve it (do NOT overwrite)
+3. Append session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
 
 ## Step 5: Post-Completion
 
@@ -71,7 +71,7 @@ Report to user:
 | Trigger | Every phase transition / teammate completion | User runs command |
 | Content | State snapshot only | State + user context + direction |
 | Quality | Minimal (machine-generated) | High (user-validated) |
-| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites conductor.md |
+| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites conductor.md, appends to log.md |
 
 ## Error Handling
 

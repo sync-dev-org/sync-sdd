@@ -376,9 +376,22 @@ Respond: `「直接ユーザーと対話して steering を生成してくださ
       - **GO** → Wave N complete, proceed to next wave
       - **CONDITIONAL/NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
    e. Update `{{SDD_DIR}}/handover/coordinator.md` with Wave Quality Gate results
+   f. Request commit: `DIRECT_ACTION: Commit Wave {N} — {summary of completed specs}`
 10. After all waves complete:
     - Send to Conductor:
       `PIPELINE_COMPLETE Feature:roadmap Summary:{wave_count} waves, {spec_count} specs completed Next:/sdd-status`
+
+## Steering Feedback Processing
+
+When Auditor verdict contains a `STEERING:` section, extract and route each entry:
+
+1. Parse `STEERING:` lines: `{CODIFY|PROPOSE}|{target file}|{decision text}`
+2. Route by level:
+   - **CODIFY** → `DIRECT_ACTION: Update steering/{target file} with: "{decision text}" and append to log.md: STEERING_UPDATE (CODIFY, source: {review type} {feature})`
+   - **PROPOSE** → `ESCALATION: Steering proposal — add to {target file}: "{decision text}". Approve?`
+     - On approval → `DIRECT_ACTION: Update steering/{target file}` + log as `STEERING_UPDATE (PROPOSE, approved)`
+     - On rejection → `DIRECT_ACTION: Append to log.md: USER_DECISION: Rejected steering proposal: "{decision text}"`
+3. Process STEERING entries **after** handling the verdict (GO/NO-GO/etc.) but **before** advancing to the next phase
 
 ## Auto-Fix Loop
 
@@ -448,6 +461,8 @@ After EVERY significant event, update `{{SDD_DIR}}/handover/coordinator.md`:
 - Teammate dismissed → update Active Teammates (remove entry)
 - Knowledge tag received → update Knowledge Buffer
 - Wave completed → flush Knowledge Buffer to knowledge/, reset Pipeline State
+
+**Decision log relay**: When Coordinator makes a routing decision that affects pipeline direction (e.g., spec serialization due to file overlap, failure propagation, auto-fix scope), include a `DIRECT_ACTION` requesting Conductor to append the event to `{{SDD_DIR}}/handover/log.md`.
 
 ### Resume from Handover
 

@@ -148,11 +148,23 @@ Conductor MUST update `steering/product.md` User Intent section whenever:
 - Design is started → detail Success Criteria
 - User makes a decision → append to Decision Log
 - Direction changes → update Vision/Criteria
+- Review-driven steering update → Auditor proposes `CODIFY` or `PROPOSE` via verdict (see Steering Feedback Loop)
 
 Auditor references User Intent during every review for:
 1. **Alignment check**: spec/impl matches Vision and Success Criteria
 2. **Over-engineering check**: design/impl does not violate Anti-Goals
 3. **Spec structure check**: Spec Rationale matches actual spec decomposition
+
+### Steering Feedback Loop
+
+Auditor verdicts may include a `STEERING:` section with two levels:
+
+| Level | Meaning | Processing | Blocks pipeline |
+|-------|---------|-----------|----------------|
+| `CODIFY` | Document existing implicit pattern | Auto-apply via `DIRECT_ACTION` + log | No |
+| `PROPOSE` | New constraint affecting future work | `ESCALATION` → user approval | Yes |
+
+Coordinator extracts `STEERING:` from Auditor verdicts and routes accordingly.
 
 ## Incremental Persistence (Handover)
 
@@ -162,12 +174,29 @@ State is persisted incrementally to `{{SDD_DIR}}/handover/` — NOT triggered by
 |-------|--------|------|---------|
 | Phase transition | Conductor | conductor.md | Next Action, Active Goals |
 | User decision | Conductor | conductor.md | Key Decisions |
+| Decision/direction change | Conductor | log.md | Timestamped event (append) |
+| Steering update applied | Conductor | log.md | Source and rationale (append) |
 | Teammate completion | Coordinator | coordinator.md | Pipeline State, Active Teammates |
 | Teammate spawn | Coordinator | coordinator.md | Active Teammates |
 | Knowledge report | Coordinator | coordinator.md | Knowledge Buffer |
 | Wave completion | Coordinator | coordinator.md | Pipeline State reset, Knowledge flush |
 
-Each role overwrites its handover file as a **latest snapshot** (not append).
+conductor.md and coordinator.md are **latest snapshots** (overwrite). log.md is **append-only** (never overwrite).
+
+### Decision Log (`log.md`)
+
+Append-only record of decisions, direction changes, and steering updates. Provides traceability that snapshots cannot.
+
+Format:
+```
+[{ISO-8601}] {EVENT_TYPE}: {description}
+```
+
+Event types:
+- `USER_DECISION` — User made a choice (e.g., skip spec, change approach)
+- `STEERING_UPDATE` — Steering file modified (source: which review, CODIFY or PROPOSE)
+- `DIRECTION_CHANGE` — Spec split, wave restructure, scope change
+- `ESCALATION_RESOLVED` — Outcome of an escalation to user
 
 ### Session Resume
 On session start (new or post-compact):
@@ -203,6 +232,30 @@ Resume: `/sdd-roadmap run` reads handover state and resumes from interruption po
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
+
+## Git Workflow
+
+Trunk-based development. main is always HEAD.
+
+### Branch Strategy
+- All work happens on main by default
+- Feature/topic branches are optional; always merge back to main and delete the branch
+- main MUST remain the latest state at all times
+- Never leave stale branches; merged branches are deleted immediately
+
+### Commit Timing
+- **Wave completion**: After Wave Quality Gate passes, Coordinator requests commit via `DIRECT_ACTION`
+- **Standalone command completion**: After `/sdd-impl` or `/sdd-review` completes outside roadmap, Conductor commits
+- Commit scope: all spec artifacts + implementation changes from the completed work
+- Commit message format: `Wave {N}: {summary}` (roadmap) or `{feature}: {summary}` (standalone)
+
+### Release Flow
+After a logical milestone (roadmap completion, significant feature set):
+1. Create release branch from main (e.g., `release/v{version}`)
+2. Update version (hatch-vcs for Python projects, or project-appropriate method)
+3. Tag the release
+4. Push release branch
+5. main continues to advance; release branch is a snapshot, not merged back
 
 ## Compact Pipe-Delimited Format (CPF)
 

@@ -182,6 +182,8 @@ REMOVED:
 {agent}|{reason}|{original issue}
 RESOLVED:
 {agents}|{resolution}|{conflicting findings}
+STEERING:
+{CODIFY|PROPOSE}|{target file}|{decision text}
 NOTES:
 {synthesis observations}
 ROADMAP_ADVISORY: (wave-scoped mode only)
@@ -193,6 +195,7 @@ Rules:
 - Agents: use + separator (e.g. rulebase+consistency)
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
+- STEERING: `CODIFY` = code/design already follows this pattern (auto-apply); `PROPOSE` = new constraint affecting future work (requires user approval)
 
 Example:
 ```
@@ -208,8 +211,9 @@ best-practices|over-engineering|needs caching layer - not required by any AC
 architecture|false positive|missing state - covered by implicit initial state in design
 RESOLVED:
 testability+architecture|severity aligned|testability flagged Critical but architecture confirms acceptable given scope
+STEERING:
+PROPOSE|tech.md|No ORM until data model complexity demands it
 NOTES:
-Suggest steering decision: "No ORM until data model complexity demands it"
 4 findings confirmed by multiple agents (high confidence)
 Design is generally well-structured with focused issues
 ```

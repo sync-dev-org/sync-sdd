@@ -232,6 +232,8 @@ RESOLVED:
 {agents}|{resolution}|{conflicting findings}
 SPEC_FEEDBACK: (only when VERDICT is SPEC-UPDATE-NEEDED)
 {phase}|{spec}|{description}
+STEERING:
+{CODIFY|PROPOSE}|{target file}|{decision text}
 NOTES:
 {synthesis observations}
 ROADMAP_ADVISORY: (wave-scoped mode only)
@@ -244,6 +246,7 @@ Rules:
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
 - SPEC_FEEDBACK: `phase` is `specifications` or `design`; `spec` is the feature name; `description` explains the spec defect
+- STEERING: `CODIFY` = code/design already follows this pattern (auto-apply); `PROPOSE` = new constraint affecting future work (requires user approval)
 
 Example:
 ```
@@ -259,10 +262,11 @@ quality|over-implementation|needs retry logic - not in design, code is correct w
 test|false positive|missing test - utility file, tested indirectly
 RESOLVED:
 test+interface|test passes but interface wrong|mock hides actual mismatch
+STEERING:
+CODIFY|tech.md|console.log only for debugging, no logging framework
 NOTES:
 Feature tests: 24 passed, 1 failed
 Task completion: 9/10 (90%)
-Suggest steering decision: "console.log only for debugging, no logging framework"
 ```
 
 ## Error Handling
