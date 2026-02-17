@@ -54,10 +54,11 @@ After dispatching an instruction to Coordinator, Conductor enters a message loop
 1. **Receive** next message from Coordinator
 2. **Handle by type**:
    - `SPAWN_REQUEST:` → Spawn listed teammates mechanically → continue loop
+   - `DISMISS_REQUEST:` → Remove listed teammates from team → continue loop
    - `PHASE_UPDATE:` → Update spec.json as instructed → continue loop
    - `ESCALATION:` → Present issue to user, relay decision to Coordinator → continue loop
    - `DIRECT_ACTION:` → Execute requested action directly → continue loop
-   - `PIPELINE_COMPLETE` → Exit loop → proceed to Post-Completion
+   - `PIPELINE_COMPLETE` → Dismiss Coordinator → exit loop → proceed to Post-Completion
 3. **Repeat** until `PIPELINE_COMPLETE` received
 
 All command dispatchers use this loop after dispatching to Coordinator.
@@ -186,10 +187,13 @@ On session start (new or post-compact):
 ## Pipeline Stop Protocol
 
 When user requests stop during pipeline execution:
-1. Conductor sends shutdown request to all active teammates via SendMessage
-2. Coordinator saves current pipeline state to `{{SDD_DIR}}/handover/coordinator.md` before shutting down
-3. Conductor updates `{{SDD_DIR}}/handover/conductor.md` with interruption point
-4. Report to user: what was completed, what was in progress, how to resume
+1. Conductor sends stop signal to Coordinator
+2. Coordinator saves current pipeline state to `{{SDD_DIR}}/handover/coordinator.md`
+3. Coordinator sends `DISMISS_REQUEST` for all active T3/T4 teammates
+4. Conductor dismisses listed teammates
+5. Conductor dismisses Coordinator
+6. Conductor updates `{{SDD_DIR}}/handover/conductor.md` with interruption point
+7. Report to user: what was completed, what was in progress, how to resume
 
 Resume: `/sdd-roadmap run` reads handover state and resumes from interruption point.
 

@@ -38,10 +38,11 @@ Conductor sends natural language instructions like:
 Always use typed messages. Conductor handles each type in its message loop:
 
 1. **SPAWN_REQUEST** — Request teammate spawning (see Spawn Request Format below)
-2. **PHASE_UPDATE** — Request spec.json update: `PHASE_UPDATE: spec={feature} phase={phase} {key=value ...}`
-3. **DIRECT_ACTION** — Conductor handles directly: `DIRECT_ACTION: {description}`
-4. **ESCALATION** — User decision needed: `ESCALATION: {description}`
-5. **PIPELINE_COMPLETE** — End of dispatched work (feature, summary, next action)
+2. **DISMISS_REQUEST** — Request teammate removal (see Dismiss Request Format below)
+3. **PHASE_UPDATE** — Request spec.json update: `PHASE_UPDATE: spec={feature} phase={phase} {key=value ...}`
+4. **DIRECT_ACTION** — Conductor handles directly: `DIRECT_ACTION: {description}`
+5. **ESCALATION** — User decision needed: `ESCALATION: {description}`
+6. **PIPELINE_COMPLETE** — End of dispatched work (feature, summary, next action)
 
 ### Spawn Request Format
 
@@ -73,6 +74,17 @@ SPAWN_REQUEST:
     File scope: src/api/, src/middleware/
 ```
 
+### Dismiss Request Format
+
+Request Conductor to remove completed teammates from the team. Always send DISMISS_REQUEST **before** the next SPAWN_REQUEST to keep active teammate count minimal.
+
+```
+DISMISS_REQUEST:
+- teammate: sdd-architect
+- teammate: sdd-inspector-rulebase
+- teammate: sdd-inspector-testability
+```
+
 ## Phase Handlers
 
 **Standalone rule**: When handling a standalone command (not roadmap run), send `PIPELINE_COMPLETE` after the final step.
@@ -92,10 +104,15 @@ SPAWN_REQUEST:
    ```
 2. Wait for Architect completion report (via SendMessage)
 3. Verify design.md and research.md exist
-4. Read spec.json and compute metadata updates:
+4. Dismiss Architect:
+   ```
+   DISMISS_REQUEST:
+   - teammate: sdd-architect
+   ```
+5. Read spec.json and compute metadata updates:
    - If re-edit (`version_refs.design` is non-null): increment `version` minor
    - Set `version_refs.design` = current `version`, `version_refs.tasks` = null
-5. Send to Conductor:
+6. Send to Conductor:
    `PHASE_UPDATE: spec={feature} phase=design-generated version={v} version_refs.design={v} version_refs.tasks=null changelog="Design generated"`
 
 ### Design Review (`設計レビュー`)
@@ -125,7 +142,17 @@ SPAWN_REQUEST:
    Inspectors send CPF results directly to Auditor via SendMessage.
    Auditor receives all 5, synthesizes, sends verdict to Coordinator via SendMessage.
 2. Receive Auditor verdict
-3. Handle verdict:
+3. Dismiss all review teammates:
+   ```
+   DISMISS_REQUEST:
+   - teammate: sdd-inspector-rulebase
+   - teammate: sdd-inspector-testability
+   - teammate: sdd-inspector-architecture
+   - teammate: sdd-inspector-consistency
+   - teammate: sdd-inspector-best-practices
+   - teammate: sdd-auditor-design
+   ```
+4. Handle verdict:
    - **GO/CONDITIONAL** → Report to Conductor
    - **NO-GO** → Initiate auto-fix loop (see Auto-Fix section)
 
@@ -144,9 +171,14 @@ SPAWN_REQUEST:
    ```
 2. Wait for Planner completion (via SendMessage)
 3. Verify tasks.md exists
-4. Read spec.json and compute metadata updates:
+4. Dismiss Planner:
+   ```
+   DISMISS_REQUEST:
+   - teammate: sdd-planner
+   ```
+5. Read spec.json and compute metadata updates:
    - Set `version_refs.tasks` = current `version`
-5. Send to Conductor:
+6. Send to Conductor:
    `PHASE_UPDATE: spec={feature} phase=tasks-generated version_refs.tasks={v} changelog="Tasks generated"`
 
 ### Implementation (`実装`)
@@ -181,6 +213,11 @@ SPAWN_REQUEST:
 5. When dependent tasks are unblocked, request Conductor to spawn next Builders
 6. On all tasks complete:
    - Aggregate `Files` from all Builder reports
+   - Dismiss all Builders:
+     ```
+     DISMISS_REQUEST:
+     - teammate: sdd-builder (all instances)
+     ```
    - Send to Conductor:
      `PHASE_UPDATE: spec={feature} phase=implementation-complete implementation.files_created=[{files}] changelog="Implementation complete"`
 
@@ -211,7 +248,17 @@ SPAWN_REQUEST:
    Inspectors send CPF results directly to Auditor via SendMessage.
    Auditor receives all 5, synthesizes, sends verdict to Coordinator via SendMessage.
 2. Receive Auditor verdict
-3. Handle verdict:
+3. Dismiss all review teammates:
+   ```
+   DISMISS_REQUEST:
+   - teammate: sdd-inspector-impl-rulebase
+   - teammate: sdd-inspector-interface
+   - teammate: sdd-inspector-test
+   - teammate: sdd-inspector-quality
+   - teammate: sdd-inspector-impl-consistency
+   - teammate: sdd-auditor-impl
+   ```
+4. Handle verdict:
    - **GO/CONDITIONAL** → Report to Conductor
    - **NO-GO** → Initiate auto-fix loop (see Auto-Fix section)
    - **SPEC-UPDATE-NEEDED** → Cascade fix (see Auto-Fix section)
@@ -242,7 +289,13 @@ SPAWN_REQUEST:
    Inspectors send CPF results directly to Auditor via SendMessage.
    Auditor receives all, synthesizes, sends verdict to Coordinator via SendMessage.
 4. Receive Auditor verdict
-5. Handle verdict:
+5. Dismiss all review teammates:
+   ```
+   DISMISS_REQUEST:
+   - teammate: sdd-inspector-dead-{selected} (all spawned instances)
+   - teammate: sdd-auditor-dead-code
+   ```
+6. Handle verdict:
    - **GO/CONDITIONAL** → Report to Conductor
    - **NO-GO** → Report to Conductor (dead-code review has no auto-fix in standalone mode)
 
@@ -295,6 +348,7 @@ Respond: `「直接ユーザーと対話して steering を生成してくださ
         context: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 5 Inspector results"
       ```
    b. Handle cross-check verdict:
+      - Dismiss all cross-check teammates (5 Inspectors + Auditor)
       - **GO/CONDITIONAL** → proceed to dead-code review
       - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries → escalate)
       - **SPEC-UPDATE-NEEDED** → cascade fix from spec level (Architect → Planner → Builder → re-review)
@@ -318,6 +372,7 @@ Respond: `「直接ユーザーと対話して steering を生成してくださ
         context: "Expect: 4 Inspector results via SendMessage"
       ```
    d. Handle dead-code verdict:
+      - Dismiss all dead-code review teammates (4 Inspectors + Auditor)
       - **GO** → Wave N complete, proceed to next wave
       - **CONDITIONAL/NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
    e. Update `{{SDD_DIR}}/handover/coordinator.md` with Wave Quality Gate results
@@ -330,16 +385,17 @@ Respond: `「直接ユーザーと対話して steering を生成してくださ
 When Auditor returns NO-GO or SPEC-UPDATE-NEEDED:
 
 1. Extract fix instructions from Auditor's verdict
-2. Track retry count (max 3)
-3. Determine fix scope:
-   - **NO-GO (design review)** → re-spawn Architect with fix instructions
-   - **NO-GO (impl review)** → re-spawn Builder with fix instructions
+2. Review teammates are already dismissed (see phase handlers above)
+3. Track retry count (max 3)
+4. Determine fix scope and spawn fix teammates:
+   - **NO-GO (design review)** → spawn Architect with fix instructions
+   - **NO-GO (impl review)** → spawn Builder with fix instructions
    - **SPEC-UPDATE-NEEDED (impl review only)** → cascade: Architect → Planner → Builder
    - **Structural changes** (spec splitting, wave restructuring) → auto-fix in full-auto mode, escalate in gate mode
-   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from wave's file ownership records → re-spawn with fix instructions
+   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from wave's file ownership records → spawn with fix instructions
    - **SPEC-UPDATE-NEEDED (wave quality gate)** → cascade from spec level: Architect → Planner → Builder
-4. After fix, re-spawn review pipeline (Inspectors + Auditor)
-5. If 3 retries exhausted → send to Conductor:
+5. After fix, dismiss fix teammates, then spawn review pipeline (Inspectors + Auditor)
+6. If 3 retries exhausted → send to Conductor:
    `ESCALATION: 3回の自動修正を試みましたが解決しません。ユーザー確認が必要です。`
 
 ### Escalation Criteria
@@ -389,6 +445,7 @@ After EVERY significant event, update `{{SDD_DIR}}/handover/coordinator.md`:
 **Update triggers**:
 - Teammate spawned → update Active Teammates
 - Teammate completed → update Pipeline State + Active Teammates
+- Teammate dismissed → update Active Teammates (remove entry)
 - Knowledge tag received → update Knowledge Buffer
 - Wave completed → flush Knowledge Buffer to knowledge/, reset Pipeline State
 
@@ -412,9 +469,10 @@ When processing Knowledge Buffer:
 ## Stop Handler
 
 When Conductor sends a stop signal:
-1. Save current pipeline state to `{{SDD_DIR}}/handover/coordinator.md` immediately
-2. Report to Conductor: active teammates list, current status per spec, pending work
-3. Coordinator shuts down after handover is written
+1. Save current pipeline state to `{{SDD_DIR}}/handover/coordinator.md` immediately (including active teammates list)
+2. Send `DISMISS_REQUEST` for all active T3/T4 teammates
+3. Report to Conductor: current status per spec, pending work, summary of dismissed teammates
+4. Coordinator shuts down (Conductor dismisses Coordinator)
 
 ## Error Handling
 
