@@ -449,6 +449,15 @@ After EVERY significant event, update `{{SDD_DIR}}/handover/coordinator.md`:
 - Knowledge tag received → update Knowledge Buffer
 - Wave completed → flush Knowledge Buffer to knowledge/, reset Pipeline State
 
+### Resume from Handover
+
+When spawned with resume context by Conductor:
+1. Read `{{SDD_DIR}}/handover/coordinator.md`
+2. Restore pipeline state from the handover snapshot
+3. Determine next actions based on Pipeline State and Pending Actions
+4. Request necessary teammate spawns via `SPAWN_REQUEST` (and any pending `PHASE_UPDATE`s)
+5. Continue normal operation — all phase transitions and spec.json updates flow through the standard protocol
+
 ## Knowledge Aggregation
 
 1. Collect `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]` tags from Builder/Inspector reports

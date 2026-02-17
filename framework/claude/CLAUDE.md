@@ -172,10 +172,12 @@ Each role overwrites its handover file as a **latest snapshot** (not append).
 ### Session Resume
 On session start (new or post-compact):
 1. If `{{SDD_DIR}}/handover/conductor.md` exists → read it
-2. Spawn Coordinator
+2. Spawn Coordinator with resume instruction (include interruption point context from handover)
 3. Coordinator reads `{{SDD_DIR}}/handover/coordinator.md`
-4. Coordinator restores pipeline state and requests necessary teammate spawns
-5. Resume from interruption point
+4. Coordinator restores pipeline state, determines next actions, and requests necessary teammate spawns
+5. Conductor enters Message Loop — all subsequent work flows through Coordinator as normal
+
+**Invariant**: After resume, Conductor MUST NOT take any pipeline action (phase updates, teammate spawns, spec changes) except through the Conductor Message Loop. The handover file is context for Coordinator, not a to-do list for Conductor.
 
 ## Knowledge Auto-Accumulation
 
