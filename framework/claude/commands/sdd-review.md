@@ -1,6 +1,6 @@
 ---
 description: Multi-agent review (design, implementation, or dead code)
-allowed-tools: Glob, Read
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check]
 ---
 
@@ -98,12 +98,17 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 4. **Auto-Fix Loop** (design/impl review only):
    - If NO-GO or SPEC-UPDATE-NEEDED:
-     a. Extract fix instructions from verdict
+     a. Extract fix instructions from Auditor's verdict
      b. Track retry count (max 3)
-     c. **NO-GO (design)**: spawn Architect with fix instructions → re-spawn review pipeline
-     d. **NO-GO (impl)**: spawn Builder(s) with fix instructions → re-spawn review pipeline
-     e. **SPEC-UPDATE-NEEDED**: cascade: Architect → Planner → Builder → re-spawn review pipeline
-     f. If 3 retries exhausted: present final verdict and options to user
+     c. Determine fix scope and spawn fix teammates:
+        - **NO-GO (design)**: spawn Architect with fix instructions
+        - **NO-GO (impl)**: spawn Builder(s) with fix instructions
+        - **SPEC-UPDATE-NEEDED**: cascade: spawn Architect → dismiss → spawn Planner → dismiss → spawn Builder(s)
+     d. Read fix teammate's completion report
+     e. Dismiss fix teammate
+     f. Update spec.json (version_refs, phase) and `{{SDD_DIR}}/handover/conductor.md`
+     g. Re-spawn review pipeline (Step 3) with same review type
+     h. If 3 retries exhausted: present final verdict and options to user
 
 5. **Process STEERING entries** from verdict:
    - CODIFY → apply directly to steering file + append to log.md

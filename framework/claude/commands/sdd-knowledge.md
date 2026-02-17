@@ -1,6 +1,6 @@
 ---
 description: Manage reusable knowledge entries and review auto-accumulated knowledge
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: [type] [description] | [--review] | [--skills]
 ---
 

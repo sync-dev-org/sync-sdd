@@ -1,6 +1,6 @@
 ---
 description: Set up project-wide context (create, update, delete, custom)
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, SendMessage
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: [-y] [custom]
 ---
 
