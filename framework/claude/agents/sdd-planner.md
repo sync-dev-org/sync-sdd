@@ -3,7 +3,7 @@ name: sdd-planner
 description: |
   T3 Brain layer. Generates implementation tasks from design documents.
   Analyzes parallelism, creates properly sized tasks with spec traceability.
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, SendMessage
 model: opus
 ---
 

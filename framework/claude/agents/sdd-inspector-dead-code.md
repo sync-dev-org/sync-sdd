@@ -3,7 +3,7 @@ name: sdd-inspector-dead-code
 description: |
   T4 Execution layer. Investigates project source code to detect unused functions,
   classes, methods, and other dead code.
-tools: Bash, Read, Write, Glob, Grep
+tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet
 ---
 
@@ -49,7 +49,7 @@ Be cautious with:
 
 ## Output Format
 
-Send findings to `sdd-auditor-dead-code`. One finding per line:
+Send findings to `sdd-auditor-dead-code` via SendMessage. One finding per line:
 
 ```
 CATEGORY:dead-code

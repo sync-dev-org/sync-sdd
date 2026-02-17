@@ -100,7 +100,7 @@ After Coordinator reports Auditor's final verdict:
    - Report each retry attempt to user
    - If retries exhausted: present final verdict and options to user
 
-5. Update `{{SDD_DIR}}/handover/conductor.md` with current state
+5. Pipeline state tracking is handled by Coordinator (updates `coordinator.md` on review completion per Incremental Handover triggers)
 
 ### Next Steps by Verdict
 

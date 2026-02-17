@@ -6,7 +6,7 @@ description: |
 
   **Input**: Results from 4 audit agents embedded in prompt
   **Output**: Unified, verified dead code review report with final verdict
-tools: Read, Glob
+tools: Read, Glob, SendMessage
 model: opus
 ---
 
@@ -29,8 +29,8 @@ Cross-check, verify, and integrate findings from 4 independent audit agents into
 
 ## Input Handling
 
-You will receive a prompt containing:
-- **Results from 4 agents**:
+You will receive results from Inspectors via SendMessage. The number of Inspectors is specified in your spawn context (`Expect: N`; default 4 in full mode). Wait for all expected Inspector results before proceeding.
+- **Possible Inspector results**:
   1. Settings Audit results (dead config, broken passthrough)
   2. Dead Code Detection results (unused symbols, test-only code)
   3. Spec Alignment results (spec drift, unimplemented features)
@@ -135,7 +135,7 @@ You MAY override this formula with justification.
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Send your verdict to Coordinator (`sdd-coordinator`) via SendMessage in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}

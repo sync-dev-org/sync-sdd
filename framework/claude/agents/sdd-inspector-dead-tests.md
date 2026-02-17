@@ -3,7 +3,7 @@ name: sdd-inspector-dead-tests
 description: |
   T4 Execution layer. Investigates test code to detect orphaned fixtures,
   stale tests, and tests depending on outdated interfaces.
-tools: Bash, Read, Write, Glob, Grep
+tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet
 ---
 
@@ -43,7 +43,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Send findings to `sdd-auditor-dead-code`. One finding per line:
+Send findings to `sdd-auditor-dead-code` via SendMessage. One finding per line:
 
 ```
 CATEGORY:orphaned-test

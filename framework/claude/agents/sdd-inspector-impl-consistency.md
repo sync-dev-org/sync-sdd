@@ -6,7 +6,7 @@ description: |
 
   **Input**: Feature name (or cross-check mode) and context embedded in prompt
   **Output**: Structured findings of consistency issues
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, SendMessage
 model: sonnet
 ---
 
@@ -184,6 +184,7 @@ In cross-check mode, systematically verify consistency across ALL implemented fe
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Send this output to the Auditor specified in your context via SendMessage.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}

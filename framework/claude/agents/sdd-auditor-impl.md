@@ -6,7 +6,7 @@ description: |
 
   **Input**: Results from 5 review agents embedded in prompt
   **Output**: Unified, verified implementation review report with final verdict
-tools: Read, Glob
+tools: Read, Glob, SendMessage
 model: opus
 ---
 
@@ -29,10 +29,11 @@ Cross-check, verify, and integrate findings from 5 independent review agents int
 
 ## Input Handling
 
-You will receive a prompt containing:
+You will receive results from 5 Inspectors via SendMessage. Your spawn context contains:
 - **Feature name** (or "cross-check" for all specs, or "wave-scoped-cross-check" with wave number)
 - **Wave number** (if wave-scoped mode)
-- **Results from 5 agents**:
+
+Wait for all 5 Inspector results to arrive via SendMessage before proceeding. **Results from 5 agents**:
   1. Rulebase Review results (task completion, traceability, file structure)
   2. Interface Review results (signature, call site, dependency verification)
   3. Test Review results (execution, coverage, quality)
@@ -216,7 +217,7 @@ You MAY override this formula with justification.
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Send your verdict to Coordinator (`sdd-coordinator`) via SendMessage in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO|SPEC-UPDATE-NEEDED}

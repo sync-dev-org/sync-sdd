@@ -6,7 +6,7 @@ description: |
 
   **Input**: Feature name, task scope, and context embedded in prompt
   **Output**: Structured findings of quality issues
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, SendMessage
 model: sonnet
 ---
 
@@ -173,6 +173,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Send this output to the Auditor specified in your context via SendMessage.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}

@@ -3,7 +3,7 @@ name: sdd-inspector-dead-specs
 description: |
   T4 Execution layer. Investigates alignment between project specifications and implementation.
   Detects spec drift, unimplemented features, and orphaned implementations.
-tools: Bash, Read, Write, Glob, Grep
+tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet
 ---
 
@@ -42,7 +42,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Send findings to `sdd-auditor-dead-code`. One finding per line:
+Send findings to `sdd-auditor-dead-code` via SendMessage. One finding per line:
 
 ```
 CATEGORY:spec-drift

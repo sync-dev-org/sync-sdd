@@ -3,7 +3,7 @@ name: sdd-architect
 description: |
   T3 Brain layer. Generates technical design documents including specifications and architecture.
   Performs discovery, research, and produces design.md + research.md.
-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
+tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch, SendMessage
 model: opus
 ---
 

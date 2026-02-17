@@ -58,7 +58,7 @@ Reset all project files: `rm -rf .claude/sdd/project`
 
 ```
 Tier 1: Command  ─── Conductor ──────────── (Lead, Opus)
-Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Sonnet)
+Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Opus)
 Tier 3: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
 Tier 4: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
 ```

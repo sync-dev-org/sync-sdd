@@ -8,7 +8,7 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ```
 Tier 1: Command  ─── Conductor ──────────── (Lead, Opus)
-Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Sonnet)
+Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Opus)
 Tier 3: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
 Tier 4: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
 ```
@@ -117,7 +117,12 @@ Before sending any instruction to Coordinator, Conductor MUST verify:
 - On NO-GO verdict: Auditor sends fix instructions → Coordinator re-spawns Architect/Builder → re-review
 - Maximum 3 retries before escalating to user
 - On SPEC-UPDATE-NEEDED: fix from spec level (Architect → Planner → Builder → re-review)
-- Structural changes (spec splitting, wave restructuring) always escalate to user
+- Structural changes (spec splitting, wave restructuring): auto-fix in full-auto mode, escalate in `--gate` mode
+
+### Wave Quality Gate (Roadmap)
+- After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
+- Issues found → re-spawn responsible Builder(s) from file ownership records → re-review
+- Max 3 retries per gate → escalate to user
 
 ## Product Intent
 
@@ -162,6 +167,16 @@ On session start (new or post-compact):
 - Coordinator collects tagged reports from all teammates
 - On wave completion: Coordinator aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
 - Skill emergence: when 2+ specs share the same pattern, Coordinator proposes Skill candidates to Conductor → user approval
+
+## Pipeline Stop Protocol
+
+When user requests stop during pipeline execution:
+1. Conductor sends shutdown request to all active teammates via SendMessage
+2. Coordinator saves current pipeline state to `{{SDD_DIR}}/handover/coordinator.md` before shutting down
+3. Conductor updates `{{SDD_DIR}}/handover/conductor.md` with interruption point
+4. Report to user: what was completed, what was in progress, how to resume
+
+Resume: `/sdd-roadmap run` reads handover state and resumes from interruption point.
 
 ## Behavioral Rules
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
