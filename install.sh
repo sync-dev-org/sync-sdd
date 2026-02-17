@@ -242,7 +242,24 @@ migrate_kiro_to_sdd() {
 if version_lt "$INSTALLED_VERSION" "0.4.0"; then
     migrate_kiro_to_sdd
 fi
-# Future: if version_lt "$INSTALLED_VERSION" "0.5.0"; then migrate_xxx; fi
+# v0.7.0: Coordinator eliminated, 3-tier architecture
+if version_lt "$INSTALLED_VERSION" "0.7.0"; then
+    if [ -f .claude/agents/sdd-coordinator.md ]; then
+        rm -f .claude/agents/sdd-coordinator.md
+        info "Removed sdd-coordinator.md (3-tier architecture in v0.7.0)"
+    fi
+    if [ -f .claude/sdd/handover/coordinator.md ]; then
+        if [ -f .claude/sdd/handover/conductor.md ]; then
+            printf '\n\n## Migrated Pipeline State\n\n' >> .claude/sdd/handover/conductor.md
+            cat .claude/sdd/handover/coordinator.md >> .claude/sdd/handover/conductor.md
+            info "Merged coordinator handover state into conductor.md"
+        else
+            mv .claude/sdd/handover/coordinator.md .claude/sdd/handover/conductor.md
+            info "Renamed coordinator handover to conductor.md"
+        fi
+        rm -f .claude/sdd/handover/coordinator.md
+    fi
+fi
 
 # --- Install framework files ---
 install_file() {

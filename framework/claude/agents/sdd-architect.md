@@ -3,7 +3,7 @@ name: sdd-architect
 description: |
   T3 Brain layer. Generates technical design documents including specifications and architecture.
   Performs discovery, research, and produces design.md + research.md.
-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch, SendMessage
+tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 model: opus
 ---
 
@@ -15,7 +15,7 @@ Generate design document for a feature including specifications (WHAT) and archi
 
 ## Input
 
-You receive context from Coordinator including:
+You receive context from Lead including:
 - **Feature name**: the feature to design
 - **Steering path**: `{{SDD_DIR}}/project/steering/`
 - **Template path**: `{{SDD_DIR}}/settings/templates/specs/`
@@ -90,7 +90,7 @@ Version consistency check (skip if `version_refs` not present):
    - Use language specified in spec.json
    - Ensure Specifications Traceability maps spec IDs to components
 
-3. **Do NOT update spec.json** — Coordinator manages all metadata updates.
+3. **Do NOT update spec.json** — Lead manages all metadata updates.
 
 ## Critical Constraints
 - **Type Safety**: Enforce strong typing aligned with the project's technology stack
@@ -102,7 +102,7 @@ Version consistency check (skip if `version_refs` not present):
 
 ## Completion Report
 
-Send completion report to Coordinator (`sdd-coordinator`) via SendMessage:
+Output your completion report as your final text (Lead reads this directly):
 
 ```
 ARCHITECT_COMPLETE
@@ -113,6 +113,6 @@ Discovery: {full|light|minimal}
 Key findings: {2-3 critical insights}
 ```
 
-**After sending your report, terminate immediately. Do not wait for further messages.**
+**After outputting your report, terminate immediately.**
 
 think

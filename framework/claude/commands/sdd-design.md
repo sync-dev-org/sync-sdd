@@ -1,6 +1,6 @@
 ---
 description: Create comprehensive technical design for a specification
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, SendMessage
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 argument-hint: <feature-name-or-"description">
 ---
 
@@ -10,7 +10,7 @@ argument-hint: <feature-name-or-"description">
 
 ## Core Task
 
-Orchestrate design generation for feature **$1** via Coordinator → Architect pipeline.
+Orchestrate design generation for feature **$1** by spawning Architect directly.
 
 ## Step 1: Input Mode Detection
 
@@ -30,20 +30,26 @@ Orchestrate design generation for feature **$1** via Coordinator → Architect p
 - If existing spec: verify spec directory and spec.json exist
 - No phase restriction for design generation (any phase is valid)
 
-## Step 3: Dispatch to Coordinator
+## Step 3: Spawn Architect
 
-Send instruction to Coordinator:
-
-```
-設計生成 feature={feature}
-Mode: {new|existing}
-```
-
-Coordinator will plan and request Architect spawn. Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
+1. Spawn Architect with context:
+   ```
+   Feature: {feature}
+   Steering: {{SDD_DIR}}/project/steering/
+   Template: {{SDD_DIR}}/settings/templates/specs/
+   Mode: {new|existing}
+   ```
+2. Read Architect's completion report (`ARCHITECT_COMPLETE`)
+3. Dismiss Architect
+4. Verify `design.md` and `research.md` exist in spec directory
+5. Update spec.json:
+   - If re-edit (`version_refs.design` is non-null): increment `version` minor
+   - Set `version_refs.design` = current `version`, `version_refs.tasks` = null
+   - Set `phase` = `design-generated`
+   - Update `changelog`
 
 ## Step 4: Post-Completion
 
-After Coordinator reports completion:
 1. Update `{{SDD_DIR}}/project/steering/product.md` User Intent section if user expressed new requirements during this flow
 2. Update `{{SDD_DIR}}/handover/conductor.md` with current state
 3. Report to user:

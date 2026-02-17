@@ -47,9 +47,9 @@ Categories: `state`, `api`, `async`, `data`, `security`, `integration`
 
 ## Auto-Accumulated Review Mode (`--review`)
 
-Review knowledge collected automatically by Coordinator from Builder/Inspector reports.
+Review knowledge collected automatically by Lead from Builder/Inspector reports.
 
-1. Read `{{SDD_DIR}}/handover/coordinator.md` → Knowledge Buffer section
+1. Read `{{SDD_DIR}}/handover/conductor.md` → Knowledge Buffer section
 2. If buffer is empty: "No auto-accumulated knowledge to review."
 3. Present each buffered entry to user:
    - Show tag (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`), source, content
@@ -60,9 +60,9 @@ Review knowledge collected automatically by Coordinator from Builder/Inspector r
 
 ## Skill Emergence Mode (`--skills`)
 
-Review Skill candidates detected by Coordinator.
+Review Skill candidates detected by Lead.
 
-1. Read Skill candidates from Coordinator's reports
+1. Read Skill candidates from `{{SDD_DIR}}/handover/conductor.md`
 2. If none: "No Skill candidates detected yet."
 3. Present each candidate:
    - Pattern description

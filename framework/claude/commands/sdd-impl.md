@@ -1,6 +1,6 @@
 ---
 description: Execute spec tasks using TDD methodology
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob, SendMessage
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 argument-hint: <feature-name> [task-numbers]
 ---
 
@@ -10,7 +10,7 @@ argument-hint: <feature-name> [task-numbers]
 
 ## Core Task
 
-Orchestrate TDD implementation for feature **$1** via Coordinator → Builder pipeline.
+Orchestrate TDD implementation for feature **$1** by spawning Builder(s) directly.
 
 ## Step 1: Phase Gate
 
@@ -29,25 +29,40 @@ If `version_refs` present:
 - If `$2` provided: Execute specified task numbers (e.g., "1.1" or "1,2,3")
 - Otherwise: Execute all pending tasks (unchecked `- [ ]` in tasks.md)
 
-## Step 3: Dispatch to Coordinator
+## Step 3: Analyze and Spawn Builders
 
-Send instruction to Coordinator:
-
-```
-実装 feature={feature}
-Tasks: {task numbers or "all pending"}
-```
-
-Coordinator will:
-1. Analyze tasks.md for parallelism and file ownership
-2. Request Builder spawns with appropriate file scopes
-3. Track progress and manage dependencies
-
-Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
+1. Read `tasks.md` and `design.md` for the feature
+2. **Analyze parallelism**:
+   - Read `(P)` markers and dependency chains from tasks.md → determine which tasks can run in parallel
+   - Read Components section from design.md → determine file ownership per Builder
+   - Group tasks into Builder work packages (**no file overlap** between Builders)
+3. **Spawn Builder(s)** with context for each work package:
+   ```
+   Feature: {feature}
+   Tasks: {task numbers}
+   File scope: {assigned files}
+   Design ref: {{SDD_DIR}}/project/specs/{feature}/design.md
+   ```
+   For dependent tasks, include: `Depends on: Tasks {numbers} (wait for completion)`
+4. **Read each Builder's completion report**. Collect:
+   - Tasks completed
+   - Files created/modified
+   - Test results
+   - Knowledge tags (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`)
+   - Blocker reports (`BUILDER_BLOCKED`)
+5. **Handle BUILDER_BLOCKED**: analyze blocker cause, re-plan file ownership or escalate to user
+6. **When dependent tasks are unblocked**: dismiss completed Builders, spawn next wave of Builders
+7. **On all tasks complete**:
+   - Dismiss all Builders
+   - Aggregate `Files` from all Builder reports
+   - Store knowledge tags in `{{SDD_DIR}}/handover/conductor.md` Knowledge Buffer
+   - Update spec.json:
+     - Set `phase` = `implementation-complete`
+     - Set `implementation.files_created` = `[{aggregated files}]`
+     - Update `changelog`
 
 ## Step 4: Post-Completion
 
-After Coordinator reports all tasks complete:
 1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
 2. Report to user:
    - Tasks executed and test results

@@ -4,64 +4,66 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ## Role Architecture
 
-### 4-Tier Hierarchy
+### 3-Tier Hierarchy
 
 ```
-Tier 1: Command  ─── Conductor ──────────── (Lead, Opus)
-Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Opus)
-Tier 3: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
-Tier 4: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
+Tier 1: Command  ─── Lead ─────────────────────── (Conductor, Opus)
+Tier 2: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
+Tier 3: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
 ```
 
 | Tier | Role | Responsibility |
 |------|------|---------------|
-| T1 | **Conductor** | User interaction, phase gate checks, mechanical spawn execution. **Does not do work itself.** |
-| T2 | **Coordinator** | **Relay point for all instructions.** Spawn planning, parallelism analysis, file ownership assignment, progress tracking, QC routing, Knowledge aggregation. |
-| T3 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
-| T3 | **Planner** | Task decomposition. Generates tasks.md from design.md with parallelism analysis. |
-| T3 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
-| T4 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
-| T4 | **Inspector** | Individual review perspectives. 5 inspectors spawned in parallel. Outputs CPF findings. |
+| T1 | **Lead** | User interaction, phase gate checks, spawn planning, parallelism analysis, file ownership assignment, progress tracking, teammate lifecycle management, spec.json updates, Knowledge aggregation. |
+| T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
+| T2 | **Planner** | Task decomposition. Generates tasks.md from design.md with parallelism analysis. |
+| T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
+| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
+| T3 | **Inspector** | Individual review perspectives. 5 inspectors spawned in parallel. Outputs CPF findings. |
 
 ### Chain of Command
 
-**Invariant rule**: Conductor MUST NOT instruct any teammate other than Coordinator directly.
-Coordinator plans all work and requests teammate spawns from Conductor.
+Lead spawns T2/T3 teammates directly with context.
+Teammates complete their work and output a structured completion report as their final text.
+Lead reads completion output and determines next actions.
+
+Exception: Inspector → Auditor communication uses SendMessage (peer communication within a review pipeline).
 
 ### State Management
 
-**spec.json is owned by Coordinator** (via Conductor). T3/T4 teammates MUST NOT update spec.json directly.
-- Teammates produce work artifacts (design.md, tasks.md, code) and send completion reports
-- Coordinator validates results, computes metadata updates (phase, version_refs, changelog)
-- Coordinator requests Conductor to apply spec.json updates
+**spec.json is owned by Lead.** T2/T3 teammates MUST NOT update spec.json directly.
+- Teammates produce work artifacts (design.md, tasks.md, code) and output completion reports
+- Lead validates results, computes metadata updates (phase, version_refs, changelog)
+- Lead updates spec.json directly
 
 ```
-User ──→ Conductor ──→ Coordinator ──→ T3/T4 Teammates
-                  ◄──            ◄──
+User ──→ Lead ──→ T2/T3 Teammates
+              ◄──
 ```
 
-### Phase Gate (Conductor's responsibility)
+### Phase Gate
 
-Before sending any instruction to Coordinator, Conductor MUST verify:
+Before spawning any teammate, Lead MUST verify:
 - `spec.json.phase` is appropriate for the requested operation
 - `version_refs` consistency between design/tasks/implementation
 - On failure: report error to user (do NOT spawn teammates unnecessarily)
 
-### Conductor Message Loop
+### Teammate Lifecycle
 
-After dispatching an instruction to Coordinator, Conductor enters a message loop:
+Lead spawns teammates directly. Each teammate:
+1. Receives context in spawn prompt (feature, paths, scope, instructions)
+2. Executes its work autonomously
+3. Outputs a structured completion report as final text
+4. Terminates immediately after reporting
 
-1. **Receive** next message from Coordinator
-2. **Handle by type**:
-   - `SPAWN_REQUEST:` → Spawn listed teammates mechanically → continue loop
-   - `DISMISS_REQUEST:` → Remove listed teammates from team → continue loop
-   - `PHASE_UPDATE:` → Update spec.json as instructed → continue loop
-   - `ESCALATION:` → Present issue to user, relay decision to Coordinator → continue loop
-   - `DIRECT_ACTION:` → Execute requested action directly → continue loop
-   - `PIPELINE_COMPLETE` → Dismiss Coordinator → exit loop → proceed to Post-Completion
-3. **Repeat** until `PIPELINE_COMPLETE` received
+Lead reads the completion output and:
+- Extracts results (artifacts created, test results, knowledge tags, blocker info)
+- Updates spec.json metadata (phase, version_refs, changelog)
+- Updates handover state
+- Determines next action (spawn next teammate, escalate to user, etc.)
+- Dismisses the teammate
 
-All command dispatchers use this loop after dispatching to Coordinator.
+For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors SendMessage to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
 
 ## Project Context
 
@@ -130,10 +132,19 @@ All command dispatchers use this loop after dispatching to Coordinator.
 - On SPEC-UPDATE-NEEDED verdict: fix the spec first, do not re-implement
 
 ### Auto-Fix Loop (Review)
-- On NO-GO verdict: Auditor sends fix instructions → Coordinator re-spawns Architect/Builder → re-review
-- Maximum 3 retries before escalating to user
-- On SPEC-UPDATE-NEEDED: fix from spec level (Architect → Planner → Builder → re-review)
-- Structural changes (spec splitting, wave restructuring): auto-fix in full-auto mode, escalate in `--gate` mode
+
+When Auditor returns NO-GO or SPEC-UPDATE-NEEDED:
+1. Extract fix instructions from Auditor's verdict
+2. Dismiss review teammates
+3. Track retry count (max 3)
+4. Determine fix scope and spawn fix teammates:
+   - **NO-GO (design review)** → spawn Architect with fix instructions
+   - **NO-GO (impl review)** → spawn Builder(s) with fix instructions
+   - **SPEC-UPDATE-NEEDED** → cascade: Architect → Planner → Builder
+   - **Structural changes** → auto-fix in full-auto mode, escalate in `--gate` mode
+   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → spawn with fix instructions
+5. After fix, dismiss fix teammates, then spawn review pipeline (Inspectors + Auditor) again
+6. If 3 retries exhausted → escalate to user
 
 ### Wave Quality Gate (Roadmap)
 - After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
@@ -142,7 +153,7 @@ All command dispatchers use this loop after dispatching to Coordinator.
 
 ## Product Intent
 
-Conductor MUST update `steering/product.md` User Intent section whenever:
+Lead MUST update `steering/product.md` User Intent section whenever:
 - User expresses requirements or vision → update Vision, Success Criteria, Anti-Goals
 - Roadmap is created → update Spec Rationale
 - Design is started → detail Success Criteria
@@ -161,27 +172,56 @@ Auditor verdicts may include a `STEERING:` section with two levels:
 
 | Level | Meaning | Processing | Blocks pipeline |
 |-------|---------|-----------|----------------|
-| `CODIFY` | Document existing implicit pattern | Auto-apply via `DIRECT_ACTION` + log | No |
-| `PROPOSE` | New constraint affecting future work | `ESCALATION` → user approval | Yes |
+| `CODIFY` | Document existing implicit pattern | Lead applies directly + appends to log.md | No |
+| `PROPOSE` | New constraint affecting future work | Lead presents to user for approval | Yes |
 
-Coordinator extracts `STEERING:` from Auditor verdicts and routes accordingly.
+When Auditor verdict contains a `STEERING:` section:
+1. Parse `STEERING:` lines: `{CODIFY|PROPOSE}|{target file}|{decision text}`
+2. Route by level:
+   - **CODIFY** → Update `steering/{target file}` directly + append to `log.md`: `STEERING_UPDATE (CODIFY, source: {review type} {feature})`
+   - **PROPOSE** → Present to user for approval
+     - On approval → update `steering/{target file}` + log as `STEERING_UPDATE (PROPOSE, approved)`
+     - On rejection → append to `log.md`: `USER_DECISION: Rejected steering proposal: "{decision text}"`
+3. Process STEERING entries **after** handling the verdict (GO/NO-GO/etc.) but **before** advancing to the next phase
 
 ## Incremental Persistence (Handover)
 
 State is persisted incrementally to `{{SDD_DIR}}/handover/` — NOT triggered by compact.
 
-| Event | Writer | File | Content |
-|-------|--------|------|---------|
-| Phase transition | Conductor | conductor.md | Next Action, Active Goals |
-| User decision | Conductor | conductor.md | Key Decisions |
-| Decision/direction change | Conductor | log.md | Timestamped event (append) |
-| Steering update applied | Conductor | log.md | Source and rationale (append) |
-| Teammate completion | Coordinator | coordinator.md | Pipeline State, Active Teammates |
-| Teammate spawn | Coordinator | coordinator.md | Active Teammates |
-| Knowledge report | Coordinator | coordinator.md | Knowledge Buffer |
-| Wave completion | Coordinator | coordinator.md | Pipeline State reset, Knowledge flush |
+| Event | File | Content |
+|-------|------|---------|
+| Phase transition | conductor.md | Next Action, Active Goals, Pipeline State |
+| User decision | conductor.md | Key Decisions |
+| Decision/direction change | log.md | Timestamped event (append) |
+| Steering update applied | log.md | Source and rationale (append) |
+| Teammate completion | conductor.md | Pipeline State, Active Teammates |
+| Teammate spawn | conductor.md | Active Teammates |
+| Knowledge report | conductor.md | Knowledge Buffer |
+| Wave completion | conductor.md | Pipeline State reset, Knowledge flush |
 
-conductor.md and coordinator.md are **latest snapshots** (overwrite). log.md is **append-only** (never overwrite).
+conductor.md is a **latest snapshot** (overwrite). log.md is **append-only** (never overwrite).
+
+### conductor.md Format
+
+```markdown
+# Lead Handover
+**Updated**: {timestamp}
+
+## Direction
+- Next Action: {command form}
+- Active Goals: {current objectives}
+- Key Decisions: {decisions made this session}
+
+## Pipeline State
+| Spec | Phase | Last Action | Next Action | Blocked By |
+|------|-------|-------------|-------------|------------|
+
+## Active Teammates
+{list of currently spawned teammates and their tasks}
+
+## Knowledge Buffer
+{[PATTERN]/[INCIDENT]/[REFERENCE] reports not yet written to knowledge/}
+```
 
 ### Decision Log (`log.md`)
 
@@ -201,30 +241,23 @@ Event types:
 ### Session Resume
 On session start (new or post-compact):
 1. If `{{SDD_DIR}}/handover/conductor.md` exists → read it
-2. Spawn Coordinator with resume instruction (include interruption point context from handover)
-3. Coordinator reads `{{SDD_DIR}}/handover/coordinator.md`
-4. Coordinator restores pipeline state, determines next actions, and requests necessary teammate spawns
-5. Conductor enters Message Loop — all subsequent work flows through Coordinator as normal
-
-**Invariant**: After resume, Conductor MUST NOT take any pipeline action (phase updates, teammate spawns, spec changes) except through the Conductor Message Loop. The handover file is context for Coordinator, not a to-do list for Conductor.
+2. Restore pipeline state from the handover snapshot
+3. Determine next actions from Pipeline State and pending work
+4. Spawn necessary teammates directly and continue orchestration
 
 ## Knowledge Auto-Accumulation
 
 - Builder/Inspector report learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Coordinator collects tagged reports from all teammates
-- On wave completion: Coordinator aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
-- Skill emergence: when 2+ specs share the same pattern, Coordinator proposes Skill candidates to Conductor → user approval
+- Lead collects tagged reports from teammate completion outputs
+- On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
+- Skill emergence: when 2+ specs share the same pattern, Lead proposes Skill candidates to user for approval
 
 ## Pipeline Stop Protocol
 
 When user requests stop during pipeline execution:
-1. Conductor sends stop signal to Coordinator
-2. Coordinator saves current pipeline state to `{{SDD_DIR}}/handover/coordinator.md`
-3. Coordinator sends `DISMISS_REQUEST` for all active T3/T4 teammates
-4. Conductor dismisses listed teammates
-5. Conductor dismisses Coordinator
-6. Conductor updates `{{SDD_DIR}}/handover/conductor.md` with interruption point
-7. Report to user: what was completed, what was in progress, how to resume
+1. Lead dismisses all active T2/T3 teammates
+2. Lead saves current pipeline state to `{{SDD_DIR}}/handover/conductor.md`
+3. Report to user: what was completed, what was in progress, how to resume
 
 Resume: `/sdd-roadmap run` reads handover state and resumes from interruption point.
 
@@ -244,8 +277,8 @@ Trunk-based development. main is always HEAD.
 - Never leave stale branches; merged branches are deleted immediately
 
 ### Commit Timing
-- **Wave completion**: After Wave Quality Gate passes, Coordinator requests commit via `DIRECT_ACTION`
-- **Standalone command completion**: After `/sdd-impl` or `/sdd-review` completes outside roadmap, Conductor commits
+- **Wave completion**: After Wave Quality Gate passes, Lead commits directly
+- **Standalone command completion**: After `/sdd-impl` or `/sdd-review` completes outside roadmap, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
 - Commit message format: `Wave {N}: {summary}` (roadmap) or `{feature}: {summary}` (standalone)
 

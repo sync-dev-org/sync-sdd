@@ -1,6 +1,6 @@
 ---
 description: Multi-agent review (design, implementation, or dead code)
-allowed-tools: Glob, Read, SendMessage
+allowed-tools: Glob, Read
 argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check]
 ---
 
@@ -10,7 +10,7 @@ argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check]
 
 ## Core Task
 
-Orchestrate multi-agent review via Coordinator → Inspector ×5 + Auditor pipeline.
+Orchestrate multi-agent review by spawning Inspectors and Auditor directly.
 
 ## Step 1: Parse Arguments
 
@@ -42,49 +42,50 @@ If first argument is missing or not one of `design`, `impl`, `dead-code`:
 ### Dead Code Review
 - No phase gate (operates on entire codebase)
 
-## Step 3: Dispatch to Coordinator
+## Step 3: Spawn Review Pipeline
 
 ### Design Review
 
-```
-設計レビュー feature={feature}
-Mode: {single|cross-check|wave-scoped}
-Wave: {N} (wave-scoped only)
-```
+Spawn 5 design Inspectors + 1 design Auditor:
+- `sdd-inspector-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-inspector-testability` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-inspector-architecture` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-inspector-consistency` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-inspector-best-practices` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-auditor-design` (opus): "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
 
-Coordinator will request spawn of:
-- 5 design Inspectors (rulebase, testability, architecture, consistency, best-practices)
-- 1 design Auditor
+Inspectors send CPF results directly to Auditor via SendMessage.
+Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Implementation Review
 
-```
-実装レビュー feature={feature}
-Mode: {single|cross-check|wave-scoped}
-Tasks: {task numbers} (if specified)
-Wave: {N} (wave-scoped only)
-```
+Spawn 5 impl Inspectors + 1 impl Auditor:
+- `sdd-inspector-impl-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-inspector-interface` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-inspector-test` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-inspector-quality` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-inspector-impl-consistency` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-auditor-impl` (opus): "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
 
-Coordinator will request spawn of:
-- 5 impl Inspectors (impl-rulebase, interface, test, quality, impl-consistency)
-- 1 impl Auditor
+Inspectors send CPF results directly to Auditor via SendMessage.
+Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Dead Code Review
 
-```
-デッドコードレビュー
-Mode: {full|settings|code|specs|tests}
-```
+Parse Mode from arguments (default: `full`):
 
-Coordinator will request spawn of:
-- 4 dead-code Inspectors (dead-settings, dead-code, dead-specs, dead-tests)
-- 1 dead-code Auditor
+| Mode | Inspectors |
+|------|-----------|
+| `full` (default) | dead-settings, dead-code, dead-specs, dead-tests |
+| `settings` | dead-settings |
+| `code` | dead-code |
+| `specs` | dead-specs |
+| `tests` | dead-tests |
 
-Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
+Spawn selected dead-code Inspectors + `sdd-auditor-dead-code` (opus).
+Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ## Step 4: Handle Verdict
-
-After Coordinator reports Auditor's final verdict:
 
 1. Parse CPF output from Auditor
 2. Format as human-readable markdown report:
@@ -96,11 +97,19 @@ After Coordinator reports Auditor's final verdict:
 3. Display formatted report to user
 
 4. **Auto-Fix Loop** (design/impl review only):
-   - If NO-GO or SPEC-UPDATE-NEEDED: Coordinator handles auto-fix (max 3 retries)
-   - Report each retry attempt to user
-   - If retries exhausted: present final verdict and options to user
+   - If NO-GO or SPEC-UPDATE-NEEDED:
+     a. Extract fix instructions from verdict
+     b. Track retry count (max 3)
+     c. **NO-GO (design)**: spawn Architect with fix instructions → re-spawn review pipeline
+     d. **NO-GO (impl)**: spawn Builder(s) with fix instructions → re-spawn review pipeline
+     e. **SPEC-UPDATE-NEEDED**: cascade: Architect → Planner → Builder → re-spawn review pipeline
+     f. If 3 retries exhausted: present final verdict and options to user
 
-5. Pipeline state tracking is handled by Coordinator (updates `coordinator.md` on review completion per Incremental Handover triggers)
+5. **Process STEERING entries** from verdict:
+   - CODIFY → apply directly to steering file + append to log.md
+   - PROPOSE → present to user for approval
+
+6. Update `{{SDD_DIR}}/handover/conductor.md` with review results
 
 ### Next Steps by Verdict
 

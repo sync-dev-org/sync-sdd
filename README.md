@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-AI-DLC (AI Development Life Cycle) with 4-tier Agent Team architecture, phase-gated workflow, and specification traceability.
+AI-DLC (AI Development Life Cycle) with 3-tier Agent Team architecture, phase-gated workflow, and specification traceability.
 
 ## Install
 
@@ -36,7 +36,7 @@ your-project/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
     ├── commands/sdd-*.md              # 9 slash commands
-    ├── agents/sdd-*.md                # 21 agent definitions
+    ├── agents/sdd-*.md                # 20 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
             ├── rules/
@@ -57,13 +57,12 @@ Reset all project files: `rm -rf .claude/sdd/project`
 ## Architecture
 
 ```
-Tier 1: Command  ─── Conductor ──────────── (Lead, Opus)
-Tier 2: Manage   ─── Coordinator ─────────── (Teammate, Opus)
-Tier 3: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
-Tier 4: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
+Tier 1: Command  ─── Lead ─────────────────────── (Conductor, Opus)
+Tier 2: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
+Tier 3: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
 ```
 
-All work is delegated through the Agent Team hierarchy. Conductor (Lead) handles user interaction and phase gates. Coordinator plans and manages all teammate operations.
+Lead handles user interaction, phase gates, spawn planning, and teammate lifecycle management. All work is delegated through the Agent Team hierarchy.
 
 ## Quick start
 

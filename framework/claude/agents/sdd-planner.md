@@ -3,7 +3,7 @@ name: sdd-planner
 description: |
   T3 Brain layer. Generates implementation tasks from design documents.
   Analyzes parallelism, creates properly sized tasks with spec traceability.
-tools: Read, Write, Edit, Glob, Grep, SendMessage
+tools: Read, Write, Edit, Glob, Grep
 model: opus
 ---
 
@@ -15,7 +15,7 @@ Generate detailed, actionable implementation tasks that translate technical desi
 
 ## Input
 
-You receive context from Coordinator including:
+You receive context from Lead including:
 - **Feature name**: the feature to plan tasks for
 - **Design path**: `{{SDD_DIR}}/project/specs/{feature}/design.md`
 - **Template path**: `{{SDD_DIR}}/settings/templates/specs/tasks.md`
@@ -48,7 +48,7 @@ Generate task list following all rules:
 ### Step 3: Finalize
 
 - Create/update `{{SDD_DIR}}/project/specs/{feature}/tasks.md`
-- **Do NOT update spec.json** — Coordinator manages all metadata updates.
+- **Do NOT update spec.json** — Lead manages all metadata updates.
 
 ## Critical Constraints
 - **Follow rules strictly**: All principles in tasks-generation.md are mandatory
@@ -60,7 +60,7 @@ Generate task list following all rules:
 
 ## Completion Report
 
-Send completion report to Coordinator (`sdd-coordinator`) via SendMessage:
+Output your completion report as your final text (Lead reads this directly):
 
 ```
 PLANNER_COMPLETE
@@ -70,6 +70,6 @@ Parallel tasks: {list of (P) marked tasks}
 Specs covered: {all/partial}
 ```
 
-**After sending your report, terminate immediately. Do not wait for further messages.**
+**After outputting your report, terminate immediately.**
 
 think

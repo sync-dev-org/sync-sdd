@@ -135,7 +135,7 @@ You MAY override this formula with justification.
 
 ## Output Format
 
-Send your verdict to Coordinator (`sdd-coordinator`) via SendMessage in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -176,7 +176,7 @@ Settings agent found clean config passthrough for 12/14 fields
 Recommend batch cleanup of 4 unused imports in src/
 ```
 
-**After sending your verdict, terminate immediately. Do not wait for further messages.**
+**After outputting your verdict, terminate immediately.**
 
 ## Error Handling
 

@@ -12,7 +12,7 @@ argument-hint:
 
 Generate high-quality session handover document. Conductor handles directly (requires user interaction for context gathering).
 
-This is the **manual, high-quality** version of handover. It complements the **automatic incremental persistence** that Conductor and Coordinator maintain in `{{SDD_DIR}}/handover/`.
+This is the **manual, high-quality** version of handover. It complements the **automatic incremental persistence** that Lead maintains in `{{SDD_DIR}}/handover/`.
 
 ## Step 1: Auto-Collect Project State
 
@@ -21,7 +21,7 @@ Gather in parallel:
 - Roadmap/spec progress (read all spec.json files)
 - Test results (if test commands available)
 - Steering changes (recent modifications)
-- Current `{{SDD_DIR}}/handover/conductor.md` and `coordinator.md` (if exist)
+- Current `{{SDD_DIR}}/handover/conductor.md` (if exists)
 
 ## Step 2: Collect Session Context (Interactive)
 
@@ -41,7 +41,7 @@ Generate comprehensive markdown combining:
 - Caveats and warnings
 
 ### State Layer (from auto-collected data)
-- Pipeline State: reference `{{SDD_DIR}}/handover/coordinator.md` (do NOT duplicate its content)
+- Pipeline State: reference `{{SDD_DIR}}/handover/conductor.md` Pipeline State section
 - Test status
 - Git state
 
@@ -52,8 +52,7 @@ Generate comprehensive markdown combining:
 ## Step 4: Write Files
 
 1. Write handover to `{{SDD_DIR}}/handover/conductor.md` (overwrites incremental version)
-2. If Coordinator state exists in `{{SDD_DIR}}/handover/coordinator.md`, preserve it (do NOT overwrite)
-3. Append session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
+2. Append session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
 
 ## Step 5: Post-Completion
 

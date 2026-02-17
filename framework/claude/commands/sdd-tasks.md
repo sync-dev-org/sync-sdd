@@ -1,6 +1,6 @@
 ---
 description: Generate implementation tasks for a specification
-allowed-tools: Read, Write, Edit, Glob, Grep, SendMessage
+allowed-tools: Read, Write, Edit, Glob, Grep
 argument-hint: <feature-name> [-y]
 ---
 
@@ -10,7 +10,7 @@ argument-hint: <feature-name> [-y]
 
 ## Core Task
 
-Orchestrate task generation for feature **$1** via Coordinator → Planner pipeline.
+Orchestrate task generation for feature **$1** by spawning Planner directly.
 
 ## Step 1: Phase Gate
 
@@ -26,19 +26,24 @@ If `version_refs` present in spec.json:
   - If `-y` flag: auto-confirm
   - If user declines: stop
 
-## Step 2: Dispatch to Coordinator
+## Step 2: Spawn Planner
 
-Send instruction to Coordinator:
-
-```
-タスク生成 feature={feature}
-```
-
-Coordinator will plan and request Planner spawn. Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
+1. Spawn Planner with context:
+   ```
+   Feature: {feature}
+   Design: {{SDD_DIR}}/project/specs/{feature}/design.md
+   Template: {{SDD_DIR}}/settings/templates/specs/tasks.md
+   ```
+2. Read Planner's completion report (`PLANNER_COMPLETE`)
+3. Dismiss Planner
+4. Verify `tasks.md` exists
+5. Update spec.json:
+   - Set `version_refs.tasks` = current `version`
+   - Set `phase` = `tasks-generated`
+   - Update `changelog`
 
 ## Step 3: Post-Completion
 
-After Coordinator reports completion:
 1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
 2. Report to user:
    - Status: tasks.md generated
