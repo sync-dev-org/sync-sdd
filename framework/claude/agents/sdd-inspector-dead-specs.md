@@ -42,7 +42,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Send findings to `sdd-auditor-dead-code` via SendMessage. One finding per line:
+Send findings to the Auditor specified in your context via SendMessage. One finding per line:
 
 ```
 CATEGORY:spec-drift

@@ -208,20 +208,4 @@ No pattern violations detected
 - **No design.md patterns**: Skip pattern compliance, note in output
 - **Implementation files not found**: Flag as Critical
 
-## Cross-Check Protocol (Agent Team Mode)
 
-This section is active only in Agent Team mode. In Subagent mode, ignore this section.
-
-When the team lead broadcasts all teammates' findings:
-
-1. **Validate**: Check if any finding contradicts your own analysis
-2. **Corroborate**: Identify findings that support or strengthen yours
-3. **Gap Check**: Did another teammate find something in YOUR scope that you missed?
-4. **Severity Adjust**: Upgrade if corroborated by 2+ teammates, downgrade if isolated
-
-Send refined findings to the team lead using this format:
-
-REFINED:
-{sev}|{category}|{location}|{description}|{action:confirmed|withdrawn|upgraded|downgraded}|{reason}
-CROSS-REF:
-{your-finding-location}|{corroborating-teammate}|{their-finding-location}

@@ -35,12 +35,13 @@ Conductor sends natural language instructions like:
 
 ### Responding to Conductor
 
-Always respond with one of:
-1. **Spawn Request** — specify teammates to spawn with their agent files and context
-2. **Direct Action Request** — ask Conductor to handle directly (e.g., steering Q&A)
-3. **Phase Update Request** — ask Conductor to update spec.json
-4. **Status Report** — progress update or completion notification
-5. **Escalation** — issue requiring user decision
+Always use typed messages. Conductor handles each type in its message loop:
+
+1. **SPAWN_REQUEST** — Request teammate spawning (see Spawn Request Format below)
+2. **PHASE_UPDATE** — Request spec.json update: `PHASE_UPDATE: spec={feature} phase={phase} {key=value ...}`
+3. **DIRECT_ACTION** — Conductor handles directly: `DIRECT_ACTION: {description}`
+4. **ESCALATION** — User decision needed: `ESCALATION: {description}`
+5. **PIPELINE_COMPLETE** — End of dispatched work (feature, summary, next action)
 
 ### Spawn Request Format
 
@@ -74,6 +75,8 @@ SPAWN_REQUEST:
 
 ## Phase Handlers
 
+**Standalone rule**: When handling a standalone command (not roadmap run), send `PIPELINE_COMPLETE` after the final step.
+
 ### Design (`設計生成`)
 
 1. Respond to Conductor:
@@ -83,16 +86,17 @@ SPAWN_REQUEST:
      model: opus
      context: |
        Feature: {feature}
+       Report to: sdd-coordinator
        Steering: {{SDD_DIR}}/project/steering/
        Template: {{SDD_DIR}}/settings/templates/specs/
    ```
-2. Wait for Architect completion report
+2. Wait for Architect completion report (via SendMessage)
 3. Verify design.md and research.md exist
 4. Read spec.json and compute metadata updates:
    - If re-edit (`version_refs.design` is non-null): increment `version` minor
    - Set `version_refs.design` = current `version`, `version_refs.tasks` = null
-5. Request Conductor to update spec.json:
-   `「spec.json 更新: phase=design-generated, version={v}, version_refs.design={v}, version_refs.tasks=null, changelog="Design generated"」`
+5. Send to Conductor:
+   `PHASE_UPDATE: spec={feature} phase=design-generated version={v} version_refs.design={v} version_refs.tasks=null changelog="Design generated"`
 
 ### Design Review (`設計レビュー`)
 
@@ -134,15 +138,16 @@ SPAWN_REQUEST:
      model: opus
      context: |
        Feature: {feature}
+       Report to: sdd-coordinator
        Design: {{SDD_DIR}}/project/specs/{feature}/design.md
        Template: {{SDD_DIR}}/settings/templates/specs/tasks.md
    ```
-2. Wait for Planner completion
+2. Wait for Planner completion (via SendMessage)
 3. Verify tasks.md exists
 4. Read spec.json and compute metadata updates:
    - Set `version_refs.tasks` = current `version`
-5. Request Conductor to update spec.json:
-   `「spec.json 更新: phase=tasks-generated, version_refs.tasks={v}, changelog="Tasks generated"」`
+5. Send to Conductor:
+   `PHASE_UPDATE: spec={feature} phase=tasks-generated version_refs.tasks={v} changelog="Tasks generated"`
 
 ### Implementation (`実装`)
 
@@ -154,15 +159,19 @@ SPAWN_REQUEST:
 3. Respond to Conductor with Builder spawn plan:
    ```
    SPAWN_REQUEST:
-   - agent: sdd-builder (model: sonnet)
+   - agent: sdd-builder
+     model: sonnet
      context: |
        Feature: {feature}
+       Report to: sdd-coordinator
        Tasks: 1.1, 1.2, 1.3
        File scope: src/auth/*, src/models/user.*
        Design ref: {{SDD_DIR}}/project/specs/{feature}/design.md
-   - agent: sdd-builder (model: sonnet)
+   - agent: sdd-builder
+     model: sonnet
      context: |
        Feature: {feature}
+       Report to: sdd-coordinator
        Tasks: 2.1, 2.2
        File scope: src/api/routes/*, src/middleware/*
        Depends on: Tasks 1.1, 1.2 (wait for completion)
@@ -172,14 +181,40 @@ SPAWN_REQUEST:
 5. When dependent tasks are unblocked, request Conductor to spawn next Builders
 6. On all tasks complete:
    - Aggregate `Files` from all Builder reports
-   - Request Conductor to update spec.json:
-     `「spec.json 更新: phase=implementation-complete, implementation.files_created=[{files}], changelog="Implementation complete"」`
+   - Send to Conductor:
+     `PHASE_UPDATE: spec={feature} phase=implementation-complete implementation.files_created=[{files}] changelog="Implementation complete"`
 
 ### Implementation Review (`実装レビュー`)
 
-Same structure as Design Review (single SPAWN_REQUEST, Inspector → Auditor → Coordinator via SendMessage):
-- 5 Inspectors (parallel): sdd-inspector-impl-rulebase, sdd-inspector-interface, sdd-inspector-test, sdd-inspector-quality, sdd-inspector-impl-consistency
-- 1 Auditor: sdd-auditor-impl
+1. Respond to Conductor:
+   ```
+   SPAWN_REQUEST:
+   - agent: sdd-inspector-impl-rulebase
+     model: sonnet
+     context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - agent: sdd-inspector-interface
+     model: sonnet
+     context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - agent: sdd-inspector-test
+     model: sonnet
+     context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - agent: sdd-inspector-quality
+     model: sonnet
+     context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - agent: sdd-inspector-impl-consistency
+     model: sonnet
+     context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - agent: sdd-auditor-impl
+     model: opus
+     context: "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
+   ```
+   Inspectors send CPF results directly to Auditor via SendMessage.
+   Auditor receives all 5, synthesizes, sends verdict to Coordinator via SendMessage.
+2. Receive Auditor verdict
+3. Handle verdict:
+   - **GO/CONDITIONAL** → Report to Conductor
+   - **NO-GO** → Initiate auto-fix loop (see Auto-Fix section)
+   - **SPEC-UPDATE-NEEDED** → Cascade fix (see Auto-Fix section)
 
 ### Dead Code Review (`デッドコードレビュー`)
 
@@ -286,6 +321,9 @@ Respond: `「直接ユーザーと対話して steering を生成してくださ
       - **GO** → Wave N complete, proceed to next wave
       - **CONDITIONAL/NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
    e. Update `{{SDD_DIR}}/handover/coordinator.md` with Wave Quality Gate results
+10. After all waves complete:
+    - Send to Conductor:
+      `PIPELINE_COMPLETE Feature:roadmap Summary:{wave_count} waves, {spec_count} specs completed Next:/sdd-status`
 
 ## Auto-Fix Loop
 
@@ -298,8 +336,11 @@ When Auditor returns NO-GO or SPEC-UPDATE-NEEDED:
    - **NO-GO (impl review)** → re-spawn Builder with fix instructions
    - **SPEC-UPDATE-NEEDED (impl review only)** → cascade: Architect → Planner → Builder
    - **Structural changes** (spec splitting, wave restructuring) → auto-fix in full-auto mode, escalate in gate mode
+   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from wave's file ownership records → re-spawn with fix instructions
+   - **SPEC-UPDATE-NEEDED (wave quality gate)** → cascade from spec level: Architect → Planner → Builder
 4. After fix, re-spawn review pipeline (Inspectors + Auditor)
-5. If 3 retries exhausted → escalate to Conductor: `「3回の自動修正を試みましたが解決しません。ユーザー確認が必要です。」`
+5. If 3 retries exhausted → send to Conductor:
+   `ESCALATION: 3回の自動修正を試みましたが解決しません。ユーザー確認が必要です。`
 
 ### Escalation Criteria
 

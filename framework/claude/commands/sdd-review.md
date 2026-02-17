@@ -80,7 +80,7 @@ Coordinator will request spawn of:
 - 4 dead-code Inspectors (dead-settings, dead-code, dead-specs, dead-tests)
 - 1 dead-code Auditor
 
-Follow Coordinator's spawn requests mechanically.
+Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
 
 ## Step 4: Handle Verdict
 

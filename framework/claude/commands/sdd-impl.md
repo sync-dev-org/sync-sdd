@@ -43,7 +43,7 @@ Coordinator will:
 2. Request Builder spawns with appropriate file scopes
 3. Track progress and manage dependencies
 
-Follow Coordinator's spawn requests mechanically.
+Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
 
 ## Step 4: Post-Completion
 

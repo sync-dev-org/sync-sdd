@@ -97,7 +97,7 @@ Coordinator manages:
 - Failure propagation: when a spec fails, block all downstream dependents
 - Wave Quality Gate execution and auto-fix routing
 
-Follow Coordinator's spawn requests mechanically.
+Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
 
 ## Update Mode
 

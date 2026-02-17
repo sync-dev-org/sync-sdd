@@ -102,7 +102,7 @@ Version consistency check (skip if `version_refs` not present):
 
 ## Completion Report
 
-Send completion report to Coordinator:
+Send completion report to Coordinator (`sdd-coordinator`) via SendMessage:
 
 ```
 ARCHITECT_COMPLETE

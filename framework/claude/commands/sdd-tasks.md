@@ -34,7 +34,7 @@ Send instruction to Coordinator:
 タスク生成 feature={feature}
 ```
 
-Coordinator will plan and request Planner spawn. Follow Coordinator's spawn requests mechanically.
+Coordinator will plan and request Planner spawn. Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
 
 ## Step 3: Post-Completion
 

@@ -60,7 +60,7 @@ Generate task list following all rules:
 
 ## Completion Report
 
-Send completion report to Coordinator:
+Send completion report to Coordinator (`sdd-coordinator`) via SendMessage:
 
 ```
 PLANNER_COMPLETE

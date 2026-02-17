@@ -39,7 +39,7 @@ Send instruction to Coordinator:
 Mode: {new|existing}
 ```
 
-Coordinator will plan and request Architect spawn. Follow Coordinator's spawn requests mechanically.
+Coordinator will plan and request Architect spawn. Enter Conductor Message Loop: handle Coordinator's typed messages until PIPELINE_COMPLETE.
 
 ## Step 4: Post-Completion
 

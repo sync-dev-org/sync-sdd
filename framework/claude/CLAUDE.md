@@ -47,6 +47,21 @@ Before sending any instruction to Coordinator, Conductor MUST verify:
 - `version_refs` consistency between design/tasks/implementation
 - On failure: report error to user (do NOT spawn teammates unnecessarily)
 
+### Conductor Message Loop
+
+After dispatching an instruction to Coordinator, Conductor enters a message loop:
+
+1. **Receive** next message from Coordinator
+2. **Handle by type**:
+   - `SPAWN_REQUEST:` → Spawn listed teammates mechanically → continue loop
+   - `PHASE_UPDATE:` → Update spec.json as instructed → continue loop
+   - `ESCALATION:` → Present issue to user, relay decision to Coordinator → continue loop
+   - `DIRECT_ACTION:` → Execute requested action directly → continue loop
+   - `PIPELINE_COMPLETE` → Exit loop → proceed to Post-Completion
+3. **Repeat** until `PIPELINE_COMPLETE` received
+
+All command dispatchers use this loop after dispatching to Coordinator.
+
 ## Project Context
 
 ### Paths

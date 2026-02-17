@@ -98,7 +98,7 @@ Example:
 
 ## Completion Report
 
-Send completion report to Coordinator:
+Send completion report to Coordinator (`sdd-coordinator`) via SendMessage:
 
 **On success:**
 ```

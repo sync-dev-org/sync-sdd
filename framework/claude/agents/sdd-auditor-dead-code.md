@@ -182,22 +182,4 @@ Recommend batch cleanup of 4 unused imports in src/
 - **All Agents Report No Issues**: Be skeptical - verify coverage, note in NOTES whether project is genuinely clean or analysis may be insufficient
 - **Conflicting Findings**: Err on side of caution (keep finding as warning), document for human decision
 
-## Cross-Check Protocol (Agent Team Mode)
 
-This section is active only in Agent Team mode. In Subagent mode, ignore this section.
-
-When receiving findings from 4 auditor teammates, follow the verification process above. For the cross-validation broadcast to auditors, include specific cross-domain questions:
-
-```
-All audit findings below. Check for cross-domain connections:
-- Settings: Does a 'dead config' actually appear in test fixtures?
-- Code: Is an 'unused function' referenced in specs but not yet implemented?
-- Specs: Does a 'drifted spec' correspond to dead code found by the code agent?
-- Tests: Do 'orphaned tests' test functions the code agent flagged as dead?
-Review and refine. Withdraw false positives, add cross-domain insights.
-Send REFINED findings back to me.
-```
-
-After receiving refined findings from all auditors:
-1. Apply the full Verification Process (Steps 1-8)
-2. Send ONLY the final CPF report to the team lead
