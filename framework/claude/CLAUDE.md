@@ -186,64 +186,61 @@ When Auditor verdict contains a `STEERING:` section:
 
 ## Incremental Persistence (Handover)
 
-State is persisted incrementally to `{{SDD_DIR}}/handover/` — NOT triggered by compact.
+State is persisted incrementally to `{{SDD_DIR}}/handover/` during pipeline execution.
 
-| Event | File | Content |
-|-------|------|---------|
-| Phase transition | conductor.md | Next Action, Active Goals, Pipeline State |
-| User decision | conductor.md | Key Decisions |
-| Decision/direction change | log.md | Timestamped event (append) |
-| Steering update applied | log.md | Source and rationale (append) |
-| Teammate completion | conductor.md | Pipeline State, Active Teammates |
-| Teammate spawn | conductor.md | Active Teammates |
-| Knowledge report | conductor.md | Knowledge Buffer |
-| Wave completion | conductor.md | Pipeline State reset, Knowledge flush |
+| File | Behavior | Purpose |
+|------|----------|---------|
+| `state.md` | Overwrite (latest snapshot) | Pipeline state, direction, pending knowledge |
+| `log.md` | Append-only (never overwrite) | Decisions, direction changes, steering updates |
 
-conductor.md is a **latest snapshot** (overwrite). log.md is **append-only** (never overwrite).
+### Write Triggers
 
-### conductor.md Format
+**state.md** — Lead overwrites on:
+- Phase transition (spec advances to next phase)
+- User decision or direction change
+- Knowledge tag received from teammate
+- Wave completion (pipeline state reset, knowledge flush)
 
-```markdown
-# Lead Handover
-**Updated**: {timestamp}
-
-## Direction
-- Next Action: {command form}
-- Active Goals: {current objectives}
-- Key Decisions: {decisions made this session}
-
-## Pipeline State
-| Spec | Phase | Last Action | Next Action | Blocked By |
-|------|-------|-------------|-------------|------------|
-
-## Active Teammates
-{list of currently spawned teammates and their tasks}
-
-## Knowledge Buffer
-{[PATTERN]/[INCIDENT]/[REFERENCE] reports not yet written to knowledge/}
-```
-
-### Decision Log (`log.md`)
-
-Append-only record of decisions, direction changes, and steering updates. Provides traceability that snapshots cannot.
-
-Format:
-```
-[{ISO-8601}] {EVENT_TYPE}: {description}
-```
-
-Event types:
+**log.md** — Lead appends on:
+- `SESSION_START` — state.md を読んで再開したとき自動発行
+- `SESSION_END` — `/sdd-handover` 実行時、Wave完了時、パイプライン完了時
 - `USER_DECISION` — User made a choice (e.g., skip spec, change approach)
 - `STEERING_UPDATE` — Steering file modified (source: which review, CODIFY or PROPOSE)
 - `DIRECTION_CHANGE` — Spec split, wave restructure, scope change
 - `ESCALATION_RESOLVED` — Outcome of an escalation to user
 
+Format: `[{ISO-8601}] {EVENT_TYPE}: {description}`
+
+### state.md Format
+
+```markdown
+# Handover State
+**Updated**: {timestamp}
+
+## Next Action
+{specific command or step, e.g., "/sdd-impl auth-flow 3,4,5"}
+
+## Context
+- Goals: {current objectives}
+- Decisions: {key decisions made this session}
+- Caveats: {warnings or context for next session}
+
+## Pipeline State
+| Spec | Phase | Status | Blocked By |
+|------|-------|--------|------------|
+
+Status values: pending | in-progress | completed | failed
+
+## Knowledge Buffer
+{pending [PATTERN]/[INCIDENT]/[REFERENCE] entries not yet written to knowledge/}
+```
+
 ### Session Resume
 On session start (new or post-compact):
-1. If `{{SDD_DIR}}/handover/conductor.md` exists → read it
-2. Restore pipeline state from the handover snapshot
-3. Determine next actions from Pipeline State and pending work
-4. Spawn necessary teammates directly and continue orchestration
+1. If `{{SDD_DIR}}/handover/state.md` exists → read it
+2. Append `SESSION_START` to log.md with summary of restored state
+3. Read Next Action and Pipeline State
+4. Resume from the indicated state — re-spawn teammates as needed
 
 ## Knowledge Auto-Accumulation
 
@@ -256,7 +253,7 @@ On session start (new or post-compact):
 
 When user requests stop during pipeline execution:
 1. Lead dismisses all active T2/T3 teammates
-2. Lead saves current pipeline state to `{{SDD_DIR}}/handover/conductor.md`
+2. Lead saves current pipeline state to `{{SDD_DIR}}/handover/state.md`
 3. Report to user: what was completed, what was in progress, how to resume
 
 Resume: `/sdd-roadmap run` reads handover state and resumes from interruption point.

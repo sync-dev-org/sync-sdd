@@ -32,6 +32,7 @@ If `version_refs` present in spec.json:
    ```
    Feature: {feature}
    Design: {{SDD_DIR}}/project/specs/{feature}/design.md
+   Research: {{SDD_DIR}}/project/specs/{feature}/research.md (if exists)
    Template: {{SDD_DIR}}/settings/templates/specs/tasks.md
    ```
 2. Read Planner's completion report (`PLANNER_COMPLETE`)
@@ -44,7 +45,7 @@ If `version_refs` present in spec.json:
 
 ## Step 3: Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
+1. Update `{{SDD_DIR}}/handover/state.md` with current state
 2. Report to user:
    - Status: tasks.md generated
    - Task summary (major/sub counts, spec coverage)
@@ -57,5 +58,3 @@ If `version_refs` present in spec.json:
 - **Missing design.md**: "Missing design.md. Run `/sdd-design $1` first."
 - **Wrong phase**: "Phase is '{phase}'. Run `/sdd-design $1` first."
 - **Version mismatch**: Prompt user for confirmation (unless `-y`)
-
-think

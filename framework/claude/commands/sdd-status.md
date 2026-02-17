@@ -10,7 +10,7 @@ argument-hint: [feature-name] [--impact]
 
 ## Core Task
 
-Display comprehensive status for specifications and optionally analyze downstream impact of changes. Conductor handles directly (read-only, no teammate needed).
+Display comprehensive status for specifications and optionally analyze downstream impact of changes. Lead handles directly (read-only, no teammate needed).
 
 ## Step 1: Parse Arguments
 

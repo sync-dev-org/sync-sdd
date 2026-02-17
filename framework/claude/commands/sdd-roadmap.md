@@ -45,7 +45,7 @@ Lead handles directly (user-interactive):
 7. Set `spec.json.roadmap` for each spec: `{"wave": N, "dependencies": ["spec-name", ...]}`
 8. Generate roadmap.md with Wave Overview, Dependencies, Execution Flow
 9. **Update product.md** User Intent → Spec Rationale section
-10. Update `{{SDD_DIR}}/handover/conductor.md`
+10. Update `{{SDD_DIR}}/handover/state.md`
 
 ## Run Mode
 
@@ -54,7 +54,7 @@ Lead handles pipeline execution directly.
 ### Step 1: Load State
 
 1. Read `roadmap.md` and all `spec.json` files
-2. If `{{SDD_DIR}}/handover/conductor.md` exists with Pipeline State → resume from saved state
+2. If `{{SDD_DIR}}/handover/state.md` exists with Pipeline State → resume from saved state
 3. Build dependency graph from `spec.json.roadmap` fields
 
 ### Step 2: Cross-Spec File Ownership Analysis
@@ -90,7 +90,7 @@ For each ready spec, execute pipeline phases in order:
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist
 5. Update spec.json: `phase=design-generated`, `version_refs.design={v}`, `version_refs.tasks=null`
-6. Update `{{SDD_DIR}}/handover/conductor.md`
+6. Update `{{SDD_DIR}}/handover/state.md`
 
 #### Design Review Phase
 1. Spawn 5 design Inspectors + design Auditor:
@@ -110,6 +110,7 @@ For each ready spec, execute pipeline phases in order:
 1. Spawn Planner with context:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
+   - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
    - Template: `{{SDD_DIR}}/settings/templates/specs/tasks.md`
 2. Read Planner's completion report
 3. Dismiss Planner
@@ -118,7 +119,7 @@ For each ready spec, execute pipeline phases in order:
 6. Update handover
 
 #### Implementation Phase
-1. Read `tasks.md` and `design.md` for the feature
+1. Read `tasks.md`, `design.md`, and `research.md` (if exists) for the feature
 2. Analyze `(P)` markers and dependency chains → determine parallelism
 3. Read Components section → determine file ownership per Builder
 4. Group tasks into Builder work packages (no file overlap)
@@ -127,6 +128,7 @@ For each ready spec, execute pipeline phases in order:
    - Tasks: {task numbers}
    - File scope: {assigned files}
    - Design ref: `{{SDD_DIR}}/project/specs/{feature}/design.md`
+   - Research ref: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
 6. Read each Builder's completion report. Collect:
    - Files created/modified
    - Test results
@@ -204,7 +206,7 @@ After all specs in a wave complete individual pipelines:
 **c. Post-gate**:
 - Aggregate Knowledge Buffer entries, deduplicate, write to `{{SDD_DIR}}/project/knowledge/`
 - Commit: `Wave {N}: {summary of completed specs}`
-- Update `{{SDD_DIR}}/handover/conductor.md` with Wave Quality Gate results
+- Update `{{SDD_DIR}}/handover/state.md` with Wave Quality Gate results
 
 ### Step 8: Roadmap Completion
 
@@ -230,7 +232,7 @@ Lead handles directly:
 
 ## Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/conductor.md`
+1. Update `{{SDD_DIR}}/handover/state.md`
 2. Report results to user
 
 </instructions>
@@ -241,5 +243,3 @@ Lead handles directly:
 - **No steering for create**: Warn and suggest `/sdd-steering` first
 - **Spec conflicts during run**: Lead handles file ownership resolution (serialize or partition)
 - **Spec failure (retries exhausted)**: Block dependent specs, report cascading impact, present options (fix / skip / abort)
-
-think

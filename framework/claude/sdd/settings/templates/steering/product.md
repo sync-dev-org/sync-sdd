@@ -2,17 +2,25 @@
 
 [Brief description of what this product does and who it serves]
 
-## Core Capabilities
+## Vision
 
-[3-5 key capabilities, not exhaustive features]
+[What the product aims to become — guiding star for design decisions]
 
-## Target Use Cases
+## Success Criteria
 
-[Primary scenarios this product addresses]
+[Measurable outcomes that define success]
 
-## Value Proposition
+## Anti-Goals
 
-[What makes this product unique or valuable]
+[What this product explicitly does NOT do — prevents over-engineering]
+
+## Spec Rationale
+
+[Why specs are decomposed the way they are — updated when roadmap is created]
+
+## Decision Log
+
+[Append user decisions here as they occur — provides traceability]
 
 ---
-_Focus on patterns and purpose, not exhaustive feature lists_
+_Lead updates this file as user intent evolves. Auditor references it during every review._

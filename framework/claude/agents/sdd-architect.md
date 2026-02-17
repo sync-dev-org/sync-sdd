@@ -114,5 +114,3 @@ Key findings: {2-3 critical insights}
 ```
 
 **After outputting your report, terminate immediately.**
-
-think

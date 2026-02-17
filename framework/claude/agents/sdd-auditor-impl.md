@@ -6,7 +6,7 @@ description: |
 
   **Input**: Results from 5 review agents embedded in prompt
   **Output**: Unified, verified implementation review report with final verdict
-tools: Read, Glob, SendMessage
+tools: Read, Glob
 model: opus
 ---
 

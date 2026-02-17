@@ -86,18 +86,21 @@ Focus on capabilities and outcomes, not code structure.
 
 ### Parallel Analysis (default)
 - Assume parallel analysis is enabled unless explicitly disabled (e.g. `--sequential` flag).
-- Identify tasks that can run concurrently when **all** conditions hold:
-  - No data dependency on other pending tasks
-  - No shared file or resource contention
-  - No prerequisite review/approval from another task
+- Mark a task as parallel-capable only when **all** conditions hold:
+  1. No data dependency on other pending tasks
+  2. No shared file or resource contention
+  3. No prerequisite review/approval from another task
+  4. Environment/setup work needed by this task is already satisfied or covered within the task itself
 - Validate that identified parallel tasks operate within separate boundaries defined in the Architecture Pattern & Boundary Map.
 - Confirm API/event contracts from design.md do not overlap in ways that cause conflicts.
 - Append `(P)` immediately after the task number for each parallel-capable task:
   - Example: `- [ ] 2.1 (P) Build background worker`
   - Apply to both major tasks and sub-tasks when appropriate.
+  - Skip marking container-only major tasks (those without their own actionable detail bullets) — evaluate at sub-task level instead.
 - If sequential mode is requested, omit `(P)` markers entirely.
 - Group parallel tasks logically (same parent when possible) and highlight any ordering caveats in detail bullets.
 - Explicitly call out dependencies that prevent `(P)` even when tasks look similar.
+- **Quality check** before marking `(P)`: verify no merge/deployment conflicts, capture shared state expectations in detail bullets, confirm task can be tested independently. If any check fails, do not mark `(P)`.
 
 ### Checkbox Format
 ```markdown

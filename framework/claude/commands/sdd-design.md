@@ -1,6 +1,6 @@
 ---
 description: Create comprehensive technical design for a specification
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 argument-hint: <feature-name-or-"description">
 ---
 
@@ -14,8 +14,13 @@ Orchestrate design generation for feature **$1** by spawning Architect directly.
 
 ## Step 1: Input Mode Detection
 
-- **New Spec**: $1 is a quoted description (e.g., `"user authentication"`) → Initialize spec first
-- **Existing Spec**: $1 is a feature name (e.g., `auth-flow`) → Edit/regenerate existing design
+1. Check if `{{SDD_DIR}}/project/specs/$1/spec.json` exists
+2. **If exists** → Existing Spec mode (edit/regenerate)
+3. **If not** → New Spec mode (initialize from description)
+
+Input examples:
+- `/sdd-design "user authentication"` → New (description → generate feature name)
+- `/sdd-design auth-flow` → Existing if `specs/auth-flow/spec.json` exists, New otherwise
 
 ### New Spec Initialization (New Spec mode only)
 
@@ -51,7 +56,7 @@ Orchestrate design generation for feature **$1** by spawning Architect directly.
 ## Step 4: Post-Completion
 
 1. Update `{{SDD_DIR}}/project/steering/product.md` User Intent section if user expressed new requirements during this flow
-2. Update `{{SDD_DIR}}/handover/conductor.md` with current state
+2. Update `{{SDD_DIR}}/handover/state.md` with current state
 3. Report to user:
    - Status: design.md generated
    - Discovery type used
@@ -64,5 +69,3 @@ Orchestrate design generation for feature **$1** by spawning Architect directly.
 - **Missing spec (existing mode)**: "No spec found. Run `/sdd-design \"description\"` to create."
 - **Template missing**: "Template missing at `{{SDD_DIR}}/settings/templates/specs/`"
 - **Steering missing**: Warn and proceed
-
-think

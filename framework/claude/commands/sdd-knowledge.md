@@ -10,7 +10,7 @@ argument-hint: [type] [description] | [--review] | [--skills]
 
 ## Core Task
 
-Manage knowledge entries: manual capture, auto-accumulated review, and Skill emergence. Conductor handles directly.
+Manage knowledge entries: manual capture, auto-accumulated review, and Skill emergence. Lead handles directly.
 
 ## Step 1: Detect Mode
 
@@ -49,7 +49,7 @@ Categories: `state`, `api`, `async`, `data`, `security`, `integration`
 
 Review knowledge collected automatically by Lead from Builder/Inspector reports.
 
-1. Read `{{SDD_DIR}}/handover/conductor.md` → Knowledge Buffer section
+1. Read `{{SDD_DIR}}/handover/state.md` → Knowledge Buffer section
 2. If buffer is empty: "No auto-accumulated knowledge to review."
 3. Present each buffered entry to user:
    - Show tag (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`), source, content
@@ -62,7 +62,7 @@ Review knowledge collected automatically by Lead from Builder/Inspector reports.
 
 Review Skill candidates detected by Lead.
 
-1. Read Skill candidates from `{{SDD_DIR}}/handover/conductor.md`
+1. Read Skill candidates from `{{SDD_DIR}}/handover/state.md`
 2. If none: "No Skill candidates detected yet."
 3. Present each candidate:
    - Pattern description
@@ -70,6 +70,7 @@ Review Skill candidates detected by Lead.
    - Proposed Skill name and purpose
    - Options: **Approve** (generate Skill file), **Modify** (edit before generating), **Reject**
 4. For approved Skills:
+   - **Namespace check**: BLOCK if `{skill-name}` starts with `sdd-` (reserved for framework commands)
    - Generate command file in `.claude/commands/{skill-name}.md`
    - Report to user: Skill created, available via `/{skill-name}`
 
@@ -95,5 +96,3 @@ Review Skill candidates detected by Lead.
 After creating knowledge:
 - `/sdd-review design` can filter by detection phase or category
 - `/sdd-review impl` can filter by `incident-*` for common pitfalls
-
-think

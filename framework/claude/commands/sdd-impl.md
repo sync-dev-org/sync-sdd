@@ -1,6 +1,6 @@
 ---
 description: Execute spec tasks using TDD methodology
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob, AskUserQuestion
 argument-hint: <feature-name> [task-numbers]
 ---
 
@@ -31,7 +31,7 @@ If `version_refs` present:
 
 ## Step 3: Analyze and Spawn Builders
 
-1. Read `tasks.md` and `design.md` for the feature
+1. Read `tasks.md`, `design.md`, and `research.md` (if exists) for the feature
 2. **Analyze parallelism**:
    - Read `(P)` markers and dependency chains from tasks.md → determine which tasks can run in parallel
    - Read Components section from design.md → determine file ownership per Builder
@@ -42,6 +42,7 @@ If `version_refs` present:
    Tasks: {task numbers}
    File scope: {assigned files}
    Design ref: {{SDD_DIR}}/project/specs/{feature}/design.md
+   Research ref: {{SDD_DIR}}/project/specs/{feature}/research.md (if exists)
    ```
    For dependent tasks, include: `Depends on: Tasks {numbers} (wait for completion)`
 4. **Read each Builder's completion report**. Collect:
@@ -55,7 +56,7 @@ If `version_refs` present:
 7. **On all tasks complete**:
    - Dismiss all Builders
    - Aggregate `Files` from all Builder reports
-   - Store knowledge tags in `{{SDD_DIR}}/handover/conductor.md` Knowledge Buffer
+   - Store knowledge tags in `{{SDD_DIR}}/handover/state.md` Knowledge Buffer
    - Update spec.json:
      - Set `phase` = `implementation-complete`
      - Set `implementation.files_created` = `[{aggregated files}]`
@@ -63,9 +64,14 @@ If `version_refs` present:
 
 ## Step 4: Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
-2. Report to user:
+1. **Flush Knowledge Buffer** (standalone mode only, not within roadmap run):
+   - Read Knowledge Buffer from `{{SDD_DIR}}/handover/state.md`
+   - If non-empty: write entries to `{{SDD_DIR}}/project/knowledge/` using templates, update index.md
+   - Clear processed entries from Knowledge Buffer
+2. Update `{{SDD_DIR}}/handover/state.md` with current state
+3. Report to user:
    - Tasks executed and test results
+   - Knowledge entries written (if any)
    - Remaining tasks count
    - Next action: `/sdd-review impl {feature}` or continue with more tasks
 

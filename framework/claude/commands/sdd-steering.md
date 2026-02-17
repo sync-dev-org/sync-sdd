@@ -10,7 +10,7 @@ argument-hint: [-y] [custom]
 
 ## Core Task
 
-Manage project steering documents. Conductor handles this directly (no teammate delegation) since it requires user interaction.
+Manage project steering documents. Lead handles directly (no teammate delegation) since it requires user interaction.
 
 ## Step 1: Detect Mode
 
@@ -58,7 +58,7 @@ Execute full steering creation:
    - **Reset**: Delete all and recreate (requires "RESET" confirmation)
 3. If "Profile" selected: re-run profile selection flow and update tech.md/structure.md accordingly
 4. Execute selected action
-5. After update: update `{{SDD_DIR}}/handover/conductor.md`
+5. After update: update `{{SDD_DIR}}/handover/state.md`
 
 ### Custom Mode (`custom` argument)
 
@@ -69,7 +69,7 @@ Execute full steering creation:
 
 ## Step 3: Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/conductor.md` with current state
+1. Update `{{SDD_DIR}}/handover/state.md` with current state
 2. Report summary to user
 3. Suggest next action: `/sdd-design "description"` or `/sdd-roadmap`
 
@@ -79,5 +79,3 @@ Execute full steering creation:
 
 - **Template missing**: Warn and use inline basic structure
 - **Steering directory missing**: Create it automatically
-
-think

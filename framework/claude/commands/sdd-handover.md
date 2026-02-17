@@ -10,7 +10,7 @@ argument-hint:
 
 ## Core Task
 
-Generate high-quality session handover document. Conductor handles directly (requires user interaction for context gathering).
+Generate high-quality session handover document. Lead handles directly (requires user interaction for context gathering).
 
 This is the **manual, high-quality** version of handover. It complements the **automatic incremental persistence** that Lead maintains in `{{SDD_DIR}}/handover/`.
 
@@ -21,7 +21,7 @@ Gather in parallel:
 - Roadmap/spec progress (read all spec.json files)
 - Test results (if test commands available)
 - Steering changes (recent modifications)
-- Current `{{SDD_DIR}}/handover/conductor.md` (if exists)
+- Current `{{SDD_DIR}}/handover/state.md` (if exists)
 
 ## Step 2: Collect Session Context (Interactive)
 
@@ -34,14 +34,12 @@ Ask user:
 
 Generate comprehensive markdown combining:
 
-### Direction Layer (from Conductor perspective)
-- Immediate Next Action (command form)
-- Active Goals
-- Key Decisions made this session
-- Caveats and warnings
+### Direction Layer (from Lead perspective)
+- Next Action (specific command or step)
+- Context: Goals, Decisions, Caveats
 
 ### State Layer (from auto-collected data)
-- Pipeline State: reference `{{SDD_DIR}}/handover/conductor.md` Pipeline State section
+- Pipeline State: reference `{{SDD_DIR}}/handover/state.md` Pipeline State section
 - Test status
 - Git state
 
@@ -51,8 +49,8 @@ Generate comprehensive markdown combining:
 
 ## Step 4: Write Files
 
-1. Write handover to `{{SDD_DIR}}/handover/conductor.md` (overwrites incremental version)
-2. Append session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
+1. Write handover to `{{SDD_DIR}}/handover/state.md` (overwrites incremental version)
+2. Append `SESSION_END` + session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
 
 ## Step 5: Post-Completion
 
@@ -70,7 +68,7 @@ Report to user:
 | Trigger | Every phase transition / teammate completion | User runs command |
 | Content | State snapshot only | State + user context + direction |
 | Quality | Minimal (machine-generated) | High (user-validated) |
-| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites conductor.md, appends to log.md |
+| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites state.md, appends to log.md |
 
 ## Error Handling
 

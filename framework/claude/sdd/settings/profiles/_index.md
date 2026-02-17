@@ -4,12 +4,14 @@ Language profiles provide language-specific defaults for steering files during `
 
 ## How Profiles Work
 
-1. During `/sdd-steering` create, Conductor presents available profiles
+1. During `/sdd-steering` create, Lead presents available profiles
 2. User selects a profile (or "None" for fully manual setup)
 3. Profile values pre-fill `tech.md` and `structure.md` templates
 4. User can customize any pre-filled value during the dialogue
 
 Profiles are **starting points**, not constraints. All values can be overridden.
+
+The selected profile's identifier (e.g., `python`, `typescript`, `rust`) is stored in `spec.json.language` for each feature specification.
 
 ## Profile Format
 

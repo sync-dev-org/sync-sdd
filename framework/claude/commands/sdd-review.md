@@ -1,6 +1,6 @@
 ---
 description: Multi-agent review (design, implementation, or dead code)
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check]
 ---
 
@@ -22,8 +22,11 @@ $ARGUMENTS = "impl {feature}"             → Implementation review (single spec
 $ARGUMENTS = "impl {feature} {tasks}"     → Implementation review (specific tasks)
 $ARGUMENTS = "impl --cross-check"         → Implementation review (all specs)
 $ARGUMENTS = "impl --wave N"              → Implementation review (wave-scoped)
-$ARGUMENTS = "dead-code"                  → Dead code review
-$ARGUMENTS = "dead-code --full"           → Dead code review (full mode)
+$ARGUMENTS = "dead-code"                  → Dead code review (full mode, default)
+$ARGUMENTS = "dead-code settings"         → Dead code review (settings only)
+$ARGUMENTS = "dead-code code"             → Dead code review (code only)
+$ARGUMENTS = "dead-code specs"            → Dead code review (specs only)
+$ARGUMENTS = "dead-code tests"            → Dead code review (tests only)
 ```
 
 If first argument is missing or not one of `design`, `impl`, `dead-code`:
@@ -106,7 +109,7 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
         - **SPEC-UPDATE-NEEDED**: cascade: spawn Architect → dismiss → spawn Planner → dismiss → spawn Builder(s)
      d. Read fix teammate's completion report
      e. Dismiss fix teammate
-     f. Update spec.json (version_refs, phase) and `{{SDD_DIR}}/handover/conductor.md`
+     f. Update spec.json (version_refs, phase) and `{{SDD_DIR}}/handover/state.md`
      g. Re-spawn review pipeline (Step 3) with same review type
      h. If 3 retries exhausted: present final verdict and options to user
 
@@ -114,7 +117,7 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
    - CODIFY → apply directly to steering file + append to log.md
    - PROPOSE → present to user for approval
 
-6. Update `{{SDD_DIR}}/handover/conductor.md` with review results
+6. Update `{{SDD_DIR}}/handover/state.md` with review results
 
 ### Next Steps by Verdict
 

@@ -28,8 +28,7 @@ Read all necessary context:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.json`, `design.md`
 - `{{SDD_DIR}}/project/specs/{feature}/tasks.md` (if exists, for merge mode)
 - **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
-- `{{SDD_DIR}}/settings/rules/tasks-generation.md` for principles
-- `{{SDD_DIR}}/settings/rules/tasks-parallel-analysis.md` for parallel judgement criteria
+- `{{SDD_DIR}}/settings/rules/tasks-generation.md` for principles and parallel analysis criteria
 - `{{SDD_DIR}}/settings/templates/specs/tasks.md` for format (supports `(P)` markers)
 
 ### Step 2: Generate Implementation Tasks
@@ -71,5 +70,3 @@ Specs covered: {all/partial}
 ```
 
 **After outputting your report, terminate immediately.**
-
-think
