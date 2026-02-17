@@ -4,7 +4,6 @@
   },
   "permissions": {
     "allow": [
-      "Bash(python3:*)",
       "Bash(cat:*)",
       "Bash(xargs:*)",
       "Bash(echo:*)"

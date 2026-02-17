@@ -170,6 +170,8 @@ NOTES:
 State transitions in AuthFlow are well-defined and testable
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **No Design Found**: Review requirements only, note design is needed for full testability review

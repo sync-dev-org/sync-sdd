@@ -151,10 +151,9 @@ Summarize external dependency findings here; deeper investigation (API signature
 **Contracts**: Service [ ] / API [ ] / Event [ ] / Batch [ ] / State [ ]  ← check only the ones that apply.
 
 ##### Service Interface
-```typescript
-interface [ComponentName]Service {
-  methodName(input: InputType): Result<OutputType, ErrorType>;
-}
+```
+[ComponentName]Service:
+  method_name(input: InputType) -> Result<OutputType, ErrorType>
 ```
 - Preconditions:
 - Postconditions:
@@ -297,6 +296,6 @@ Include a Mermaid flowchart showing migration phases when schema/data movement i
 - Phase breakdown, rollback triggers, validation checkpoints
 
 ## Supporting References (Optional)
-- Create this section only when keeping the information in the main body would hurt readability (e.g., very long TypeScript definitions, vendor option matrices, exhaustive schema tables). Keep decision-making context in the main sections so the design stays self-contained.
+- Create this section only when keeping the information in the main body would hurt readability (e.g., very long type definitions, vendor option matrices, exhaustive schema tables). Keep decision-making context in the main sections so the design stays self-contained.
 - Link to the supporting references from the main text instead of inlining large snippets.
 - Background research notes and comparisons continue to live in `research.md`, but their conclusions must be summarized in the main design.

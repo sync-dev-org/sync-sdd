@@ -170,6 +170,8 @@ Data flow through main pipeline is well-defined
 Component isolation is generally good
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **No Design Found**: Return `{"error": "No design.md found - architecture review requires design document"}`

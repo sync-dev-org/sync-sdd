@@ -9,7 +9,7 @@
 
 ## Organization
 Options:
-- Co-located: `component.tsx` + `component.test.tsx`
+- Co-located: source file + test file side by side
 - Separate: `/src/...` and `/tests/...`
 Pick one as default; allow exceptions with rationale.
 
@@ -23,15 +23,14 @@ Naming:
 - E2E: full flows, minimal mocks, only for critical journeys
 
 ## Structure (AAA)
-```typescript
-it('does X when Y', () => {
-  // Arrange
-  const input = setup();
-  // Act
-  const result = act(input);
-  // Assert
-  expect(result).toEqual(expected);
-});
+```
+test "does X when Y":
+  // Arrange — set up preconditions
+  input = setup()
+  // Act — execute the behavior
+  result = act(input)
+  // Assert — verify the outcome
+  assert result == expected
 ```
 
 ## Mocking & Data

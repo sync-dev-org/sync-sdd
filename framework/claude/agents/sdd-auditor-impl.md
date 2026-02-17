@@ -269,6 +269,8 @@ Feature tests: 24 passed, 1 failed
 Task completion: 9/10 (90%)
 ```
 
+**After sending your verdict, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Missing Agent Results**: Proceed with available results, note incomplete verification

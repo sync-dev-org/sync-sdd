@@ -56,3 +56,5 @@ H|config.py:CACHE_BACKEND|defined but never consumed, no passthrough to any cons
 M|.env:LEGACY_API_KEY|referenced only in commented-out code
 L|settings.py:DEBUG_VERBOSE|always overridden by environment variable
 ```
+
+**After sending your findings, terminate immediately. Do not wait for further messages.**

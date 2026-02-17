@@ -210,6 +210,8 @@ NOTES:
 3 critical issues will cause runtime errors
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Implementation file not found**: Flag as Critical, note which file is missing

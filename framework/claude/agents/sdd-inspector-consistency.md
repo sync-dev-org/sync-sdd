@@ -179,6 +179,8 @@ Coverage is 85% (17/20 AC fully covered)
 2 overreach items are legitimate design decisions (caching, logging)
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **No Design Found**: Cannot perform consistency check, return error

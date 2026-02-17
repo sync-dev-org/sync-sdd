@@ -202,6 +202,8 @@ Code organization matches design.md module structure
 No pattern violations detected
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **No steering files**: Use general best practices, note lack of project conventions

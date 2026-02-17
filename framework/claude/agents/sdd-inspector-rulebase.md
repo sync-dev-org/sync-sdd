@@ -162,6 +162,8 @@ NOTES:
 Overall SDD structure is sound with minor drift in design sections
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`

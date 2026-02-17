@@ -180,6 +180,8 @@ Technology choices are generally current and appropriate
 OWASP Top 10 considerations addressed except for XSS vector above
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **No Design Found**: Limited review based on requirements technology mentions

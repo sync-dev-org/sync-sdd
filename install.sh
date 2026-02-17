@@ -355,6 +355,7 @@ fi
 # .claude/sdd/settings/ framework files
 install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
+install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".claude/sdd/settings/profiles"
 
 # Write version file
 if [ "$NEW_VERSION" != "0.0.0" ]; then
@@ -386,9 +387,11 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".claude/agents"   "$SRC/framework/claude/agents"   "sdd-*.md"
     remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
+    remove_stale ".claude/sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
 
     # Clean up empty directories left after stale file removal
     find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
+    find .claude/sdd/settings/profiles -depth -type d -empty -delete 2>/dev/null || true
 fi
 
 # --- Summary ---

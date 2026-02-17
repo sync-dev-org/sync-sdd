@@ -65,3 +65,5 @@ H|src/utils.py:parse_legacy()|no call sites found, 45 lines of dead code
 M|src/main.py:import os|os never used in this module
 L|src/helpers.py:deprecated_format()|marked deprecated, only called from test_helpers.py
 ```
+
+**After sending your findings, terminate immediately. Do not wait for further messages.**

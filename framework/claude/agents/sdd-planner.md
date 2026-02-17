@@ -70,4 +70,6 @@ Parallel tasks: {list of (P) marked tasks}
 Specs covered: {all/partial}
 ```
 
+**After sending your report, terminate immediately. Do not wait for further messages.**
+
 think

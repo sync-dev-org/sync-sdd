@@ -24,14 +24,10 @@
 
 ## Import Organization
 
-```typescript
-// Example import patterns
-import { Something } from '@/path'  // Absolute
-import { Local } from './local'     // Relative
-```
+[Describe import ordering conventions for your language/framework]
 
-**Path Aliases**:
-- `@/`: [Maps to]
+**Path Resolution**:
+- [Describe path aliases or module resolution rules]
 
 ## Code Organization Principles
 

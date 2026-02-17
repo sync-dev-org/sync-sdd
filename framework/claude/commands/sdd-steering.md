@@ -31,27 +31,34 @@ $ARGUMENTS = ""             → Auto-detect (create if missing, update if exists
 Execute full steering creation:
 1. Ask about codebase analysis preference
 2. If selected: Scan project structure, extract patterns, tech stack
-3. 6-question dialogue:
+3. **Language profile selection**:
+   a. Read available profiles from `{{SDD_DIR}}/settings/profiles/` (exclude `_index.md`)
+   b. If codebase analysis detected a language → suggest the matching profile
+   c. Present options: available profiles + "None (fully manual)"
+   d. Selected profile pre-fills `tech.md` and `structure.md` values (type safety, code quality, testing, naming, imports, commands)
+4. 6-question dialogue (profile answers pre-filled where applicable; user can override):
    - Project purpose and domain
    - Target users
    - Key capabilities
-   - Technology stack
+   - Technology stack (pre-filled from profile)
    - Architecture approach
-   - Development standards
-4. Generate steering files from templates in `{{SDD_DIR}}/settings/templates/steering/`
-5. **Initialize User Intent** in `product.md`:
+   - Development standards (pre-filled from profile)
+5. Generate steering files from templates in `{{SDD_DIR}}/settings/templates/steering/`
+6. **Apply profile suggestions**: If a profile was selected, inform user of recommended Bash permissions for `settings.json` (from profile's Suggested Permissions section)
+7. **Initialize User Intent** in `product.md`:
    - Record user's Vision from dialogue
    - Set initial Success Criteria and Anti-Goals
-6. Present summary
+8. Present summary (include which profile was applied, if any)
 
 ### If Steering Exists → Update/Reset Mode
 
 1. Build status summary from existing steering files
 2. Present options:
-   - **Update**: Targeted dialogue-driven changes (what to change: Product/Tech/Structure/Everything)
+   - **Update**: Targeted dialogue-driven changes (what to change: Product/Tech/Structure/Profile/Everything)
    - **Reset**: Delete all and recreate (requires "RESET" confirmation)
-3. Execute selected action
-4. After update: update `{{SDD_DIR}}/handover/conductor.md`
+3. If "Profile" selected: re-run profile selection flow and update tech.md/structure.md accordingly
+4. Execute selected action
+5. After update: update `{{SDD_DIR}}/handover/conductor.md`
 
 ### Custom Mode (`custom` argument)
 

@@ -113,4 +113,6 @@ Discovery: {full|light|minimal}
 Key findings: {2-3 critical insights}
 ```
 
+**After sending your report, terminate immediately. Do not wait for further messages.**
+
 think

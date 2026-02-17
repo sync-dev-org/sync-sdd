@@ -120,3 +120,5 @@ Blocker: {description of what prevents progress}
 Tasks affected: {list of blocked tasks}
 Attempted: {what was tried}
 ```
+
+**After sending your report, terminate immediately. Do not wait for further messages.**

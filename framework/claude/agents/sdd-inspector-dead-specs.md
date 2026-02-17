@@ -58,3 +58,5 @@ H|specs/auth-flow/design.md|spec says OAuth2 but implementation uses session-bas
 M|specs/user-profile/tasks.md|tasks 2.3-2.5 checked but no corresponding code found
 L|specs/dashboard/design.md|spec references UserService but class was renamed to UserManager
 ```
+
+**After sending your findings, terminate immediately. Do not wait for further messages.**

@@ -33,12 +33,12 @@ Principles: stable code enums, no secrets, include trace info.
 - Unknown errors: Bubble to global handler → 500 + generic message
 
 Example pattern:
-```typescript
-try { return await useCase(); }
-catch (e) {
-  if (e instanceof BusinessError) return respondMapped(e);
-  logError(e); return respondInternal();
-}
+```
+try:
+  return use_case()
+catch error:
+  if error is BusinessError: return respond_mapped(error)
+  log_error(error); return respond_internal()
 ```
 
 ## Logging (context over noise)

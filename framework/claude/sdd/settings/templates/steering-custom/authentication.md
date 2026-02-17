@@ -44,9 +44,9 @@
 - UI: conditional rendering (no security reliance)
 
 Example pattern:
-```typescript
-requirePermission('resource:action'); // route
-if (!user.can('resource:action')) throw ForbiddenError(); // domain
+```
+require_permission('resource:action')  // route/middleware
+if not user.can('resource:action'): raise ForbiddenError  // domain
 ```
 
 ### Ownership

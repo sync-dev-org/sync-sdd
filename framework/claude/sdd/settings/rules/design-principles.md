@@ -3,9 +3,9 @@
 ## Core Design Principles
 
 ### 1. Type Safety is Mandatory
-- **NEVER** use `any` type in TypeScript interfaces
-- Define explicit types for all parameters and returns
-- Use discriminated unions for error handling
+- Define explicit types for all parameters and returns per the project's type system
+- Avoid escape hatches that bypass type checking (e.g., `any` in TypeScript, `Any` in Python, `unsafe` blocks in Rust without justification)
+- Use discriminated unions or sum types for error handling
 - Specify generic constraints clearly
 
 ### 2. Design vs Implementation
@@ -111,7 +111,7 @@
 
 ### Shared Interfaces & Props
 - Define a base interface (e.g., `BaseUIPanelProps`) for recurring UI components and extend it per component to capture only the deltas.
-- Hooks, utilities, and integration adapters that introduce new contracts should still include full TypeScript signatures.
+- Hooks, utilities, and integration adapters that introduce new contracts should still include full type signatures in the project's language.
 - When reusing a base contract, reference it explicitly (e.g., “Extends `BaseUIPanelProps` with `onSubmitAnswer` callback”) instead of duplicating the code block.
 
 ### Data Models

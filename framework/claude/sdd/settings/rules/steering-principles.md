@@ -28,9 +28,9 @@ Steering files are **project memory**, not exhaustive specifications.
 
 **Bad** (Specification-like):
 ```markdown
-- /components/Button.tsx - Primary button with variants
-- /components/Input.tsx - Text input with validation
-- /components/Modal.tsx - Modal dialog
+- /components/Button - Primary button with variants
+- /components/Input - Text input with validation
+- /components/Modal - Modal dialog
 ... (50+ files)
 ```
 
@@ -39,7 +39,7 @@ Steering files are **project memory**, not exhaustive specifications.
 ## UI Components (`/components/ui/`)
 Reusable, design-system aligned primitives
 - Named by function (Button, Input, Modal)
-- Export component + TypeScript interface
+- Export component + type interface
 - No business logic
 ```
 

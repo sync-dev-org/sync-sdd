@@ -210,7 +210,7 @@ DISMISS_REQUEST:
        Design ref: {{SDD_DIR}}/project/specs/{feature}/design.md
    ```
 4. Track Builder completions, collect file lists and knowledge tags from reports
-5. When dependent tasks are unblocked, request Conductor to spawn next Builders
+5. When dependent tasks are unblocked: dismiss completed Builders first, then request Conductor to spawn next Builders
 6. On all tasks complete:
    - Aggregate `Files` from all Builder reports
    - Dismiss all Builders:

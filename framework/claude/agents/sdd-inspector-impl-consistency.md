@@ -212,6 +212,8 @@ Integration points: 5 shared modules, 3 consistent, 2 deviating
 No critical cross-feature type mismatches
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Single feature, no other code**: Report "No existing codebase to compare against", skip consistency checks

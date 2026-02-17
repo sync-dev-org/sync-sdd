@@ -215,6 +215,8 @@ Full suite: 156 passed, 1 failed (regression: none)
 Coverage: 72% line, 64% branch
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Test command unknown**: Warn, attempt common commands, report if unable to determine

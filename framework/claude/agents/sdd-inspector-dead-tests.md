@@ -59,3 +59,5 @@ H|tests/test_legacy.py|entire test file tests removed LegacyAPI class
 M|tests/conftest.py:mock_legacy_api|fixture defined but never used
 C|tests/test_auth.py:test_login|mocks outdated signature, passes but tests nothing real
 ```
+
+**After sending your findings, terminate immediately. Do not wait for further messages.**

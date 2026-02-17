@@ -151,6 +151,8 @@ Task completion: 8/10 (80%)
 Traceability: 14/18 AC (78%)
 ```
 
+**After sending your output, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`

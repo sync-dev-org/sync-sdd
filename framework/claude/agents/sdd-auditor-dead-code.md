@@ -176,6 +176,8 @@ Settings agent found clean config passthrough for 12/14 fields
 Recommend batch cleanup of 4 unused imports in src/
 ```
 
+**After sending your verdict, terminate immediately. Do not wait for further messages.**
+
 ## Error Handling
 
 - **Missing Agent Results**: Proceed with available results, note incomplete verification in NOTES

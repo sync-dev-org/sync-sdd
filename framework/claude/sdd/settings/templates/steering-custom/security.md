@@ -18,8 +18,8 @@
 - Centralize policies; avoid duplicating checks across code
 
 Pattern:
-```typescript
-if (!user.hasPermission('resource:action')) throw ForbiddenError();
+```
+if not user.has_permission('resource:action'): raise ForbiddenError
 ```
 
 ## Secrets & Configuration
