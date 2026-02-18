@@ -12,6 +12,8 @@ argument-hint: [-y] [custom]
 
 Manage project steering documents. Lead handles directly (no teammate delegation) since it requires user interaction.
 
+**Before any steering operation**, read `{{SDD_DIR}}/settings/rules/steering-principles.md` and apply its principles (content granularity, security, quality standards, preservation rules) throughout.
+
 ## Step 1: Detect Mode
 
 ```
@@ -63,9 +65,13 @@ Execute full steering creation:
 ### Custom Mode (`custom` argument)
 
 1. Ask for custom steering topic (suggest: API standards, testing, security, DB, auth, etc.)
-2. Optional codebase analysis
-3. Topic-specific dialogue
-4. Generate custom steering file: `{{SDD_DIR}}/project/steering/{topic}.md`
+2. Check if a matching template exists in `{{SDD_DIR}}/settings/templates/steering-custom/`:
+   - `api-standards.md`, `authentication.md`, `database.md`, `deployment.md`, `error-handling.md`, `security.md`, `testing.md`
+   - If match found: use as base template, pre-fill structure and sections
+   - If no match: generate structure from scratch
+3. Optional codebase analysis
+4. Topic-specific dialogue (template sections guide the conversation)
+5. Generate custom steering file: `{{SDD_DIR}}/project/steering/{topic}.md`
 
 ## Step 3: Post-Completion
 

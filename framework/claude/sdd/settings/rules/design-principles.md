@@ -65,7 +65,7 @@
 ## Section Authoring Guidance
 
 ### Global Ordering
-- Default flow: Specifications → Overview → Goals/Non-Goals → Specifications Traceability → Architecture → Technology Stack → System Flows → Components & Interfaces → Data Models → Optional sections.
+- Default flow: Specifications (including Non-Goals) → Overview → Architecture (including Technology Stack) → System Flows → Specifications Traceability → Components & Interfaces → Data Models → Error Handling → Testing Strategy → Optional sections.
 - Teams may swap Traceability earlier or place Data Models nearer Architecture when it improves clarity, but keep section headings intact.
 - Within each section, follow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
 

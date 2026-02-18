@@ -1,6 +1,6 @@
 ---
 description: Multi-feature roadmap (create, run, update, delete)
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, WebSearch, WebFetch
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: [run [--gate]] | [-y] | [create [-y]] | [update] | [delete]
 ---
 
@@ -106,7 +106,7 @@ For each ready spec, execute pipeline phases in order:
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (5 Inspectors + Auditor)
 4. Handle verdict:
-   - **GO/CONDITIONAL** → proceed to Implementation Phase
+   - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
    - In **gate mode**: pause for user approval before advancing
 5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
@@ -149,7 +149,7 @@ For each ready spec, execute pipeline phases in order:
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (5 Inspectors + Auditor)
 4. Handle verdict:
-   - **GO/CONDITIONAL** → spec pipeline complete
+   - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
    - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
    - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
    - In **gate mode**: pause for user approval

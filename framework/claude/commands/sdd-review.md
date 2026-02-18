@@ -104,7 +104,7 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 4. **Auto-Fix Loop** (design/impl review only):
    - If NO-GO or SPEC-UPDATE-NEEDED:
      a. Extract fix instructions from Auditor's verdict
-     b. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2)
+     b. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2). Reset both to 0 on GO/CONDITIONAL
      c. Determine fix scope and spawn fix teammates:
         - **NO-GO (design)**: increment `retry_count`, spawn Architect with fix instructions
         - **NO-GO (impl)**: increment `retry_count`, spawn Builder(s) with fix instructions

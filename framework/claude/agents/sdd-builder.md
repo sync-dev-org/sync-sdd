@@ -3,7 +3,7 @@ name: sdd-builder
 description: |
   T3 Execution layer. Implements tasks using TDD methodology.
   RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags for Knowledge accumulation.
-tools: Bash, Read, Write, Edit, Grep, Glob, WebFetch, WebSearch
+tools: Bash, Read, Write, Edit, Grep, Glob
 model: sonnet
 ---
 

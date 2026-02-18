@@ -26,7 +26,7 @@
 - No internal design details in Specifications section (internal component names, class/function signatures, database schemas)
 
 **design.md Design Sections Check** (compare against template):
-- Has Overview (Purpose, Users, Impact, Goals, Non-Goals)
+- Has Overview (Purpose, Users, Impact)
 - Has Architecture section
 - Has Components and Interfaces section
 - Has Data Models section (if applicable)

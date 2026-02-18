@@ -1,6 +1,6 @@
 ---
 description: Create comprehensive technical design for a specification
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: <feature-name-or-"description">
 ---
 

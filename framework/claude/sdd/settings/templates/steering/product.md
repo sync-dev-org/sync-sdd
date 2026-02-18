@@ -2,15 +2,17 @@
 
 [Brief description of what this product does and who it serves]
 
-## Vision
+## User Intent
+
+### Vision
 
 [What the product aims to become — guiding star for design decisions]
 
-## Success Criteria
+### Success Criteria
 
 [Measurable outcomes that define success]
 
-## Anti-Goals
+### Anti-Goals
 
 [What this product explicitly does NOT do — prevents over-engineering]
 

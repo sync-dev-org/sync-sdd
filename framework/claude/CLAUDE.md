@@ -47,7 +47,6 @@ Before spawning any teammate, Lead MUST verify:
 - `spec.yaml.phase` is appropriate for the requested operation
 - If `spec.yaml.phase` is `blocked`: BLOCK with "{feature} is blocked by {blocked_info.blocked_by}"
 - If `spec.yaml.phase` is unrecognized: BLOCK with "Unknown phase '{phase}'"
-- `version_refs.design` consistency between design and implementation
 - On failure: report error to user (do NOT spawn teammates unnecessarily)
 
 ### Teammate Lifecycle
@@ -130,7 +129,6 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 ### SPEC-Code Atomicity
 - SPEC changes (design.md, tasks.yaml) and code changes belong in the same logical unit
 - Editing specs triggers full cascade: design → implementation
-- Version consistency enforced: `/sdd-impl` blocks on version_refs.design mismatch
 - On SPEC-UPDATE-NEEDED verdict: fix the spec first, do not re-implement
 
 ### Auto-Fix Loop (Review)
@@ -173,8 +171,8 @@ When user requests unblocking:
 
 ### Auto-Fix Loop Details
 
-- `retry_count`: incremented only on NO-GO (max 3). CONDITIONAL does NOT count
-- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`
+- `retry_count`: incremented only on NO-GO (max 3). CONDITIONAL does NOT count. **Reset to 0 on GO/CONDITIONAL verdict.**
+- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`. **Reset to 0 on GO/CONDITIONAL verdict.**
 - Cascade during Architect failure: escalate entire spec to user
 - Structural changes (spec split, etc.): escalate to user, record DIRECTION_CHANGE in decisions.md
 - Design Review Auto-Fix: after fix, phase remains `design-generated`
