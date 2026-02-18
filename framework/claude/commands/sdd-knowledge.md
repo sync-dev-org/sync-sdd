@@ -49,7 +49,7 @@ Categories: `state`, `api`, `async`, `data`, `security`, `integration`
 
 Review knowledge collected automatically by Lead from Builder/Inspector reports.
 
-1. Read `{{SDD_DIR}}/handover/state.md` → Knowledge Buffer section
+1. Read `{{SDD_DIR}}/handover/buffer.md` → Knowledge Buffer section
 2. If buffer is empty: "No auto-accumulated knowledge to review."
 3. Present each buffered entry to user:
    - Show tag (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`), source, content
@@ -62,7 +62,7 @@ Review knowledge collected automatically by Lead from Builder/Inspector reports.
 
 Review Skill candidates detected by Lead.
 
-1. Read Skill candidates from `{{SDD_DIR}}/handover/state.md`
+1. Read Skill candidates from `{{SDD_DIR}}/handover/buffer.md`
 2. If none: "No Skill candidates detected yet."
 3. Present each candidate:
    - Pattern description

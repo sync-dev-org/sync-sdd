@@ -56,7 +56,7 @@ Input examples:
 ## Step 4: Post-Completion
 
 1. Update `{{SDD_DIR}}/project/steering/product.md` User Intent section if user expressed new requirements during this flow
-2. Update `{{SDD_DIR}}/handover/state.md` with current state
+2. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Report to user:
    - Status: design.md generated
    - Discovery type used

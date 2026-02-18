@@ -109,15 +109,17 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
         - **SPEC-UPDATE-NEEDED**: cascade: spawn Architect → dismiss → spawn Planner → dismiss → spawn Builder(s)
      d. Read fix teammate's completion report
      e. Dismiss fix teammate
-     f. Update spec.json (version_refs, phase) and `{{SDD_DIR}}/handover/state.md`
+     f. Update spec.json (version_refs, phase) and auto-draft `{{SDD_DIR}}/handover/session.md`
      g. Re-spawn review pipeline (Step 3) with same review type
      h. If 3 retries exhausted: present final verdict and options to user
 
 5. **Process STEERING entries** from verdict:
-   - CODIFY → apply directly to steering file + append to log.md
-   - PROPOSE → present to user for approval
+   - CODIFY → apply directly to steering file + append to `decisions.md` with Reason (STEERING_UPDATE)
+   - PROPOSE → present to user for approval → append to `decisions.md` (STEERING_UPDATE if approved, STEERING_EXCEPTION or USER_DECISION if rejected)
 
-6. Update `{{SDD_DIR}}/handover/state.md` with review results
+6. Auto-draft `{{SDD_DIR}}/handover/session.md`
+
+**Auditor context**: When spawning Auditor, include the Steering Exceptions section from `{{SDD_DIR}}/handover/session.md` (if exists) so Auditor can recognize intentional deviations and avoid false-positive flags.
 
 ### Next Steps by Verdict
 

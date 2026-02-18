@@ -45,7 +45,7 @@ Lead handles directly (user-interactive):
 7. Set `spec.json.roadmap` for each spec: `{"wave": N, "dependencies": ["spec-name", ...]}`
 8. Generate roadmap.md with Wave Overview, Dependencies, Execution Flow
 9. **Update product.md** User Intent → Spec Rationale section
-10. Update `{{SDD_DIR}}/handover/state.md`
+10. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 ## Run Mode
 
@@ -54,7 +54,7 @@ Lead handles pipeline execution directly.
 ### Step 1: Load State
 
 1. Read `roadmap.md` and all `spec.json` files
-2. If `{{SDD_DIR}}/handover/state.md` exists with Pipeline State → resume from saved state
+2. Scan all `spec.json` files → rebuild pipeline state from phase/status fields
 3. Build dependency graph from `spec.json.roadmap` fields
 
 ### Step 2: Cross-Spec File Ownership Analysis
@@ -90,7 +90,7 @@ For each ready spec, execute pipeline phases in order:
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist
 5. Update spec.json: `phase=design-generated`, `version_refs.design={v}`, `version_refs.tasks=null`
-6. Update `{{SDD_DIR}}/handover/state.md`
+6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
 1. Spawn 5 design Inspectors + design Auditor:
@@ -103,8 +103,8 @@ For each ready spec, execute pipeline phases in order:
    - **GO/CONDITIONAL** → proceed to Task Generation
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md)
    - In **gate mode**: pause for user approval before advancing
-5. Process `STEERING:` entries from verdict
-6. Update handover
+5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Task Generation Phase
 1. Spawn Planner with context:
@@ -116,7 +116,7 @@ For each ready spec, execute pipeline phases in order:
 3. Dismiss Planner
 4. Verify `tasks.md` exists
 5. Update spec.json: `phase=tasks-generated`, `version_refs.tasks={v}`
-6. Update handover
+6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Phase
 1. Read `tasks.md`, `design.md`, and `research.md` (if exists) for the feature
@@ -139,7 +139,7 @@ For each ready spec, execute pipeline phases in order:
    - Dismiss all Builders
    - Aggregate files from all Builder reports
    - Update spec.json: `phase=implementation-complete`, `implementation.files_created=[{files}]`
-   - Update handover
+   - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
 1. Spawn 5 impl Inspectors + impl Auditor:
@@ -153,8 +153,8 @@ For each ready spec, execute pipeline phases in order:
    - **NO-GO** → Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
    - **SPEC-UPDATE-NEEDED** → cascade fix: Architect → Planner → Builder → re-review
    - In **gate mode**: pause for user approval
-5. Process `STEERING:` entries from verdict
-6. Update handover
+5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 ### Step 5: Auto/Gate Mode Handling
 
@@ -204,9 +204,9 @@ After all specs in a wave complete individual pipelines:
    - **CONDITIONAL/NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
 
 **c. Post-gate**:
-- Aggregate Knowledge Buffer entries, deduplicate, write to `{{SDD_DIR}}/project/knowledge/`
+- Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/`, clear buffer.md
 - Commit: `Wave {N}: {summary of completed specs}`
-- Update `{{SDD_DIR}}/handover/state.md` with Wave Quality Gate results
+- Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 ### Step 8: Roadmap Completion
 
@@ -232,7 +232,7 @@ Lead handles directly:
 
 ## Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/state.md`
+1. Auto-draft `{{SDD_DIR}}/handover/session.md`
 2. Report results to user
 
 </instructions>

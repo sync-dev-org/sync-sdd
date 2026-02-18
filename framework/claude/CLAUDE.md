@@ -59,7 +59,7 @@ Lead spawns teammates directly. Each teammate:
 Lead reads the completion output and:
 - Extracts results (artifacts created, test results, knowledge tags, blocker info)
 - Updates spec.json metadata (phase, version_refs, changelog)
-- Updates handover state
+- Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
 - Determines next action (spawn next teammate, escalate to user, etc.)
 - Dismisses the teammate
 
@@ -172,80 +172,155 @@ Auditor verdicts may include a `STEERING:` section with two levels:
 
 | Level | Meaning | Processing | Blocks pipeline |
 |-------|---------|-----------|----------------|
-| `CODIFY` | Document existing implicit pattern | Lead applies directly + appends to log.md | No |
+| `CODIFY` | Document existing implicit pattern | Lead applies directly + appends to decisions.md | No |
 | `PROPOSE` | New constraint affecting future work | Lead presents to user for approval | Yes |
 
 When Auditor verdict contains a `STEERING:` section:
 1. Parse `STEERING:` lines: `{CODIFY|PROPOSE}|{target file}|{decision text}`
 2. Route by level:
-   - **CODIFY** → Update `steering/{target file}` directly + append to `log.md`: `STEERING_UPDATE (CODIFY, source: {review type} {feature})`
+   - **CODIFY** → Update `steering/{target file}` directly + append to `decisions.md` with Reason (STEERING_UPDATE)
    - **PROPOSE** → Present to user for approval
-     - On approval → update `steering/{target file}` + log as `STEERING_UPDATE (PROPOSE, approved)`
-     - On rejection → append to `log.md`: `USER_DECISION: Rejected steering proposal: "{decision text}"`
+     - On approval → update `steering/{target file}` + append to `decisions.md` (STEERING_UPDATE)
+     - On rejection → append to `decisions.md`: STEERING_EXCEPTION with Reason and Steering-ref, or USER_DECISION if simply rejected
 3. Process STEERING entries **after** handling the verdict (GO/NO-GO/etc.) but **before** advancing to the next phase
 
-## Incremental Persistence (Handover)
+## Handover (Session Persistence)
 
-State is persisted incrementally to `{{SDD_DIR}}/handover/` during pipeline execution.
+Session context is persisted to `{{SDD_DIR}}/handover/` for cross-session continuity.
 
 | File | Behavior | Purpose |
 |------|----------|---------|
-| `state.md` | Overwrite (latest snapshot) | Pipeline state, direction, pending knowledge |
-| `log.md` | Append-only (never overwrite) | Decisions, direction changes, steering updates |
+| `session.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
+| `decisions.md` | Append-only (never overwrite) | Decisions with rationale, steering updates, steering exceptions |
+| `buffer.md` | Overwrite (auto) | Knowledge Buffer + Skill candidates (temporary data) |
+| `sessions/` | Archive | Dated copies of session.md created by `/sdd-handover` |
+
+Pipeline state is NOT stored in handover — `spec.json` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.json` files to reconstruct pipeline state.
+
+### session.md (Auto-Draft + Manual Polish)
+
+session.md is written in two modes:
+
+**Auto-draft** (after each command completion):
+1. Read current session.md (if exists)
+2. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
+3. Update: Immediate Next Action based on current state
+4. Append: latest work to Accomplished section
+5. Mark with `**Mode**: auto-draft`
+6. Overwrite session.md
+
+**Manual polish** (`/sdd-handover`):
+1. Archive current session.md to `sessions/{date}.md`
+2. Enrich via user interaction: Session Goal, Tone/Nuance, Steering Exceptions, Key Decisions refinement, Warnings, Resume Instructions
+3. Write without Mode marker (indicates manual polish)
+
+### session.md Format
+
+```markdown
+# Session Handover
+**Generated**: {YYYY-MM-DD}
+**Branch**: {branch}
+**Session Goal**: {confirmed with user}
+
+## Direction
+### Immediate Next Action
+{specific command or step}
+
+### Active Goals
+{progress toward objectives — table or bullet list, independent of roadmap}
+
+### Key Decisions
+**Continuing from previous sessions:**
+{numbered list — decision + brief rationale, ref decisions.md for details}
+
+**Added this session:**
+{same format}
+
+### Warnings
+{constraints, risks, caveats for the next Lead}
+
+## Session Context
+### Tone and Nuance
+{user's temperature, direction nuances — e.g., "experimental, proceed carefully", "user is enthusiastic about this direction"}
+
+### Steering Exceptions
+{intentional deviations from steering best practices — reason + decisions.md ref}
+
+## Accomplished
+{work completed this session}
+
+### Modified Files
+{file list}
+
+## Resume Instructions
+{1-3 steps for next session startup}
+```
+
+### decisions.md Format
+
+Append-only structured log with rationale for every decision.
+
+```
+[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}
+- Context: {background — why a decision was needed}
+- Decision: {what was decided}
+- Reason: {why — the rationale}
+- Impact: {scope of effect}
+- Source: {origin — user instruction / review verdict / etc.}
+- Steering-ref: {for STEERING_EXCEPTION: which steering entry is being overridden}
+```
+
+| DECISION_TYPE | Meaning |
+|---------------|---------|
+| `USER_DECISION` | User made an explicit choice |
+| `STEERING_UPDATE` | Steering file modified (CODIFY/PROPOSE) |
+| `DIRECTION_CHANGE` | Spec split, wave restructure, scope change |
+| `ESCALATION_RESOLVED` | Outcome of an escalation to user |
+| `STEERING_EXCEPTION` | Intentional deviation from steering — prevents repeated false-positive review flags |
+| `SESSION_START` | Session started (lightweight: Reason/Impact optional) |
+| `SESSION_END` | Session ended (lightweight: Reason/Impact optional) |
+
+### buffer.md Format
+
+```markdown
+# Handover Buffer
+**Updated**: {timestamp}
+
+## Knowledge Buffer
+- [PATTERN] {description} (source: {spec} {role}, task {N})
+- [INCIDENT] {description} (source: {spec} {role}, task {N})
+
+## Skill Candidates
+- **{name}**: Detected in {specs} ({N} occurrences)
+```
 
 ### Write Triggers
 
-**state.md** — Lead overwrites on:
-- Phase transition (spec advances to next phase)
-- User decision or direction change
-- Knowledge tag received from teammate
-- Wave completion (pipeline state reset, knowledge flush)
-
-**log.md** — Lead appends on:
-- `SESSION_START` — state.md を読んで再開したとき自動発行
-- `SESSION_END` — `/sdd-handover` 実行時、Wave完了時、パイプライン完了時
-- `USER_DECISION` — User made a choice (e.g., skip spec, change approach)
-- `STEERING_UPDATE` — Steering file modified (source: which review, CODIFY or PROPOSE)
-- `DIRECTION_CHANGE` — Spec split, wave restructure, scope change
-- `ESCALATION_RESOLVED` — Outcome of an escalation to user
-
-Format: `[{ISO-8601}] {EVENT_TYPE}: {description}`
-
-### state.md Format
-
-```markdown
-# Handover State
-**Updated**: {timestamp}
-
-## Next Action
-{specific command or step, e.g., "/sdd-impl auth-flow 3,4,5"}
-
-## Context
-- Goals: {current objectives}
-- Decisions: {key decisions made this session}
-- Caveats: {warnings or context for next session}
-
-## Pipeline State
-| Spec | Phase | Status | Blocked By |
-|------|-------|--------|------------|
-
-Status values: pending | in-progress | completed | failed
-
-## Knowledge Buffer
-{pending [PATTERN]/[INCIDENT]/[REFERENCE] entries not yet written to knowledge/}
-```
+| Trigger | File | Notes |
+|---------|------|-------|
+| Command completion (design/tasks/impl/review/roadmap/steering) | session.md auto-draft | Carry forward + update Next Action/Accomplished |
+| `/sdd-handover` | session.md manual polish, decisions.md SESSION_END, sessions/ archive | Manual |
+| User decision | decisions.md | Auto-append with Reason |
+| STEERING change | decisions.md | Auto-append with Reason |
+| Direction change | decisions.md | Auto-append with Reason |
+| Knowledge tag received | buffer.md | Auto-overwrite |
+| Wave completion (knowledge flush) | buffer.md | Clear after flush to knowledge/ |
+| Session start | decisions.md | SESSION_START auto-append |
 
 ### Session Resume
+
 On session start (new or post-compact):
-1. If `{{SDD_DIR}}/handover/state.md` exists → read it
-2. Append `SESSION_START` to log.md with summary of restored state
-3. Read Next Action and Pipeline State
-4. Resume from the indicated state — re-spawn teammates as needed
+1. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
+2. Read latest N entries from `decisions.md` → recent decision history
+3. Read `buffer.md` → pending Knowledge/Skill candidates
+4. If roadmap active: scan all `spec.json` files → build pipeline state dynamically
+5. Append `SESSION_START` to `decisions.md`
+6. Resume from session.md Immediate Next Action
 
 ## Knowledge Auto-Accumulation
 
 - Builder/Inspector report learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead collects tagged reports from teammate completion outputs
+- Lead collects tagged reports from teammate completion outputs and writes to `buffer.md`
 - On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
 - Skill emergence: when 2+ specs share the same pattern, Lead proposes Skill candidates to user for approval
 
@@ -253,10 +328,10 @@ On session start (new or post-compact):
 
 When user requests stop during pipeline execution:
 1. Lead dismisses all active T2/T3 teammates
-2. Lead saves current pipeline state to `{{SDD_DIR}}/handover/state.md`
+2. Lead auto-drafts `session.md` with current direction and progress
 3. Report to user: what was completed, what was in progress, how to resume
 
-Resume: `/sdd-roadmap run` reads handover state and resumes from interruption point.
+Resume: `/sdd-roadmap run` scans all `spec.json` files to rebuild pipeline state and resumes from interruption point.
 
 ## Behavioral Rules
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.

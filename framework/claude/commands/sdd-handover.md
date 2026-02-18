@@ -4,15 +4,13 @@ allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint:
 ---
 
-# SDD Handover (Unified)
+# SDD Handover
 
 <instructions>
 
 ## Core Task
 
-Generate high-quality session handover document. Lead handles directly (requires user interaction for context gathering).
-
-This is the **manual, high-quality** version of handover. It complements the **automatic incremental persistence** that Lead maintains in `{{SDD_DIR}}/handover/`.
+Generate high-quality session handover document through user interaction. This is the **manual polish** version — it enriches the auto-draft with user context, tone, and nuance that cannot be captured automatically.
 
 ## Step 1: Auto-Collect Project State
 
@@ -21,7 +19,8 @@ Gather in parallel:
 - Roadmap/spec progress (read all spec.json files)
 - Test results (if test commands available)
 - Steering changes (recent modifications)
-- Current `{{SDD_DIR}}/handover/state.md` (if exists)
+- Current `{{SDD_DIR}}/handover/session.md` (if exists — may be auto-draft or previous manual polish)
+- Recent entries from `{{SDD_DIR}}/handover/decisions.md` (if exists)
 
 ## Step 2: Collect Session Context (Interactive)
 
@@ -29,48 +28,68 @@ Ask user:
 1. "What was accomplished in this session?" (key deliverables)
 2. "What should be done next?" (immediate next action)
 3. "Any decisions or caveats to note?" (context for next session)
+4. "Any tone or nuance to convey?" (e.g., "this approach is experimental", "user is enthusiastic about X direction", "prioritize speed over quality for now")
+5. "Any intentional deviations from steering/best practices?" (steering exceptions — prevents repeated review flags in future sessions)
 
 ## Step 3: Generate Handover Document
 
-Generate comprehensive markdown combining:
+Generate comprehensive session.md following the format defined in CLAUDE.md:
 
-### Direction Layer (from Lead perspective)
-- Next Action (specific command or step)
-- Context: Goals, Decisions, Caveats
+### Direction (from Lead perspective + user input)
+- Immediate Next Action
+- Active Goals (from spec progress + user input)
+- Key Decisions: carry forward from previous session.md + add new from this session (each with brief rationale, reference decisions.md D{seq} for details)
+- Warnings
 
-### State Layer (from auto-collected data)
-- Pipeline State: reference `{{SDD_DIR}}/handover/state.md` Pipeline State section
-- Test status
-- Git state
+### Session Context (from user interaction)
+- Tone and Nuance
+- Steering Exceptions (with decisions.md references)
 
-### Context Layer (from user interaction)
-- Session accomplishments
-- User-provided context and nuances
+### Accomplished (from auto-collected data + user input)
+- Work summary
+- Modified Files
+
+### Resume Instructions
+- 1-3 concrete steps for next session startup
+
+Do NOT include a `**Mode**:` marker — absence of marker indicates manual polish.
 
 ## Step 4: Write Files
 
-1. Write handover to `{{SDD_DIR}}/handover/state.md` (overwrites incremental version)
-2. Append `SESSION_END` + session decisions to `{{SDD_DIR}}/handover/log.md` (append-only, NEVER overwrite)
+1. If `{{SDD_DIR}}/handover/session.md` exists:
+   - Copy it to `{{SDD_DIR}}/handover/sessions/{YYYY-MM-DD}.md` (archive)
+   - If same-day archive already exists, use `{YYYY-MM-DD}-2.md`, `-3.md`, etc.
+2. Write new session.md to `{{SDD_DIR}}/handover/session.md`
+3. Append `SESSION_END` to `{{SDD_DIR}}/handover/decisions.md` (append-only, NEVER overwrite):
+   ```
+   [{ISO-8601}] D{seq}: SESSION_END | {brief session summary}
+   - Context: /sdd-handover executed
+   - Decision: Session ended, handover archived
+   ```
 
 ## Step 5: Post-Completion
 
 Report to user:
 - Handover file location
+- Archive location (if created)
 - Key items captured
-- Reminder: next session will auto-load handover on start
+- Reminder: next session will auto-load session.md on start
 
 </instructions>
 
-## Relationship to Incremental Persistence
+## Relationship to Auto-Draft
 
-| Aspect | Incremental (Automatic) | Manual (/sdd-handover) |
-|--------|------------------------|----------------------|
-| Trigger | Every phase transition / teammate completion | User runs command |
-| Content | State snapshot only | State + user context + direction |
-| Quality | Minimal (machine-generated) | High (user-validated) |
-| Location | Same `{{SDD_DIR}}/handover/` directory | Overwrites state.md, appends to log.md |
+| Aspect | Auto-Draft (Automatic) | Manual Polish (/sdd-handover) |
+|--------|------------------------|-------------------------------|
+| Trigger | Each command completion | User runs command |
+| Content | Carry-forward + Next Action/Accomplished | Full user context + tone + steering exceptions |
+| Quality | Functional (machine-generated) | High (user-validated) |
+| Mode marker | `**Mode**: auto-draft` | No marker |
+| Archive | No archive | Archives previous session.md to sessions/ |
 
 ## Error Handling
 
 - **No active specs**: Still generate handover with available context
 - **No git repo**: Skip git state section
+- **No existing session.md**: Generate from scratch (no archive step)
+- **No decisions.md**: Create with SESSION_END as first entry

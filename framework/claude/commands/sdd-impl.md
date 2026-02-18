@@ -56,7 +56,7 @@ If `version_refs` present:
 7. **On all tasks complete**:
    - Dismiss all Builders
    - Aggregate `Files` from all Builder reports
-   - Store knowledge tags in `{{SDD_DIR}}/handover/state.md` Knowledge Buffer
+   - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md` Knowledge Buffer
    - Update spec.json:
      - Set `phase` = `implementation-complete`
      - Set `implementation.files_created` = `[{aggregated files}]`
@@ -65,10 +65,10 @@ If `version_refs` present:
 ## Step 4: Post-Completion
 
 1. **Flush Knowledge Buffer** (standalone mode only, not within roadmap run):
-   - Read Knowledge Buffer from `{{SDD_DIR}}/handover/state.md`
+   - Read Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`
    - If non-empty: write entries to `{{SDD_DIR}}/project/knowledge/` using templates, update index.md
    - Clear processed entries from Knowledge Buffer
-2. Update `{{SDD_DIR}}/handover/state.md` with current state
+2. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Report to user:
    - Tasks executed and test results
    - Knowledge entries written (if any)

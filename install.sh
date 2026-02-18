@@ -260,6 +260,20 @@ if version_lt "$INSTALLED_VERSION" "0.7.0"; then
         rm -f .claude/sdd/handover/coordinator.md
     fi
 fi
+# v0.9.0: Handover redesign - state.md → session.md, log.md → decisions.md
+if version_lt "$INSTALLED_VERSION" "0.9.0"; then
+    if [ -f .claude/sdd/handover/conductor.md ]; then
+        mv .claude/sdd/handover/conductor.md .claude/sdd/handover/session.md
+        info "Renamed handover/conductor.md -> session.md (v0.9.0)"
+    elif [ -f .claude/sdd/handover/state.md ]; then
+        mv .claude/sdd/handover/state.md .claude/sdd/handover/session.md
+        info "Renamed handover/state.md -> session.md (v0.9.0)"
+    fi
+    if [ -f .claude/sdd/handover/log.md ]; then
+        mv .claude/sdd/handover/log.md .claude/sdd/handover/decisions.md
+        info "Renamed handover/log.md -> decisions.md (v0.9.0)"
+    fi
+fi
 
 # --- Install framework files ---
 install_file() {

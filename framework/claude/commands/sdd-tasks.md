@@ -45,7 +45,7 @@ If `version_refs` present in spec.json:
 
 ## Step 3: Post-Completion
 
-1. Update `{{SDD_DIR}}/handover/state.md` with current state
+1. Auto-draft `{{SDD_DIR}}/handover/session.md`
 2. Report to user:
    - Status: tasks.md generated
    - Task summary (major/sub counts, spec coverage)
