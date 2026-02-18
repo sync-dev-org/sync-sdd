@@ -14,25 +14,25 @@ Orchestrate design generation for feature **$1** by spawning Architect directly.
 
 ## Step 1: Input Mode Detection
 
-1. Check if `{{SDD_DIR}}/project/specs/$1/spec.json` exists
+1. Check if `{{SDD_DIR}}/project/specs/$1/spec.yaml` exists
 2. **If exists** → Existing Spec mode (edit/regenerate)
 3. **If not** → New Spec mode (initialize from description)
 
 Input examples:
 - `/sdd-design "user authentication"` → New (description → generate feature name)
-- `/sdd-design auth-flow` → Existing if `specs/auth-flow/spec.json` exists, New otherwise
+- `/sdd-design auth-flow` → Existing if `specs/auth-flow/spec.yaml` exists, New otherwise
 
 ### New Spec Initialization (New Spec mode only)
 
 1. Generate feature name: Convert description to kebab-case
 2. Create spec directory: `{{SDD_DIR}}/project/specs/{feature-name}/`
-3. Initialize spec.json from `{{SDD_DIR}}/settings/templates/specs/init.json`
+3. Initialize spec.yaml from `{{SDD_DIR}}/settings/templates/specs/init.yaml`
 4. Inform user of the generated feature name
 5. Continue with the generated feature name
 
 ## Step 2: Phase Gate
 
-- If existing spec: verify spec directory and spec.json exist
+- If existing spec: verify spec directory and spec.yaml exist
 - No phase restriction for design generation (any phase is valid)
 
 ## Step 3: Spawn Architect
@@ -47,9 +47,9 @@ Input examples:
 2. Read Architect's completion report (`ARCHITECT_COMPLETE`)
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist in spec directory
-5. Update spec.json:
+5. Update spec.yaml:
    - If re-edit (`version_refs.design` is non-null): increment `version` minor
-   - Set `version_refs.design` = current `version`, `version_refs.tasks` = null
+   - Set `version_refs.design` = current `version`
    - Set `phase` = `design-generated`
    - Update `changelog`
 
@@ -60,7 +60,7 @@ Input examples:
 3. Report to user:
    - Status: design.md generated
    - Discovery type used
-   - Next action: `/sdd-review design {feature}` or `/sdd-tasks {feature}`
+   - Next action: `/sdd-review design {feature}` or `/sdd-impl {feature}`
 
 </instructions>
 

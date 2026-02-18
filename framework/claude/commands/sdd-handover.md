@@ -16,7 +16,7 @@ Generate high-quality session handover document through user interaction. This i
 
 Gather in parallel:
 - Git state (branch, recent commits, uncommitted changes)
-- Roadmap/spec progress (read all spec.json files)
+- Roadmap/spec progress (read all spec.yaml files)
 - Test results (if test commands available)
 - Steering changes (recent modifications)
 - Current `{{SDD_DIR}}/handover/session.md` (if exists — may be auto-draft or previous manual polish)

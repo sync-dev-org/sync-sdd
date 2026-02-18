@@ -38,7 +38,7 @@ You will receive a prompt containing:
 
 1. **Target Spec**:
    - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` for integration points
-   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata and file paths
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` for metadata and file paths
 
 2. **Steering Context**:
    - Read entire `{{SDD_DIR}}/project/steering/` directory:
@@ -47,7 +47,7 @@ You will receive a prompt containing:
 
 3. **Implementation Files**:
    - Extract implementation file paths from design.md
-   - Check spec.json `implementation.files_created` if present
+   - Check spec.yaml `implementation.files_created` if present
    - Read implementation files for this feature
 
 4. **Other Feature Designs** (for consistency comparison):
@@ -58,7 +58,7 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
    - Read ALL design.md files
    - Identify all implementation file paths for each feature
 
@@ -111,8 +111,8 @@ In single spec mode, verify the feature's implementation is consistent with the 
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Read each spec.json
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
+   - Read each spec.yaml
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
@@ -125,7 +125,7 @@ In single spec mode, verify the feature's implementation is consistent with the 
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.yaml`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope
@@ -138,7 +138,7 @@ In single spec mode, verify the feature's implementation is consistent with the 
 In cross-check mode, systematically verify consistency across ALL implemented features:
 
 1. **Discover All Implementations**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` for features
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml` for features
    - Read design.md and implementation files for each
    - Map all shared module usage
 

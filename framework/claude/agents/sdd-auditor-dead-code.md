@@ -48,7 +48,7 @@ The primary value of this verifier. Check for connections across audit domains:
 |-----------------|-----------------|-------------|--------|
 | Dead function `foo()` | Orphaned test `test_foo()` | Code+Test confirm | High confidence dead code → merge into single finding, upgrade severity |
 | Dead config `bar_timeout` | No spec mentions `bar` | Settings+Specs confirm | High confidence dead config → merge |
-| Spec says "feature X" | No implementation found | Specs alone | Verify: is it planned for future? Check tasks.md |
+| Spec says "feature X" | No implementation found | Specs alone | Verify: is it planned for future? Check tasks.yaml |
 | Unused import `baz` | `baz` referenced in spec | Code+Specs contradict | Likely not yet implemented, not dead code → reclassify or remove |
 | Dead function `qux()` | Spec references `qux` | Code+Specs contradict | Implementation pending, not dead → remove finding |
 | Stale test for `old_api()` | `old_api()` flagged as dead | Test+Code confirm | High confidence removal candidate |

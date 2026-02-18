@@ -37,17 +37,17 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Load Context**:
-   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for language and metadata
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` for language and metadata
    - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (includes Specifications section)
-   - Read `{{SDD_DIR}}/project/specs/{feature}/tasks.md`
+   - Read `{{SDD_DIR}}/project/specs/{feature}/tasks.yaml`
 
 2. **Task Completion Check**:
 
    For each task in scope:
-   - Verify checkbox is `[x]` in tasks.md
+   - Verify status is `done` in tasks.yaml
    - If not completed, flag as "Task not marked complete"
    - Check subtasks are also completed
-   - Cross-reference with spec.json implementation status
+   - Cross-reference with spec.yaml implementation status
 
 3. **Specifications Traceability**:
 
@@ -62,7 +62,7 @@ You will receive a prompt containing:
 
    - Extract expected file paths from design.md
    - Use Glob to confirm files exist at expected paths
-   - Check spec.json `implementation.files_created` if present
+   - Check spec.yaml `implementation.files_created` if present
    - Flag: "Missing file" if expected file not found
    - Flag: "Unexpected file" if implementation creates files not in design
 
@@ -78,15 +78,15 @@ You will receive a prompt containing:
 
 6. **Spec Metadata Integrity**:
 
-   - Verify spec.json status reflects actual implementation state
-   - Check that completed tasks in tasks.md align with spec.json counts
-   - Flag inconsistencies between spec.json and actual state
+   - Verify spec.yaml status reflects actual implementation state
+   - Check that `done` tasks in tasks.yaml align with spec.yaml counts
+   - Flag inconsistencies between spec.yaml and actual state
 
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Read each spec.json
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
+   - Read each spec.yaml
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
@@ -99,7 +99,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.yaml`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope
@@ -110,7 +110,7 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **Discover Implemented Features**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
    - Identify features with completed tasks
 
 2. **Execute Cross-Check**:
@@ -144,7 +144,7 @@ ISSUES:
 H|task-incomplete|Task 2.3|checkbox not marked, subtask 2.3.2 missing
 H|traceability-missing|Spec 3.AC2|no implementation evidence found for error recovery
 M|file-missing|src/validators/config.ts|expected by design but not created
-M|metadata-mismatch|spec.json|status says "implementing" but all tasks checked
+M|metadata-mismatch|spec.yaml|status says "implementing" but all tasks checked
 L|file-unexpected|src/utils/helpers.ts|not specified in design
 NOTES:
 Task completion: 8/10 (80%)
@@ -156,7 +156,7 @@ Traceability: 14/18 AC (78%)
 ## Error Handling
 
 - **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`
-- **No tasks.md**: Return error, tasks must exist for impl review
+- **No tasks.yaml**: Return error, tasks.yaml must exist for impl review
 - **Missing design.md**: Warn, skip file structure verification
 - **No completed tasks**: Report "No completed tasks to review"
 

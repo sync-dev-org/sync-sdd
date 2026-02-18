@@ -37,10 +37,12 @@ If first argument is missing or not one of `design`, `impl`, `dead-code`:
 ### Design Review
 - Verify `{{SDD_DIR}}/project/specs/{feature}/design.md` exists
 - No phase restriction
+- BLOCK if `spec.yaml.phase` is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}"
 
 ### Implementation Review
-- Verify `design.md` and `tasks.md` exist
-- Verify `phase` is `tasks-generated` or `implementation-complete`
+- Verify `design.md` and `tasks.yaml` exist
+- Verify `phase` is `implementation-complete`
+- BLOCK if `spec.yaml.phase` is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}"
 
 ### Dead Code Review
 - No phase gate (operates on entire codebase)
@@ -102,16 +104,16 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 4. **Auto-Fix Loop** (design/impl review only):
    - If NO-GO or SPEC-UPDATE-NEEDED:
      a. Extract fix instructions from Auditor's verdict
-     b. Track retry count (max 3)
+     b. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2)
      c. Determine fix scope and spawn fix teammates:
-        - **NO-GO (design)**: spawn Architect with fix instructions
-        - **NO-GO (impl)**: spawn Builder(s) with fix instructions
-        - **SPEC-UPDATE-NEEDED**: cascade: spawn Architect → dismiss → spawn Planner → dismiss → spawn Builder(s)
+        - **NO-GO (design)**: increment `retry_count`, spawn Architect with fix instructions
+        - **NO-GO (impl)**: increment `retry_count`, spawn Builder(s) with fix instructions
+        - **SPEC-UPDATE-NEEDED**: increment `spec_update_count`. Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: spawn Architect (include SPEC_FEEDBACK from Auditor in spawn prompt) → dismiss → spawn TaskGenerator → dismiss → spawn Builder(s). All tasks are fully re-implemented (no differential).
      d. Read fix teammate's completion report
      e. Dismiss fix teammate
-     f. Update spec.json (version_refs, phase) and auto-draft `{{SDD_DIR}}/handover/session.md`
+     f. Update spec.yaml (version_refs, phase) and auto-draft `{{SDD_DIR}}/handover/session.md`
      g. Re-spawn review pipeline (Step 3) with same review type
-     h. If 3 retries exhausted: present final verdict and options to user
+     h. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2: present final verdict and options to user
 
 5. **Process STEERING entries** from verdict:
    - CODIFY → apply directly to steering file + append to `decisions.md` with Reason (STEERING_UPDATE)
@@ -124,7 +126,7 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 ### Next Steps by Verdict
 
 **Design Review**:
-- GO → `/sdd-tasks {feature}`
+- GO → `/sdd-impl {feature}`
 - CONDITIONAL → Address issues, optionally re-review
 - NO-GO → Auto-fix loop or manual fix
 
@@ -140,5 +142,6 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 - **Missing spec**: "Spec '{feature}' not found. Run `/sdd-design \"description\"` first."
 - **Missing design.md**: "Design required. Run `/sdd-design {feature}` first."
-- **Wrong phase for impl**: "Phase is '{phase}'. Run `/sdd-tasks {feature}` first."
+- **Wrong phase for impl**: "Phase is '{phase}'. Run `/sdd-impl {feature}` first."
+- **Blocked**: "{feature} is blocked by {blocked_info.blocked_by}."
 - **No specs found (cross-check)**: "No specs found. Create specs first."

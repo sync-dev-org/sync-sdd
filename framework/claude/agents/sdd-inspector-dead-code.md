@@ -1,7 +1,7 @@
 ---
 name: sdd-inspector-dead-code
 description: |
-  T4 Execution layer. Investigates project source code to detect unused functions,
+  T3 Execution layer. Investigates project source code to detect unused functions,
   classes, methods, and other dead code.
 tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet

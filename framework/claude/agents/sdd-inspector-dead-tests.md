@@ -1,7 +1,7 @@
 ---
 name: sdd-inspector-dead-tests
 description: |
-  T4 Execution layer. Investigates test code to detect orphaned fixtures,
+  T3 Execution layer. Investigates test code to detect orphaned fixtures,
   stale tests, and tests depending on outdated interfaces.
 tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet

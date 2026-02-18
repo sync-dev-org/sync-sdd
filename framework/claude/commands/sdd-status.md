@@ -24,7 +24,7 @@ $ARGUMENTS = "--impact {feature}"  → Same as above
 ## Step 2: Load Context
 
 1. Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
-2. Scan `{{SDD_DIR}}/project/specs/*/spec.json` for all specs
+2. Scan `{{SDD_DIR}}/project/specs/*/spec.yaml` for all specs
 
 ## Step 3: Generate Report
 
@@ -32,16 +32,16 @@ $ARGUMENTS = "--impact {feature}"  → Same as above
 
 For each wave in roadmap:
 - Wave completion percentage
-- Specs in each phase (design-generated / tasks-generated / implementation-complete)
-- Blocked specs and their dependencies
+- Specs in each phase (design-generated / implementation-complete / blocked)
+- Blocked specs with `blocked_info` details (blocked_by, reason)
 
 ### Individual Spec Status (when feature specified)
 
 - Current phase and version
 - Design status (exists, version)
-- Tasks status (total, completed, pending, optional)
+- Tasks status (parse tasks.yaml: total, done, pending, optional)
 - Implementation status (files created, test results)
-- Version alignment check (design ↔ tasks ↔ impl)
+- Version alignment check (design ↔ impl)
 
 ### Impact Analysis (when `--impact` flag)
 

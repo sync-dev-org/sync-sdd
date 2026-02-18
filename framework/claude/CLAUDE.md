@@ -7,17 +7,17 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 ### 3-Tier Hierarchy
 
 ```
-Tier 1: Command  ─── Lead ─────────────────────── (Conductor, Opus)
-Tier 2: Brain    ─── Architect / Planner / Auditor ── (Teammate, Opus)
-Tier 3: Execute  ─── Builder / Inspector ─── (Teammate ×N, Sonnet)
+Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
+Tier 2: Brain    ─── Architect / Auditor ────────────── (Teammate, Opus)
+Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teammate ×N, Sonnet)
 ```
 
 | Tier | Role | Responsibility |
 |------|------|---------------|
-| T1 | **Lead** | User interaction, phase gate checks, spawn planning, parallelism analysis, file ownership assignment, progress tracking, teammate lifecycle management, spec.json updates, Knowledge aggregation. |
+| T1 | **Lead** | User interaction, phase gate checks, spawn planning, progress tracking, teammate lifecycle management, spec.yaml updates, Knowledge aggregation. |
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
-| T2 | **Planner** | Task decomposition. Generates tasks.md from design.md with parallelism analysis. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
+| T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
 | T3 | **Inspector** | Individual review perspectives. 5 inspectors spawned in parallel. Outputs CPF findings. |
 
@@ -31,10 +31,10 @@ Exception: Inspector → Auditor communication uses SendMessage (peer communicat
 
 ### State Management
 
-**spec.json is owned by Lead.** T2/T3 teammates MUST NOT update spec.json directly.
-- Teammates produce work artifacts (design.md, tasks.md, code) and output completion reports
+**spec.yaml is owned by Lead.** T2/T3 teammates MUST NOT update spec.yaml directly.
+- Teammates produce work artifacts (design.md, tasks.yaml, code) and output completion reports
 - Lead validates results, computes metadata updates (phase, version_refs, changelog)
-- Lead updates spec.json directly
+- Lead updates spec.yaml directly
 
 ```
 User ──→ Lead ──→ T2/T3 Teammates
@@ -44,8 +44,10 @@ User ──→ Lead ──→ T2/T3 Teammates
 ### Phase Gate
 
 Before spawning any teammate, Lead MUST verify:
-- `spec.json.phase` is appropriate for the requested operation
-- `version_refs` consistency between design/tasks/implementation
+- `spec.yaml.phase` is appropriate for the requested operation
+- If `spec.yaml.phase` is `blocked`: BLOCK with "{feature} is blocked by {blocked_info.blocked_by}"
+- If `spec.yaml.phase` is unrecognized: BLOCK with "Unknown phase '{phase}'"
+- `version_refs.design` consistency between design and implementation
 - On failure: report error to user (do NOT spawn teammates unnecessarily)
 
 ### Teammate Lifecycle
@@ -58,12 +60,14 @@ Lead spawns teammates directly. Each teammate:
 
 Lead reads the completion output and:
 - Extracts results (artifacts created, test results, knowledge tags, blocker info)
-- Updates spec.json metadata (phase, version_refs, changelog)
+- Updates spec.yaml metadata (phase, version_refs, changelog)
 - Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
 - Determines next action (spawn next teammate, escalate to user, etc.)
 - Dismisses the teammate
 
 For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors SendMessage to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
+
+**Builder parallel coordination** (逐次更新): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
 ## Project Context
 
@@ -94,14 +98,13 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 
 ## Workflow
 
-### Commands (9)
+### Commands (8)
 
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-design` | Generate or edit a technical design |
 | `/sdd-review` | Multi-agent review (design/impl/dead-code) |
-| `/sdd-tasks` | Generate implementation tasks from design |
 | `/sdd-impl` | TDD implementation of tasks |
 | `/sdd-roadmap` | Multi-feature roadmap (create/run/update/delete) |
 | `/sdd-status` | Check progress + impact analysis |
@@ -114,21 +117,20 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 - Stage 1 (Specification):
   - `/sdd-design "description"` (new) or `/sdd-design {feature}` (edit existing)
   - `/sdd-review design {feature}` (optional)
-  - `/sdd-tasks {feature}`
 - Stage 2 (Implementation):
   - `/sdd-impl {feature} [tasks]`
   - `/sdd-review impl {feature}` (optional)
 - Progress check: `/sdd-status {feature}` (anytime)
 
 ### Phase-Driven Workflow
-- Phases: `design-generated` → `tasks-generated` → `implementation-complete`
+- Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
 - Each phase gate is enforced by the next command
 - Keep steering current and verify alignment with `/sdd-status`
 
 ### SPEC-Code Atomicity
-- SPEC changes (design.md, tasks.md) and code changes belong in the same logical unit
-- Editing specs triggers full cascade: design → tasks → implementation
-- Version consistency enforced: `/sdd-impl` blocks on version_refs mismatch
+- SPEC changes (design.md, tasks.yaml) and code changes belong in the same logical unit
+- Editing specs triggers full cascade: design → implementation
+- Version consistency enforced: `/sdd-impl` blocks on version_refs.design mismatch
 - On SPEC-UPDATE-NEEDED verdict: fix the spec first, do not re-implement
 
 ### Auto-Fix Loop (Review)
@@ -136,20 +138,65 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 When Auditor returns NO-GO or SPEC-UPDATE-NEEDED:
 1. Extract fix instructions from Auditor's verdict
 2. Dismiss review teammates
-3. Track retry count (max 3)
+3. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
 4. Determine fix scope and spawn fix teammates:
    - **NO-GO (design review)** → spawn Architect with fix instructions
    - **NO-GO (impl review)** → spawn Builder(s) with fix instructions
-   - **SPEC-UPDATE-NEEDED** → cascade: Architect → Planner → Builder
+   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder. All tasks fully re-implemented.
    - **Structural changes** → auto-fix in full-auto mode, escalate in `--gate` mode
    - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → spawn with fix instructions
 5. After fix, dismiss fix teammates, then spawn review pipeline (Inspectors + Auditor) again
-6. If 3 retries exhausted → escalate to user
+6. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2 → escalate to user
 
 ### Wave Quality Gate (Roadmap)
 - After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
 - Issues found → re-spawn responsible Builder(s) from file ownership records → re-review
-- Max 3 retries per gate → escalate to user
+- Max 3 retries per gate → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
+- Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
+- CONDITIONAL = GO (proceed; remaining issues are tracked for future waves)
+- Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N. Inspectors flag only NEW issues not previously resolved in earlier wave gates
+
+### Blocking/Unblocking Protocol
+
+When a spec fails after exhausting retries:
+1. Traverse dependency graph → identify all downstream specs
+2. For each downstream spec:
+   - Save current phase to `blocked_info.blocked_at_phase`
+   - Set `phase` = `blocked`
+   - Set `blocked_info.blocked_by` = `{failed_spec}`
+   - Set `blocked_info.reason` = `upstream_failure`
+
+When user requests unblocking:
+- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
+- **skip**: Exclude upstream spec → evaluate if dependencies resolved → restore if possible
+- **abort**: Stop pipeline, leave all specs as-is
+
+### Auto-Fix Loop Details
+
+- `retry_count`: incremented only on NO-GO (max 3). CONDITIONAL does NOT count
+- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`
+- Cascade during Architect failure: escalate entire spec to user
+- Structural changes (spec split, etc.): escalate to user, record DIRECTION_CHANGE in decisions.md
+- Design Review Auto-Fix: after fix, phase remains `design-generated`
+- SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's spawn prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
+
+### File Ownership (Cross-Spec)
+
+- `buffer.md`: Lead has exclusive write access (no parallel write conflicts)
+- Cross-Spec file overlap resolution (Layer 2, Lead responsibility):
+  1. After all parallel specs' tasks.yaml are generated, collect file lists from each execution section
+  2. Detect overlap: for each file pair (group_A, group_B) where both claim the same file
+  3. If A and B are in same wave (parallel candidates): serialize the overlapping specs OR partition file ownership by re-spawning TaskGenerator with file exclusion constraints
+  4. If A depends on B (or vice versa): OK (already serialized by dependency)
+  5. Record final file ownership assignments for auto-fix routing
+
+### decisions.md Recording
+
+Lead records the following decision types as a standard behavior:
+- `USER_DECISION`: when user makes an explicit choice
+- `DIRECTION_CHANGE`: spec split, wave restructure, scope change
+- `ESCALATION_RESOLVED`: outcome of an escalation to user
+- `SESSION_START`: auto-append on session resume
 
 ## Product Intent
 
@@ -195,7 +242,7 @@ Session context is persisted to `{{SDD_DIR}}/handover/` for cross-session contin
 | `buffer.md` | Overwrite (auto) | Knowledge Buffer + Skill candidates (temporary data) |
 | `sessions/` | Archive | Dated copies of session.md created by `/sdd-handover` |
 
-Pipeline state is NOT stored in handover — `spec.json` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.json` files to reconstruct pipeline state.
+Pipeline state is NOT stored in handover — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
 
 ### session.md (Auto-Draft + Manual Polish)
 
@@ -298,7 +345,7 @@ Append-only structured log with rationale for every decision.
 
 | Trigger | File | Notes |
 |---------|------|-------|
-| Command completion (design/tasks/impl/review/roadmap/steering) | session.md auto-draft | Carry forward + update Next Action/Accomplished |
+| Command completion (design/impl/review/roadmap/steering) | session.md auto-draft | Carry forward + update Next Action/Accomplished |
 | `/sdd-handover` | session.md manual polish, decisions.md SESSION_END, sessions/ archive | Manual |
 | User decision | decisions.md | Auto-append with Reason |
 | STEERING change | decisions.md | Auto-append with Reason |
@@ -313,7 +360,7 @@ On session start (new or post-compact):
 1. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
 2. Read latest N entries from `decisions.md` → recent decision history
 3. Read `buffer.md` → pending Knowledge/Skill candidates
-4. If roadmap active: scan all `spec.json` files → build pipeline state dynamically
+4. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
 5. Append `SESSION_START` to `decisions.md`
 6. Resume from session.md Immediate Next Action
 
@@ -331,7 +378,7 @@ When user requests stop during pipeline execution:
 2. Lead auto-drafts `session.md` with current direction and progress
 3. Report to user: what was completed, what was in progress, how to resume
 
-Resume: `/sdd-roadmap run` scans all `spec.json` files to rebuild pipeline state and resumes from interruption point.
+Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point.
 
 ## Behavioral Rules
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.

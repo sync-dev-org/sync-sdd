@@ -11,7 +11,7 @@ Language profiles provide language-specific defaults for steering files during `
 
 Profiles are **starting points**, not constraints. All values can be overridden.
 
-The selected profile's identifier (e.g., `python`, `typescript`, `rust`) is stored in `spec.json.language` for each feature specification.
+The selected profile's identifier (e.g., `python`, `typescript`, `rust`) is stored in `spec.yaml.language` for each feature specification.
 
 ## Profile Format
 

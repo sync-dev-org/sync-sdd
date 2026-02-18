@@ -1,7 +1,7 @@
 ---
 name: sdd-inspector-dead-specs
 description: |
-  T4 Execution layer. Investigates alignment between project specifications and implementation.
+  T3 Execution layer. Investigates alignment between project specifications and implementation.
   Detects spec drift, unimplemented features, and orphaned implementations.
 tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet
@@ -18,9 +18,9 @@ Thoroughly investigate alignment between project specifications and implementati
 Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical checklist.
 
 1. **Discover project structure**: Find spec directories, implementation directories
-2. **Read each spec**: Understand expected implementation from design.md and tasks.md
+2. **Read each spec**: Understand expected implementation from design.md and tasks.yaml
 3. **Cross-reference with code**: Compare spec promises with actual implementation
-4. **Check task completion**: Compare checkbox status in tasks.md with actual code state
+4. **Check task completion**: Compare task status in tasks.yaml with actual code state
 5. **Create analysis scripts**: Write scripts for automated comparison when needed
 
 ## Key Focus Areas
@@ -37,7 +37,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 - Compare interface definitions in specs with actual signatures
 - Compare dependency diagrams in specs with actual import relationships
 - Detect partial or incomplete implementations
-- Check spec.json phase vs actual state
+- Check spec.yaml phase vs actual state
 - Report anything suspicious — let humans make the final judgment
 
 ## Output Format
@@ -55,7 +55,7 @@ Example:
 ```
 CATEGORY:spec-drift
 H|specs/auth-flow/design.md|spec says OAuth2 but implementation uses session-based auth
-M|specs/user-profile/tasks.md|tasks 2.3-2.5 checked but no corresponding code found
+M|specs/user-profile/tasks.yaml|tasks 2.3-2.5 marked done but no corresponding code found
 L|specs/dashboard/design.md|spec references UserService but class was renamed to UserManager
 ```
 

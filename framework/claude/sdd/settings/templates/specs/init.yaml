@@ -1,0 +1,18 @@
+feature_name: "{{FEATURE_NAME}}"
+created_at: "{{TIMESTAMP}}"
+updated_at: "{{TIMESTAMP}}"
+language: "{{LANG_CODE}}"
+version: "1.0.0"
+changelog: []
+version_refs:
+  design: null
+phase: initialized
+implementation:
+  files_created: []
+orchestration:
+  retry_count: 0
+  spec_update_count: 0
+  in_progress: false
+  last_phase_action: null
+blocked_info: null
+roadmap: null

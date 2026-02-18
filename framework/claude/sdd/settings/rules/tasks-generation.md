@@ -45,11 +45,10 @@ Focus on capabilities and outcomes, not code structure.
 
 ### 4. Specifications Mapping
 
-**End each task detail section with**:
-- `_Specs: X.X, Y.Y_` listing **only numeric spec IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+**Each sub-task must include**:
+- `specs:` field listing **only numeric spec IDs** as a YAML list. Never append descriptive text, parentheses, translations, or free-form labels.
 - For cross-cutting specs, list every relevant spec ID. All specs MUST have numeric IDs in design.md's Specifications section. If an ID is missing, stop and correct the Specifications section before generating tasks.
-- When task detail references specific acceptance criteria, optionally add `_ACs: S{N}.AC{M}, S{N}.AC{M}_` to enable direct traceability from task → AC → test via the `AC: {feature}.S{N}.AC{M}` test marker convention.
-- Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
+- When task references specific acceptance criteria, optionally add `acs:` field (e.g., `[S1.AC1, S1.AC2]`) to enable direct traceability from task → AC → test via the `AC: {feature}.S{N}.AC{M}` test marker convention.
 
 ### 5. Code-Only Focus
 
@@ -66,18 +65,18 @@ Focus on capabilities and outcomes, not code structure.
 
 ### Optional Test Coverage Tasks
 
-- When the design already guarantees functional coverage and rapid MVP delivery is prioritized, mark purely test-oriented follow-up work (e.g., baseline rendering/unit tests) as **optional** using the `- [ ]*` checkbox form.
+- When the design already guarantees functional coverage and rapid MVP delivery is prioritized, mark purely test-oriented follow-up work (e.g., baseline rendering/unit tests) as **optional** using `optional: true`.
 - Only apply the optional marker when the sub-task directly references acceptance criteria from design.md's Specifications section in its detail bullets.
-- Never mark implementation work or integration-critical verification as optional—reserve `*` for auxiliary/deferrable test coverage that can be revisited post-MVP.
+- Never mark implementation work or integration-critical verification as optional—reserve `optional: true` for auxiliary/deferrable test coverage that can be revisited post-MVP.
 
 ## Task Hierarchy Rules
 
 ### Maximum 2 Levels
-- **Level 1**: Major tasks (1, 2, 3, 4...)
-- **Level 2**: Sub-tasks (1.1, 1.2, 2.1, 2.2...)
-- **No deeper nesting** (no 1.1.1)
-- If a major task would contain only a single actionable item, collapse the structure and promote the sub-task to the major level (e.g., replace `1.1` with `1.`).
-- When a major task exists purely as a container, keep the checkbox description concise and avoid duplicating detailed bullets—reserve specifics for its sub-tasks.
+- **Level 1**: Major tasks (id: "1", "2", "3"...)
+- **Level 2**: Sub-tasks (id: "1.1", "1.2", "2.1", "2.2"...)
+- **No deeper nesting** (no "1.1.1")
+- If a major task would contain only a single actionable item, collapse the structure and promote the sub-task to the major level (e.g., replace "1.1" with "1").
+- When a major task exists purely as a container, keep the summary concise and avoid duplicating detailed bullets—reserve specifics for its sub-tasks.
 
 ### Sequential Numbering
 - Major tasks MUST increment: 1, 2, 3, 4, 5...
@@ -93,34 +92,75 @@ Focus on capabilities and outcomes, not code structure.
   4. Environment/setup work needed by this task is already satisfied or covered within the task itself
 - Validate that identified parallel tasks operate within separate boundaries defined in the Architecture Pattern & Boundary Map.
 - Confirm API/event contracts from design.md do not overlap in ways that cause conflicts.
-- Append `(P)` immediately after the task number for each parallel-capable task:
-  - Example: `- [ ] 2.1 (P) Build background worker`
+- Set `p: true` on each parallel-capable task:
   - Apply to both major tasks and sub-tasks when appropriate.
   - Skip marking container-only major tasks (those without their own actionable detail bullets) — evaluate at sub-task level instead.
-- If sequential mode is requested, omit `(P)` markers entirely.
+- If sequential mode is requested, omit `p: true` entirely.
 - Group parallel tasks logically (same parent when possible) and highlight any ordering caveats in detail bullets.
-- Explicitly call out dependencies that prevent `(P)` even when tasks look similar.
-- **Quality check** before marking `(P)`: verify no merge/deployment conflicts, capture shared state expectations in detail bullets, confirm task can be tested independently. If any check fails, do not mark `(P)`.
+- Explicitly call out dependencies that prevent parallel execution even when tasks look similar.
+- **Quality check** before marking `p: true`: verify no merge/deployment conflicts, capture shared state expectations in detail bullets, confirm task can be tested independently. If any check fails, do not mark `p: true`.
 
-### Checkbox Format
-```markdown
-- [ ] 1. Major task description
-- [ ] 1.1 Sub-task description
-  - Detail item 1
-  - Detail item 2
-  - _Specs: X.X_
+### YAML Output Format
 
-- [ ] 1.2 Sub-task description
-  - Detail items...
-  - _Specs: Y.Y_
+Output tasks.yaml with this structure:
 
-- [ ] 1.3 Sub-task description
-  - Detail items...
-  - _Specs: Z.Z, W.W_
+```yaml
+tasks:
+  - id: "1"
+    summary: Major task description
+    status: pending       # pending | done
+    subtasks:
+      - id: "1.1"
+        p: true           # parallel capable
+        summary: Sub-task description
+        details:
+          - Detail item 1
+          - Detail item 2
+        specs: [1.1, 1.2]
+        acs: [S1.AC1, S1.AC2]   # optional, for test traceability
+        status: pending
+        depends: []
+      - id: "1.2"
+        summary: Another sub-task
+        details:
+          - Detail item
+        specs: [1.3]
+        status: pending
+        depends: ["1.1"]
 
-- [ ] 2. Next major task (NOT 1 again!)
-- [ ] 2.1 Sub-task...
+execution:
+  - wave: 1
+    groups:
+      - id: A
+        tasks: ["1.1", "1.2"]
+        files: [src/auth/handler.py, src/auth/models.py]
+      - id: B
+        tasks: ["2.1"]
+        files: [src/api/routes.py]
+  - wave: 2
+    groups:
+      - id: C
+        tasks: ["3.1"]
+        files: [src/core/middleware.py]
+        depends: [A]
 ```
+
+Field reference:
+- `status`: `pending` (not started) or `done` (completed)
+- `p`: `true` if task can execute in parallel (omit or `false` if sequential)
+- `specs`: list of numeric spec IDs from design.md (mandatory)
+- `acs`: list of acceptance criteria IDs (optional, for test traceability)
+- `depends`: list of task IDs this task depends on
+- `optional`: `true` for deferrable test coverage tasks (omit otherwise)
+
+### Execution Plan Generation
+
+The `execution` section maps tasks to Builder work packages:
+
+- **File ownership**: Read design.md Components section to determine which files each task touches
+- **Group formation**: Group parallel tasks into Builder work packages with **no file overlap** between groups
+- **Wave structure**: Organize groups into execution waves based on dependency chains
+- **Group dependencies**: Use `depends` at group level to express cross-group ordering
 
 ## Specifications Coverage
 

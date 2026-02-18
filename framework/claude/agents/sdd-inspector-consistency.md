@@ -37,7 +37,7 @@ You will receive a prompt containing:
 
 1. **Target Spec**:
    - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (contains both Specifications and Design sections)
-   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` for metadata
 
 2. **Steering Context**:
    - Read entire `{{SDD_DIR}}/project/steering/` directory:
@@ -53,9 +53,9 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
    - Read ALL design.md files
-   - Read ALL spec.json files
+   - Read ALL spec.yaml files
 
 2. **Steering Context**:
    - Read entire `{{SDD_DIR}}/project/steering/` directory
@@ -116,8 +116,8 @@ Deep investigation of single spec's consistency:
 ## Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Read each spec.json
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
+   - Read each spec.yaml
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:

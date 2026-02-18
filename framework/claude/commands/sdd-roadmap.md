@@ -42,7 +42,7 @@ Lead handles directly (user-interactive):
 4. Organize into implementation waves (dependency-based)
 5. Refine wave organization through dialogue (unless `-y`)
 6. Create spec directories with skeleton design.md files
-7. Set `spec.json.roadmap` for each spec: `{"wave": N, "dependencies": ["spec-name", ...]}`
+7. Set `spec.yaml.roadmap` for each spec: `{wave: N, dependencies: ["spec-name", ...]}`
 8. Generate roadmap.md with Wave Overview, Dependencies, Execution Flow
 9. **Update product.md** User Intent → Spec Rationale section
 10. Auto-draft `{{SDD_DIR}}/handover/session.md`
@@ -53,23 +53,29 @@ Lead handles pipeline execution directly.
 
 ### Step 1: Load State
 
-1. Read `roadmap.md` and all `spec.json` files
-2. Scan all `spec.json` files → rebuild pipeline state from phase/status fields
-3. Build dependency graph from `spec.json.roadmap` fields
+1. Read `roadmap.md` and all `spec.yaml` files
+2. Scan all `spec.yaml` files → rebuild pipeline state from phase/status fields
+3. Build dependency graph from `spec.yaml.roadmap` fields
 
 ### Step 2: Cross-Spec File Ownership Analysis
 
 1. Read all parallel-candidate specs' `design.md` Components sections
-2. Detect file scope overlaps between specs in the same wave
-3. If overlap detected: serialize overlapping specs OR partition file ownership
-4. Record file ownership assignments for later auto-fix routing
+2. Detect file scope overlaps between specs in the same wave:
+   - For each pair of parallel-candidate specs: compare claimed file paths
+   - If intersection is non-empty: flag as overlap
+3. Resolve overlaps:
+   - **Serialize** (preferred): convert overlapping specs to sequential execution within the wave
+   - **Partition**: re-assign file ownership so each file belongs to exactly one spec. May require re-spawning TaskGenerator for affected specs with file exclusion constraints
+4. Validate: after resolution, verify no file is claimed by two parallel specs
+5. Record final file ownership assignments for later auto-fix routing
+6. buffer.md: Lead has exclusive write access (no parallel write conflicts)
 
 ### Step 3: Schedule Specs
 
 Determine which specs can run in parallel (same wave, no file overlap, no dependency).
 For each spec, track individual pipeline state:
 ```
-spec-a: [Architect] → [Design Review] → [Planner] → [Builder ×N] → [Impl Review]
+spec-a: [Architect] → [Design Review] → [TaskGenerator] → [Builder ×N] → [Impl Review]
 spec-b:   [Architect] → [Design Review] → ...
 spec-c:         (waiting on spec-a) → [Architect] → ...
 ```
@@ -89,7 +95,7 @@ For each ready spec, execute pipeline phases in order:
 2. Read Architect's completion report
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist
-5. Update spec.json: `phase=design-generated`, `version_refs.design={v}`, `version_refs.tasks=null`
+5. Update spec.yaml: `phase=design-generated`, `version_refs.design={v}`
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
@@ -100,45 +106,39 @@ For each ready spec, execute pipeline phases in order:
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (5 Inspectors + Auditor)
 4. Handle verdict:
-   - **GO/CONDITIONAL** → proceed to Task Generation
-   - **NO-GO** → Auto-Fix Loop (see CLAUDE.md)
+   - **GO/CONDITIONAL** → proceed to Implementation Phase
+   - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
    - In **gate mode**: pause for user approval before advancing
 5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
-#### Task Generation Phase
-1. Spawn Planner with context:
+#### Implementation Phase
+1. Spawn TaskGenerator with context:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
-   - Template: `{{SDD_DIR}}/settings/templates/specs/tasks.md`
-2. Read Planner's completion report
-3. Dismiss Planner
-4. Verify `tasks.md` exists
-5. Update spec.json: `phase=tasks-generated`, `version_refs.tasks={v}`
-6. Auto-draft `{{SDD_DIR}}/handover/session.md`
-
-#### Implementation Phase
-1. Read `tasks.md`, `design.md`, and `research.md` (if exists) for the feature
-2. Analyze `(P)` markers and dependency chains → determine parallelism
-3. Read Components section → determine file ownership per Builder
-4. Group tasks into Builder work packages (no file overlap)
-5. Spawn Builder(s) with context for each work package:
+2. Read TaskGenerator's completion report (`TASKGEN_COMPLETE`)
+3. Dismiss TaskGenerator
+4. Verify `tasks.yaml` exists
+5. Read `tasks.yaml` execution plan → determine Builder grouping
+6. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-spawn TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
+7. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
+8. Spawn Builder(s) with context for each work package:
    - Feature: {feature}
-   - Tasks: {task numbers}
+   - Tasks: {task IDs + summaries + detail bullets}
    - File scope: {assigned files}
    - Design ref: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research ref: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
-6. Read each Builder's completion report. Collect:
-   - Files created/modified
-   - Test results
-   - Knowledge tags (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`)
-   - Blocker reports
-7. When dependent tasks are unblocked: dismiss completed Builders, spawn next wave
-8. On all tasks complete:
-   - Dismiss all Builders
+9. **Builder逐次更新**: As each Builder completes, immediately:
+   - Read completion report (files, test results, knowledge tags, blockers)
+   - Update tasks.yaml: mark completed tasks as `done`
+   - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
+   - If BUILDER_BLOCKED: re-plan execution (modify tasks.yaml execution) or escalate
+10. When dependent tasks are unblocked: dismiss completed Builder, spawn next-wave Builders immediately
+11. On ALL Builders complete:
+   - Dismiss remaining Builders
    - Aggregate files from all Builder reports
-   - Update spec.json: `phase=implementation-complete`, `implementation.files_created=[{files}]`
+   - Update spec.yaml: `phase=implementation-complete`, `implementation.files_created=[{files}]`
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
@@ -150,8 +150,8 @@ For each ready spec, execute pipeline phases in order:
 3. Dismiss all review teammates (5 Inspectors + Auditor)
 4. Handle verdict:
    - **GO/CONDITIONAL** → spec pipeline complete
-   - **NO-GO** → Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
-   - **SPEC-UPDATE-NEEDED** → cascade fix: Architect → Planner → Builder → re-review
+   - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
+   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
    - In **gate mode**: pause for user approval
 5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
@@ -170,14 +170,23 @@ For each ready spec, execute pipeline phases in order:
 - Pause at Wave transitions → user approval
 - Structural changes (spec splitting, wave restructuring) → escalate to user
 
-### Step 6: Failure Propagation
+### Step 6: Failure Propagation (Blocking Protocol)
 
 When a spec fails after exhausting retries:
-- Mark all downstream dependent specs as `blocked`
-- Report cascading impact to user
-- Present options to user: fix / skip / abort roadmap
+1. Traverse dependency graph → identify all downstream specs
+2. For each downstream spec:
+   - Save current phase to `blocked_info.blocked_at_phase`
+   - Set `phase` = `blocked`, `blocked_info.blocked_by` = `{failed_spec}`, `blocked_info.reason` = `upstream_failure`
+3. Report cascading impact to user
+4. Present options: fix / skip / abort roadmap
+   - **fix**: After user claims upstream is fixed, Lead verifies upstream spec phase is `implementation-complete` before unblocking downstream. If not verified, re-run `/sdd-review impl {upstream}` first
+   - **skip**: Exclude upstream spec from pipeline, evaluate if downstream dependencies are resolved
+   - **abort**: Stop pipeline, leave all specs as-is
 
 ### Step 7: Wave Quality Gate
+
+Wave completion condition: all specs in wave are `implementation-complete` or `blocked`.
+Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N. Inspectors flag only NEW issues not previously resolved in earlier wave gates.
 
 After all specs in a wave complete individual pipelines:
 
@@ -189,8 +198,8 @@ After all specs in a wave complete individual pipelines:
 3. Dismiss all cross-check teammates
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries → escalate)
-   - **SPEC-UPDATE-NEEDED** → cascade fix from spec level (Architect → Planner → Builder → re-review)
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user → user chooses: proceed to Dead Code Review despite issues, or abort wave
+   - **SPEC-UPDATE-NEEDED** → cascade fix from spec level (reset orchestration, set `phase = design-generated`, spawn Architect with SPEC_FEEDBACK → TaskGenerator → Builder → re-review)
 
 **b. Dead Code Review** (full codebase):
 1. Spawn 4 dead-code Inspectors + dead-code Auditor:
@@ -241,5 +250,6 @@ Lead handles directly:
 
 - **No roadmap for run/update**: "No roadmap found. Run `/sdd-roadmap create` first."
 - **No steering for create**: Warn and suggest `/sdd-steering` first
-- **Spec conflicts during run**: Lead handles file ownership resolution (serialize or partition)
-- **Spec failure (retries exhausted)**: Block dependent specs, report cascading impact, present options (fix / skip / abort)
+- **Spec conflicts during run**: Lead handles file ownership resolution (serialize preferred, partition allowed)
+- **Spec failure (retries exhausted)**: Block dependent specs via Blocking Protocol, report cascading impact, present options (fix / skip / abort)
+- **Artifact verification failure**: Do not update spec.yaml — escalate to user

@@ -1,7 +1,7 @@
 ---
 name: sdd-architect
 description: |
-  T3 Brain layer. Generates technical design documents including specifications and architecture.
+  T2 Brain layer. Generates technical design documents including specifications and architecture.
   Performs discovery, research, and produces design.md + research.md.
 tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 model: opus
@@ -26,14 +26,14 @@ You receive context from Lead including:
 ### Step 1: Load Context
 
 Read all necessary context:
-- `{{SDD_DIR}}/project/specs/{feature}/spec.json`, `design.md` (if exists)
+- `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md` (if exists)
 - **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
 - `{{SDD_DIR}}/settings/templates/specs/design.md` for document structure
 - `{{SDD_DIR}}/settings/rules/design-principles.md` for design principles
 - `{{SDD_DIR}}/settings/templates/specs/research.md` for discovery log structure
 
 Version consistency check (skip if `version_refs` not present):
-- Read `version` and `version_refs` from spec.json (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
+- Read `version` and `version_refs` from spec.yaml (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
 - If existing design.md has a Specifications section, note it for merge mode
 
 ### Step 2: Discovery & Analysis
@@ -76,7 +76,7 @@ Version consistency check (skip if `version_refs` not present):
    - Summarize discovery scope and key findings
    - Record investigations with sources and implications
    - Document architecture pattern evaluation, design decisions, and risks
-   - Use the language specified in spec.json
+   - Use the language specified in spec.yaml
 
 ### Step 3: Generate Design Document
 
@@ -87,10 +87,10 @@ Version consistency check (skip if `version_refs` not present):
    - **Integrate all discovery findings**: Use researched information throughout
    - If existing design.md found, use it as reference context (merge mode)
    - Apply design rules: Type Safety, Visual Communication, Formal Tone
-   - Use language specified in spec.json
+   - Use language specified in spec.yaml
    - Ensure Specifications Traceability maps spec IDs to components
 
-3. **Do NOT update spec.json** — Lead manages all metadata updates.
+3. **Do NOT update spec.yaml** — Lead manages all metadata updates.
 
 ## Critical Constraints
 - **Type Safety**: Enforce strong typing aligned with the project's technology stack

@@ -1,7 +1,7 @@
 ---
 name: sdd-builder
 description: |
-  T4 Execution layer. Implements tasks using TDD methodology.
+  T3 Execution layer. Implements tasks using TDD methodology.
   RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags for Knowledge accumulation.
 tools: Bash, Read, Write, Edit, Grep, Glob, WebFetch, WebSearch
 model: sonnet
@@ -27,7 +27,7 @@ You receive context from Lead including:
 ### Step 1: Load Context
 
 Read all necessary context:
-- `{{SDD_DIR}}/project/specs/{feature}/spec.json`, `design.md`, `tasks.md`
+- `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `tasks.yaml`
 - **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
 
 ### Step 2: Execute with TDD
@@ -56,16 +56,14 @@ For each assigned task, follow the TDD cycle:
    - No regressions in existing functionality
 
 5. **MARK COMPLETE**:
-   - Update checkbox from `- [ ]` to `- [x]` in tasks.md
    - Verify all ACs referenced by this task have matching test markers
 
 ### Step 3: Finalize Tasks
 
 After all assigned tasks are executed:
 
-1. **Auto-complete parent tasks**: If ALL subtasks of a parent are `[x]`, mark parent `[x]` too
-2. **Handle optional tasks**: Tasks marked `- [ ]*` do NOT block completion
-3. **Do NOT update spec.json** — Lead manages all metadata updates. Include file list and completion status in your report.
+1. **Handle optional tasks**: Tasks marked `optional: true` do NOT block completion
+2. **Do NOT update spec.yaml or tasks.yaml** — Lead manages all metadata updates. Include file list and completion status in your report.
 
 ## File Scope Rules
 
@@ -107,7 +105,7 @@ Feature: {feature}
 Tasks completed: {list}
 Files: {created/modified file paths}
 Tests: {pass count}/{total count}
-Phase: {tasks-generated | implementation-complete}
+Phase: {design-generated | implementation-complete}
 
 {Knowledge tags if any}
 ```

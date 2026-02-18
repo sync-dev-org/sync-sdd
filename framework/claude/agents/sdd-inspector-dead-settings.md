@@ -1,7 +1,7 @@
 ---
 name: sdd-inspector-dead-settings
 description: |
-  T4 Execution layer. Investigates project configuration management to detect dead config.
+  T3 Execution layer. Investigates project configuration management to detect dead config.
   Traces config fields from definition through intermediate layers to final consumption.
 tools: Bash, Read, Write, Glob, Grep, SendMessage
 model: sonnet

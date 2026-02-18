@@ -39,7 +39,7 @@ You will receive a prompt containing:
 
 1. **Target Spec**:
    - Read `{{SDD_DIR}}/project/specs/{feature}/design.md` (error handling, patterns, architecture)
-   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for metadata and file paths
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` for metadata and file paths
 
 2. **Steering Context**:
    - Read `{{SDD_DIR}}/project/steering/product.md` - Product purpose, users, domain context
@@ -48,7 +48,7 @@ You will receive a prompt containing:
 
 3. **Implementation Files**:
    - Extract ALL implementation file paths from design.md
-   - Check spec.json `implementation.files_created` if present
+   - Check spec.yaml `implementation.files_created` if present
    - Use Glob to verify which files exist
    - Read ALL implementation files for quality analysis
 
@@ -59,7 +59,7 @@ You will receive a prompt containing:
 ### Cross-Check Mode
 
 1. **All Specs**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
    - Read design.md for each feature
    - Identify all implementation file paths
 
@@ -136,8 +136,8 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Read each spec.json
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
+   - Read each spec.yaml
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
@@ -150,7 +150,7 @@ You will receive a prompt containing:
 
 4. **Load Wave-Scoped Specs**:
    - For each spec where wave <= N:
-     - Read `design.md` + `tasks.md`
+     - Read `design.md` + `tasks.yaml`
 
 5. **Execute Wave-Scoped Cross-Check**:
    - Same analysis as Cross-Check Mode, limited to wave scope

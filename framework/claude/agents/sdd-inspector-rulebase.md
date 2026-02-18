@@ -35,7 +35,7 @@ You will receive a prompt containing:
 ### Single Spec Mode (feature name provided)
 
 1. **Load Context**:
-   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.json` for language and metadata
+   - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` for language and metadata
    - Read `{{SDD_DIR}}/project/specs/{feature}/design.md`
 
 2. **Load Templates and Rules**:
@@ -94,8 +94,8 @@ You will receive a prompt containing:
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json`
-   - Read each spec.json
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
+   - Read each spec.yaml
    - Filter specs where `roadmap.wave <= N`
 
 2. **Load Steering Context**:
@@ -119,7 +119,7 @@ You will receive a prompt containing:
 ### Cross-Check Mode (no feature name)
 
 1. **Discover All Specs**:
-   - Glob `{{SDD_DIR}}/project/specs/*/spec.json` to find all specs
+   - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml` to find all specs
    - For each spec, check if `design.md` exists
 
 2. **Load Templates and Rules**:
