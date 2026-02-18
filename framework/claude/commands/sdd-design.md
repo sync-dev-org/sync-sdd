@@ -33,7 +33,9 @@ Input examples:
 ## Step 2: Phase Gate
 
 - If existing spec: verify spec directory and spec.yaml exist
-- No phase restriction for design generation (any phase is valid)
+- BLOCK if `spec.yaml.phase` is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}"
+- If `spec.yaml.phase` is `implementation-complete`: warn user that re-designing will invalidate existing implementation. Use AskUser to confirm: "Re-designing {feature} will invalidate the current implementation. Proceed?" If rejected, abort.
+- Otherwise: no phase restriction for design generation
 
 ## Step 3: Spawn Architect
 

@@ -12,7 +12,6 @@ implementation:
 orchestration:
   retry_count: 0
   spec_update_count: 0
-  in_progress: false
   last_phase_action: null
 blocked_info: null
 roadmap: null

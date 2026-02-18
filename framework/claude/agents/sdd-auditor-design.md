@@ -4,7 +4,7 @@ description: |
   Cross-check and synthesis agent for design review.
   Receives results from 5 parallel review agents and produces verified, integrated report.
 
-  **Input**: Results from 5 review agents embedded in prompt
+  **Input**: Results from 5 review agents via SendMessage
   **Output**: Unified, verified design review report with final verdict
 tools: Read, Glob
 model: opus

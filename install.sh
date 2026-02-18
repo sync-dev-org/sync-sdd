@@ -314,7 +314,7 @@ if version_lt "$INSTALLED_VERSION" "0.10.0"; then
                     -e '/^[[:space:]]*[{}],\?$/d' \
                     "$spec_dir/spec.json" > "$spec_dir/spec.yaml"
                 # Append new fields
-                printf 'orchestration:\n  retry_count: 0\n  spec_update_count: 0\n  in_progress: false\n  last_phase_action: null\nblocked_info: null\n' >> "$spec_dir/spec.yaml"
+                printf 'orchestration:\n  retry_count: 0\n  spec_update_count: 0\n  last_phase_action: null\nblocked_info: null\n' >> "$spec_dir/spec.yaml"
                 rm "$spec_dir/spec.json"
             fi
         done

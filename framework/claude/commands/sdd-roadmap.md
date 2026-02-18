@@ -199,7 +199,7 @@ After all specs in a wave complete individual pipelines:
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user → user chooses: proceed to Dead Code Review despite issues, or abort wave
-   - **SPEC-UPDATE-NEEDED** → cascade fix from spec level (reset orchestration, set `phase = design-generated`, spawn Architect with SPEC_FEEDBACK → TaskGenerator → Builder → re-review)
+   - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
 **b. Dead Code Review** (full codebase):
 1. Spawn 4 dead-code Inspectors + dead-code Auditor:
@@ -209,11 +209,11 @@ After all specs in a wave complete individual pipelines:
 2. Read Auditor verdict from completion output
 3. Dismiss all dead-code review teammates
 4. Handle verdict:
-   - **GO** → Wave N complete, proceed to next wave
-   - **CONDITIONAL/NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
+   - **GO/CONDITIONAL** → Wave N complete, proceed to next wave
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
 
 **c. Post-gate**:
-- Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/`, clear buffer.md
+- Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/` using templates, update `{{SDD_DIR}}/project/knowledge/index.md`, clear buffer.md
 - Commit: `Wave {N}: {summary of completed specs}`
 - Auto-draft `{{SDD_DIR}}/handover/session.md`
 

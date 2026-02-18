@@ -135,7 +135,7 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 
 ### Auto-Fix Loop (Review)
 
-When Auditor returns NO-GO or SPEC-UPDATE-NEEDED:
+CONDITIONAL = GO (proceed; remaining issues are tracked). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
 1. Extract fix instructions from Auditor's verdict
 2. Dismiss review teammates
 3. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)

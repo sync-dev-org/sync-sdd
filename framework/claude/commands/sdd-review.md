@@ -125,14 +125,14 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Next Steps by Verdict
 
+CONDITIONAL = GO (proceed). Remaining issues are tracked but do not block advancement. CONDITIONAL does NOT increment `retry_count`.
+
 **Design Review**:
-- GO → `/sdd-impl {feature}`
-- CONDITIONAL → Address issues, optionally re-review
+- GO/CONDITIONAL → `/sdd-impl {feature}`
 - NO-GO → Auto-fix loop or manual fix
 
 **Implementation Review**:
-- GO → Feature complete
-- CONDITIONAL → Address issues
+- GO/CONDITIONAL → Feature complete
 - NO-GO → Auto-fix loop or manual fix
 - SPEC-UPDATE-NEEDED → Fix spec first (auto-fix from Architect level)
 

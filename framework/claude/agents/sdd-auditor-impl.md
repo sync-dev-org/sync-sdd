@@ -4,7 +4,7 @@ description: |
   Cross-check and synthesis agent for implementation review.
   Receives results from 5 parallel review agents and produces verified, integrated report.
 
-  **Input**: Results from 5 review agents embedded in prompt
+  **Input**: Results from 5 review agents via SendMessage
   **Output**: Unified, verified implementation review report with final verdict
 tools: Read, Glob
 model: opus
