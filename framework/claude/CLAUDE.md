@@ -46,6 +46,24 @@ User ──→ Lead ──→ T2/T3 Teammates
               ◄──
 ```
 
+### Artifact Ownership
+
+Lead による spec 成果物の操作は以下に限定する:
+
+| Artifact | Lead の許可操作 | 生成・内容変更の責任 |
+|----------|----------------|-------------------|
+| `design.md` | 読み取りのみ | Architect |
+| `research.md` | 読み取りのみ | Architect |
+| `tasks.yaml` | タスクステータス更新 (`done` マーク) のみ | TaskGenerator (生成・構造変更) |
+| Implementation code | 読み取りのみ | Builder |
+
+**禁止事項**: Lead が design.md の内容書き換え、tasks.yaml のタスク定義変更、コードの直接編集を行うことは禁止。
+
+ユーザーが spec の design や implementation の変更を要求した場合:
+- Roadmap active → `/sdd-roadmap revise {feature}` を使用
+- Standalone → `/sdd-design {feature}` を使用（Architect 経由）
+- **内容変更は必ず担当 teammate 経由** でルーティングする
+
 ### Phase Gate
 
 Before spawning any teammate, Lead MUST verify:
@@ -145,6 +163,7 @@ Review pipeline で Inspector が無応答/エラーの場合:
 
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
+  - Revision: `implementation-complete` → `design-generated` → (full pipeline) → `implementation-complete`
 - Each phase gate is enforced by the next command
 - Keep steering current and verify alignment with `/sdd-status`
 
@@ -220,6 +239,7 @@ Lead records the following decision types as a standard behavior:
 - `USER_DECISION`: when user makes an explicit choice
 - `DIRECTION_CHANGE`: spec split, wave restructure, scope change
 - `ESCALATION_RESOLVED`: outcome of an escalation to user
+- `REVISION_INITIATED`: user-initiated past-wave spec revision
 - `SESSION_START`: auto-append on session resume
 
 ## Product Intent

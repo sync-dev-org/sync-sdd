@@ -35,7 +35,8 @@ Input examples:
 
 - If existing spec: verify spec directory and spec.yaml exist
 - BLOCK if `spec.yaml.phase` is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}"
-- If `spec.yaml.phase` is `implementation-complete`: warn user that re-designing will invalidate existing implementation. Use AskUser to confirm: "Re-designing {feature} will invalidate the current implementation. Proceed?" If rejected, abort.
+- If `spec.yaml.phase` is `implementation-complete` AND `spec.yaml.roadmap` is non-null: BLOCK with "{feature} is part of an active roadmap. Use `/sdd-roadmap revise {feature}` to modify past-wave specs through the proper pipeline."
+- If `spec.yaml.phase` is `implementation-complete` AND `spec.yaml.roadmap` is null: warn user that re-designing will invalidate existing implementation. Use AskUser to confirm: "Re-designing {feature} will invalidate the current implementation. Proceed?" If rejected, abort.
 - Otherwise: no phase restriction for design generation
 
 ## Step 3: Spawn Architect

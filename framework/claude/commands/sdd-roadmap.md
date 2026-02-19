@@ -1,7 +1,7 @@
 ---
-description: Multi-feature roadmap (create, run, update, delete)
+description: Multi-feature roadmap (create, run, revise, update, delete)
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: [run [--gate] [--consensus N]] | [-y] | [create [-y]] | [update] | [delete]
+argument-hint: [run [--gate] [--consensus N]] | [revise {feature} [instructions]] | [-y] | [create [-y]] | [update] | [delete]
 ---
 
 # SDD Roadmap (Unified)
@@ -10,7 +10,7 @@ argument-hint: [run [--gate] [--consensus N]] | [-y] | [create [-y]] | [update] 
 
 ## Core Task
 
-Manage product-wide specification roadmap. Create/update/delete are handled by Lead directly. Run is the primary orchestration flow — Lead manages full pipeline execution.
+Manage product-wide specification roadmap. Create/update/delete are handled by Lead directly. Run is the primary orchestration flow — Lead manages full pipeline execution. Revise enables user-initiated modification of past-wave specs through the standard pipeline.
 
 ## Step 1: Detect Mode
 
@@ -18,6 +18,7 @@ Manage product-wide specification roadmap. Create/update/delete are handled by L
 $ARGUMENTS = "run"              → Execute roadmap (full-auto mode)
 $ARGUMENTS = "run --gate"       → Execute roadmap (gate mode)
 $ARGUMENTS = "run --consensus N" → Execute with N-run consensus reviews
+$ARGUMENTS = "revise {feature} [instructions]" → Revise past-wave spec
 $ARGUMENTS = "create" or "create -y" → Create roadmap
 $ARGUMENTS = "update"           → Sync roadmap with current spec states
 $ARGUMENTS = "delete"           → Delete roadmap and all specs
@@ -282,6 +283,79 @@ Lead handles directly:
 1. Require explicit "RESET" confirmation
 2. Delete roadmap.md and all spec directories
 3. Optionally reinitialize via Create mode
+
+## Revise Mode
+
+Past-wave spec の修正を正規パイプラインで実行する。Lead は CLAUDE.md §Artifact Ownership に従い、成果物の内容を直接編集しない。
+
+### Step 1: Validate
+
+1. Verify `roadmap.md` exists
+2. Verify `spec.yaml` exists and `phase` is `implementation-complete`
+3. Verify spec belongs to a completed wave (wave < current executing wave, or all waves complete)
+4. BLOCK if `phase` is `blocked`
+
+### Step 2: Collect Revision Intent
+
+1. If instructions provided in arguments → use directly
+2. If not → AskUser: "What changes are needed for {feature}?"
+3. Record as `REVISION_INITIATED` in `decisions.md`
+
+### Step 3: Impact Preview
+
+1. Traverse dependency graph → find all downstream specs with `spec.yaml.roadmap.dependencies` containing {feature}
+2. Classify: direct dependents (1-hop) vs transitive dependents (2+ hops)
+3. Present to user:
+   ```
+   Revision target: {feature} (Wave {N})
+   Direct dependents: {list or "none"}
+   Transitive dependents: {list or "none"}
+
+   Pipeline: Architect → Design Review → TaskGenerator → Builder → Impl Review
+   All tasks will be fully re-implemented (no differential).
+   Proceed?
+   ```
+4. On rejection → abort, record `USER_DECISION` in decisions.md
+
+### Step 4: State Transition
+
+1. Reset `orchestration.last_phase_action = null`
+2. Reset `orchestration.retry_count = 0`, `orchestration.spec_update_count = 0`
+3. Set `phase = design-generated`
+
+### Step 5: Execute Pipeline
+
+Standard pipeline with revision context:
+
+1. **Design Phase**: Spawn Architect with context:
+   - Feature: {feature}
+   - Mode: existing
+   - REVISION_INSTRUCTIONS: {user's modification intent}
+   - "Preserve unaffected design sections. Document changes in a '## Revision Notes' subsection."
+2. **Design Review Phase**: Same as Run Mode Step 4 Design Review
+3. **Implementation Phase**: Same as Run Mode Step 4 Implementation (TaskGenerator → Builder, all tasks fully re-implemented)
+4. **Implementation Review Phase**: Same as Run Mode Step 4 Impl Review
+
+Auto-fix loop applies normally (retry_count, spec_update_count).
+
+### Step 6: Downstream Resolution
+
+After revision pipeline completes (spec returns to `implementation-complete`):
+
+1. For each direct dependent spec that is `implementation-complete`:
+   - Present to user per-spec:
+     a. **Re-review**: Run impl review only (`/sdd-review impl {dep}`)
+     b. **Re-implement**: Reset to `design-generated`, full cascade
+     c. **Skip**: Accept current state
+   - Record each decision in `decisions.md` as `USER_DECISION`
+2. Execute user's choices sequentially
+3. For transitive dependents: flag in session.md Warnings section only (user decides in future waves)
+
+### Step 7: Post-Revision
+
+1. Auto-draft `{{SDD_DIR}}/handover/session.md`
+2. If roadmap run was in progress: resume from current position
+3. Suggest: `/sdd-status` to verify state
 
 ## Post-Completion
 

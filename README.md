@@ -21,7 +21,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.13.0
+curl -LsSf <url>/install.sh | sh -s -- --version v0.14.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -110,7 +110,7 @@ steering → design → review → implement → review
 | `/sdd-design` | Generate or edit a technical design |
 | `/sdd-review` | Multi-agent review (design/impl/dead-code) |
 | `/sdd-impl` | Task generation + TDD implementation |
-| `/sdd-roadmap` | Multi-feature roadmap (create/run/update/delete) |
+| `/sdd-roadmap` | Multi-feature roadmap (create/run/revise/update/delete) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
