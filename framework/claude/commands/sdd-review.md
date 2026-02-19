@@ -119,7 +119,7 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 CONDITIONAL = GO (proceed). Remaining issues are tracked but do not block advancement. CONDITIONAL does NOT increment `retry_count`.
 
 **Design Review**:
-- GO/CONDITIONAL → `/sdd-impl {feature}`
+- GO/CONDITIONAL → `/sdd-impl {feature}`. If verdict contains M/L issues, pass them as review findings context to TaskGenerator (see sdd-impl.md Step 2).
 - NO-GO → Auto-fix loop or manual fix
 
 **Implementation Review**:

@@ -23,6 +23,7 @@ Context from Lead:
 - Feature name
 - Design path: `{{SDD_DIR}}/project/specs/{feature}/design.md`
 - Research path: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
+- Review findings (advisory, if provided): M/L severity issues from design review
 
 ## Execution Steps
 
@@ -39,6 +40,7 @@ Read:
 - Use language specified in spec.yaml
 - Map ALL specifications from design.md to tasks
 - Include detail bullets: actionable implementation guidance per task
+- If review findings are provided, incorporate relevant findings into task detail bullets (e.g., add implementation notes to address flagged anti-patterns or ambiguities)
 - Mark parallel-capable tasks with `p: true`
 - Apply specs/acs references for traceability
 - Verify complete specification coverage
