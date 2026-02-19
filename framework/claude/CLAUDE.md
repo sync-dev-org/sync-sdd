@@ -100,12 +100,24 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 
 ### Teammate Recovery Protocol
 
+Review pipeline で teammate が無応答/エラーの場合の回復手順。
+
+#### Inspector Recovery
+
 Review pipeline で Inspector が無応答/エラーの場合:
 1. Lead は他の Inspector の idle 通知到着状況を確認
 2. 無応答 Inspector を `requestShutdown` で停止試行
 3. 同一 agent type で新名称の Inspector を再 spawn (1回リトライ)
 4. リトライ後も失敗 → Lead が Auditor に SendMessage: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
 5. Auditor は到着した結果のみで判定。欠落 Inspector を NOTES に記録。
+
+#### Auditor Recovery
+
+Auditor が verdict 出力前に idle になった場合:
+1. Lead は Auditor に SendMessage: "Output your verdict now with findings verified so far. Use NOTES: PARTIAL_VERIFICATION if incomplete."
+2. Auditor が応答し verdict 出力 → 通常フローに戻る
+3. 1回目の nudge 後も verdict なし → `requestShutdown` で停止、新名称で Auditor を再 spawn (1回リトライ)。Inspector CPF 結果を spawn context に直接埋め込み、"RECOVERY MODE: Inspector results in spawn context. Skip SendMessage wait. Prioritize verdict output." を指示。
+4. リトライ後も失敗 → Lead が Inspector 結果から保守的 verdict を導出 (Critical/High 件数ベース)。`NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict` を付与。
 
 ## Project Context
 

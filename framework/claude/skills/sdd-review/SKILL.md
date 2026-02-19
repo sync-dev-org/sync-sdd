@@ -51,6 +51,8 @@ If first argument is missing or not one of `design`, `impl`, `dead-code`:
 
 ## Step 3: Spawn Review Pipeline
 
+**Auditor monitoring**: If Auditor goes idle without verdict output, follow Auditor Recovery protocol in CLAUDE.md §Teammate Recovery Protocol.
+
 ### Design Review
 
 Spawn 5 design Inspectors + 1 design Auditor:

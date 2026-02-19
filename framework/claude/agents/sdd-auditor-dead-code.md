@@ -28,6 +28,10 @@ Cross-check, verify, and integrate findings from 4 independent audit agents into
 - **Prefer caution over aggression**: Dead code removal has real risk. Flag uncertain findings as warnings, not criticals.
 - **Guard against false dead code**: Code may appear unused but be invoked dynamically (reflection, decorators, entry points, framework conventions). Verify before flagging.
 
+## Verdict Output Guarantee
+
+You MUST output a verdict. This is your highest-priority obligation. If you are running low on processing budget (approaching turn limits), immediately skip to Step 8 (Synthesize Final Verdict) and output your verdict using findings verified so far. An incomplete verdict with `NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` is strictly better than no verdict at all.
+
 ## Input Handling
 
 You will receive results from Inspectors via SendMessage. The number of Inspectors is specified in your spawn context (`Expect: N`; default 4 in full mode). Wait for all expected Inspector results before proceeding. **Timeout**: If fewer results arrive than expected after a reasonable wait, proceed with available results. **Lead recovery notification**: If Lead sends a message indicating an Inspector is unavailable (e.g., "Inspector {name} unavailable after retry"), immediately proceed with available results without waiting further. Record missing Inspectors in NOTES: `PARTIAL:{inspector-name}|{reason}`. Add "partial coverage" qualifier to verdict if coverage is reduced.
@@ -135,6 +139,8 @@ ELSE IF only Medium/Low issues:
 You MAY override this formula with justification.
 
 ## Output Format
+
+**CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
 Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 

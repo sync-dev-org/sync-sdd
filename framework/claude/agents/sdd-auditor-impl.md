@@ -28,6 +28,15 @@ Cross-check, verify, and integrate findings from 5 independent review agents int
 - **Prefer simplicity**: When agents flag missing abstractions, utilities, or defensive code, critically evaluate whether the design actually requires them. Code that correctly implements the design with minimal surface area is superior to "comprehensive" code that adds unrequested capabilities.
 - **Guard against AI complexity bias**: LLM-generated reviews tend to recommend more error handling, more helpers, more configurability. Counter this by asking: "Does the design specify this?" If no, the addition is over-implementation.
 
+## Verdict Output Guarantee
+
+You MUST output a verdict. This is your highest-priority obligation. If you are running low on processing budget (approaching turn limits), immediately skip to Step 10 (Synthesize Final Verdict) and output your verdict using findings verified so far. An incomplete verdict with `NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` is strictly better than no verdict at all.
+
+**Budget strategy for large-scope reviews** (wave-scoped-cross-check, cross-check):
+- Steps 1-6: Execute using Inspector-reported evidence ONLY. Do not read source files.
+- Step 7 (Resolve Conflicts): Do NOT read source files. Resolve using Inspector evidence and your judgment. If unresolvable, record as `UNRESOLVED` in RESOLVED section.
+- Steps 8-10: Execute normally.
+
 ## Input Handling
 
 You will receive results from 5 Inspectors via SendMessage. Your spawn context contains:
@@ -145,9 +154,10 @@ Apply YOUR judgment to final severity:
 
 For each detected conflict between agents:
 1. Analyze root cause
-2. If possible, read actual source to determine truth
+2. Resolve using Inspector-reported evidence. Read source files ONLY for single-feature reviews with <=3 conflicts. For cross-check or wave-scoped modes, do NOT read source files.
 3. Make verifier's judgment call
 4. Document reasoning for human review
+5. If unresolvable without source access, mark as `UNRESOLVED` in RESOLVED section
 
 ### Step 8: Over-Implementation Check
 
@@ -217,6 +227,8 @@ ELSE IF only Medium/Low issues AND tests pass:
 You MAY override this formula with justification.
 
 ## Output Format
+
+**CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
 Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 

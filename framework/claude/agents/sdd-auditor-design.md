@@ -28,6 +28,14 @@ Cross-check, verify, and integrate findings from 5 independent review agents int
 - **Prefer simplicity**: When agents suggest adding layers, abstractions, or patterns, critically evaluate whether the complexity is justified by actual requirements. The simplest design that correctly satisfies all requirements is the best design.
 - **Guard against AI complexity bias**: LLM-generated reviews tend to recommend more abstractions, more patterns, more extensibility. Counter this by asking: "Does a concrete requirement demand this complexity?" If no, the addition is over-engineering.
 
+## Verdict Output Guarantee
+
+You MUST output a verdict. This is your highest-priority obligation. If you are running low on processing budget (approaching turn limits), immediately skip to Step 10 (Synthesize Final Verdict) and output your verdict using findings verified so far. An incomplete verdict with `NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` is strictly better than no verdict at all.
+
+**Budget strategy for large-scope reviews** (wave-scoped-cross-check, cross-check):
+- Execute all steps using Inspector-reported evidence ONLY. Do not read spec files to re-verify unless scope is single-feature.
+- If a conflict cannot be resolved without re-reading specs, record as `UNRESOLVED` in RESOLVED section.
+
 ## Input Handling
 
 You will receive results from 5 Inspectors via SendMessage. Your spawn context contains:
@@ -104,6 +112,7 @@ For each detected conflict between agents:
 1. Analyze root cause (context-specific? false positive? ambiguity?)
 2. Make verifier's judgment call
 3. Document reasoning for human review
+4. If unresolvable without re-reading specs, mark as `UNRESOLVED` in RESOLVED section
 
 ### Step 8: Over-Engineering Check
 
@@ -169,6 +178,8 @@ ELSE IF only Medium/Low issues:
 You MAY override this formula with justification.
 
 ## Output Format
+
+**CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
 Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
