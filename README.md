@@ -114,7 +114,3 @@ steering → design → review → implement → review
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
-
-## License
-
-MIT
