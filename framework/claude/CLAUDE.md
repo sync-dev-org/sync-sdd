@@ -78,7 +78,7 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 - **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
 - **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
 - **Framework convention — SendMessage usage**: Inspector → Auditor peer communication within review pipelines. Lead → Teammate for recovery notifications (see §Teammate Recovery Protocol).
-- **Concurrent teammate limit**: Framework designs for max 6 concurrent teammates (5 Inspectors + 1 Auditor) per review pipeline.
+- **Concurrent teammate limit**: 6 per single review pipeline. Consensus mode (`--consensus N`) spawns N pipelines in parallel (6×N teammates).
 
 ### Teammate Recovery Protocol
 
@@ -106,6 +106,7 @@ Review pipeline で Inspector が無応答/エラーの場合:
 |----------|-------|---------|----------|
 | **Steering** | Project-specific | Project-wide rules, context, decisions | No |
 | **Specs** | Feature-specific | Design + architecture + tasks for a feature | No |
+| **Verdicts** | Feature/Wave-specific | Review verdicts, consensus findings, issue tracking | No |
 | **Knowledge** | Cross-project | Reusable insights, patterns, incidents | Yes |
 
 - Project-specific decisions (tech stack, architecture) → Steering
@@ -154,7 +155,7 @@ Review pipeline で Inspector が無応答/エラーの場合:
 
 ### Auto-Fix Loop (Review)
 
-CONDITIONAL = GO (proceed; remaining issues are tracked). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
+CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/{feature}/verdicts.md` Tracked section). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
 1. Extract fix instructions from Auditor's verdict
 2. Dismiss review teammates
 3. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
@@ -173,9 +174,9 @@ CONDITIONAL = GO (proceed; remaining issues are tracked). Auto-fix triggers on N
 - Issues found → re-spawn responsible Builder(s) from file ownership records → re-review
 - Max 3 retries per gate → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
 - Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
-- CONDITIONAL = GO (proceed; remaining issues are tracked for future waves)
+- CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/verdicts-wave.md`)
 - Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N
-- **NEW issue detection**: Lead includes in Inspector spawn context: "Previously resolved issues from waves 1..{N-1}: {summary of resolved findings from earlier gate verdicts}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
+- **NEW issue detection**: Lead reads `specs/verdicts-wave.md` to collect resolved issues from waves 1..{N-1}. Lead includes in Inspector spawn context: "Previously resolved issues: {resolved findings from verdicts-wave.md}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
 
 ### Blocking/Unblocking Protocol
 
@@ -366,6 +367,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
    - Absent → first session: skip to step 6
    - Present → resume session: proceed
 2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
+2a. Read `{{SDD_DIR}}/project/specs/*/verdicts.md` → active review state per spec (latest batch Tracked)
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending Knowledge/Skill candidates
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically

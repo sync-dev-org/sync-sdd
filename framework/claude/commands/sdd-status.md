@@ -43,6 +43,7 @@ For each wave in roadmap:
 - Implementation status (files created, test results)
 - Version alignment check (design ↔ impl ↔ version_refs)
 - **Change history**: Display latest 5 entries from `spec.yaml.changelog` (version, action, timestamp)
+- **Review history**: If `verdicts.md` exists, display per batch: B{seq}, review-type, date, runs, verdict/consensus-verdict, tracked open count
 
 ### Impact Analysis (when `--impact` flag)
 

@@ -1,7 +1,7 @@
 ---
 description: Multi-feature roadmap (create, run, update, delete)
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: [run [--gate]] | [-y] | [create [-y]] | [update] | [delete]
+argument-hint: [run [--gate] [--consensus N]] | [-y] | [create [-y]] | [update] | [delete]
 ---
 
 # SDD Roadmap (Unified)
@@ -17,6 +17,7 @@ Manage product-wide specification roadmap. Create/update/delete are handled by L
 ```
 $ARGUMENTS = "run"              → Execute roadmap (full-auto mode)
 $ARGUMENTS = "run --gate"       → Execute roadmap (gate mode)
+$ARGUMENTS = "run --consensus N" → Execute with N-run consensus reviews
 $ARGUMENTS = "create" or "create -y" → Create roadmap
 $ARGUMENTS = "update"           → Sync roadmap with current spec states
 $ARGUMENTS = "delete"           → Delete roadmap and all specs
@@ -106,18 +107,22 @@ For each ready spec, execute pipeline phases in order:
    - Auditor context: "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (5 Inspectors + Auditor)
-4. Handle verdict:
+4. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see sdd-review.md Step 4 step 2)
+5. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
    - In **gate mode**: pause for user approval before advancing
-5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
-6. Auto-draft `{{SDD_DIR}}/handover/session.md`
+6. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+7. Auto-draft `{{SDD_DIR}}/handover/session.md`
+
+If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus Mode.
 
 #### Implementation Phase
 1. Spawn TaskGenerator with context:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
+   - Review findings: from `specs/{feature}/verdicts.md` latest design batch Tracked (if exists)
 2. Read TaskGenerator's completion report (`TASKGEN_COMPLETE`)
 3. Dismiss TaskGenerator
 4. Verify `tasks.yaml` exists
@@ -149,13 +154,16 @@ For each ready spec, execute pipeline phases in order:
    - Auditor context: "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (5 Inspectors + Auditor)
-4. Handle verdict:
+4. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see sdd-review.md Step 4 step 2)
+5. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
    - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
    - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
    - In **gate mode**: pause for user approval
-5. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
-6. Auto-draft `{{SDD_DIR}}/handover/session.md`
+6. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+7. Auto-draft `{{SDD_DIR}}/handover/session.md`
+
+If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus Mode.
 
 ### Step 5: Auto/Gate Mode Handling
 
@@ -192,11 +200,13 @@ Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1.
 After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped):
+0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Collect Consensus findings from previous wave batches. Compare successive batches to identify resolved issues (present in earlier batch Consensus but absent from later). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
 1. Spawn 5 impl Inspectors + Auditor with wave-scoped cross-check context:
-   - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {resolved_findings_from_earlier_gates}, Report to: sdd-auditor-impl"
+   - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
    - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 5 Inspector results"
 2. Read Auditor verdict from completion output
 3. Dismiss all cross-check teammates
+3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`). Same persistence logic as sdd-review.md Step 4 step 2.
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
@@ -212,6 +222,7 @@ After all specs in a wave complete individual pipelines:
    - sdd-auditor-dead-code: "Expect: 4 Inspector results via SendMessage"
 2. Read Auditor verdict from completion output
 3. Dismiss all dead-code review teammates
+3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
 4. Handle verdict:
    - **GO/CONDITIONAL** → Wave N complete, proceed to next wave
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)

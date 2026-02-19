@@ -1,7 +1,7 @@
 ---
 description: Multi-agent review (design, implementation, or dead code)
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check]
+argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check] [--consensus N]
 ---
 
 # SDD Review (Dispatcher)
@@ -27,6 +27,8 @@ $ARGUMENTS = "dead-code settings"         → Dead code review (settings only)
 $ARGUMENTS = "dead-code code"             → Dead code review (code only)
 $ARGUMENTS = "dead-code specs"            → Dead code review (specs only)
 $ARGUMENTS = "dead-code tests"            → Dead code review (tests only)
+$ARGUMENTS = "design {feature} --consensus N" → Design review with N consensus runs
+$ARGUMENTS = "impl {feature} --consensus N"   → Impl review with N consensus runs
 ```
 
 If first argument is missing or not one of `design`, `impl`, `dead-code`:
@@ -90,10 +92,41 @@ Parse Mode from arguments (default: `full`):
 Spawn selected dead-code Inspectors + `sdd-auditor-dead-code` (opus).
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
+### Consensus Mode (`--consensus N`)
+
+When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
+
+1. Spawn N pipelines in parallel. Each pipeline: same Inspector set + Auditor as above.
+   Use unique Auditor names per pipeline: `auditor-{type}-1`, `auditor-{type}-2`, ...
+   Each Inspector: `"Feature: {feature}, Report to: auditor-{type}-{n}"`
+   Each Auditor: `"Feature: {feature}, Expect: {inspector_count} Inspector results via SendMessage"`
+2. Read all N Auditors' verdicts from completion output. Dismiss all teammates.
+3. Aggregate VERIFIED sections across N verdicts:
+   - Key each finding by `{category}|{location}`
+   - Count frequency across N verdicts
+   - Confirmed: freq ≥ threshold → Consensus
+   - Noise: freq < threshold
+4. Construct consensus verdict:
+   - All N verdicts GO → GO
+   - Any C/H issue in Consensus → NO-GO
+   - Only M/L in Consensus → CONDITIONAL
+5. Proceed to Step 4 with consensus verdict.
+
+N=1 (default) skips aggregation — single pipeline runs as above and proceeds directly to Step 4.
+
 ## Step 4: Handle Verdict
 
-1. Parse CPF output from Auditor
-2. Format as human-readable markdown report:
+1. Parse CPF output from Auditor (or consensus verdict if `--consensus` mode)
+2. **Persist verdict** to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md`:
+   a. Read existing file (or create with `# Verdicts: {feature}` header)
+   b. Determine B{seq} (increment max existing, or start at 1)
+   c. Append batch entry: `## [B{seq}] {review-type} | {timestamp} | v{version} | runs:{N} | threshold:{K}/{N}`
+   d. Append Raw section (N Auditor CPF verdicts verbatim: V1, V2, ...)
+   e. Append Consensus section (findings with freq ≥ threshold) and Noise section (freq < threshold)
+   f. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
+   g. For CONDITIONAL: extract Consensus M/L issues → append as Tracked section
+   h. If previous batch exists with Tracked: compare with current Consensus → append `Resolved since B{prev}` for issues no longer present
+3. Format as human-readable markdown report:
    - Executive Summary (verdict + issue counts by severity)
    - Prioritized Issues table (Critical → High → Medium → Low)
    - Verification Notes (removed false positives, resolved conflicts)
@@ -116,10 +149,10 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Next Steps by Verdict
 
-CONDITIONAL = GO (proceed). Remaining issues are tracked but do not block advancement. CONDITIONAL does NOT increment `retry_count`.
+CONDITIONAL = GO (proceed). Remaining issues are persisted to `verdicts.md` Tracked section. CONDITIONAL does NOT increment `retry_count`.
 
 **Design Review**:
-- GO/CONDITIONAL → `/sdd-impl {feature}`. If verdict contains M/L issues, pass them as review findings context to TaskGenerator (see sdd-impl.md Step 2).
+- GO/CONDITIONAL → `/sdd-impl {feature}`. Review findings sourced from `verdicts.md` Tracked (see sdd-impl.md Step 2).
 - NO-GO → Auto-fix loop or manual fix
 
 **Implementation Review**:

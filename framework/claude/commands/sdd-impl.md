@@ -34,7 +34,7 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
      Feature: {feature}
      Design: {{SDD_DIR}}/project/specs/{feature}/design.md
      Research: {{SDD_DIR}}/project/specs/{feature}/research.md (if exists)
-     Review findings (advisory): {M/L issues from design review, if available}
+     Review findings (advisory): from {{SDD_DIR}}/project/specs/{feature}/verdicts.md latest design batch Tracked (if file exists)
      ```
   2. Read TaskGenerator's completion report (`TASKGEN_COMPLETE`)
   3. Dismiss TaskGenerator
