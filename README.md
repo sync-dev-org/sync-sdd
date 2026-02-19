@@ -37,7 +37,7 @@ your-project/
 └── .claude/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
-    ├── commands/sdd-*.md              # 8 slash commands
+    ├── skills/sdd-*/SKILL.md          # 8 skills
     ├── agents/sdd-*.md                # 20 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
