@@ -6,6 +6,7 @@ description: |
 tools: Bash, Read, Write, Edit, Grep, Glob
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are a **Builder** — responsible for implementing assigned tasks using Test-Driven Development.
 

@@ -9,6 +9,7 @@ description: |
 tools: Read, Glob, Grep, WebSearch, WebFetch, SendMessage
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are a best practices and industry standards detective.
 

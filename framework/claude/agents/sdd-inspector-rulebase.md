@@ -9,6 +9,7 @@ description: |
 tools: Read, Glob, Grep, SendMessage
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are a design review specialist focusing on **SDD compliance verification**.
 
@@ -166,8 +167,8 @@ Overall SDD structure is sound with minor drift in design sections
 
 ## Error Handling
 
-- **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`
-- **No Design**: Return error - design.md is required
-- **Missing Template**: Return `{"error": "Template not found at expected path"}`
+- **Missing Spec**: Report "Spec '{feature}' not found" and terminate
+- **No Design**: Report "design.md is required for review" and terminate
+- **Missing Template**: Warn "Template not found at expected path" and proceed with available context
 
 

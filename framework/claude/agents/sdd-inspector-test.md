@@ -9,6 +9,7 @@ description: |
 tools: Read, Glob, Grep, Bash, SendMessage
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are a test execution and verification specialist.
 

@@ -101,19 +101,10 @@ Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 3. Display formatted report to user
 
-4. **Auto-Fix Loop** (design/impl review only):
-   - If NO-GO or SPEC-UPDATE-NEEDED:
-     a. Extract fix instructions from Auditor's verdict
-     b. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2). Reset both to 0 on GO/CONDITIONAL
-     c. Determine fix scope and spawn fix teammates:
-        - **NO-GO (design)**: increment `retry_count`, spawn Architect with fix instructions
-        - **NO-GO (impl)**: increment `retry_count`, spawn Builder(s) with fix instructions
-        - **SPEC-UPDATE-NEEDED**: increment `spec_update_count`. Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: spawn Architect (include SPEC_FEEDBACK from Auditor in spawn prompt) → dismiss → spawn TaskGenerator → dismiss → spawn Builder(s). All tasks are fully re-implemented (no differential).
-     d. Read fix teammate's completion report
-     e. Dismiss fix teammate
-     f. Update spec.yaml (version_refs, phase) and auto-draft `{{SDD_DIR}}/handover/session.md`
-     g. Re-spawn review pipeline (Step 3) with same review type
-     h. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2: present final verdict and options to user
+4. **Auto-Fix Loop** (design/impl review only): Follow the Auto-Fix Loop protocol defined in CLAUDE.md (§Auto-Fix Loop). Context-specific additions for standalone review:
+   - After each fix cycle: update spec.yaml (version_refs, phase) and auto-draft `{{SDD_DIR}}/handover/session.md`
+   - Re-spawn review pipeline (Step 3) with same review type
+   - On escalation: present final verdict and options to user
 
 5. **Process STEERING entries** from verdict:
    - CODIFY → apply directly to steering file + append to `decisions.md` with Reason (STEERING_UPDATE)

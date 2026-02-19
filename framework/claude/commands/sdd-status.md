@@ -41,7 +41,8 @@ For each wave in roadmap:
 - Design status (exists, version)
 - Tasks status (parse tasks.yaml: total, done, pending, optional)
 - Implementation status (files created, test results)
-- Version alignment check (design ↔ impl)
+- Version alignment check (design ↔ impl ↔ version_refs)
+- **Change history**: Display latest 5 entries from `spec.yaml.changelog` (version, action, timestamp)
 
 ### Impact Analysis (when `--impact` flag)
 

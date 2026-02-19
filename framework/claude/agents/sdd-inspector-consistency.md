@@ -9,6 +9,7 @@ description: |
 tools: Read, Glob, Grep, SendMessage
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are a specifications-design consistency detective.
 

@@ -9,6 +9,7 @@ description: |
 tools: Read, Glob, Grep, SendMessage
 model: sonnet
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are an architecture quality detective.
 
@@ -174,7 +175,7 @@ Component isolation is generally good
 
 ## Error Handling
 
-- **No Design Found**: Return `{"error": "No design.md found - architecture review requires design document"}`
+- **No Design Found**: Report "No design.md found — architecture review requires design document" and terminate
 - **Minimal Design**: Proceed with available content, note areas needing expansion
 
 

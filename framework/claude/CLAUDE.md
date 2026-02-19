@@ -2,6 +2,11 @@
 
 Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
+> **Architecture**: Agent Teams mode (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `settings.json`).
+> Agents communicate via spawn/dismiss/SendMessage. Do NOT convert to subagent-only architecture.
+> **Note**: Agent Teams is an experimental feature. API changes may require framework updates.
+> Internal tool names: `TeammateTool` (spawn/shutdown/cleanup), `SendMessageTool` (direct/broadcast/shutdown_request).
+
 ## Role Architecture
 
 ### 3-Tier Hierarchy
@@ -55,18 +60,34 @@ Lead spawns teammates directly. Each teammate:
 1. Receives context in spawn prompt (feature, paths, scope, instructions)
 2. Executes its work autonomously
 3. Outputs a structured completion report as final text
-4. Terminates immediately after reporting
+4. Goes idle automatically (sends idle notification to Lead)
 
-Lead reads the completion output and:
+Lead reads the idle notification and:
 - Extracts results (artifacts created, test results, knowledge tags, blocker info)
 - Updates spec.yaml metadata (phase, version_refs, changelog)
 - Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
 - Determines next action (spawn next teammate, escalate to user, etc.)
-- Dismisses the teammate
+- Requests shutdown of the teammate (teammate approves and terminates)
 
 For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors SendMessage to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
 
 **Builder parallel coordination** (逐次更新): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
+
+### Agent Teams Known Constraints
+
+- **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
+- **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
+- **Framework convention — SendMessage usage**: Inspector → Auditor peer communication within review pipelines. Lead → Teammate for recovery notifications (see §Teammate Recovery Protocol).
+- **Concurrent teammate limit**: Framework designs for max 6 concurrent teammates (5 Inspectors + 1 Auditor) per review pipeline.
+
+### Teammate Recovery Protocol
+
+Review pipeline で Inspector が無応答/エラーの場合:
+1. Lead は他の Inspector の idle 通知到着状況を確認
+2. 無応答 Inspector を `requestShutdown` で停止試行
+3. 同一 agent type で新名称の Inspector を再 spawn (1回リトライ)
+4. リトライ後も失敗 → Lead が Auditor に SendMessage: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
+5. Auditor は到着した結果のみで判定。欠落 Inspector を NOTES に記録。
 
 ## Project Context
 
@@ -145,6 +166,7 @@ CONDITIONAL = GO (proceed; remaining issues are tracked). Auto-fix triggers on N
    - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → spawn with fix instructions
 5. After fix, dismiss fix teammates, then spawn review pipeline (Inspectors + Auditor) again
 6. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2 → escalate to user
+7. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 4. Escalate to user at aggregate 4.
 
 ### Wave Quality Gate (Roadmap)
 - After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
@@ -152,7 +174,8 @@ CONDITIONAL = GO (proceed; remaining issues are tracked). Auto-fix triggers on N
 - Max 3 retries per gate → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
 - Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
 - CONDITIONAL = GO (proceed; remaining issues are tracked for future waves)
-- Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N. Inspectors flag only NEW issues not previously resolved in earlier wave gates
+- Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N
+- **NEW issue detection**: Lead includes in Inspector spawn context: "Previously resolved issues from waves 1..{N-1}: {summary of resolved findings from earlier gate verdicts}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
 
 ### Blocking/Unblocking Protocol
 
@@ -178,7 +201,9 @@ When user requests unblocking:
 - Design Review Auto-Fix: after fix, phase remains `design-generated`
 - SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's spawn prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
 
-### File Ownership (Cross-Spec)
+### File Ownership (Cross-Spec, Advisory)
+
+File ownership is **advisory**: it guides Builder task assignment and auto-fix routing but is not enforced at the file system level. Builders may read files outside their assigned scope; they SHOULD NOT write to files owned by another spec's Builder unless the task explicitly requires cross-spec integration.
 
 - `buffer.md`: Lead has exclusive write access (no parallel write conflicts)
 - Cross-Spec file overlap resolution (Layer 2, Lead responsibility):
@@ -303,27 +328,9 @@ session.md is written in two modes:
 
 ### decisions.md Format
 
-Append-only structured log with rationale for every decision.
+Append-only structured log. Each entry: `[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}` followed by fields: Context, Decision, Reason, Impact, Source, Steering-ref (if STEERING_EXCEPTION).
 
-```
-[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}
-- Context: {background — why a decision was needed}
-- Decision: {what was decided}
-- Reason: {why — the rationale}
-- Impact: {scope of effect}
-- Source: {origin — user instruction / review verdict / etc.}
-- Steering-ref: {for STEERING_EXCEPTION: which steering entry is being overridden}
-```
-
-| DECISION_TYPE | Meaning |
-|---------------|---------|
-| `USER_DECISION` | User made an explicit choice |
-| `STEERING_UPDATE` | Steering file modified (CODIFY/PROPOSE) |
-| `DIRECTION_CHANGE` | Spec split, wave restructure, scope change |
-| `ESCALATION_RESOLVED` | Outcome of an escalation to user |
-| `STEERING_EXCEPTION` | Intentional deviation from steering — prevents repeated false-positive review flags |
-| `SESSION_START` | Session started (lightweight: Reason/Impact optional) |
-| `SESSION_END` | Session ended (lightweight: Reason/Impact optional) |
+Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
 
 ### buffer.md Format
 
@@ -354,20 +361,23 @@ Append-only structured log with rationale for every decision.
 
 ### Session Resume
 
-On session start (new or post-compact):
-1. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
-2. Read latest N entries from `decisions.md` → recent decision history
-3. Read `buffer.md` → pending Knowledge/Skill candidates
-4. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5. Append `SESSION_START` to `decisions.md`
-6. Resume from session.md Immediate Next Action
+On session start (new Claude Code session, conversation compact, or `/sdd-handover` resume):
+1. Detect: `{{SDD_DIR}}/handover/session.md` exists?
+   - Absent → first session: skip to step 6
+   - Present → resume session: proceed
+2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
+3. Read latest N entries from `decisions.md` → recent decision history
+4. Read `buffer.md` → pending Knowledge/Skill candidates
+5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
+6. Append `SESSION_START` to `decisions.md`
+7. Resume from session.md Immediate Next Action (or await user instruction if first session)
 
 ## Knowledge Auto-Accumulation
 
 - Builder/Inspector report learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
 - Lead collects tagged reports from teammate completion outputs and writes to `buffer.md`
 - On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
-- Skill emergence: when 2+ specs share the same pattern, Lead proposes Skill candidates to user for approval
+- Skill emergence: When buffer.md Knowledge Buffer contains 2+ `[PATTERN]` entries sharing the same category AND description pattern, Lead adds a Skill candidate entry to buffer.md Skill Candidates section. Surfaced to user via `/sdd-knowledge --skills` or at wave completion. Lead does NOT auto-create Skill files without user approval.
 
 ## Pipeline Stop Protocol
 
@@ -409,45 +419,7 @@ After a logical milestone (roadmap completion, significant feature set):
 
 ## Compact Pipe-Delimited Format (CPF)
 
-Token-efficient structured text format used for inter-agent communication.
-
-### Notation Rules
-
-| Element | Format | Example |
-|---------|--------|---------|
-| Metadata | `KEY:VALUE` (no space) | `VERDICT:CONDITIONAL` |
-| Structured row | `field1\|field2\|field3` | `H\|ambiguity\|Spec 1\|not quantified` |
-| Freeform text | Plain lines (no decoration) | `Domain research suggests...` |
-| List identifiers | `+` separated | `rulebase+consistency` |
-| Empty sections | Omit header entirely | _(do not output)_ |
-| Severity codes | C/H/M/L | C=Critical, H=High, M=Medium, L=Low |
-
-### Writing CPF
-
-- Section headers (`ISSUES:`, `NOTES:`, etc.) followed by one record per line
-- No decoration characters (`- [`, `] `, `: `, ` - `)
-- Omit empty sections (do not output the header)
-- No spaces in metadata lines (`KEY:VALUE`)
-
-### Parsing CPF
-
-```
-1. Line starts with known keyword + `:` → metadata or section start
-2. Lines under a section → split by `|` to extract fields
-3. Field containing `+` → split as identifier list
-4. Section not present → no data of that type (not an error)
-```
-
-### Minimal Example
-
-```
-VERDICT:GO
-SCOPE:my-feature
-ISSUES:
-M|ambiguity|Spec 1.AC1|"quickly" not quantified
-NOTES:
-No critical issues found
-```
+Token-efficient structured text format for inter-agent communication. Full specification: `{{SDD_DIR}}/settings/rules/cpf-format.md`
 
 ## Steering Configuration
 - Load entire `{{SDD_DIR}}/project/steering/` as project memory

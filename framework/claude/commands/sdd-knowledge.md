@@ -43,7 +43,6 @@ Categories: `state`, `api`, `async`, `data`, `security`, `integration`
 3. Load template: `{{SDD_DIR}}/settings/templates/knowledge/{type}.md`
 4. Generate content via dialogue
 5. Write knowledge file
-6. Update `{{SDD_DIR}}/project/knowledge/index.md`
 
 ## Auto-Accumulated Review Mode (`--review`)
 
@@ -55,8 +54,7 @@ Review knowledge collected automatically by Lead from Builder/Inspector reports.
    - Show tag (`[PATTERN]`/`[INCIDENT]`/`[REFERENCE]`), source, content
    - Options: **Accept** (write to knowledge/), **Edit** (modify before writing), **Discard**
 4. Write accepted entries using templates
-5. Update index.md
-6. Clear processed entries from Knowledge Buffer
+5. Clear processed entries from Knowledge Buffer
 
 ## Skill Emergence Mode (`--skills`)
 
@@ -78,7 +76,6 @@ Review Skill candidates detected by Lead.
 
 1. Report summary:
    - Created/reviewed entries count
-   - Index updated confirmation
    - Skills created (if any)
 2. Suggest: knowledge is used during `/sdd-review` for context-aware checks
 
@@ -88,7 +85,6 @@ Review Skill candidates detected by Lead.
 
 - **Invalid type**: Show available types and re-prompt
 - **Template missing**: Use inline basic structure with warning
-- **Index missing**: Create new index.md from scratch
 - **Empty knowledge buffer**: Inform user, suggest manual capture
 
 ## Integration with Reviews

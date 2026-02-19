@@ -5,20 +5,7 @@
   "permissions": {
     "allow": [
       "Bash(cat:*)",
-      "Bash(xargs:*)",
       "Bash(echo:*)"
-    ]
-  },
-  "hooks": {
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'After compact, always wait for the user next instruction. Do not start any action autonomously. Do not continue or resume previously in-progress tasks unless the user explicitly instructs you to do so.'"
-          }
-        ]
-      }
     ]
   }
 }

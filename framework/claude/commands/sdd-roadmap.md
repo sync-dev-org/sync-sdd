@@ -56,6 +56,7 @@ Lead handles pipeline execution directly.
 1. Read `roadmap.md` and all `spec.yaml` files
 2. Scan all `spec.yaml` files → rebuild pipeline state from phase/status fields
 3. Build dependency graph from `spec.yaml.roadmap` fields
+4. **DAG validation**: Topological sort the dependency graph. If a cycle is detected, BLOCK with: "Circular dependency detected: {cycle_path}. Fix spec.yaml.roadmap.dependencies before proceeding."
 
 ### Step 2: Cross-Spec File Ownership Analysis
 
@@ -133,12 +134,12 @@ For each ready spec, execute pipeline phases in order:
    - Read completion report (files, test results, knowledge tags, blockers)
    - Update tasks.yaml: mark completed tasks as `done`
    - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
-   - If BUILDER_BLOCKED: re-plan execution (modify tasks.yaml execution) or escalate
+   - If BUILDER_BLOCKED: classify cause (missing dependency → reorder tasks, re-spawn; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
 10. When dependent tasks are unblocked: dismiss completed Builder, spawn next-wave Builders immediately
 11. On ALL Builders complete:
    - Dismiss remaining Builders
    - Aggregate files from all Builder reports
-   - Update spec.yaml: `phase=implementation-complete`, `implementation.files_created=[{files}]`
+   - Update spec.yaml: `phase=implementation-complete`, `implementation.files_created=[{files}]`, `version_refs.implementation={version}`
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
@@ -192,13 +193,16 @@ After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped):
 1. Spawn 5 impl Inspectors + Auditor with wave-scoped cross-check context:
-   - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Report to: sdd-auditor-impl"
+   - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {resolved_findings_from_earlier_gates}, Report to: sdd-auditor-impl"
    - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 5 Inspector results"
 2. Read Auditor verdict from completion output
 3. Dismiss all cross-check teammates
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user → user chooses: proceed to Dead Code Review despite issues, or abort wave
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
+     a. **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record as `ESCALATION_RESOLVED` in decisions.md with accepted issues listed
+     b. **Abort wave**: Stop wave execution, leave specs as-is. Record as `ESCALATION_RESOLVED` with abort reason
+     c. **Manual fix**: User fixes issues manually, then Lead re-runs Wave QG (counter reset)
    - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
 **b. Dead Code Review** (full codebase):
@@ -213,7 +217,7 @@ After all specs in a wave complete individual pipelines:
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
 
 **c. Post-gate**:
-- Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/` using templates, update `{{SDD_DIR}}/project/knowledge/index.md`, clear buffer.md
+- Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/` using templates, clear buffer.md
 - Commit: `Wave {N}: {summary of completed specs}`
 - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
@@ -226,11 +230,40 @@ After all waves complete:
 ## Update Mode
 
 Lead handles directly:
-1. Load roadmap and scan all spec states
-2. Detect structural differences (missing specs, wave mismatches, dependency changes)
-3. Impact analysis (wave reordering, scope changes)
-4. Present update options (Apply All / Selective / Abort)
-5. Execute updates with preview
+
+### Step 1: Load and Compare
+1. Read `roadmap.md` and scan all `spec.yaml` files
+2. Build current state map: `{spec: {phase, wave, dependencies, version}}`
+3. Compare against roadmap.md declared state
+
+### Step 2: Detect Differences
+
+| Category | Detection |
+|----------|-----------|
+| **Missing spec** | spec.yaml exists but not in roadmap.md |
+| **Orphaned entry** | roadmap.md lists spec but no spec.yaml |
+| **Wave mismatch** | spec.yaml.roadmap.wave differs from roadmap.md |
+| **Dependency change** | spec.yaml.roadmap.dependencies differ |
+| **Phase regression** | spec phase earlier than expected for completed wave |
+| **Blocked cascade** | spec is blocked but roadmap shows active |
+
+### Step 3: Impact Analysis
+For each difference:
+1. Trace dependency graph forward (downstream impact)
+2. Check wave ordering integrity (would change violate wave boundaries?)
+3. Classify impact: `SAFE` / `WAVE_REORDER` / `SCOPE_CHANGE`
+
+### Step 4: Present Options
+- **Apply All**: Apply all safe changes, present risky changes individually
+- **Selective**: User picks which changes to apply
+- **Abort**: No changes
+
+### Step 5: Execute
+1. Update roadmap.md to reflect accepted changes
+2. Update affected spec.yaml roadmap fields
+3. If wave reordering: re-validate dependency graph (no cycles)
+4. Auto-draft `{{SDD_DIR}}/handover/session.md`
+5. Record changes to `decisions.md` as `DIRECTION_CHANGE`
 
 ## Delete Mode
 

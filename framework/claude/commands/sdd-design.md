@@ -10,11 +10,12 @@ argument-hint: <feature-name-or-"description">
 
 ## Core Task
 
-Orchestrate design generation for feature **$1** by spawning Architect directly.
+Orchestrate design generation by spawning Architect directly. Parse `$ARGUMENTS` as the feature name or description.
 
 ## Step 1: Input Mode Detection
 
-1. Check if `{{SDD_DIR}}/project/specs/$1/spec.yaml` exists
+1. Parse feature name from `$ARGUMENTS` (the full argument string)
+2. Check if `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` exists
 2. **If exists** → Existing Spec mode (edit/regenerate)
 3. **If not** → New Spec mode (initialize from description)
 
@@ -53,6 +54,7 @@ Input examples:
    - If re-edit (`version_refs.design` is non-null): increment `version` minor
    - Set `version_refs.design` = current `version`
    - Set `phase` = `design-generated`
+   - Set `orchestration.last_phase_action` = null
    - Update `changelog`
 
 ## Step 4: Post-Completion

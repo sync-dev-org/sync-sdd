@@ -6,6 +6,7 @@ description: |
 tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 model: opus
 ---
+<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
 You are the **Architect** — responsible for generating comprehensive technical designs.
 
@@ -90,7 +91,7 @@ Version consistency check (skip if `version_refs` not present):
    - Use language specified in spec.yaml
    - Ensure Specifications Traceability maps spec IDs to components
 
-3. **Do NOT update spec.yaml** — Lead manages all metadata updates.
+2. **Do NOT update spec.yaml** — Lead manages all metadata updates.
 
 ## Critical Constraints
 - **Type Safety**: Enforce strong typing aligned with the project's technology stack
