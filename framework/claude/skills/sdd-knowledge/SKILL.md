@@ -69,7 +69,7 @@ Review Skill candidates detected by Lead.
    - Options: **Approve** (generate Skill file), **Modify** (edit before generating), **Reject**
 4. For approved Skills:
    - **Namespace check**: BLOCK if `{skill-name}` starts with `sdd-` (reserved for framework commands)
-   - Generate command file in `.claude/commands/{skill-name}.md`
+   - Generate skill file in `.claude/skills/{skill-name}/SKILL.md`
    - Report to user: Skill created, available via `/{skill-name}`
 
 ## Post-Completion
