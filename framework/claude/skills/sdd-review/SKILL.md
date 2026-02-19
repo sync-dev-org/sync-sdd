@@ -55,26 +55,28 @@ If first argument is missing or not one of `design`, `impl`, `dead-code`:
 
 ### Design Review
 
-Spawn 5 design Inspectors + 1 design Auditor:
+Spawn 6 design Inspectors + 1 design Auditor:
 - `sdd-inspector-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-testability` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-architecture` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-consistency` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-best-practices` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
-- `sdd-auditor-design` (opus): "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
+- `sdd-inspector-holistic` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
+- `sdd-auditor-design` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
 Inspectors send CPF results directly to Auditor via SendMessage.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Implementation Review
 
-Spawn 5 impl Inspectors + 1 impl Auditor:
+Spawn 6 impl Inspectors + 1 impl Auditor:
 - `sdd-inspector-impl-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-interface` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-test` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-quality` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-impl-consistency` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
-- `sdd-auditor-impl` (opus): "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
+- `sdd-inspector-impl-holistic` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
+- `sdd-auditor-impl` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
 Inspectors send CPF results directly to Auditor via SendMessage.
 Read Auditor's verdict from completion output. Dismiss all review teammates.

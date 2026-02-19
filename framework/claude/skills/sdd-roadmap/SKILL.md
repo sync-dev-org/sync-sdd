@@ -102,12 +102,12 @@ For each ready spec, execute pipeline phases in order:
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
-1. Spawn 5 design Inspectors + design Auditor:
-   - Inspector set: rulebase, testability, architecture, consistency, best-practices
+1. Spawn 6 design Inspectors + design Auditor:
+   - Inspector set: rulebase, testability, architecture, consistency, best-practices, holistic
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-design"
-   - Auditor context: "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
+   - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
-3. Dismiss all review teammates (5 Inspectors + Auditor)
+3. Dismiss all review teammates (6 Inspectors + Auditor)
 4. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see sdd-review.md Step 4 step 2)
 5. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
@@ -149,12 +149,12 @@ If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
-1. Spawn 5 impl Inspectors + impl Auditor:
-   - Inspector set: impl-rulebase, interface, test, quality, impl-consistency
+1. Spawn 6 impl Inspectors + impl Auditor:
+   - Inspector set: impl-rulebase, interface, test, quality, impl-consistency, impl-holistic
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-impl"
-   - Auditor context: "Feature: {feature}, Expect: 5 Inspector results via SendMessage"
+   - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
-3. Dismiss all review teammates (5 Inspectors + Auditor)
+3. Dismiss all review teammates (6 Inspectors + Auditor)
 4. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see sdd-review.md Step 4 step 2)
 5. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
@@ -202,9 +202,9 @@ After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped):
 0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Collect Consensus findings from previous wave batches. Compare successive batches to identify resolved issues (present in earlier batch Consensus but absent from later). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
-1. Spawn 5 impl Inspectors + Auditor with wave-scoped cross-check context:
+1. Spawn 6 impl Inspectors + Auditor with wave-scoped cross-check context:
    - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
-   - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 5 Inspector results"
+   - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 6 Inspector results"
 2. Read Auditor verdict from completion output
 3. Dismiss all cross-check teammates
 3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`). Same persistence logic as sdd-review.md Step 4 step 2.

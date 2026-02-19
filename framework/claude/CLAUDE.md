@@ -24,7 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teamma
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
-| T3 | **Inspector** | Individual review perspectives. 5 inspectors spawned in parallel. Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. 6 inspectors spawned in parallel (design/impl), 4 (dead-code). Outputs CPF findings. |
 
 ### Chain of Command
 
@@ -96,7 +96,7 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 - **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
 - **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
 - **Framework convention — SendMessage usage**: Inspector → Auditor peer communication within review pipelines. Lead → Teammate for recovery notifications (see §Teammate Recovery Protocol).
-- **Concurrent teammate limit**: 6 per single review pipeline. Consensus mode (`--consensus N`) spawns N pipelines in parallel (6×N teammates).
+- **Concurrent teammate limit**: 24 (3 pipelines × 7 teammates + headroom). Consensus mode (`--consensus N`) spawns N pipelines in parallel (7×N teammates).
 
 ### Teammate Recovery Protocol
 
