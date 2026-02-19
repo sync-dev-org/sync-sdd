@@ -5,6 +5,7 @@ description: |
   Detects spec drift, unimplemented features, and orphaned implementations.
 tools: Bash, Read, Glob, Grep, SendMessage
 model: sonnet
+permissionMode: bypassPermissions
 ---
 <!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 

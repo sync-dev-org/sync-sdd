@@ -5,6 +5,7 @@ description: |
   stale tests, and tests depending on outdated interfaces.
 tools: Bash, Read, Glob, Grep, SendMessage
 model: sonnet
+permissionMode: bypassPermissions
 ---
 <!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 

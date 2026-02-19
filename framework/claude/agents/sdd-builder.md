@@ -5,6 +5,7 @@ description: |
   RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags for Knowledge accumulation.
 tools: Bash, Read, Write, Edit, Grep, Glob
 model: sonnet
+permissionMode: bypassPermissions
 ---
 <!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 

@@ -5,6 +5,7 @@ description: |
   Performs discovery, research, and produces design.md + research.md.
 tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
 model: opus
+permissionMode: bypassPermissions
 ---
 <!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 

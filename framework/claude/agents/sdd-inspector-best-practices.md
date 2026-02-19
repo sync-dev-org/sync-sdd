@@ -8,6 +8,7 @@ description: |
   **Output**: Structured findings with best practices alignment and steering proposals
 tools: Read, Glob, Grep, WebSearch, WebFetch, SendMessage
 model: sonnet
+permissionMode: bypassPermissions
 ---
 <!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
 
