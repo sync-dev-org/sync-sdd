@@ -20,10 +20,11 @@ Thoroughly investigate the project's source code to detect unused code — funct
 Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical checklist.
 
 1. **Discover project structure**: Find source directories, entry points, module boundaries
-2. **Enumerate public symbols**: Functions, classes, methods, constants
-3. **Trace call sites**: Search thoroughly for references to each symbol
-4. **Run analysis scripts**: Use Bash with inline Python (`python -c "..."` or heredocs) for AST analysis or call graph generation when needed
-5. **Compare exports with usage**: Check `__all__`, public APIs, re-exports
+2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
+3. **Enumerate public symbols**: Functions, classes, methods, constants
+4. **Trace call sites**: Search thoroughly for references to each symbol
+5. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
+6. **Compare exports with usage**: Check `__all__`, public APIs, re-exports
 
 ## Key Focus Areas
 

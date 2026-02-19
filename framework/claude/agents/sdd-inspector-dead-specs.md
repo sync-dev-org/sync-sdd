@@ -20,10 +20,11 @@ Thoroughly investigate alignment between project specifications and implementati
 Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical checklist.
 
 1. **Discover project structure**: Find spec directories, implementation directories
-2. **Read each spec**: Understand expected implementation from design.md and tasks.yaml
-3. **Cross-reference with code**: Compare spec promises with actual implementation
-4. **Check task completion**: Compare task status in tasks.yaml with actual code state
-5. **Run analysis scripts**: Use Bash with inline Python (`python -c "..."` or heredocs) for automated comparison when needed
+2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
+3. **Read each spec**: Understand expected implementation from design.md and tasks.yaml
+4. **Cross-reference with code**: Compare spec promises with actual implementation
+5. **Check task completion**: Compare task status in tasks.yaml with actual code state
+6. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
 
 ## Key Focus Areas
 

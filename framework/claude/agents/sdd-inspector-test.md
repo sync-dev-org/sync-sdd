@@ -26,6 +26,7 @@ Verify that tests exist, pass, provide meaningful coverage, and do not produce f
 - Do NOT evaluate code style or naming conventions
 - Use Bash to execute tests and gather results
 - Be skeptical of passing tests - investigate mock quality
+- Use exact command patterns from `steering/tech.md` Common Commands for all Bash execution
 
 ## Input Handling
 
@@ -88,12 +89,7 @@ You will receive a prompt containing:
    - Capture any error output
    - Record test count (passed, failed, skipped, errors)
 
-   ```bash
-   # Example: Run scoped tests
-   pytest tests/test_feature.py -v
-   # or
-   npm test -- --testPathPattern="feature"
-   ```
+   Use the test command from `steering/tech.md` Common Commands, scoped to the feature's test files.
 
 4. **Regression Check**:
 

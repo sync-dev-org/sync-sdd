@@ -20,10 +20,11 @@ Thoroughly investigate the project's test code to detect orphaned test code — 
 Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical checklist.
 
 1. **Discover project structure**: Find test directories, conftest files, test utilities
-2. **Enumerate fixture definitions**: Trace their usage across all test files
-3. **Compare test imports with source**: Verify tested symbols still exist
-4. **Run analysis scripts**: Use Bash with inline Python (`python -c "..."` or heredocs) for fixture dependency analysis when needed
-5. **Detect stale patterns**: Tests that pass but test nothing meaningful
+2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
+3. **Enumerate fixture definitions**: Trace their usage across all test files
+4. **Compare test imports with source**: Verify tested symbols still exist
+5. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
+6. **Detect stale patterns**: Tests that pass but test nothing meaningful
 
 ## Key Focus Areas
 

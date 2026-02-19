@@ -20,10 +20,11 @@ Thoroughly investigate the project's configuration management to detect "dead co
 Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical checklist.
 
 1. **Discover project structure**: Find config files, environment files, settings modules
-2. **Identify config classes/modules**: Extract all defined fields
-3. **Trace usage for each field**: Follow the path from definition → intermediate layer → final consumer
-4. **Run analysis scripts**: Use Bash with inline Python (`python -c "..."` or heredocs) for AST analysis or dependency tracing when needed
-5. **Verify passthrough chains**: Confirm config values actually reach their consumers (broken passthrough with defaults is especially sneaky)
+2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
+3. **Identify config classes/modules**: Extract all defined fields
+4. **Trace usage for each field**: Follow the path from definition → intermediate layer → final consumer
+5. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
+6. **Verify passthrough chains**: Confirm config values actually reach their consumers (broken passthrough with defaults is especially sneaky)
 
 ## Key Focus Areas
 

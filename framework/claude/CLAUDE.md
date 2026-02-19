@@ -415,6 +415,12 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 
+## Execution Conventions
+
+- **No comment preamble in Bash commands**: The `command` argument to Bash must begin with the executable. Do not prepend `#` comment lines. Use the Bash tool's `description` parameter for human-readable context.
+- **Use steering Common Commands**: When running project tools (test, lint, build, format, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
+- **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
+
 ## Git Workflow
 
 Trunk-based development. main is always HEAD.

@@ -30,7 +30,7 @@ You receive context from Lead including:
 
 Read all necessary context:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `tasks.yaml`
-- **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
+- **Entire `{{SDD_DIR}}/project/steering/` directory** — especially `tech.md` Common Commands for all Bash execution
 
 ### Step 2: Execute with TDD
 
