@@ -28,3 +28,7 @@
 - Reason: Step 9 (Post-Release Verification) の追加は install.sh のスコープに影響しない
 - Impact: installer は implementation-complete のまま。再レビュー不要
 - Source: ユーザー判断
+
+[2026-02-20T13:00:00Z] D6: SESSION_END | release-automation revision + Change Request Triage ルール追加
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
