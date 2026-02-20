@@ -1,0 +1,22 @@
+feature_name: "status-progress"
+created_at: "2026-02-20"
+updated_at: "2026-02-20"
+language: "markdown"
+version: "1.0.0"
+changelog: []
+version_refs:
+  design: "1.0.0"
+  implementation: "1.0.0"
+phase: implementation-complete
+implementation:
+  files_created:
+    - "framework/claude/skills/sdd-status/SKILL.md"
+orchestration:
+  retry_count: 0
+  spec_update_count: 0
+  last_phase_action: null
+blocked_info: null
+roadmap:
+  wave: 5
+  dependencies:
+    - "core-architecture"

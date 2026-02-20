@@ -1,0 +1,25 @@
+feature_name: "cpf-protocol"
+created_at: "2026-02-20"
+updated_at: "2026-02-20"
+language: "markdown"
+version: "1.0.0"
+changelog: []
+version_refs:
+  design: "1.0.0"
+  implementation: "1.0.0"
+phase: implementation-complete
+implementation:
+  files_created:
+    - "framework/claude/sdd/settings/rules/cpf-format.md"
+  notes: >
+    CPF プロトコルは横断的仕様。cpf-format.md がフォーマット定義本体。
+    Inspector/Auditor の CPF スキーマ実装は各 review spec (design-review, impl-review, dead-code-review) の
+    agent 定義に含まれる。Consensus 集約ロジックは sdd-review SKILL.md に含まれる。
+orchestration:
+  retry_count: 0
+  spec_update_count: 0
+  last_phase_action: null
+blocked_info: null
+roadmap:
+  wave: 1
+  dependencies: []

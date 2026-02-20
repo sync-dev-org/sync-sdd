@@ -1,0 +1,29 @@
+feature_name: "design-pipeline"
+created_at: "2026-02-20"
+updated_at: "2026-02-20"
+language: "markdown"
+version: "1.0.0"
+changelog: []
+version_refs:
+  design: "1.0.0"
+  implementation: "1.0.0"
+phase: implementation-complete
+implementation:
+  files_created:
+    - "framework/claude/skills/sdd-design/SKILL.md"
+    - "framework/claude/agents/sdd-architect.md"
+    - "framework/claude/sdd/settings/rules/design-discovery-full.md"
+    - "framework/claude/sdd/settings/rules/design-discovery-light.md"
+    - "framework/claude/sdd/settings/rules/design-principles.md"
+    - "framework/claude/sdd/settings/templates/specs/design.md"
+    - "framework/claude/sdd/settings/templates/specs/research.md"
+    - "framework/claude/sdd/settings/templates/specs/init.yaml"
+orchestration:
+  retry_count: 0
+  spec_update_count: 0
+  last_phase_action: null
+blocked_info: null
+roadmap:
+  wave: 2
+  dependencies:
+    - "core-architecture"

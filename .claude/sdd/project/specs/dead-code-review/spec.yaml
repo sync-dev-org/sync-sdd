@@ -1,0 +1,26 @@
+feature_name: "dead-code-review"
+created_at: "2026-02-20"
+updated_at: "2026-02-20"
+language: "markdown"
+version: "1.0.0"
+changelog: []
+version_refs:
+  design: "1.0.0"
+  implementation: "1.0.0"
+phase: implementation-complete
+implementation:
+  files_created:
+    - "framework/claude/agents/sdd-auditor-dead-code.md"
+    - "framework/claude/agents/sdd-inspector-dead-code.md"
+    - "framework/claude/agents/sdd-inspector-dead-tests.md"
+    - "framework/claude/agents/sdd-inspector-dead-specs.md"
+    - "framework/claude/agents/sdd-inspector-dead-settings.md"
+orchestration:
+  retry_count: 0
+  spec_update_count: 0
+  last_phase_action: null
+blocked_info: null
+roadmap:
+  wave: 4
+  dependencies:
+    - "cpf-protocol"
