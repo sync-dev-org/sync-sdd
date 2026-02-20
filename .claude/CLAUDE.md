@@ -1,4 +1,5 @@
-# AI-DLC and Spec-Driven Development (v{{SDD_VERSION}})
+<!-- sdd:start -->
+# AI-DLC and Spec-Driven Development (v0.17.0)
 
 Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
@@ -465,3 +466,4 @@ Token-efficient structured text format for inter-agent communication. Full speci
 - Load entire `{{SDD_DIR}}/project/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/sdd-steering`)
+<!-- sdd:end -->
