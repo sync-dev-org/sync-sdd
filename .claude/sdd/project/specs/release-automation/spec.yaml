@@ -1,12 +1,13 @@
 feature_name: "release-automation"
 created_at: "2026-02-20"
-updated_at: "2026-02-20"
+updated_at: "2026-02-20T12:30:00Z"
 language: "markdown"
-version: "1.0.0"
-changelog: []
+version: "1.1.0"
+changelog:
+  - "1.1.0: Add Spec 7 Post-Release Verification"
 version_refs:
-  design: "1.0.0"
-  implementation: "1.0.0"
+  design: "1.1.0"
+  implementation: "1.1.0"
 phase: implementation-complete
 implementation:
   files_created:
@@ -15,6 +16,7 @@ orchestration:
   retry_count: 0
   spec_update_count: 0
   last_phase_action: null
+  revision_instructions: null
 blocked_info: null
 roadmap:
   wave: 6

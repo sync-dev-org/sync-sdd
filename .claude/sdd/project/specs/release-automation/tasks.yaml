@@ -1,0 +1,122 @@
+tasks:
+  - id: "1"
+    summary: Rewrite SKILL.md with complete step sequence including Post-Release Verification
+    status: done
+    subtasks:
+      - id: "1.1"
+        summary: Rewrite skill header, core task description, and input section
+        details:
+          - Preserve the YAML front matter (description, allowed-tools, argument-hint) unchanged
+          - Update the Core Task description in the instructions block to include "post-release verification" in the automation sequence listed
+          - Keep Step 1 Pre-Flight Checks content identical to v1.0.0 (no changes to Specs 1-2 content)
+          - Keep Step 2 Ecosystem Detection content identical to v1.0.0
+          - Revision is a full overwrite — write the complete file from scratch, not a patch
+        specs: [1, 2]
+        acs: [S1.AC1, S1.AC2, S1.AC3, S1.AC4, S1.AC5, S1.AC6, S2.AC1, S2.AC2, S2.AC3, S2.AC4, S2.AC5, S2.AC6, S2.AC7]
+        status: done
+        depends: []
+
+      - id: "1.2"
+        summary: Write Steps 3 and 4 (Documentation Update and Metadata Update)
+        details:
+          - Keep Step 3 Documentation Update content identical to v1.0.0 (Spec 3 unchanged)
+          - Keep Step 4 Metadata Update content identical to v1.0.0 with all six ecosystem subsections (Spec 4 unchanged)
+          - Ensure SDD Framework subsection in Step 4 remains accurate (VERSION, README.md --version line, install.sh header comment)
+        specs: [3, 4]
+        acs: [S3.AC1, S3.AC2, S3.AC3, S4.AC1, S4.AC2, S4.AC3, S4.AC4, S4.AC5, S4.AC6]
+        status: done
+        depends: ["1.1"]
+
+      - id: "1.3"
+        summary: Write Steps 5 through 8 (Git Release Flow)
+        details:
+          - Keep Steps 5-8 (Commit on Main, Release Branch + Tag, Push Release, Return to Main + Push) content identical to v1.0.0 (Spec 5 unchanged)
+          - Step numbering must remain 5, 6, 7, 8 — verification step will be inserted as Step 9 before the report
+        specs: [5]
+        acs: [S5.AC1, S5.AC2, S5.AC3, S5.AC4, S5.AC5, S5.AC6]
+        status: done
+        depends: ["1.2"]
+
+      - id: "1.4"
+        summary: Write Step 9 Post-Release Verification (new step)
+        details:
+          - Insert as Step 9 between the existing Step 8 (Return to Main + Push) and the Report step (now Step 10)
+          - Begin with a clear statement that verification runs after ALL git operations (including push to main) are complete
+          - Document Git tag verification for all ecosystems using "git describe --tags --abbrev=0" and matching against "v{version}"; output warning message "Warning: git tag mismatch — expected v{version}, got {actual}" on mismatch (Spec 7 AC1)
+          - Document Python (hatch-vcs) metadata rebuild sub-flow (Spec 7 AC2 and AC3):
+            - Check for uv.lock existence
+            - If uv.lock exists: read package name from pyproject.toml [project] name field, then run "uv sync --reinstall-package {pkg}" to force metadata rebuild
+            - Do NOT use "uv pip install -e ." — this breaks lockfile integrity; the correct command is "uv sync --reinstall-package {pkg}" (addresses review finding M: explicit error handling)
+            - After rebuild: verify version via runtime using "uv run python -c 'import importlib.metadata; print(importlib.metadata.version(\"{pkg}\"))'"; warn on mismatch with message "Warning: runtime version mismatch — expected {version}, got {actual}"
+            - If uv.lock absent: output "Warning: uv.lock not found — skipping runtime verification" and proceed with git tag check only
+            - If package name cannot be read: output "Warning: could not read package name from pyproject.toml — skipping runtime verification"
+          - Document Python (standard) file check: read version field from pyproject.toml and compare; warn with "Warning: file version mismatch in pyproject.toml — expected {version}, got {actual}" (Spec 7 AC4)
+          - Document TypeScript file check: read version field from package.json and compare; warn with "Warning: file version mismatch in package.json — expected {version}, got {actual}" (Spec 7 AC5)
+          - Document Rust file check: read version field from Cargo.toml and compare; warn with "Warning: file version mismatch in Cargo.toml — expected {version}, got {actual}" (Spec 7 AC6)
+          - Document SDD Framework file check: read VERSION file contents and compare; warn with "Warning: file version mismatch in VERSION — expected {version}, got {actual}" (Spec 7 AC7)
+          - Document Other ecosystem: git tag check only, no file check (Spec 7 AC8)
+          - Verification failures are warnings only — never abort, never roll back the release (Spec 7 AC9)
+          - Collect all warning/pass results for use in Step 10 Report
+        specs: [7]
+        acs: [S7.AC1, S7.AC2, S7.AC3, S7.AC4, S7.AC5, S7.AC6, S7.AC7, S7.AC8, S7.AC9]
+        status: done
+        depends: ["1.3"]
+
+      - id: "1.5"
+        summary: Write Step 10 Release Report (updated to include verification results)
+        details:
+          - Renumber the former Step 9 (Report) to Step 10
+          - Preserve all existing report output fields from v1.0.0: ecosystem detected, version transition (old -> new), release branch name, tag name, commit summary, files modified (Spec 6 AC1)
+          - Add verification results section to the report output (Spec 6 AC2):
+            - When all verification checks pass: display success status (e.g., "Post-release verification: PASSED")
+            - List each check with its result (git tag, ecosystem-specific check)
+          - Add conditional warnings section to the report output (Spec 6 AC3):
+            - When any verification produced a warning: append a "Warnings" section at the end of the report
+            - List each warning message collected from Step 9
+            - Include a prompt for manual confirmation (e.g., "Manual verification recommended")
+          - Results aggregation clarity (addresses review finding L): the report step must clearly distinguish between "no warnings" (all passed) and "some warnings" (partial pass) paths — use explicit conditional branching in the step instructions
+        specs: [6]
+        acs: [S6.AC1, S6.AC2, S6.AC3]
+        status: done
+        depends: ["1.4"]
+
+      - id: "1.6"
+        summary: Write Error Handling section (updated with verification warnings)
+        details:
+          - Preserve all existing error entries from v1.0.0 verbatim: not-on-main, dirty working tree, version not incrementing, no ecosystem detected, missing arguments
+          - Add new warning entries from Spec 7 error handling table:
+            - Git tag mismatch: "Warning: git tag mismatch — expected v{version}, got {actual}" with manual verification recovery
+            - hatch-vcs runtime mismatch: "Warning: runtime version mismatch — expected {version}, got {actual}" with manual package reinstall recovery
+            - uv.lock absent: "Warning: uv.lock not found — skipping runtime verification" with git tag only note
+            - Package name read failure: "Warning: could not read package name from pyproject.toml — skipping runtime verification"
+            - Metadata file mismatch: "Warning: file version mismatch in {file} — expected {version}, got {actual}" with manual verification recovery
+          - Note explicitly that for hatch-vcs: "uv sync --reinstall-package" failure should surface as a warning (skip runtime check) rather than aborting the report — this is the explicit failure handling called out in the M-severity review finding
+          - The Error Handling section is outside the instructions block; preserve its placement after </instructions>
+        specs: [7]
+        acs: [S7.AC1, S7.AC2, S7.AC3, S7.AC9]
+        status: done
+        depends: ["1.5"]
+
+  - id: "2"
+    summary: Sync local copy of SKILL.md
+    status: done
+    subtasks:
+      - id: "2.1"
+        summary: Copy updated SKILL.md to local install path
+        details:
+          - Read the fully rewritten framework source at "framework/claude/skills/sdd-release/SKILL.md"
+          - Write identical content to ".claude/skills/sdd-release/SKILL.md" to keep the local dogfooding copy in sync
+          - No content changes — this is a byte-for-byte copy of the framework source
+          - Verify both files are identical after writing
+        specs: [1, 2, 3, 4, 5, 6, 7]
+        status: done
+        depends: ["1.6"]
+
+execution:
+  - wave: 1
+    groups:
+      - id: A
+        tasks: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "2.1"]
+        files:
+          - framework/claude/skills/sdd-release/SKILL.md
+          - .claude/skills/sdd-release/SKILL.md

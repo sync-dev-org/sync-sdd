@@ -5,10 +5,7 @@
 
 ## Direction
 ### Immediate Next Action
-全作業完了。ユーザー判断で次のアクションを選択：
-- コミット（全 spec artifacts を main に）
-- 追加の改修（MINOR findings の修正、spec スコープ調整等）
-- `/sdd-roadmap revise {feature}` で個別 spec の改訂
+release-automation revision 完了。コミット待ち。
 
 ### Active Goals
 - [x] ステアリングセットアップ (product.md, tech.md, structure.md)
@@ -17,14 +14,19 @@
 - [x] 全15 spec の design.md 詳細化（既存実装から逆起こし）
 - [x] 3段階レビュー（個別 + Wave Cross + 全体 Cross）
 - [x] MAJOR findings 3件の修正
+- [x] release-automation revision (Spec 7: Post-Release Verification 追加)
 
 ### Key Decisions
-**Added this session:**
+**Continuing from previous sessions:**
 1. 細かめ粒度 (15 spec) を採用 — 改修・機能追加への強さとミス防止を優先
 2. 全 spec を `implementation-complete` で作成 — 既存実装が正のため
 3. 6 Wave 構成: Foundation → Steering & Design → Review & Tasks → Execution → Orchestration → Distribution
 4. cpf-protocol は横断的仕様として notes で他 spec との関係を明示
 5. Write Fallback Protocol を knowledge buffer に記録（フレームワーク改修候補）
+
+**Added this session:**
+6. release-automation に Spec 7 (Post-Release Verification) を追加 — hatch-vcs メタデータキャッシュ問題の対策
+7. installer downstream は Skip — Step 9 追加は install.sh に影響なし
 
 ### Warnings
 - MINOR findings 12件は未修正（品質向上の余地あり、緊急性なし）
@@ -34,6 +36,7 @@
 ## Session Context
 ### Tone and Nuance
 ユーザーは「全自動で良い」と指示。効率重視。フレームワークの区別（開発対象 vs 実行環境）を正確に理解している。
+Leadが直接ファイル修正することを嫌い、正規のSDD pipeline (roadmap revise) を経由させる。
 
 ## Accomplished
 - `/sdd-steering` — product.md, tech.md, structure.md 生成
@@ -42,10 +45,16 @@
 - 3段階レビュー実行（Wave 1-2, Wave 3-4, Wave 5-6 + 全体 Cross）
 - MAJOR 3件修正: impl-review Bash記述、installer files_created、cpf-protocol notes追加
 - Knowledge buffer に Write Fallback Protocol を記録
+- `/sdd-roadmap revise release-automation` — Spec 7 追加 (Design GO → Impl GO)
 
 ### Modified Files
 - `.claude/sdd/project/steering/product.md`, `tech.md`, `structure.md`
 - `.claude/sdd/project/specs/roadmap.md`
 - `.claude/sdd/project/specs/*/spec.yaml` (15ファイル)
 - `.claude/sdd/project/specs/*/design.md` (15ファイル)
+- `.claude/sdd/project/specs/release-automation/research.md`
+- `.claude/sdd/project/specs/release-automation/tasks.yaml`
+- `.claude/sdd/project/specs/release-automation/verdicts.md`
+- `framework/claude/skills/sdd-release/SKILL.md`
+- `.claude/skills/sdd-release/SKILL.md`
 - `.claude/sdd/handover/session.md`, `decisions.md`, `buffer.md`
