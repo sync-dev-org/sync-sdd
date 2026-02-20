@@ -90,11 +90,11 @@ Design Review and Impl Review are **mandatory** in roadmap run.
 For each ready spec, execute pipeline phases in order:
 
 #### Design Phase
-1. Spawn Architect with context:
+1. Spawn Architect via `TeammateTool` with context:
    - Feature: {feature}
-   - Steering: `{{SDD_DIR}}/project/steering/`
-   - Template: `{{SDD_DIR}}/settings/templates/specs/`
    - Mode: {new|existing}
+   - User-instructions: {additional user instructions, or empty string if none}
+   - **Architect loads its own context** (steering, templates, rules, existing code) autonomously in Step 1-2. Do NOT pre-read these files for Architect.
 2. Read Architect's completion report
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist
@@ -102,7 +102,7 @@ For each ready spec, execute pipeline phases in order:
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
-1. Spawn 6 design Inspectors + design Auditor:
+1. Spawn (via `TeammateTool`) 6 design Inspectors + design Auditor:
    - Inspector set: rulebase, testability, architecture, consistency, best-practices, holistic
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-design"
    - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
@@ -119,7 +119,7 @@ For each ready spec, execute pipeline phases in order:
 If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus Mode.
 
 #### Implementation Phase
-1. Spawn TaskGenerator with context:
+1. Spawn TaskGenerator via `TeammateTool` with context:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
@@ -130,13 +130,13 @@ If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus
 5. Read `tasks.yaml` execution plan → determine Builder grouping
 6. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-spawn TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
 7. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
-8. Spawn Builder(s) with context for each work package:
+8. Spawn Builder(s) via `TeammateTool` with context for each work package:
    - Feature: {feature}
    - Tasks: {task IDs + summaries + detail bullets}
    - File scope: {assigned files}
    - Design ref: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research ref: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
-9. **Builder逐次更新**: As each Builder completes, immediately:
+9. **Builder incremental processing**: As each Builder completes, immediately:
    - Read completion report (files, test results, knowledge tags, blockers)
    - Update tasks.yaml: mark completed tasks as `done`
    - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
@@ -149,7 +149,7 @@ If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
-1. Spawn 6 impl Inspectors + impl Auditor:
+1. Spawn (via `TeammateTool`) 6 impl Inspectors + impl Auditor:
    - Inspector set: impl-rulebase, interface, test, quality, impl-consistency, impl-holistic
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-impl"
    - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
@@ -158,8 +158,8 @@ If `--consensus N` is active, apply consensus mode per sdd-review.md §Consensus
 4. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see sdd-review.md Step 4 step 2)
 5. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
-   - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) with fix instructions → re-review (max 3 retries)
-   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
+   - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) via `TeammateTool` with fix instructions → re-review (max 3 retries)
+   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect via `TeammateTool` (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
    - In **gate mode**: pause for user approval
 6. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
 7. Auto-draft `{{SDD_DIR}}/handover/session.md`
@@ -202,7 +202,7 @@ After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped):
 0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Collect Consensus findings from previous wave batches. Compare successive batches to identify resolved issues (present in earlier batch Consensus but absent from later). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
-1. Spawn 6 impl Inspectors + Auditor with wave-scoped cross-check context:
+1. Spawn (via `TeammateTool`) 6 impl Inspectors + Auditor with wave-scoped cross-check context:
    - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
    - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 6 Inspector results"
 2. Read Auditor verdict from completion output
@@ -210,14 +210,14 @@ After all specs in a wave complete individual pipelines:
 3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`). Same persistence logic as sdd-review.md Step 4 step 2.
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
      a. **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record as `ESCALATION_RESOLVED` in decisions.md with accepted issues listed
      b. **Abort wave**: Stop wave execution, leave specs as-is. Record as `ESCALATION_RESOLVED` with abort reason
      c. **Manual fix**: User fixes issues manually, then Lead re-runs Wave QG (counter reset)
-   - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
+   - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect via `TeammateTool` with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
 **b. Dead Code Review** (full codebase):
-1. Spawn 4 dead-code Inspectors + dead-code Auditor:
+1. Spawn (via `TeammateTool`) 4 dead-code Inspectors + dead-code Auditor:
    - sdd-inspector-dead-settings, sdd-inspector-dead-code, sdd-inspector-dead-specs, sdd-inspector-dead-tests
    - Each: "Report to: sdd-auditor-dead-code"
    - sdd-auditor-dead-code: "Expect: 4 Inspector results via SendMessage"
@@ -226,7 +226,7 @@ After all specs in a wave complete individual pipelines:
 3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
 4. Handle verdict:
    - **GO/CONDITIONAL** → Wave N complete, proceed to next wave
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn with fix instructions, re-review dead-code (max 3 retries → escalate)
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review dead-code (max 3 retries → escalate)
 
 **c. Post-gate**:
 - Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/` using templates, clear buffer.md
@@ -286,7 +286,7 @@ Lead handles directly:
 
 ## Revise Mode
 
-Past-wave spec の修正を正規パイプラインで実行する。Lead は CLAUDE.md §Artifact Ownership に従い、成果物の内容を直接編集しない。
+Execute past-wave spec modifications through the standard pipeline. Lead follows CLAUDE.md §Artifact Ownership and MUST NOT directly edit artifact content.
 
 ### Step 1: Validate
 
@@ -327,11 +327,11 @@ Past-wave spec の修正を正規パイプラインで実行する。Lead は CL
 
 Standard pipeline with revision context:
 
-1. **Design Phase**: Spawn Architect with context:
+1. **Design Phase**: Spawn Architect via `TeammateTool` with context:
    - Feature: {feature}
    - Mode: existing
-   - REVISION_INSTRUCTIONS: {user's modification intent}
-   - "Preserve unaffected design sections. Document changes in a '## Revision Notes' subsection."
+   - User-instructions: {REVISION_INSTRUCTIONS from Step 2}. Preserve unaffected design sections. Document changes in a '## Revision Notes' subsection.
+   - **Architect loads its own context.** Do NOT pre-read files for Architect.
 2. **Design Review Phase**: Same as Run Mode Step 4 Design Review
 3. **Implementation Phase**: Same as Run Mode Step 4 Implementation (TaskGenerator → Builder, all tasks fully re-implemented)
 4. **Implementation Review Phase**: Same as Run Mode Step 4 Impl Review

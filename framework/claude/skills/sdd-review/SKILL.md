@@ -10,7 +10,7 @@ argument-hint: design|impl|dead-code <feature-name> [--wave N] [--cross-check] [
 
 ## Core Task
 
-Orchestrate multi-agent review by spawning Inspectors and Auditor directly.
+Orchestrate multi-agent review by spawning Inspectors and Auditor as teammates (`TeammateTool`).
 
 ## Step 1: Parse Arguments
 
@@ -55,7 +55,7 @@ If first argument is missing or not one of `design`, `impl`, `dead-code`:
 
 ### Design Review
 
-Spawn 6 design Inspectors + 1 design Auditor:
+Spawn (via `TeammateTool`) 6 design Inspectors + 1 design Auditor:
 - `sdd-inspector-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-testability` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-inspector-architecture` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
@@ -64,12 +64,12 @@ Spawn 6 design Inspectors + 1 design Auditor:
 - `sdd-inspector-holistic` (sonnet): "Feature: {feature}, Report to: sdd-auditor-design"
 - `sdd-auditor-design` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
-Inspectors send CPF results directly to Auditor via SendMessage.
+Inspectors send CPF results directly to Auditor via `SendMessageTool`.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Implementation Review
 
-Spawn 6 impl Inspectors + 1 impl Auditor:
+Spawn (via `TeammateTool`) 6 impl Inspectors + 1 impl Auditor:
 - `sdd-inspector-impl-rulebase` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-interface` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-inspector-test` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
@@ -78,7 +78,7 @@ Spawn 6 impl Inspectors + 1 impl Auditor:
 - `sdd-inspector-impl-holistic` (sonnet): "Feature: {feature}, Report to: sdd-auditor-impl"
 - `sdd-auditor-impl` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
-Inspectors send CPF results directly to Auditor via SendMessage.
+Inspectors send CPF results directly to Auditor via `SendMessageTool`.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Dead Code Review
@@ -93,14 +93,14 @@ Parse Mode from arguments (default: `full`):
 | `specs` | dead-specs |
 | `tests` | dead-tests |
 
-Spawn selected dead-code Inspectors + `sdd-auditor-dead-code` (opus).
+Spawn (via `TeammateTool`) selected dead-code Inspectors + `sdd-auditor-dead-code` (opus).
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Consensus Mode (`--consensus N`)
 
 When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
-1. Spawn N pipelines in parallel. Each pipeline: same Inspector set + Auditor as above.
+1. Spawn (via `TeammateTool`) N pipelines in parallel. Each pipeline: same Inspector set + Auditor as above.
    Use unique Auditor names per pipeline: `auditor-{type}-1`, `auditor-{type}-2`, ...
    Each Inspector: `"Feature: {feature}, Report to: auditor-{type}-{n}"`
    Each Auditor: `"Feature: {feature}, Expect: {inspector_count} Inspector results via SendMessage"`

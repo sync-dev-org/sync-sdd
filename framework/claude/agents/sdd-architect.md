@@ -19,9 +19,8 @@ Generate design document for a feature including specifications (WHAT) and archi
 
 You receive context from Lead including:
 - **Feature name**: the feature to design
-- **Steering path**: `{{SDD_DIR}}/project/steering/`
-- **Template path**: `{{SDD_DIR}}/settings/templates/specs/`
 - **Mode**: New spec (from description) or existing spec (edit/regenerate)
+- **User-instructions**: Additional design directives from user (may be empty)
 
 ## Execution Steps
 
@@ -88,6 +87,7 @@ Version consistency check (skip if `version_refs` not present):
    - **Architecture and Components sections**: Translate specifications into technical design
    - **Integrate all discovery findings**: Use researched information throughout
    - If existing design.md found, use it as reference context (merge mode)
+   - If User-instructions is non-empty, incorporate the user's directives into the design approach
    - Apply design rules: Type Safety, Visual Communication, Formal Tone
    - Use language specified in spec.yaml
    - Ensure Specifications Traceability maps spec IDs to components

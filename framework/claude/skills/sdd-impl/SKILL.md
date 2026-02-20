@@ -10,7 +10,7 @@ argument-hint: <feature-name> [task-numbers]
 
 ## Core Task
 
-Orchestrate TDD implementation by spawning TaskGenerator and Builder(s) directly. Parse `$ARGUMENTS`: first token = `{feature}` (feature name), remaining tokens = `{task-numbers}` (optional task number list).
+Orchestrate TDD implementation by spawning TaskGenerator and Builder(s) as teammates (`TeammateTool`). Parse `$ARGUMENTS`: first token = `{feature}` (feature name), remaining tokens = `{task-numbers}` (optional task number list).
 
 ## Step 1: Phase Gate
 
@@ -29,7 +29,7 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 **REGENERATE** (generate new tasks):
 - Condition: `tasks.yaml` does not exist OR `orchestration.last_phase_action` is null
 - Action:
-  1. Spawn TaskGenerator with context:
+  1. Spawn TaskGenerator via `TeammateTool` with context:
      ```
      Feature: {feature}
      Design: {{SDD_DIR}}/project/specs/{feature}/design.md
@@ -54,7 +54,7 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 - Condition: `phase` == `implementation-complete` AND `{task-numbers}` NOT provided
 - Action: Ask user — "Implementation is complete. Options: A) Specify task numbers to re-run, B) Re-edit design first (`/sdd-design {feature}`), C) Abort"
 
-## Step 3: Spawn Builders
+## Step 3: Spawn Builders (via `TeammateTool`)
 
 1. Read `tasks.yaml` execution section → determine Builder groups
 2. Read `tasks.yaml` tasks section → extract detail bullets for assigned tasks
@@ -68,8 +68,8 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
    Research ref: {{SDD_DIR}}/project/specs/{feature}/research.md (if exists)
    ```
    For dependent tasks, include: `Depends on: Tasks {numbers} (wait for completion)`
-5. Spawn Builder(s) per execution group (parallel where possible)
-6. **Builder逐次更新**: As each Builder completes, immediately:
+5. Spawn Builder(s) via `TeammateTool` per execution group (parallel where possible)
+6. **Builder incremental processing**: As each Builder completes, immediately:
    - Read completion report: tasks completed, files created/modified, test results, knowledge tags, blocker reports
    - Update tasks.yaml: mark completed tasks as `done`
    - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md` Knowledge Buffer

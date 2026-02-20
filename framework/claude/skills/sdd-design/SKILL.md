@@ -10,7 +10,7 @@ argument-hint: <feature-name-or-"description">
 
 ## Core Task
 
-Orchestrate design generation by spawning Architect directly. Parse `$ARGUMENTS` as the feature name or description.
+Orchestrate design generation by spawning Architect as a teammate (`TeammateTool`). Parse `$ARGUMENTS` as the feature name or description.
 
 ## Step 1: Input Mode Detection
 
@@ -41,13 +41,13 @@ Input examples:
 
 ## Step 3: Spawn Architect
 
-1. Spawn Architect with context:
+1. Spawn Architect via `TeammateTool` with context:
    ```
    Feature: {feature}
-   Steering: {{SDD_DIR}}/project/steering/
-   Template: {{SDD_DIR}}/settings/templates/specs/
    Mode: {new|existing}
+   User-instructions: {additional user instructions, or empty string if none}
    ```
+   **Architect loads its own context** (steering, templates, rules, existing code) autonomously in Step 1-2. Do NOT pre-read these files for Architect.
 2. Read Architect's completion report (`ARCHITECT_COMPLETE`)
 3. Dismiss Architect
 4. Verify `design.md` and `research.md` exist in spec directory

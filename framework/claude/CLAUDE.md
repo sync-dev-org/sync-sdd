@@ -28,11 +28,11 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teamma
 
 ### Chain of Command
 
-Lead spawns T2/T3 teammates directly with context.
+Lead spawns T2/T3 teammates using `TeammateTool`. Do NOT use the `Task` tool to spawn teammates — `Task` creates isolated subagents that cannot participate in Agent Teams messaging (`SendMessageTool` will not reach them).
 Teammates complete their work and output a structured completion report as their final text.
 Lead reads completion output and determines next actions.
 
-Exception: Inspector → Auditor communication uses SendMessage (peer communication within a review pipeline).
+Exception: Inspector → Auditor communication uses `SendMessageTool` (peer communication within a review pipeline).
 
 ### State Management
 
@@ -48,21 +48,21 @@ User ──→ Lead ──→ T2/T3 Teammates
 
 ### Artifact Ownership
 
-Lead による spec 成果物の操作は以下に限定する:
+Lead's operations on spec artifacts are restricted to the following:
 
-| Artifact | Lead の許可操作 | 生成・内容変更の責任 |
-|----------|----------------|-------------------|
-| `design.md` | 読み取りのみ | Architect |
-| `research.md` | 読み取りのみ | Architect |
-| `tasks.yaml` | タスクステータス更新 (`done` マーク) のみ | TaskGenerator (生成・構造変更) |
-| Implementation code | 読み取りのみ | Builder |
+| Artifact | Lead's Permitted Operations | Owner (Creation/Content Changes) |
+|----------|----------------------------|----------------------------------|
+| `design.md` | Read-only | Architect |
+| `research.md` | Read-only | Architect |
+| `tasks.yaml` | Task status updates (`done` marking) only | TaskGenerator (creation/structural changes) |
+| Implementation code | Read-only | Builder |
 
-**禁止事項**: Lead が design.md の内容書き換え、tasks.yaml のタスク定義変更、コードの直接編集を行うことは禁止。
+**Prohibited**: Lead MUST NOT rewrite design.md content, modify tasks.yaml task definitions, or directly edit code.
 
-ユーザーが spec の design や implementation の変更を要求した場合:
-- Roadmap active → `/sdd-roadmap revise {feature}` を使用
-- Standalone → `/sdd-design {feature}` を使用（Architect 経由）
-- **内容変更は必ず担当 teammate 経由** でルーティングする
+When the user requests changes to spec design or implementation:
+- Roadmap active → use `/sdd-roadmap revise {feature}`
+- Standalone → use `/sdd-design {feature}` (via Architect)
+- **Content changes MUST always be routed through the responsible teammate**
 
 ### Phase Gate
 
@@ -74,7 +74,7 @@ Before spawning any teammate, Lead MUST verify:
 
 ### Teammate Lifecycle
 
-Lead spawns teammates directly. Each teammate:
+Lead spawns teammates using `TeammateTool`. Each teammate:
 1. Receives context in spawn prompt (feature, paths, scope, instructions)
 2. Executes its work autonomously
 3. Outputs a structured completion report as final text
@@ -87,9 +87,9 @@ Lead reads the idle notification and:
 - Determines next action (spawn next teammate, escalate to user, etc.)
 - Requests shutdown of the teammate (teammate approves and terminates)
 
-For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors SendMessage to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
+For review pipelines: Lead spawns Inspectors + Auditor together (all via `TeammateTool`). Inspectors use `SendMessageTool` to send CPF to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
 
-**Builder parallel coordination** (逐次更新): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
+**Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
 ### Agent Teams Known Constraints
 
@@ -100,24 +100,24 @@ For review pipelines: Lead spawns Inspectors + Auditor together. Inspectors Send
 
 ### Teammate Recovery Protocol
 
-Review pipeline で teammate が無応答/エラーの場合の回復手順。
+Recovery procedures when a teammate becomes unresponsive or errors during a review pipeline.
 
 #### Inspector Recovery
 
-Review pipeline で Inspector が無応答/エラーの場合:
-1. Lead は他の Inspector の idle 通知到着状況を確認
-2. 無応答 Inspector を `requestShutdown` で停止試行
-3. 同一 agent type で新名称の Inspector を再 spawn (1回リトライ)
-4. リトライ後も失敗 → Lead が Auditor に SendMessage: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
-5. Auditor は到着した結果のみで判定。欠落 Inspector を NOTES に記録。
+When an Inspector becomes unresponsive or errors during a review pipeline:
+1. Lead checks the arrival status of idle notifications from other Inspectors
+2. Attempt to stop the unresponsive Inspector via `requestShutdown`
+3. Re-spawn an Inspector of the same agent type with a new name via `TeammateTool` (1 retry)
+4. If retry also fails → Lead sends SendMessage to Auditor: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
+5. Auditor proceeds with available results only. Records missing Inspector in NOTES.
 
 #### Auditor Recovery
 
-Auditor が verdict 出力前に idle になった場合:
-1. Lead は Auditor に SendMessage: "Output your verdict now with findings verified so far. Use NOTES: PARTIAL_VERIFICATION if incomplete."
-2. Auditor が応答し verdict 出力 → 通常フローに戻る
-3. 1回目の nudge 後も verdict なし → `requestShutdown` で停止、新名称で Auditor を再 spawn (1回リトライ)。Inspector CPF 結果を spawn context に直接埋め込み、"RECOVERY MODE: Inspector results in spawn context. Skip SendMessage wait. Prioritize verdict output." を指示。
-4. リトライ後も失敗 → Lead が Inspector 結果から保守的 verdict を導出 (Critical/High 件数ベース)。`NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict` を付与。
+When Auditor goes idle before outputting verdict:
+1. Lead sends SendMessage to Auditor: "Output your verdict now with findings verified so far. Use NOTES: PARTIAL_VERIFICATION if incomplete."
+2. If Auditor responds and outputs verdict → return to normal flow
+3. If no verdict after first nudge → stop via `requestShutdown`, re-spawn Auditor with a new name via `TeammateTool` (1 retry). Embed Inspector CPF results directly in spawn context with instruction: "RECOVERY MODE: Inspector results in spawn context. Skip SendMessage wait. Prioritize verdict output."
+4. If retry also fails → Lead derives a conservative verdict from Inspector results (based on Critical/High counts). Tag with `NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict`.
 
 ## Project Context
 
@@ -190,7 +190,7 @@ CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/{feature}/ve
 1. Extract fix instructions from Auditor's verdict
 2. Dismiss review teammates
 3. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
-4. Determine fix scope and spawn fix teammates:
+4. Determine fix scope and spawn fix teammates (all via `TeammateTool`):
    - **NO-GO (design review)** → spawn Architect with fix instructions
    - **NO-GO (impl review)** → spawn Builder(s) with fix instructions
    - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder. All tasks fully re-implemented.
