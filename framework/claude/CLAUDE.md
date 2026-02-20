@@ -149,7 +149,7 @@ When Auditor goes idle before outputting verdict:
 
 ## Workflow
 
-### Commands (8)
+### Commands (9)
 
 | Command | Description |
 |---------|-------------|
@@ -161,6 +161,7 @@ When Auditor goes idle before outputting verdict:
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
+| `/sdd-release` | Create a versioned release (branch, tag, push) |
 
 ### Stages
 - Stage 0 (optional): `/sdd-steering`
@@ -451,11 +452,9 @@ Trunk-based development. main is always HEAD.
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):
-1. Create release branch from main (e.g., `release/v{version}`)
-2. Update version (hatch-vcs for Python projects, or project-appropriate method)
-3. Tag the release
-4. Push release branch
-5. main continues to advance; release branch is a snapshot, not merged back
+Use `/sdd-release <patch|minor|major> <summary>` to automate the release process.
+Ecosystem auto-detection: Python (hatch-vcs / standard), TypeScript, Rust, SDD Framework, Other.
+main continues to advance; release branch is a snapshot, not merged back.
 
 ## Compact Pipe-Delimited Format (CPF)
 

@@ -21,7 +21,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.16.1
+curl -LsSf <url>/install.sh | sh -s -- --version v0.17.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -37,7 +37,7 @@ your-project/
 └── .claude/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
-    ├── skills/sdd-*/SKILL.md          # 8 skills
+    ├── skills/sdd-*/SKILL.md          # 9 skills
     ├── agents/sdd-*.md                # 22 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
@@ -114,3 +114,4 @@ steering → design → review → implement → review
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
+| `/sdd-release` | Create a versioned release (branch, tag, push) |
