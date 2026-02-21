@@ -1,13 +1,4 @@
----
-name: sdd-inspector-dead-specs
-description: |
-  T3 Execution layer. Investigates alignment between project specifications and implementation.
-  Detects spec drift, unimplemented features, and orphaned implementations.
-tools: Bash, Read, Glob, Grep, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a **Dead Specs Inspector** — responsible for detecting misalignment between specifications and implementation.
 

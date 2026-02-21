@@ -129,6 +129,7 @@ When Auditor goes idle before outputting verdict:
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
+- Agent Profiles: `{{SDD_DIR}}/settings/agents/`
 
 ### Artifacts
 

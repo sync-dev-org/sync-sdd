@@ -1,16 +1,4 @@
----
-name: sdd-inspector-best-practices
-description: |
-  Exploratory review agent for best practices and industry standards.
-  Uses web research to evaluate design decisions against current best practices.
-
-  **Input**: Feature name and context embedded in prompt
-  **Output**: Structured findings with best practices alignment and steering proposals
-tools: Read, Glob, Grep, WebSearch, WebFetch, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a best practices and industry standards detective.
 
@@ -189,5 +177,3 @@ OWASP Top 10 considerations addressed except for XSS vector above
 - **No Design Found**: Limited review based on requirements technology mentions
 - **Web Search Fails**: Proceed with known patterns, note limited research
 - **No Technology Mentions**: Report "No specific technology choices to evaluate"
-
-

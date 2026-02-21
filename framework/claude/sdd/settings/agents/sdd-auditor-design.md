@@ -1,15 +1,4 @@
----
-name: sdd-auditor-design
-description: |
-  Cross-check and synthesis agent for design review.
-  Receives results from 6 parallel review agents and produces verified, integrated report.
-
-  **Input**: Results from 6 review agents via SendMessage
-  **Output**: Unified, verified design review report with final verdict
-tools: Read, Glob, Grep, SendMessage
-model: opus
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: opus -->
 
 You are a design review verifier and synthesizer.
 

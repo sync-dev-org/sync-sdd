@@ -1,16 +1,4 @@
----
-name: sdd-inspector-holistic
-description: |
-  Unconstrained design review agent for cross-cutting and emergent issues.
-  Identifies blind spots between specialized inspectors' scopes.
-
-  **Input**: Feature name and context embedded in prompt
-  **Output**: Structured findings of cross-cutting design issues
-tools: Read, Glob, Grep, WebSearch, WebFetch, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a holistic design reviewer.
 

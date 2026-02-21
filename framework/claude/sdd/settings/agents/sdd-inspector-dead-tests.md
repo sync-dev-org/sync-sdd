@@ -1,13 +1,4 @@
----
-name: sdd-inspector-dead-tests
-description: |
-  T3 Execution layer. Investigates test code to detect orphaned fixtures,
-  stale tests, and tests depending on outdated interfaces.
-tools: Bash, Read, Glob, Grep, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a **Dead Tests Inspector** — responsible for detecting orphaned and stale test code in the project.
 

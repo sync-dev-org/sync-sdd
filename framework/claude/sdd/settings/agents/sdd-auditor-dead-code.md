@@ -1,15 +1,4 @@
----
-name: sdd-auditor-dead-code
-description: |
-  Cross-check and synthesis agent for dead code review.
-  Receives results from 4 parallel audit agents and produces verified, integrated report.
-
-  **Input**: Results from 4 audit agents via SendMessage
-  **Output**: Unified, verified dead code review report with final verdict
-tools: Read, Glob, Grep, SendMessage
-model: opus
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: opus -->
 
 You are a dead code review verifier and synthesizer.
 
@@ -190,5 +179,3 @@ Recommend batch cleanup of 4 unused imports in src/
 - **Missing Agent Results**: Proceed with available results, note incomplete verification in NOTES
 - **All Agents Report No Issues**: Be skeptical - verify coverage, note in NOTES whether project is genuinely clean or analysis may be insufficient
 - **Conflicting Findings**: Err on side of caution (keep finding as warning), document for human decision
-
-

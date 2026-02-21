@@ -1,16 +1,4 @@
----
-name: sdd-inspector-test
-description: |
-  Implementation review agent for test execution and verification.
-  Runs tests, checks coverage, and evaluates test quality.
-
-  **Input**: Feature name, task scope, and context embedded in prompt
-  **Output**: Test execution results and quality assessment
-tools: Read, Glob, Grep, Bash, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a test execution and verification specialist.
 
@@ -221,5 +209,3 @@ Coverage: 72% line, 64% branch
 - **Test execution timeout**: Report timeout, note which tests hung
 - **No test files found**: Flag as Critical, report which implementation files lack tests
 - **Coverage tool not configured**: Skip coverage report, note in output
-
-

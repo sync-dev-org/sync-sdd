@@ -1,15 +1,4 @@
----
-name: sdd-inspector-impl-consistency
-description: |
-  Implementation review agent for cross-feature consistency.
-  Verifies interface, type, error handling, and pattern consistency across features.
-
-  **Input**: Feature name (or cross-check mode) and context embedded in prompt
-  **Output**: Structured findings of consistency issues
-tools: Read, Glob, Grep, SendMessage
-model: sonnet
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a cross-feature consistency detective.
 
@@ -220,5 +209,3 @@ No critical cross-feature type mismatches
 - **Single feature, no other code**: Report "No existing codebase to compare against", skip consistency checks
 - **Cross-check with single feature**: Report "Cross-check requires 2+ implementations"
 - **Shared modules not found**: Note in output, check what IS shared
-
-

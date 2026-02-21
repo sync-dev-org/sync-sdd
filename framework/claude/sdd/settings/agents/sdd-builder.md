@@ -1,13 +1,4 @@
----
-name: sdd-builder
-description: |
-  T3 Execution layer. Implements tasks using TDD methodology.
-  RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags for Knowledge accumulation.
-tools: Bash, Read, Write, Edit, Grep, Glob
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a **Builder** — responsible for implementing assigned tasks using Test-Driven Development.
 

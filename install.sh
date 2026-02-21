@@ -350,6 +350,17 @@ if version_lt "$INSTALLED_VERSION" "0.15.0"; then
     fi
     info "Migrated commands -> skills format (v0.15.0)"
 fi
+# v0.18.0: Agent definitions moved from .claude/agents/ to .claude/sdd/settings/agents/
+if version_lt "$INSTALLED_VERSION" "0.18.0"; then
+    for agent_file in .claude/agents/sdd-*.md; do
+        [ -f "$agent_file" ] || continue
+        rm -f "$agent_file"
+    done
+    if [ -d .claude/agents ] && [ -z "$(ls -A .claude/agents 2>/dev/null)" ]; then
+        rmdir .claude/agents 2>/dev/null || true
+    fi
+    info "Migrated agents/ -> sdd/settings/agents/ (v0.18.0)"
+fi
 
 # --- Install framework files ---
 install_file() {
@@ -383,7 +394,6 @@ info "Installing framework files..."
 
 # .claude/ framework files
 install_dir "$SRC/framework/claude/skills" ".claude/skills"
-install_dir "$SRC/framework/claude/agents"   ".claude/agents"
 
 # .claude/CLAUDE.md - marker-based section management
 install_claude_md() {
@@ -463,6 +473,7 @@ fi
 install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
 install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".claude/sdd/settings/profiles"
+install_dir "$SRC/framework/claude/sdd/settings/agents"     ".claude/sdd/settings/agents"
 
 # Write version file
 if [ "$NEW_VERSION" != "0.0.0" ]; then
@@ -499,10 +510,10 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
             warn "Removed stale skill: $skill_dir"
         fi
     done
-    remove_stale ".claude/agents"   "$SRC/framework/claude/agents"   "sdd-*.md"
     remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".claude/sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
+    remove_stale ".claude/sdd/settings/agents"    "$SRC/framework/claude/sdd/settings/agents"     "*.md"
 
     # Clean up empty directories left after stale file removal
     find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
@@ -521,9 +532,9 @@ fi
 echo ""
 printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/skills/      $(find .claude/skills -name 'SKILL.md' -path '*/sdd-*/*' 2>/dev/null | wc -l | tr -d ' ') skills"
-echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agents"
+echo "  .claude/sdd/agents/  $(find .claude/sdd/settings/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .claude/sdd/         Rules + templates"
+echo "  .claude/sdd/         Rules + templates + agents"
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     echo "  Version:             ${NEW_VERSION}"
 fi

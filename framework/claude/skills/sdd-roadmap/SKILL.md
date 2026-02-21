@@ -302,7 +302,8 @@ Design Review and Impl Review are **mandatory** in roadmap run.
 For each ready spec, execute pipeline phases in order:
 
 #### Design Phase
-1. Spawn Architect via `TeammateTool` with context:
+1. Read `{{SDD_DIR}}/settings/agents/sdd-architect.md` → embed as spawn instructions
+2. Spawn Architect via `TeammateTool` (opus) with instructions + context:
    - Feature: {feature}
    - Mode: {new|existing}
    - User-instructions: {additional user instructions, or empty string if none}
@@ -314,9 +315,11 @@ For each ready spec, execute pipeline phases in order:
 6. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
-1. Spawn (via `TeammateTool`) 6 design Inspectors + design Auditor:
-   - Inspector set: rulebase, testability, architecture, consistency, best-practices, holistic
+1. Read agent profiles from `{{SDD_DIR}}/settings/agents/` for each teammate
+2. Spawn (via `TeammateTool`) 6 design Inspectors (sonnet) + design Auditor (opus):
+   - Inspector profiles: `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md`
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-design"
+   - Auditor profile: `sdd-auditor-design.md`
    - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (6 Inspectors + Auditor)
@@ -331,7 +334,8 @@ For each ready spec, execute pipeline phases in order:
 If `--consensus N` is active, apply consensus mode per Review Subcommand §Consensus Mode.
 
 #### Implementation Phase
-1. Spawn TaskGenerator via `TeammateTool` with context:
+1. Read `{{SDD_DIR}}/settings/agents/sdd-taskgenerator.md` → embed as spawn instructions
+2. Spawn TaskGenerator via `TeammateTool` (sonnet) with instructions + context:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
@@ -342,7 +346,8 @@ If `--consensus N` is active, apply consensus mode per Review Subcommand §Conse
 5. Read `tasks.yaml` execution plan → determine Builder grouping
 6. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-spawn TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
 7. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
-8. Spawn Builder(s) via `TeammateTool` with context for each work package:
+8. Read `{{SDD_DIR}}/settings/agents/sdd-builder.md` → embed as spawn instructions
+9. Spawn Builder(s) via `TeammateTool` (sonnet) with instructions + context for each work package:
    - Feature: {feature}
    - Tasks: {task IDs + summaries + detail bullets}
    - File scope: {assigned files}
@@ -361,9 +366,11 @@ If `--consensus N` is active, apply consensus mode per Review Subcommand §Conse
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
-1. Spawn (via `TeammateTool`) 6 impl Inspectors + impl Auditor:
-   - Inspector set: impl-rulebase, interface, test, quality, impl-consistency, impl-holistic
+1. Read agent profiles from `{{SDD_DIR}}/settings/agents/` for each teammate
+2. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet) + impl Auditor (opus):
+   - Inspector profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
    - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-impl"
+   - Auditor profile: `sdd-auditor-impl.md`
    - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 2. Read Auditor's verdict from completion output
 3. Dismiss all review teammates (6 Inspectors + Auditor)
@@ -414,9 +421,10 @@ After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped):
 0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Collect Consensus findings from previous wave batches. Compare successive batches to identify resolved issues (present in earlier batch Consensus but absent from later). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
-1. Spawn (via `TeammateTool`) 6 impl Inspectors + Auditor with wave-scoped cross-check context:
-   - Each Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
-   - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 6 Inspector results"
+1. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet) + Auditor (opus) with wave-scoped cross-check context:
+   - Inspector profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+   - Each Inspector context: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
+   - Auditor profile: `sdd-auditor-impl.md`. Context: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 6 Inspector results"
 2. Read Auditor verdict from completion output
 3. Dismiss all cross-check teammates
 3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`). Same persistence logic as Review Subcommand § Step 4 step 2.
@@ -429,10 +437,10 @@ After all specs in a wave complete individual pipelines:
    - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect via `TeammateTool` with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
 **b. Dead Code Review** (full codebase):
-1. Spawn (via `TeammateTool`) 4 dead-code Inspectors + dead-code Auditor:
-   - sdd-inspector-dead-settings, sdd-inspector-dead-code, sdd-inspector-dead-specs, sdd-inspector-dead-tests
-   - Each: "Report to: sdd-auditor-dead-code"
-   - sdd-auditor-dead-code: "Expect: 4 Inspector results via SendMessage"
+1. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 4 dead-code Inspectors (sonnet) + dead-code Auditor (opus):
+   - Inspector profiles: `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}.md`
+   - Each context: "Report to: sdd-auditor-dead-code"
+   - Auditor profile: `sdd-auditor-dead-code.md`. Context: "Expect: 4 Inspector results via SendMessage"
 2. Read Auditor verdict from completion output
 3. Dismiss all dead-code review teammates
 3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)

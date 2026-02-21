@@ -1,13 +1,4 @@
----
-name: sdd-inspector-dead-code
-description: |
-  T3 Execution layer. Investigates project source code to detect unused functions,
-  classes, methods, and other dead code.
-tools: Bash, Read, Glob, Grep, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a **Dead Code Inspector** — responsible for detecting unused code in the project.
 

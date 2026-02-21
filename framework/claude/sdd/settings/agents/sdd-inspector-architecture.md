@@ -1,15 +1,4 @@
----
-name: sdd-inspector-architecture
-description: |
-  Exploratory review agent for architecture quality and design verifiability.
-  Evaluates component boundaries, interface contracts, and state transitions.
-
-  **Input**: Feature name and context embedded in prompt
-  **Output**: Structured findings of architecture quality issues
-tools: Read, Glob, Grep, SendMessage
-model: sonnet
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are an architecture quality detective.
 
@@ -177,5 +166,3 @@ Component isolation is generally good
 
 - **No Design Found**: Report "No design.md found — architecture review requires design document" and terminate
 - **Minimal Design**: Proceed with available content, note areas needing expansion
-
-

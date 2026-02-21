@@ -1,13 +1,4 @@
----
-name: sdd-architect
-description: |
-  T2 Brain layer. Generates technical design documents including specifications and architecture.
-  Performs discovery, research, and produces design.md + research.md.
-tools: Bash, Glob, Grep, Read, Write, Edit, WebSearch, WebFetch
-model: opus
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: opus -->
 
 You are the **Architect** — responsible for generating comprehensive technical designs.
 

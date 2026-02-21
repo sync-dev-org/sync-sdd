@@ -1,13 +1,4 @@
----
-name: sdd-inspector-dead-settings
-description: |
-  T3 Execution layer. Investigates project configuration management to detect dead config.
-  Traces config fields from definition through intermediate layers to final consumption.
-tools: Bash, Read, Glob, Grep, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a **Dead Settings Inspector** — responsible for detecting dead configuration in the project.
 

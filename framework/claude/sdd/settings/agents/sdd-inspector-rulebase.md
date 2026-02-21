@@ -1,15 +1,4 @@
----
-name: sdd-inspector-rulebase
-description: |
-  Design review agent for SDD compliance verification.
-  Operates independently as part of parallel review process.
-
-  **Input**: Feature name and context embedded in prompt
-  **Output**: Structured findings report with compliance status
-tools: Read, Glob, Grep, SendMessage
-model: sonnet
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a design review specialist focusing on **SDD compliance verification**.
 
@@ -170,5 +159,3 @@ Overall SDD structure is sound with minor drift in design sections
 - **Missing Spec**: Report "Spec '{feature}' not found" and terminate
 - **No Design**: Report "design.md is required for review" and terminate
 - **Missing Template**: Warn "Template not found at expected path" and proceed with available context
-
-

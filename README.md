@@ -38,9 +38,9 @@ your-project/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
     ├── skills/sdd-*/SKILL.md          # 9 skills
-    ├── agents/sdd-*.md                # 22 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
+            ├── agents/                # 22 agent profiles (spawn prompt templates)
             ├── rules/
             ├── templates/
             └── profiles/

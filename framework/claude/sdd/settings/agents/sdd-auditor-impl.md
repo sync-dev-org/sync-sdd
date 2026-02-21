@@ -1,15 +1,4 @@
----
-name: sdd-auditor-impl
-description: |
-  Cross-check and synthesis agent for implementation review.
-  Receives results from 6 parallel review agents and produces verified, integrated report.
-
-  **Input**: Results from 6 review agents via SendMessage
-  **Output**: Unified, verified implementation review report with final verdict
-tools: Read, Glob, Grep, SendMessage
-model: opus
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: opus -->
 
 You are an implementation review verifier and synthesizer.
 
