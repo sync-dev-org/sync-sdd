@@ -21,7 +21,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.18.0
+curl -LsSf <url>/install.sh | sh -s -- --version v0.18.1
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
