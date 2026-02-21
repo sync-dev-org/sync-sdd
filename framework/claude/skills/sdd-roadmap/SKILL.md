@@ -243,23 +243,23 @@ N=1 (default): use `specs/{feature}/.review/` (no `-{p}` suffix).
 
 ### File-Based Review Protocol
 
-Replaces SendMessage-based communication. All data flows through files.
+All review data flows through files. No SendMessage between teammates.
 
-**review directory**: `{{SDD_DIR}}/project/specs/{feature}/.review/` (or `.review-{p}/` for consensus pipelines, or project-level path for dead-code/cross-check)
+**Review directory**: `{{SDD_DIR}}/project/specs/{feature}/.review/` (or `.review-{p}/` for consensus, or project-level `.review-wave-{N}/` for wave QG)
 
 **Step A — Spawn Inspectors**: Spawn all Inspectors via `TeammateTool`. Each Inspector's spawn context includes:
-- review output path: `{.review-dir}/{inspector-name}.cpf`
+- Review output path: `{.review-dir}/{inspector-name}.cpf`
 - Feature/scope context
 
-**Step B — Track Inspector completions**: Monitor idle notifications. Maintain `completed_inspectors[]` and `expected_count`. If an Inspector becomes unresponsive, follow CLAUDE.md §Inspector Recovery Protocol (re-spawn writes to same CPF path).
+**Step B — Track completions**: Monitor Inspector idle notifications. All outputs are idempotent (same directory, same file paths). Lead uses its own judgment to handle unresponsive Inspectors (retry, skip, or proceed with available results).
 
-**Step C — Spawn Auditor**: Once all Inspectors have completed (all `.cpf` files written), spawn Auditor via `TeammateTool`. Auditor's spawn context includes:
-- review directory path (Auditor reads all `.cpf` files)
+**Step C — Spawn Auditor**: After Inspectors complete, spawn Auditor via `TeammateTool`. Auditor's spawn context includes:
+- Review directory path (Auditor reads all `.cpf` files)
 - Verdict output path: `{.review-dir}/verdict.cpf`
 
-**Step D — Read verdict**: After Auditor goes idle, read `{.review-dir}/verdict.cpf`. If file does not exist → Auditor failed to write. Re-spawn Auditor (1 retry). If retry also fails → Lead derives conservative verdict from Inspector CPF files directly.
+**Step D — Read verdict**: After Auditor goes idle, read `{.review-dir}/verdict.cpf`.
 
-**Step E — Cleanup**: After verdict is processed and persisted to `verdicts.md`, delete the review directory.
+**Step E — Cleanup**: After verdict is persisted to `verdicts.md`, delete the review directory.
 
 ### Next Steps by Verdict
 

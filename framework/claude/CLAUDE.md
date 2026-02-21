@@ -95,28 +95,12 @@ For review pipelines: Lead spawns Inspectors first (all via `TeammateTool`). Ins
 
 - **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
 - **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
-- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. SendMessage is reserved for Lead → Teammate recovery notifications only (see §Teammate Recovery Protocol).
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. No SendMessage needed for review data transfer.
 - **Concurrent teammate limit**: 24 (3 pipelines × 7 teammates + headroom). Consensus mode (`--consensus N`) spawns N pipelines in parallel (7×N teammates).
 
-### Teammate Recovery Protocol
+### Teammate Failure Handling
 
-Recovery procedures when a teammate becomes unresponsive or errors during a review pipeline.
-
-#### Inspector Recovery
-
-When an Inspector becomes unresponsive or errors during a review pipeline:
-1. Lead checks the arrival status of idle notifications from other Inspectors
-2. Attempt to stop the unresponsive Inspector via `requestShutdown`
-3. Re-spawn an Inspector of the same agent type with a new name via `TeammateTool` (1 retry). Re-spawned Inspector writes to the same `.review/` output path.
-4. If retry also fails → Inspector's `.cpf` file will be missing. Auditor handles this via `PARTIAL:{inspector-name}|file not found` in NOTES.
-
-#### Auditor Recovery
-
-When Auditor goes idle without writing `verdict.cpf`:
-1. Lead checks if `verdict.cpf` exists in the `.review/` directory
-2. If file exists → verdict was written successfully, read it
-3. If file does not exist → re-spawn Auditor with a new name via `TeammateTool` (1 retry), same `.review/` directory and verdict path
-4. If retry also fails → Lead derives a conservative verdict from Inspector `.cpf` files directly (based on Critical/High counts). Tag with `NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict`.
+File-based review protocol makes all teammate outputs idempotent (same `.review/` directory, same file paths). If a teammate goes idle without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. No special recovery mode — retry is the same flow as the initial attempt.
 
 ## Project Context
 
