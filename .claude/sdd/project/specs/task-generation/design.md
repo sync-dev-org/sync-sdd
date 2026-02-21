@@ -3,7 +3,7 @@
 ## Specifications
 
 ### Introduction
-設計ドキュメント (design.md) から実装タスクリスト (tasks.yaml) への変換パイプライン。TaskGenerator agent が design.md の Specifications と Components を解析し、Builder 向けのタスク定義・並列実行分析・ファイル所有権グルーピング・Wave 構造を含む execution plan を生成する。sdd-impl skill (Step 2: REGENERATE モード) がこの変換を orchestrate する。
+設計ドキュメント (design.md) から実装タスクリスト (tasks.yaml) への変換パイプライン。TaskGenerator agent が design.md の Specifications と Components を解析し、Builder 向けのタスク定義・並列実行分析・ファイル所有権グルーピング・Wave 構造を含む execution plan を生成する。`/sdd-roadmap impl` (Step 2: REGENERATE モード) がこの変換を orchestrate する。
 
 ### Spec 1: TaskGenerator Agent
 **Goal:** design.md を入力とし tasks.yaml を自律的に生成する T3 エージェント
@@ -101,8 +101,8 @@
 4. `status` フィールドは `pending` (未着手) または `done` (完了) のみ
 5. `depends` フィールドはタスク ID のリスト（タスクレベル）またはグループ ID のリスト（グループレベル）
 
-### Spec 10: sdd-impl Skill Integration (REGENERATE Mode)
-**Goal:** sdd-impl skill が TaskGenerator を spawn し tasks.yaml を取得するフロー
+### Spec 10: /sdd-roadmap impl Integration (REGENERATE Mode)
+**Goal:** `/sdd-roadmap impl` が TaskGenerator を spawn し tasks.yaml を取得するフロー
 
 **Acceptance Criteria:**
 1. tasks.yaml が存在しない、または `orchestration.last_phase_action` が null の場合に REGENERATE モードを発動
@@ -170,7 +170,7 @@ Builder spawn (tdd-execution scope)
 |-------|------------------|-----------------|-------|
 | Agent Definition | Markdown (sdd-taskgenerator.md) | TaskGenerator の振る舞い定義 | model: sonnet |
 | Rule Definition | Markdown (tasks-generation.md) | タスク分解・並列化ルール | TaskGenerator が実行時に読み込む |
-| Skill Orchestration | Markdown (sdd-impl/SKILL.md) | REGENERATE mode で spawn を制御 | Lead が実行 |
+| Skill Orchestration | Markdown (sdd-roadmap/SKILL.md) | REGENERATE mode で spawn を制御 | Lead が実行 |
 | Output Format | YAML (tasks.yaml) | タスク定義と execution plan | 2セクション構成 |
 | Agent Infrastructure | Claude Code Agent Teams | TeammateTool spawn/dismiss | Experimental API |
 
@@ -180,9 +180,9 @@ Builder spawn (tdd-execution scope)
 
 ```mermaid
 flowchart TD
-    A["/sdd-impl {feature}"] --> B{Phase Gate Check}
+    A["/sdd-roadmap impl {feature}"] --> B{Phase Gate Check}
     B -->|blocked| B1["BLOCK: blocked by {spec}"]
-    B -->|wrong phase| B2["BLOCK: Run /sdd-design first"]
+    B -->|wrong phase| B2["BLOCK: Run /sdd-roadmap design first"]
     B -->|design-generated / impl-complete| C{Execution Mode?}
 
     C -->|"tasks.yaml なし OR last_phase_action null"| D["REGENERATE Mode"]
@@ -287,15 +287,15 @@ flowchart LR
 | 7 (Execution Plan Generation) | Builder グルーピング、Wave 構造 | sdd-taskgenerator agent, tasks-generation rule | tasks-generation.md Execution Plan Generation |
 | 8 (Optional Test Coverage) | 延期可能テストタスク | tasks-generation rule | tasks-generation.md Optional Test Coverage Tasks |
 | 9 (tasks.yaml Output Format) | YAML スキーマ定義 | tasks-generation rule | tasks-generation.md YAML Output Format |
-| 10 (sdd-impl Integration) | REGENERATE mode フロー | sdd-impl skill | sdd-impl SKILL.md Step 2 |
+| 10 (/sdd-roadmap impl Integration) | REGENERATE mode フロー | sdd-roadmap impl skill | sdd-roadmap SKILL.md Step 2 |
 
 ## Components and Interfaces
 
 | Component | Domain/Layer | Intent | Req Coverage | Files |
 |-----------|--------------|--------|--------------|-------|
-| sdd-taskgenerator agent | Agent (T3 Execute) | design.md → tasks.yaml 変換 | 1, 4, 7 | `framework/claude/agents/sdd-taskgenerator.md` |
+| sdd-taskgenerator agent | Agent (T3 Execute) | design.md → tasks.yaml 変換 | 1, 4, 7 | `framework/claude/sdd/settings/agents/sdd-taskgenerator.md` |
 | tasks-generation rule | Rule (Settings) | タスク分解・並列化・出力形式ルール | 2, 3, 4, 5, 6, 7, 8, 9 | `framework/claude/sdd/settings/rules/tasks-generation.md` |
-| sdd-impl skill (Step 2) | Skill (Orchestration) | REGENERATE mode での TaskGenerator spawn | 10 | `framework/claude/skills/sdd-impl/SKILL.md` |
+| sdd-roadmap impl (Step 2) | Skill (Orchestration) | REGENERATE mode での TaskGenerator spawn | 10 | `framework/claude/skills/sdd-roadmap/SKILL.md` |
 
 ### Agent Layer (T3 Execute)
 
@@ -314,6 +314,8 @@ flowchart LR
 - tasks-generation.md のルールを厳密に適用する
 - spec.yaml は更新しない（Lead の artifact ownership boundary）
 - tasks.yaml の生成のみが成果物（他の artifacts は変更しない）
+
+**Agent Profile**: `sdd/settings/agents/sdd-taskgenerator.md` — Lead が spawn prompt に埋め込み、`TeammateTool` で spawn する
 
 **Dependencies**
 - Inbound: Lead (TeammateTool spawn) — feature name, design path, research path, review findings (P0)
@@ -383,7 +385,7 @@ Execution: {N} waves, {M} groups
 
 ### Skill Layer (Orchestration)
 
-#### sdd-impl skill (REGENERATE Mode — Step 2)
+#### /sdd-roadmap impl (REGENERATE Mode — Step 2)
 
 | Field | Detail |
 |-------|--------|
@@ -480,8 +482,8 @@ TaskGenerator のエラーは Lead (sdd-impl skill) が検知し、ユーザー�
 
 | Category | Trigger | Response |
 |----------|---------|----------|
-| Missing design.md | design.md が存在しない | Lead が BLOCK: "Run `/sdd-design {feature}` first." |
-| Wrong phase | phase が design-generated/impl-complete でない | Lead が BLOCK: "Phase is '{phase}'. Run `/sdd-design {feature}` first." |
+| Missing design.md | design.md が存在しない | Lead が BLOCK: "Run `/sdd-roadmap design {feature}` first." |
+| Wrong phase | phase が design-generated/impl-complete でない | Lead が BLOCK: "Phase is '{phase}'. Run `/sdd-roadmap design {feature}` first." |
 | Blocked spec | phase == blocked | Lead が BLOCK: "{feature} is blocked by {blocked_info.blocked_by}." |
 | Specifications Coverage gap | design.md の spec がタスクにマッピングされていない | TaskGenerator がタスク生成を停止、設計フェーズへの差し戻しを報告 |
 | Missing spec ID in design.md | Specifications セクションに数値 ID がない spec がある | TaskGenerator が停止、Specifications セクションの修正を要求 |
@@ -497,4 +499,9 @@ TaskGenerator のエラーは Lead (sdd-impl skill) が検知し、ユーザー�
 2. **File Ownership Integrity**: execution groups 間でファイル重複がないことの検証（TaskGenerator の Step 3 内で実行）
 3. **Hierarchy Compliance**: 2レベル制限、連番、構造簡潔化ルールの遵守（tasks-generation.md ルールによる制約）
 4. **Parallel Safety**: p: true タスクが4条件を全て満たすことの検証（TaskGenerator の Step 2 内で実行）
-5. **Integration Test (End-to-End)**: `/sdd-impl {feature}` 実行時に tasks.yaml が正しく生成され、Builder spawn に進めることの検証（sdd-impl skill のフロー全体で検証）
+5. **Integration Test (End-to-End)**: `/sdd-roadmap impl {feature}` 実行時に tasks.yaml が正しく生成され、Builder spawn に進めることの検証（sdd-roadmap impl のフロー全体で検証）
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- Agent 定義パス: `framework/claude/agents/sdd-taskgenerator.md` → `framework/claude/sdd/settings/agents/sdd-taskgenerator.md`
+- 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新

@@ -15,7 +15,7 @@
 4. `{{SDD_DIR}}/project/specs/roadmap.md` を読み込む（存在する場合）
 5. `{{SDD_DIR}}/project/specs/*/spec.yaml` を glob スキャンして全 spec のメタデータを収集する
 6. feature 指定時、該当する spec ディレクトリが存在しない場合は "Spec '{feature}' not found." エラーを表示する
-7. spec が1件も見つからない場合は "No specs found. Run `/sdd-design \"description\"` to create." メッセージを表示する
+7. spec が1件も見つからない場合は "No specs found. Run `/sdd-roadmap design \"description\"` to create." メッセージを表示する
 
 ### Spec 2: Overall Progress Report
 **Goal:** ロードマップ全体の進捗サマリー表示
@@ -208,3 +208,7 @@ verdicts.md (per spec)──┘                        (--impact only)
 - **Teammate spawn**: 不要（read-only 操作）
 - **Phase gate**: なし（任意のタイミングで実行可能）
 - **Tools**: Read, Glob, Grep のみ使用
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新

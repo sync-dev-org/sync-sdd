@@ -1,7 +1,7 @@
 # SDD Framework Roadmap
 
 **Created**: 2026-02-20
-**Status**: implementation-complete (retroactive spec creation)
+**Status**: implementation-complete (retroactive spec creation + v0.18.0 alignment)
 **Specs**: 15 | **Waves**: 6
 
 ## Wave Overview
@@ -11,7 +11,7 @@
 
 | Spec | Description | Phase |
 |------|-------------|-------|
-| `core-architecture` | 3-tier役割定義、phase gate、状態管理、ライフサイクル、リカバリ | implementation-complete |
+| `core-architecture` | 3-tier役割定義、phase gate、状態管理、ライフサイクル、Teammate Failure Handling | implementation-complete |
 | `cpf-protocol` | Compact Pipe-Delimited Format、Inspector→Auditor通信規約 | implementation-complete |
 
 ### Wave 2: Steering & Design
@@ -113,3 +113,26 @@ graph TD
 
 全スペックは retroactive (既存実装から逆起こし) のため、フェーズは `implementation-complete`。
 今後の改修時は `/sdd-roadmap revise {feature}` で該当スペックを更新し、標準パイプライン (Architect → Review → TaskGen → Builder → Review) を実行。
+
+## Alignment History
+
+### v0.18.0 Retroactive Alignment (2026-02-22)
+
+v0.18.0 の構造変更（Roadmap Router化、ファイルベースレビュー、Agent定義移動、Recovery Protocol廃止）に対し、12 spec の design.md と spec.yaml を Architect 経由で更新。実装は変更なし。
+
+| Spec | Version | Tier | 主な変更 |
+|------|---------|------|---------|
+| core-architecture | 1.0.0 → 1.1.0 | A | ファイルベースレビュー, Recovery→Teammate Failure Handling |
+| design-pipeline | 1.0.0 → 1.1.0 | B | agent パス, コマンド参照 |
+| steering-system | 1.0.0 → 1.1.0 | C | コマンド参照 |
+| design-review | 1.1.0 → 1.2.0 | A | ファイルベースレビュー, agent パス |
+| task-generation | 1.0.0 → 1.1.0 | B | agent パス, コマンド参照 |
+| impl-review | 1.0.0 → 1.1.0 | A | ファイルベースレビュー, agent パス |
+| dead-code-review | 1.1.0 → 1.2.0 | A | ファイルベースレビュー, agent パス |
+| tdd-execution | 1.0.0 → 1.1.0 | B | agent パス, コマンド参照 |
+| roadmap-orchestration | 1.0.0 → 1.1.0 | A | Router化, 1-Spec Roadmap, ファイルベースレビュー |
+| knowledge-system | 1.0.0 → 1.1.0 | C | コマンド参照 |
+| status-progress | 1.0.0 → 1.1.0 | C | コマンド参照 |
+| installer | 1.0.0 → 1.1.0 | C | --local flag, agent パス, migration |
+
+未変更: `cpf-protocol` (v1.0.0), `session-persistence` (v1.0.0), `release-automation` (v1.0.0)

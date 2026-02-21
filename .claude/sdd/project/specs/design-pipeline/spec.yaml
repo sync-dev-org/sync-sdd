@@ -1,17 +1,20 @@
 feature_name: "design-pipeline"
 created_at: "2026-02-20"
-updated_at: "2026-02-20"
+updated_at: "2026-02-22"
 language: "markdown"
-version: "1.0.0"
-changelog: []
+version: "1.1.0"
+changelog:
+  - version: "1.1.0"
+    action: "v0.18.0 retroactive alignment: agent パス更新, コマンド参照更新"
+    timestamp: "2026-02-22"
 version_refs:
-  design: "1.0.0"
+  design: "1.1.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
   files_created:
     - "framework/claude/skills/sdd-design/SKILL.md"
-    - "framework/claude/agents/sdd-architect.md"
+    - "framework/claude/sdd/settings/agents/sdd-architect.md"
     - "framework/claude/sdd/settings/rules/design-discovery-full.md"
     - "framework/claude/sdd/settings/rules/design-discovery-light.md"
     - "framework/claude/sdd/settings/rules/design-principles.md"

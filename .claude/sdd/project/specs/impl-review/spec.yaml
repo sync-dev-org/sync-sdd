@@ -1,22 +1,25 @@
 feature_name: "impl-review"
 created_at: "2026-02-20"
-updated_at: "2026-02-20"
+updated_at: "2026-02-22"
 language: "markdown"
-version: "1.0.0"
-changelog: []
+version: "1.1.0"
+changelog:
+  - version: "1.1.0"
+    action: "v0.18.0 retroactive alignment: ファイルベースレビュー, agent パス更新, コマンド参照更新"
+    timestamp: "2026-02-22"
 version_refs:
-  design: "1.0.0"
+  design: "1.1.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
   files_created:
-    - "framework/claude/agents/sdd-auditor-impl.md"
-    - "framework/claude/agents/sdd-inspector-impl-rulebase.md"
-    - "framework/claude/agents/sdd-inspector-interface.md"
-    - "framework/claude/agents/sdd-inspector-test.md"
-    - "framework/claude/agents/sdd-inspector-quality.md"
-    - "framework/claude/agents/sdd-inspector-impl-consistency.md"
-    - "framework/claude/agents/sdd-inspector-impl-holistic.md"
+    - "framework/claude/sdd/settings/agents/sdd-auditor-impl.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-impl-rulebase.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-interface.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-test.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-quality.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-impl-consistency.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-impl-holistic.md"
 orchestration:
   retry_count: 0
   spec_update_count: 0

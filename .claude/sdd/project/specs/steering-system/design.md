@@ -86,7 +86,7 @@
 **Acceptance Criteria:**
 1. 操作完了後、`{{SDD_DIR}}/handover/session.md` が auto-draft される
 2. サマリーがユーザーに報告される
-3. 次のアクションが提案される: `/sdd-design "description"` または `/sdd-roadmap`
+3. 次のアクションが提案される: `/sdd-roadmap design "description"` または `/sdd-roadmap`
 
 ### Spec 7: Error Handling
 **Goal:** ステアリング操作中のエラーに対する適切な処理
@@ -240,7 +240,7 @@ sequenceDiagram
 
     L->>U: Suggested Bash permissions: Bash(uv:*)
     L->>FS: Auto-draft handover/session.md
-    L->>U: Summary (profile: Python applied)<br/>Next: /sdd-design or /sdd-roadmap
+    L->>U: Summary (profile: Python applied)<br/>Next: /sdd-roadmap design or /sdd-roadmap
 ```
 
 ### Update/Reset Decision Flow
@@ -538,3 +538,7 @@ SteeringSkill:
 - **Profile to Tech/Structure**: プロファイル値が tech.md と structure.md に正しく反映される
 - **Custom + Core**: カスタムステアリング追加後もコアファイルが影響を受けない
 - **Post-Completion**: 全操作後に session.md auto-draft が正常に実行される
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- 個別コマンド参照 (`/sdd-design`) を `/sdd-roadmap design` に更新

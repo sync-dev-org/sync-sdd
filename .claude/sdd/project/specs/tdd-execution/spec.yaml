@@ -1,17 +1,20 @@
 feature_name: "tdd-execution"
 created_at: "2026-02-20"
-updated_at: "2026-02-20"
+updated_at: "2026-02-22"
 language: "markdown"
-version: "1.0.0"
-changelog: []
+version: "1.1.0"
+changelog:
+  - version: "1.1.0"
+    action: "v0.18.0 retroactive alignment: agent パス更新, コマンド参照更新"
+    timestamp: "2026-02-22"
 version_refs:
-  design: "1.0.0"
+  design: "1.1.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
   files_created:
     - "framework/claude/skills/sdd-impl/SKILL.md"
-    - "framework/claude/agents/sdd-builder.md"
+    - "framework/claude/sdd/settings/agents/sdd-builder.md"
 orchestration:
   retry_count: 0
   spec_update_count: 0

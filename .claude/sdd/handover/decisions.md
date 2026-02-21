@@ -98,3 +98,39 @@
 - Reason: Inspector CPF と Lead トリガーの内容は明確に異なり、実際の誤判別は発生していない。ただし channel 複雑化時には再検討の余地あり
 - Impact: tech.md Key Technical Decisions に記録。将来の PROPOSE を自動却下するものではない
 - Source: Auditor PROPOSE → ユーザー承認（条件付き: 将来の見直し可）
+
+[2026-02-21T17:30:00Z] D17: SESSION_END | Design cross-check + Inspector Completion Trigger + v0.17.2 release
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-21T18:00:00Z] D18: SESSION_START | Resume session
+- Context: v0.17.2 リリース完了後の再開。全15 spec implementation-complete
+
+[2026-02-22T00:00:00Z] D19: DIRECTION_CHANGE | Roadmap Router化 + ファイルベースレビュー + SubAgent防止 (v0.18.0)
+- Context: roadmap run 動作から外れた際に個別コマンドが使われ、roadmap.md 乖離・Agent Teams 不使用が発生
+- Decision: (1) /sdd-roadmap を統合エントリポイント化、個別コマンド廃止 (2) Agent定義を sdd/settings/agents/ に移動（SubAgent spawn 構造的排除）(3) ファイルベースレビュー（SendMessage 排除）(4) Recovery Protocol 廃止
+- Reason: SendMessage ベースの Inspector→Auditor 通信が Auditor idle の根本原因。SubAgent spawn が Agent Teams 通信不成立の原因。個別コマンドの存在が roadmap コンテキスト離脱の原因
+- Impact: v0.18.0 リリース。全 skill/agent/CLAUDE.md を更新。既存 retroactive spec 15件は旧アーキテクチャ前提のまま（改修時に revise で更新）
+- Source: ユーザー指示
+
+[2026-02-22T03:30:00Z] D20: SESSION_END | Roadmap Router + file-based review + v0.18.0 release
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-22T10:00:00Z] D21: USER_DECISION | v0.18.0 Spec Retroactive Alignment — Architect 経由・実装変更なし
+- Context: v0.18.0 構造変更 (Router化, ファイルベースレビュー, agent移動, Recovery廃止) が spec を通さず Lead 直接で行われていた。12 spec の design.md/spec.yaml が実装と乖離
+- Decision: Architect を各 spec に spawn し design.md を現実装に追従。Review/Builder skip（実装変更なし）。Lead が spec.yaml メタデータを更新
+- Reason: 正規パイプラインを通す（option 1）が、実装は変えない。Architect が design.md を書くことで Artifact Ownership ルールを遵守
+- Impact: 12 spec の design.md + spec.yaml 更新、roadmap.md に Alignment History 追加。release-automation, cpf-protocol, session-persistence は変更不要
+- Source: ユーザー判断
+
+[2026-02-22T12:00:00Z] D22: USER_DECISION | .gitignore: インストール済みフレームワーク除外
+- Context: .claude/ 配下のインストール先ファイルが git tracked で混乱を招いていた
+- Decision: .claude/CLAUDE.md, settings.json, skills/, sdd/settings/, sdd/.version を gitignore。project/ と handover/ は tracked 維持
+- Reason: framework/ がソース、.claude/ はインストール先。二重管理の解消
+- Impact: git rm --cached でトラッキング除外。ファイルは残るが git 管理外に
+- Source: ユーザー指示
+
+[2026-02-22T12:30:00Z] D23: SESSION_END | v0.18.0 spec alignment + gitignore cleanup
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived

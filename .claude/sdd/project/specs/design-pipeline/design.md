@@ -4,9 +4,9 @@
 
 ### Introduction
 
-フィーチャー設計生成パイプライン。`/sdd-design` コマンドが Lead として機能し、入力モード検出・Phase Gate 検証・新規 spec 初期化を行った上で、Architect (T2) を `TeammateTool` で spawn する。Architect は自律的に Discovery（full / light / minimal）を実行し、コードベース分析・外部調査を経て `design.md` と `research.md` を生成する。完了後、Lead が `spec.yaml` のメタデータ（phase, version_refs, changelog）を更新し、session.md を auto-draft する。
+フィーチャー設計生成パイプライン。`/sdd-design` は `/sdd-roadmap design` へのリダイレクトスタブであり、正式なエントリポイントは `/sdd-roadmap design` である。Lead として機能し、入力モード検出・Phase Gate 検証・新規 spec 初期化を行った上で、Architect (T2) を `TeammateTool` で spawn する。Architect は自律的に Discovery（full / light / minimal）を実行し、コードベース分析・外部調査を経て `design.md` と `research.md` を生成する。完了後、Lead が `spec.yaml` のメタデータ（phase, version_refs, changelog）を更新し、session.md を auto-draft する。
 
-本パイプラインはフレームワークの Stage 1（Specification）に位置し、`/sdd-impl` や `/sdd-review design` の前提となる。
+本パイプラインはフレームワークの Stage 1（Specification）に位置し、`/sdd-roadmap impl` や `/sdd-roadmap review design` の前提となる。
 
 ### Spec 1: Input Mode Detection and Spec Initialization
 
@@ -111,7 +111,7 @@
 
 1. ユーザーが設計フロー中に新しい要件を表明した場合、`steering/product.md` の User Intent section を更新する
 2. `{{SDD_DIR}}/handover/session.md` を auto-draft する（Direction, Accomplished, Next Action を含む）
-3. ユーザーに完了レポートを提示する: (a) Status: design.md generated, (b) 使用された Discovery type, (c) 次のアクション: `/sdd-review design {feature}` または `/sdd-impl {feature}`
+3. ユーザーに完了レポートを提示する: (a) Status: design.md generated, (b) 使用された Discovery type, (c) 次のアクション: `/sdd-roadmap review design {feature}` または `/sdd-roadmap impl {feature}`
 
 ### Spec 8: Error Handling
 
@@ -125,8 +125,8 @@
 
 ### Non-Goals
 
-- 設計の自動レビュー（`/sdd-review design` のスコープ -- design-review spec で定義）
-- `tasks.yaml` の生成（`/sdd-impl` パイプラインの TaskGenerator のスコープ -- task-generation spec で定義）
+- 設計の自動レビュー（`/sdd-roadmap review design` のスコープ -- design-review spec で定義）
+- `tasks.yaml` の生成（`/sdd-roadmap impl` パイプラインの TaskGenerator のスコープ -- task-generation spec で定義）
 - 実装コードの生成（Builder のスコープ -- impl-pipeline spec で定義）
 - Architect エラー時の自動リトライ（Auto-Fix Loop は `/sdd-review` のスコープ）
 - Roadmap revision フロー（`/sdd-roadmap revise` で定義）
@@ -135,9 +135,9 @@
 
 **Purpose**: Design Pipeline は SDD フレームワークの Stage 1（Specification）を実現する。ユーザーの feature description または既存 spec 名から、構造化された技術設計ドキュメント (`design.md`) と調査記録 (`research.md`) を生成する。
 
-**Users**: Lead（T1）が orchestrator として機能し、Architect（T2）を teammate として spawn する。ユーザーは `/sdd-design` コマンドを通じてパイプラインを起動する。
+**Users**: Lead（T1）が orchestrator として機能し、Architect（T2）を teammate として spawn する。ユーザーは `/sdd-design`（リダイレクトスタブ）または正式コマンド `/sdd-roadmap design` を通じてパイプラインを起動する。
 
-**Impact**: `spec.yaml` の phase を `initialized` から `design-generated` に遷移させ、後続の `/sdd-impl` や `/sdd-review design` を unlock する。
+**Impact**: `spec.yaml` の phase を `initialized` から `design-generated` に遷移させ、後続の `/sdd-roadmap impl` や `/sdd-roadmap review design` を unlock する。
 
 ## Architecture
 
@@ -227,7 +227,7 @@ sequenceDiagram
     participant Arch as Architect (T2)
     participant FS as File System
 
-    User->>Lead: /sdd-design {args}
+    User->>Lead: /sdd-roadmap design {args}<br/>(or /sdd-design redirect)
     Lead->>Lead: Parse $ARGUMENTS
     Lead->>FS: Check specs/{feature}/spec.yaml exists?
 
@@ -626,3 +626,9 @@ Key findings: {2-3 critical insights}
 - `/sdd-design "user authentication"` -> `user-authentication` spec 作成 -> design.md 生成 -> phase = `design-generated`
 - `/sdd-design existing-feature` -> 既存 design.md の merge mode -> version minor increment
 - `/sdd-design blocked-feature` -> BLOCK message -> no Architect spawn
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- `/sdd-design` は `/sdd-roadmap design` へのリダイレクトスタブに変更
+- 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新
+- Agent 定義パス: `framework/claude/agents/` → `framework/claude/sdd/settings/agents/`

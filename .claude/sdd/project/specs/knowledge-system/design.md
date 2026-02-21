@@ -4,7 +4,7 @@
 
 ### Introduction
 
-SDD フレームワークにおける再利用可能な知識の蓄積・管理・活用システム。Builder/Inspector が開発中に発見した学習事項を `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` タグで報告し、Lead が `buffer.md` に一時蓄積した後、Wave 完了時またはスタンドアロン `/sdd-impl` 完了時に `knowledge/` ディレクトリへ永続化する。さらに、蓄積されたパターンから Skill emergence（スキル候補の自動検出）を行い、ユーザー承認を経て新しいスキルファイルを生成する。`/sdd-knowledge` スキルがこのシステム全体の管理 UI を提供する。
+SDD フレームワークにおける再利用可能な知識の蓄積・管理・活用システム。Builder/Inspector が開発中に発見した学習事項を `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` タグで報告し、Lead が `buffer.md` に一時蓄積した後、Wave 完了時またはスタンドアロン `/sdd-roadmap impl` 完了時に `knowledge/` ディレクトリへ永続化する。さらに、蓄積されたパターンから Skill emergence（スキル候補の自動検出）を行い、ユーザー承認を経て新しいスキルファイルを生成する。`/sdd-knowledge` スキルがこのシステム全体の管理 UI を提供する。
 
 ### Spec 1: Manual Knowledge Capture
 **Goal:** ユーザーが対話的に knowledge エントリを作成できるようにする
@@ -41,7 +41,7 @@ SDD フレームワークにおける再利用可能な知識の蓄積・管理�
 
 **Acceptance Criteria:**
 1. Wave 完了時（roadmap モード）に、Lead が buffer.md の Knowledge Buffer を読み取る
-2. スタンドアロン `/sdd-impl` 完了時にも Knowledge Buffer の flush を実行する
+2. スタンドアロン `/sdd-roadmap impl` 完了時にも Knowledge Buffer の flush を実行する
 3. flush 処理では集約（aggregate）と重複排除（deduplicate）を行う
 4. 永続化先は `{{SDD_DIR}}/project/knowledge/` ディレクトリ
 5. 永続化時にテンプレート（`pattern.md`/`incident.md`/`reference.md`）を使用してファイルを生成する
@@ -88,13 +88,13 @@ SDD フレームワークにおける再利用可能な知識の蓄積・管理�
 8. 全テンプレートは `{{SDD_DIR}}/settings/templates/knowledge/` に配置される
 
 ### Spec 7: Review Integration
-**Goal:** 知識エントリを `/sdd-review` でコンテキストとして活用する
+**Goal:** 知識エントリを `/sdd-roadmap review` でコンテキストとして活用する
 
 **Acceptance Criteria:**
 1. Inspector（特に best-practices）は `knowledge/pattern-*.md` を glob で検索し、関連パターンをレビューコンテキストに含める
 2. Inspector は `knowledge/reference-*.md` を glob で検索し、参考資料をレビューに活用する
-3. `/sdd-review design` は detection phase や category でフィルタ可能
-4. `/sdd-review impl` は `incident-*` でフィルタし、common pitfalls をチェック対象に含める
+3. `/sdd-roadmap review design` は detection phase や category でフィルタ可能
+4. `/sdd-roadmap review impl` は `incident-*` でフィルタし、common pitfalls をチェック対象に含める
 
 ### Non-Goals
 - Knowledge の自動適用（参照のみ、自動修正は行わない）
@@ -278,8 +278,8 @@ flowchart TD
 | Incident Template | Template / Storage | インシデント知識の構造化テンプレート | S6 | `framework/claude/sdd/settings/templates/knowledge/incident.md` |
 | Reference Template | Template / Storage | リファレンス知識の構造化テンプレート | S6 | `framework/claude/sdd/settings/templates/knowledge/reference.md` |
 | Auto-Accumulation (CLAUDE.md) | Framework / Protocol | Builder/Inspector → buffer.md → knowledge/ のデータフロー定義 | S2, S3 | `framework/claude/CLAUDE.md` (Knowledge Auto-Accumulation section) |
-| Builder Agent | Agent / T3 | `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` タグ報告 | S2 | `framework/claude/agents/sdd-builder.md` |
-| Inspector Agent (best-practices) | Agent / T3 | knowledge/ からのコンテキスト読み取り | S7 | `framework/claude/agents/sdd-inspector-best-practices.md` |
+| Builder Agent | Agent / T3 | `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` タグ報告 | S2 | `framework/claude/sdd/settings/agents/sdd-builder.md` |
+| Inspector Agent (best-practices) | Agent / T3 | knowledge/ からのコンテキスト読み取り | S7 | `framework/claude/sdd/settings/agents/sdd-inspector-best-practices.md` |
 | buffer.md | Handover / Storage | Knowledge Buffer + Skill Candidates の一時保管 | S2, S3, S4, S5 | `{{SDD_DIR}}/handover/buffer.md` |
 | knowledge/ directory | Project / Storage | 永続化された knowledge エントリ | S1, S3, S4 | `{{SDD_DIR}}/project/knowledge/` |
 
@@ -485,3 +485,7 @@ Knowledge Buffer (Transient)
 - Inspector が `knowledge/pattern-*.md` を glob 検索しレビューコンテキストに含める
 - Inspector が `knowledge/reference-*.md` を参照する
 - `incident-*` フィルタによる common pitfalls チェック
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新

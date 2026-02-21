@@ -3,7 +3,7 @@
 ## Specifications
 
 ### Introduction
-TDD (Test-Driven Development) による実装実行パイプライン。`/sdd-impl` skill の Step 3 以降のフェーズに相当し、tasks.yaml の execution セクションに基づいて Builder agent を `TeammateTool` で spawn し、RED→GREEN→REFACTOR サイクルでタスクを実装する。Lead は Builder の completion report を incremental に処理し、タスクステータス更新・Knowledge tag 収集・次 wave Builder の即時 spawn を行う。複数 Builder の並列実行とファイルスコープ分離により、安全な並行開発を実現する。
+TDD (Test-Driven Development) による実装実行パイプライン。`/sdd-roadmap impl` の Step 3 以降のフェーズに相当し、tasks.yaml の execution セクションに基づいて Builder agent を `TeammateTool` で spawn し、RED→GREEN→REFACTOR サイクルでタスクを実装する。Lead は Builder の completion report を incremental に処理し、タスクステータス更新・Knowledge tag 収集・次 wave Builder の即時 spawn を行う。複数 Builder の並列実行とファイルスコープ分離により、安全な並行開発を実現する。
 
 ### Spec 1: Builder Spawning & Work Package Construction
 **Goal:** tasks.yaml の execution セクションから Builder ワークパッケージを構築し、TeammateTool で spawn する
@@ -15,7 +15,7 @@ TDD (Test-Driven Development) による実装実行パイプライン。`/sdd-im
 4. group ごとに spawn prompt を構築する: Feature 名、Task IDs + summaries + detail bullets、File scope（execution group の files）、Design ref パス、Research ref パス（存在する場合）
 5. 依存タスクがある group には `Depends on: Tasks {numbers} (wait for completion)` を spawn context に含める
 6. 各 group に対して `TeammateTool` で Builder を spawn する（同一 wave 内の group は並列 spawn）
-7. spawn される Builder agent は `sdd-builder` agent 定義（model: sonnet, permissionMode: bypassPermissions）を使用する
+7. spawn される Builder agent は `sdd-builder` agent 定義（model: sonnet, permissionMode: bypassPermissions）を使用する。Lead は `sdd/settings/agents/sdd-builder.md` から agent profile を読み込み、spawn prompt に埋め込んで `TeammateTool` で spawn する
 
 ### Spec 2: TDD Cycle (RED→GREEN→REFACTOR)
 **Goal:** Builder agent 内部での Kent Beck TDD サイクルに基づく実装
@@ -58,7 +58,7 @@ TDD (Test-Driven Development) による実装実行パイプライン。`/sdd-im
 2. Lead は blocker を以下の3カテゴリに分類する:
    - **Missing dependency** (他タスクのコードが未完了): 残タスクの順序を変更し、依存タスクを優先して Builder を re-spawn する
    - **External blocker** (API 不可、環境問題): ユーザーにコンテキスト付きでエスカレーションする
-   - **Design gap** (設計通りに実装不可): ユーザーにエスカレーションし、`/sdd-design {feature}` による再設計を提案する
+   - **Design gap** (設計通りに実装不可): ユーザーにエスカレーションし、`/sdd-roadmap design {feature}` による再設計を提案する
 3. 全ての blocker を `handover/buffer.md` に `[INCIDENT]` タグで記録する
 4. blocker 発生時、Lead は spec.yaml を更新せず、ユーザーまたは再構成による解決を待つ
 
@@ -83,13 +83,13 @@ TDD (Test-Driven Development) による実装実行パイプライン。`/sdd-im
 ### Non-Goals
 - タスクの生成・分解（task-generation spec のスコープ）
 - 実装コードのレビュー（impl-review spec のスコープ）
-- Phase gate チェックと Execution mode 判定（sdd-impl skill の Step 1-2）
+- Phase gate チェックと Execution mode 判定（sdd-roadmap impl の Step 1-2）
 - Cross-spec ファイル所有権の解決（roadmap-orchestration spec のスコープ）
 - Auto-Fix ループの Builder re-spawn（roadmap-orchestration spec の Auto-Fix Loop）
 
 ## Overview
 
-Stage 2 (Implementation) の中核実行フェーズ。`/sdd-impl` skill が tasks.yaml の execution セクションを解析し、Builder グループを TeammateTool で spawn する。各 Builder は TDD (RED→GREEN→REFACTOR) サイクルでタスクを実装し、構造化された completion report を出力する。Lead は各 Builder の完了を incremental に処理し、タスクの `done` マーキング、Knowledge tag の buffer.md 蓄積、次 wave Builder の即時 spawn を行う。全 Builder 完了後、spec.yaml を `implementation-complete` に遷移させる。
+Stage 2 (Implementation) の中核実行フェーズ。`/sdd-roadmap impl` が tasks.yaml の execution セクションを解析し、Builder グループを TeammateTool で spawn する。各 Builder は TDD (RED→GREEN→REFACTOR) サイクルでタスクを実装し、構造化された completion report を出力する。Lead は各 Builder の完了を incremental に処理し、タスクの `done` マーキング、Knowledge tag の buffer.md 蓄積、次 wave Builder の即時 spawn を行う。全 Builder 完了後、spec.yaml を `implementation-complete` に遷移させる。
 
 ## Architecture
 
@@ -115,7 +115,7 @@ Lead (T1, Opus)
 
 | Layer | Choice / Version | Role in Feature | Notes |
 |-------|------------------|-----------------|-------|
-| Orchestration | sdd-impl skill (Markdown) | Builder spawn と incremental processing | Step 3-4 |
+| Orchestration | sdd-roadmap impl (Markdown) | Builder spawn と incremental processing | Step 3-4 |
 | Agent | sdd-builder agent (Markdown) | TDD 実装実行 | model: sonnet |
 | Agent API | TeammateTool | Builder spawn/dismiss | Agent Teams experimental |
 | State | spec.yaml / tasks.yaml | Phase 管理 / タスクステータス | Lead 所有 |
@@ -213,7 +213,7 @@ sequenceDiagram
     else External blocker
         L->>U: Escalate with context
     else Design gap
-        L->>U: Escalate + suggest /sdd-design
+        L->>U: Escalate + suggest /sdd-roadmap design
     end
 ```
 
@@ -221,8 +221,8 @@ sequenceDiagram
 
 | Component | Domain/Layer | Intent | Files |
 |-----------|--------------|--------|-------|
-| sdd-impl skill (Steps 3-4) | Skill / Orchestration | Builder spawn、incremental processing | `framework/claude/skills/sdd-impl/SKILL.md` |
-| sdd-builder agent | Agent (T3) | TDD サイクル実行 | `framework/claude/agents/sdd-builder.md` |
+| sdd-roadmap impl (Steps 3-4) | Skill / Orchestration | Builder spawn、incremental processing | `framework/claude/skills/sdd-roadmap/SKILL.md` |
+| sdd-builder agent | Agent (T3) | TDD サイクル実行 | `framework/claude/sdd/settings/agents/sdd-builder.md` |
 
 ### Interface Contracts
 
@@ -257,3 +257,9 @@ Blocker: {description}
 Tasks affected: {list}
 Attempted: {what was tried}
 ```
+
+## Revision Notes
+### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
+- Agent 定義パス: `framework/claude/agents/sdd-builder.md` → `framework/claude/sdd/settings/agents/sdd-builder.md`
+- `/sdd-impl` は `/sdd-roadmap impl` へのリダイレクトスタブに変更
+- 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新

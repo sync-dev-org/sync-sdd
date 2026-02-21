@@ -1,23 +1,26 @@
 feature_name: "dead-code-review"
 created_at: "2026-02-20"
-updated_at: "2026-02-20"
+updated_at: "2026-02-22"
 language: "markdown"
-version: "1.1.0"
+version: "1.2.0"
 changelog:
+  - version: "1.2.0"
+    action: "v0.18.0 retroactive alignment: ファイルベースレビュー, agent パス更新, コマンド参照更新"
+    timestamp: "2026-02-22"
   - version: "1.1.0"
     action: "Non-Goals Auto-Fix scope clarification (D11/D12)"
     timestamp: "2026-02-21"
 version_refs:
-  design: "1.1.0"
+  design: "1.2.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
   files_created:
-    - "framework/claude/agents/sdd-auditor-dead-code.md"
-    - "framework/claude/agents/sdd-inspector-dead-code.md"
-    - "framework/claude/agents/sdd-inspector-dead-tests.md"
-    - "framework/claude/agents/sdd-inspector-dead-specs.md"
-    - "framework/claude/agents/sdd-inspector-dead-settings.md"
+    - "framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-code.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-tests.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-specs.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-settings.md"
 orchestration:
   retry_count: 0
   spec_update_count: 0
