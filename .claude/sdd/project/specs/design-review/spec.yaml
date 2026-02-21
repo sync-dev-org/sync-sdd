@@ -2,11 +2,14 @@ feature_name: "design-review"
 created_at: "2026-02-20"
 updated_at: "2026-02-20"
 language: "markdown"
-version: "1.0.0"
-changelog: []
+version: "1.1.0"
+changelog:
+  - version: "1.1.0"
+    action: "Spec 15 Inspector Completion Trigger 追加 (D14)"
+    timestamp: "2026-02-21"
 version_refs:
-  design: "1.0.0"
-  implementation: "1.0.0"
+  design: "1.1.0"
+  implementation: "1.1.0"
 phase: implementation-complete
 implementation:
   files_created:
@@ -22,7 +25,7 @@ implementation:
 orchestration:
   retry_count: 0
   spec_update_count: 0
-  last_phase_action: null
+  last_phase_action: "impl-complete"
 blocked_info: null
 roadmap:
   wave: 3

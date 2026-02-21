@@ -1,72 +1,55 @@
 # Session Handover
-**Generated**: 2026-02-20
+**Generated**: 2026-02-21
 **Branch**: main
-**Session Goal**: release-automation revision + Lead 直接編集バイパス問題の修正
+**Mode**: auto-draft
 
 ## Direction
 ### Immediate Next Action
-ユーザー判断待ち。全作業完了。
+ユーザー判断待ち。design-review revision 完了（Spec 15 実装済み）。impl review は後回し可能。
 
 ### Active Goals
-- [x] ステアリングセットアップ (product.md, tech.md, structure.md)
-- [x] ロードマップ作成 (15 spec / 6 wave)
-- [x] 全15 spec の design.md 詳細化（既存実装から逆起こし）
-- [x] 3段階レビュー + MAJOR findings 修正
-- [x] release-automation revision (Spec 7: Post-Release Verification)
-- [x] CLAUDE.md に Change Request Triage ルール追加
+- [x] 全作業完了（前セッション累積）
+- [x] Design cross-check review (CONDITIONAL)
+- [x] dead-code-review revision (Non-Goals Auto-Fix スコープ明確化)
+- [x] design-review revision (Spec 15 Inspector Completion Trigger)
+  - design.md 追加 + Design Review GO + SKILL.md 実装完了
 
 ### Key Decisions
-**Continuing from previous sessions:**
-1. 細かめ粒度 (15 spec) を採用 — 改修・機能追加への強さとミス防止 (ref D2)
-2. 全 spec を `implementation-complete` で作成 — 既存実装が正 (ref D1)
-3. 6 Wave 構成: Foundation → Steering & Design → Review & Tasks → Execution → Orchestration → Distribution
-4. cpf-protocol は横断的仕様、改修時は3 spec 影響確認必要
-5. Write Fallback Protocol — knowledge buffer に記録（フレームワーク改修候補）
-
-**Added this session:**
-6. release-automation Spec 7 追加 — hatch-vcs メタデータキャッシュ問題の対策 (ref D4)
-7. installer downstream Skip — Step 9 追加は install.sh に影響なし (ref D5)
-8. CLAUDE.md に Change Request Triage ルール追加 — Lead が spec 管理ファイルを直接編集することを明示的に禁止
+9-16: (本セッション D8-D16 参照)
 
 ### Warnings
-- MINOR findings 12件は未修正（品質向上の余地あり、緊急性なし）
-- cpf-protocol は横断的仕様のため、改修時は design-review/impl-review/dead-code-review の3 spec も影響確認が必要
-- sdd-review SKILL.md と sdd-impl SKILL.md は複数 spec にまたがる共有コンポーネント
-- `.claude/` 配下はインストール先。編集対象は `framework/` のみ。次回 install で上書きされる
+- impl-review / dead-code-review は SKILL.md 共有のため自動カバー。downstream Skip で可
+- Cross-check Tracked issues 27件 (verdicts-cross-check.md)
+- Inspector Completion Trigger の有効性はこのセッションで実証済み
+- `.claude/` 配下はインストール先。`framework/` が編集対象
 
 ## Session Context
 ### Tone and Nuance
-ユーザーは効率重視。フレームワークの区別（`framework/` = ソース、`.claude/` = インストール先）を正確に理解している。
-Lead が直接ファイル修正することを強く嫌い、正規の SDD pipeline (`/sdd-roadmap revise`) を経由させる。
-`.claude/` への直接編集も不要（install.sh が同期する）。
+ユーザーは効率重視。正規 SDD pipeline 経由を徹底。revise スコープは柔軟。
 
 ### Steering Exceptions
 なし
 
 ## Accomplished
-**前セッションからの累積:**
-- `/sdd-steering` — product.md, tech.md, structure.md
-- `/sdd-roadmap create` — roadmap.md + 15 spec
-- 15 spec design.md 詳細化 + 3段階レビュー + MAJOR 3件修正
-
 **このセッション:**
-- `/sdd-roadmap revise release-automation` — Spec 7 (Post-Release Verification) 追加
-  - Design Review: GO (6/6 Inspector)
-  - Implementation Review: GO (6/6 Inspector)
-  - hatch-vcs: `uv sync --reinstall-package` でメタデータリフレッシュ、`uv pip install -e` は禁止
-- CLAUDE.md Change Request Triage ルール追加
-  - Artifact Ownership テーブル: `implementation.files_created` への明示参照
-  - Prohibited 文: 「directly edit code」→「directly edit any file in implementation.files_created」
-  - ルーティングトリガー: バグ報告・修正もカバー
-  - Behavioral Rules: 先頭に Change Request Triage を追加
+- `/sdd-review design --cross-check` — CONDITIONAL (0C 8H 15M 6L), STEERING 4件処理
+- `/sdd-roadmap revise dead-code-review` — Non-Goals 修正, GO
+- `/sdd-roadmap revise design-review` — Spec 15 追加 + 実装
+  - Architect: design.md Spec 15 追加
+  - Design Review: GO (Inspector Completion Trigger で Auditor 即応答を実証)
+  - TaskGenerator: tasks.yaml 生成 (1 task)
+  - Builder: SKILL.md に Inspector Completion Protocol 追加
+  - phase: implementation-complete, version: 1.1.0
 
 ### Modified Files
-- `framework/claude/CLAUDE.md` (Change Request Triage ルール追加)
-- `framework/claude/skills/sdd-release/SKILL.md` (Step 9 Post-Release Verification 追加)
-- `.claude/sdd/project/specs/release-automation/` (design.md, research.md, tasks.yaml, verdicts.md, spec.yaml)
-- `.claude/sdd/handover/` (session.md, decisions.md, buffer.md)
+- `framework/claude/skills/sdd-review/SKILL.md` (Inspector Completion Protocol 追加)
+- `.claude/sdd/project/specs/design-review/` (design.md, research.md, tasks.yaml, verdicts.md, spec.yaml)
+- `.claude/sdd/project/specs/dead-code-review/` (design.md, verdicts.md, spec.yaml)
+- `.claude/sdd/project/specs/verdicts-cross-check.md` (新規)
+- `.claude/sdd/project/steering/tech.md` (7件追加)
+- `.claude/sdd/handover/decisions.md` (D7-D16)
 
 ## Resume Instructions
-1. `session.md` を読み込み、Direction と Warnings を確認
-2. ユーザーの指示を待つ（全作業完了済み）
-3. 改修が必要な場合は `/sdd-roadmap revise {feature}` を使用（Lead 直接編集禁止）
+1. `session.md` 読み込み + Warnings 確認
+2. 改修は `/sdd-roadmap revise {feature}` 経由
+3. Tracked issues: `verdicts-cross-check.md` (27件)

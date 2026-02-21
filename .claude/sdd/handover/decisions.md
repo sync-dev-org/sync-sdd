@@ -32,3 +32,69 @@
 [2026-02-20T13:00:00Z] D6: SESSION_END | release-automation revision + Change Request Triage ルール追加
 - Context: /sdd-handover executed
 - Decision: Session ended, handover archived
+
+[2026-02-20T14:00:00Z] D7: SESSION_START | Resume session
+- Context: 前セッション完了後の再開。全15 spec implementation-complete、MINOR 12件未修正
+
+[2026-02-21T14:58:00Z] D8: STEERING_UPDATE | Auto-Fix Loop ownership を tech.md に CODIFY
+- Context: Design cross-check review (B1) — Auditor STEERING:CODIFY
+- Decision: Auto-Fix Loop は各レビュー spec（design-review, impl-review）にスタンドアロン用の完全な定義を持ち、roadmap-orchestration が Wave レベルの調整層として機能する
+- Reason: 3 spec に Auto-Fix Loop の完全定義が分散しているが、これは意図的な設計（standalone vs roadmap context）
+- Impact: tech.md Key Technical Decisions に記録。実装者が「どの spec が canonical か」を判断できる
+- Source: Auditor verdict (B1 cross-check)
+
+[2026-02-21T15:00:00Z] D9: STEERING_UPDATE | Auditor timeout 方針を tech.md に PROPOSE承認
+- Context: Design cross-check review (B1) — Auditor STEERING:PROPOSE
+- Decision: 「合理的な待機後」タイムアウトは実装裁量とし固定値を規定しない。Agent Teams メッセージ配信は非決定的でプラットフォーム依存。Lead Recovery Protocol が障害ケースを処理する
+- Reason: 固定タイムアウトは aggressive/conservative のどちらにも偏るリスク
+- Impact: tech.md Key Technical Decisions に記録
+- Source: Auditor PROPOSE → ユーザー承認
+
+[2026-02-21T15:00:01Z] D10: STEERING_UPDATE | Agent Teams API 依存方針を tech.md に PROPOSE承認
+- Context: Design cross-check review (B1) — Auditor STEERING:PROPOSE
+- Decision: Agent Teams experimental API 依存をフォールバックなしで受け入れる。フレームワークは Agent Teams 専用設計であり graceful degradation は根本的に異なるアーキテクチャを要する。install.sh のバージョン固定でリスク軽減
+- Reason: フォールバック設計はコスト対効果が不合理
+- Impact: tech.md Key Technical Decisions に記録
+- Source: Auditor PROPOSE → ユーザー承認
+
+[2026-02-21T15:02:00Z] D11: STEERING_UPDATE | dead-code review Auto-Fix スコープ明確化を PROPOSE承認
+- Context: Design cross-check review (B1) — Auditor STEERING:PROPOSE
+- Decision: dead-code review pipeline は verdict 出力のみ。post-verdict の Builder re-spawn は roadmap-orchestration (Lead) の責務。dead-code-review Non-Goals の「Auto-Fix Loop なし」を明確化する
+- Reason: dead-code-review spec 単体では auto-fix なしだが、roadmap context では Lead が外部的に auto-fix を実行する。現状の表現は misleading
+- Impact: tech.md に方針記録。design.md の実際の変更は `/sdd-roadmap revise dead-code-review` で Architect 経由で実施
+- Source: Auditor PROPOSE → ユーザー承認
+
+[2026-02-21T15:10:00Z] D12: REVISION_INITIATED | dead-code-review Non-Goals Auto-Fix スコープ明確化
+- Context: D11 で承認された PROPOSE を design.md に反映するための revision
+- Decision: Non-Goals の「Auto-Fix Loop なし」を「このパイプラインは verdict 出力のみ。Wave Quality Gate での post-verdict remediation は roadmap-orchestration の責務」に明確化
+- Reason: dead-code-review spec 単体読みで誤解を招く表現の修正
+- Impact: dead-code-review design.md Non-Goals セクションの1行修正。downstream 影響なし
+- Source: ユーザー指示 (`/sdd-roadmap revise dead-code-review`)
+
+[2026-02-21T15:22:00Z] D13: USER_DECISION | dead-code-review revision downstream Skip
+- Context: dead-code-review revision (Non-Goals 表現修正) 完了後の downstream 対応
+- Decision: roadmap-orchestration, installer ともに Skip — 現状のまま受け入れ
+- Reason: インターフェースや振る舞いの変更なし。Non-Goals の表現明確化のみ
+- Impact: downstream specs は implementation-complete のまま。再レビュー不要
+- Source: ユーザー判断
+
+[2026-02-21T15:30:00Z] D14: REVISION_INITIATED | design-review Inspector Completion Trigger 追加
+- Context: Auditor が verdict テキスト出力に失敗するパターンを2回観測。Inspector 全完了後に Lead が Auditor に明示的トリガーを送信する仕組みを追加
+- Decision: SKILL.md Step 3 に Inspector Completion Trigger プロトコルを追加
+- Reason: Agent Teams の multi-turn message handling で Auditor が「全結果到着」を確実に検知できない問題
+- Impact: sdd-review SKILL.md に共通サブセクション追加。impl-review, dead-code-review も自動カバー
+- Source: ユーザー指示
+
+[2026-02-21T15:35:00Z] D15: STEERING_UPDATE | Revision Notes convention を tech.md に CODIFY
+- Context: Design review (B1) for design-review v1.1.0 — Auditor STEERING:CODIFY
+- Decision: design.md の Revision Notes セクションは revision 単位の変更履歴として使用する（テンプレート拡張）
+- Reason: dead-code-review, design-review の revision で既に使用中のパターンを正式化
+- Impact: tech.md Key Technical Decisions に記録
+- Source: Auditor verdict (design-review B1)
+
+[2026-02-21T15:38:00Z] D16: STEERING_UPDATE | SendMessage discrimination 方針を tech.md に PROPOSE承認
+- Context: Design review (B1) for design-review v1.1.0 — Auditor STEERING:PROPOSE
+- Decision: 現時点では message-type discriminator を導入せず content pattern match で区別。将来の再検討を妨げない
+- Reason: Inspector CPF と Lead トリガーの内容は明確に異なり、実際の誤判別は発生していない。ただし channel 複雑化時には再検討の余地あり
+- Impact: tech.md Key Technical Decisions に記録。将来の PROPOSE を自動却下するものではない
+- Source: Auditor PROPOSE → ユーザー承認（条件付き: 将来の見直し可）

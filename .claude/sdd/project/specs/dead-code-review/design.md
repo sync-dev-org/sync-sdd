@@ -193,7 +193,7 @@ Dead code レビューパイプライン。コードベース全体を対象に�
 - コード品質レビュー（impl-review spec のスコープ）
 - 設計品質レビュー（design-review spec のスコープ）
 - Dead artifact の自動削除（本パイプラインは検出のみ）
-- Auto-Fix Loop（dead-code review は verdict 表示のみで自動修正を行わない）
+- Auto-Fix Loop — このパイプラインは verdict 出力のみを行い、内部に自動修正ロジックを持たない。Wave Quality Gate の一部として実行される場合、post-verdict の Builder re-spawn による remediation は roadmap-orchestration (Lead) の責務
 - Consensus mode（dead-code review では `--consensus N` 未対応）
 
 ## Overview
@@ -388,7 +388,7 @@ Dead-code モードは sdd-review skill 内の分岐として実装。Design/Imp
 - Phase Gate なし（Step 2 をスキップ）
 - Inspector 数: 4（Design/Impl は 6）
 - Verdict に `SPEC-UPDATE-NEEDED` なし
-- Auto-Fix Loop なし（verdict 表示のみ）
+- Auto-Fix Loop なし（パイプラインは verdict 出力のみ。Wave Quality Gate での post-verdict remediation は roadmap-orchestration の責務）
 - Feature scope なし（コードベース全体）
 - Consensus mode 未対応
 
@@ -526,3 +526,15 @@ Auditor は根拠付きでこの判定式をオーバーライド可能。
 | sdd-inspector-dead-code | Agent (T3) | 未使用コード検出 | `framework/claude/agents/sdd-inspector-dead-code.md` |
 | sdd-inspector-dead-specs | Agent (T3) | 仕様乖離検出 | `framework/claude/agents/sdd-inspector-dead-specs.md` |
 | sdd-inspector-dead-tests | Agent (T3) | テスト陳腐化検出 | `framework/claude/agents/sdd-inspector-dead-tests.md` |
+
+## Revision Notes
+
+### Rev 1.1.0 (2026-02-21)
+
+**変更箇所**: Non-Goals セクション — Auto-Fix Loop の記述を明確化
+
+**変更理由**: D11 decision に基づく。従来の記述（「dead-code review は verdict 表示のみで自動修正を行わない」）はパイプライン内部のスコープとしては正確だが、Wave Quality Gate フロー全体における dead code issue の remediation が一切行われないかのような誤解を招く表現だった。
+
+**変更内容**: パイプラインのスコープ（verdict 出力のみ、内部に自動修正ロジックなし）と、オーケストレーターのスコープ（Lead が post-verdict で Builder re-spawn による remediation を実行）を明確に分離する記述に変更。
+
+**影響範囲**: Non-Goals の記述のみ。仕様（Spec 1-7）、アーキテクチャ、コンポーネント定義に変更なし。実装への影響なし。

@@ -1,0 +1,28 @@
+tasks:
+  - id: "1"
+    summary: Add Inspector Completion Trigger protocol to sdd-review SKILL.md
+    status: done
+    subtasks:
+      - id: "1.1"
+        summary: Implement Inspector completion tracking and Auditor trigger in Step 3
+        details:
+          - Read the current Step 3 (Spawn Review Pipeline) section of framework/claude/skills/sdd-review/SKILL.md to understand existing spawn instructions for Design Review, Implementation Review, and Dead Code Review subsections
+          - After each review type's spawn block (Design, Implementation, Dead Code), add an "Inspector Completion Tracking" protocol that instructs Lead to monitor each Inspector's idle notification and track completed Inspector names in an internal list
+          - After the completion tracking description, add a "Completion Trigger" step: once all expected Inspectors are complete (or Inspector Recovery Protocol has resolved unavailable Inspectors), Lead sends a SendMessage to the Auditor with the exact message format: "ALL_INSPECTORS_COMPLETE: {N}/{N} results delivered. Inspectors: {comma-separated names}. Synthesize and output your verdict now."
+          - Add the unavailable-Inspector variant to the trigger message: when one or more Inspectors are unavailable after recovery, append "Missing: {names}. Proceed with {available}/{expected} results." to the trigger message
+          - For Consensus Mode section, add a note that each pipeline sends its own independent completion trigger to its own Auditor (auditor-{type}-{n})
+          - Position the completion tracking + trigger instruction between the spawn block and the existing "Read Auditor's verdict from completion output" line so the flow reads: spawn all teammates → track Inspector completions → send ALL_INSPECTORS_COMPLETE trigger → read Auditor verdict → dismiss teammates
+          - Ensure the protocol note references that Auditor Recovery Protocol (CLAUDE.md §Teammate Recovery Protocol) remains the safety net if Auditor goes idle after trigger is sent, consistent with Spec 15 AC5
+          - Apply these changes uniformly across all three review type subsections (Design Review, Implementation Review, Dead Code Review) since Spec 15 AC6 specifies this applies to all review types
+        specs: [15]
+        acs: [S15.AC1, S15.AC2, S15.AC3, S15.AC4, S15.AC5, S15.AC6]
+        status: done
+        depends: []
+
+execution:
+  - wave: 1
+    groups:
+      - id: A
+        tasks: ["1.1"]
+        files:
+          - framework/claude/skills/sdd-review/SKILL.md

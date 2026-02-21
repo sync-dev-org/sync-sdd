@@ -200,6 +200,17 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Auditor リトライも失敗: Lead が Inspector 結果から conservative verdict を導出し、`NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict` を付与する
 6. Auditor が missing Inspector を NOTES に `PARTIAL:{inspector-name}|{reason}` として記録する
 
+### Spec 15: Inspector Completion Trigger
+**Goal:** Lead が全 Inspector 完了を検知し、Auditor に明示的な合成トリガーを送信する
+
+**Acceptance Criteria:**
+1. Lead は Inspector の idle notification を監視し、完了した Inspector 名を追跡する
+2. 全 Inspector 完了（または Inspector Recovery Protocol 処理完了）後、Lead は Auditor に SendMessage を送信する: "ALL_INSPECTORS_COMPLETE: {N}/{N} results delivered. Inspectors: {comma-separated names}. Synthesize and output your verdict now."
+3. Inspector が unavailable の場合、トリガーメッセージに "Missing: {names}. Proceed with {available}/{expected} results." を含める
+4. トリガー送信後、Lead は Auditor の verdict を completion output から待ち受ける
+5. トリガー後も Auditor が verdict 未出力で idle になった場合、既存の Auditor Recovery Protocol に従う
+6. この仕様は全3レビュータイプ（design, impl, dead-code）に適用される（共通の sdd-review SKILL.md で実装されるため）
+
 ### Non-Goals
 - Implementation review（`/sdd-review impl` で `impl-review` spec のスコープ）
 - Dead code review（`/sdd-review dead-code` で `dead-code-review` spec のスコープ）
@@ -288,7 +299,12 @@ sequenceDiagram
         IH->>A: SendMessage: CPF findings
     end
 
-    A->>A: Wait for 6 results<br/>Cross-check → Contradiction Detection<br/>→ False Positive Check → Coverage<br/>→ Dedup → Severity Reclass<br/>→ Over-Engineering Check<br/>→ Decision Suggestions → Verdict
+    Note over L: Inspector Completion Tracking<br/>Monitor idle notifications<br/>Track completed Inspector names
+
+    L->>L: All Inspectors complete<br/>(or Recovery Protocol resolved)
+    L->>A: SendMessage: ALL_INSPECTORS_COMPLETE<br/>N/N results delivered<br/>Synthesize and output verdict
+
+    A->>A: Cross-check → Contradiction Detection<br/>→ False Positive Check → Coverage<br/>→ Dedup → Severity Reclass<br/>→ Over-Engineering Check<br/>→ Decision Suggestions → Verdict
 
     A-->>L: Completion output (CPF verdict)
 
@@ -391,12 +407,13 @@ flowchart TD
 | 12 | Verdict handling / Auto-Fix | sdd-review skill (Lead logic) | Architect spawn (fix) | Verdict Handling Flow |
 | 13 | STEERING processing | sdd-review skill (Lead logic) | steering files, decisions.md | Verdict Handling Flow (STEERING branch) |
 | 14 | Recovery protocol | sdd-review skill (Lead logic) | requestShutdown, re-spawn | Recovery (implicit in Main Flow) |
+| 15 | Inspector completion trigger | sdd-review skill (Lead logic) | SendMessage to Auditor | Main Flow (completion tracking section) |
 
 ## Components and Interfaces
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|-----------------|-----------|
-| sdd-review skill | Orchestration | Pipeline lifecycle, verdict handling | 1, 10, 11, 12, 13 | TeammateTool, verdicts.md | Skill |
+| sdd-review skill | Orchestration | Pipeline lifecycle, verdict handling | 1, 10, 11, 12, 13, 15 | TeammateTool, verdicts.md | Skill |
 | sdd-auditor-design | Synthesis | Finding cross-check, verdict output | 9 | SendMessage (input), CPF (output) | Service |
 | sdd-inspector-rulebase | Inspection | SDD compliance | 2, 3 | design.md, template, rules | Service |
 | sdd-inspector-testability | Inspection | Test clarity | 2, 4 | design.md, steering | Service |
@@ -412,14 +429,16 @@ flowchart TD
 
 | Field | Detail |
 |-------|--------|
-| Intent | `/sdd-review design` コマンドのエントリポイント。引数解析、Phase Gate、pipeline spawn、verdict handling、verdicts.md 永続化、STEERING 処理、Auto-Fix Loop、session.md auto-draft を統括する |
-| Requirements | 1, 10, 11, 12, 13, 14 |
+| Intent | `/sdd-review design` コマンドのエントリポイント。引数解析、Phase Gate、pipeline spawn、Inspector completion tracking、Auditor trigger、verdict handling、verdicts.md 永続化、STEERING 処理、Auto-Fix Loop、session.md auto-draft を統括する |
+| Requirements | 1, 10, 11, 12, 13, 14, 15 |
 
 **Responsibilities & Constraints**
 - 引数解析: `design {feature}`, `design --cross-check`, `design --wave N`, `design {feature} --consensus N`
 - Phase Gate: design.md 存在確認、blocked 状態チェック（phase restriction なし）
 - Pipeline spawn: 6 Inspector (sonnet) + 1 Auditor (opus) を TeammateTool で一括 spawn
-- Consensus mode: N pipeline 並列 spawn、verdict aggregation
+- Inspector completion tracking: 各 Inspector の idle notification を監視し、完了した Inspector 名を内部リストで追跡する
+- Inspector completion trigger: 全 Inspector 完了（または Recovery Protocol 処理完了）後、Auditor に "ALL_INSPECTORS_COMPLETE" メッセージを SendMessage で送信する。Inspector が unavailable の場合は "Missing: {names}" を含める
+- Consensus mode: N pipeline 並列 spawn、verdict aggregation（各パイプラインで個別に completion trigger を送信）
 - Verdict handling: GO/CONDITIONAL/NO-GO に応じた後続アクション
 - STEERING processing: CODIFY 自動適用、PROPOSE ユーザー承認
 - Auto-Fix Loop: NO-GO → Architect spawn → re-review（max 3 retries）
@@ -450,6 +469,15 @@ sdd-review:
   spawn_pipeline(config: ReviewConfig) -> Pipeline
     - Spawns 6 Inspectors + 1 Auditor via TeammateTool
     - Consensus: N * (6 + 1) teammates
+
+  track_inspector_completion(pipeline: Pipeline, inspector_name: string) -> CompletionStatus
+    - Records inspector_name in completed set
+    - Returns {completed: string[], remaining: string[], all_complete: boolean}
+
+  send_completion_trigger(pipeline: Pipeline, status: CompletionStatus) -> void
+    - Precondition: status.all_complete == true OR all remaining resolved via Recovery Protocol
+    - Sends "ALL_INSPECTORS_COMPLETE: {N}/{N} results delivered. Inspectors: {names}. Synthesize and output your verdict now."
+    - If unavailable inspectors: appends "Missing: {names}. Proceed with {available}/{expected} results."
 
   handle_verdict(verdict: CPFVerdict) -> VerdictOutcome
     - GO → proceed
@@ -822,3 +850,31 @@ ROADMAP_ADVISORY:
 - NO-GO → Architect spawn → re-review の循環が正しく動作すること
 - retry_count の正しいインクリメントとリセット
 - Escalation threshold (3 retries, aggregate 4) での正しいユーザーエスカレーション
+
+### Inspector Completion Trigger Tests
+- 全6 Inspector 正常完了時: Lead が全名前を追跡し、"ALL_INSPECTORS_COMPLETE: 6/6" トリガーを Auditor に送信すること
+- Inspector 1件 unavailable 時: トリガーメッセージに "Missing: {name}. Proceed with 5/6 results." が含まれること
+- トリガー送信後に Auditor が verdict を出力すること
+- トリガー送信後に Auditor が idle (verdict 未出力) の場合、Auditor Recovery Protocol に遷移すること
+- Consensus mode: 各パイプラインが独立して completion trigger を送信すること
+
+## Revision Notes
+
+### v1.1.0 — Spec 15: Inspector Completion Trigger (2026-02-21)
+
+**背景**: Agent Teams では各 SendMessage が新しいターンを生成するため、Auditor は6件の Inspector 結果が全て到着したことを確実に検知できない。Lead は Inspector の idle notification から全員の完了状態を既に把握しているため、Lead から Auditor への明示的なトリガーで合成開始タイミングを確定する。
+
+**変更内容**:
+- Specifications: Spec 15 追加（Inspector Completion Trigger）
+- System Flows: Main Design Review Flow に Inspector completion tracking ステップと Lead → Auditor trigger SendMessage を追加
+- Components: sdd-review skill の Requirements, Intent, Responsibilities に Inspector completion tracking と trigger 送信を追加。Skill Interface に `track_inspector_completion` と `send_completion_trigger` メソッドを追加
+- Specifications Traceability: Spec 15 の行を追加
+- Testing Strategy: Inspector Completion Trigger Tests セクションを追加
+
+**適用範囲**: この仕様は sdd-review SKILL.md で共通実装されるため、全3レビュータイプ（design, impl, dead-code）に適用される。
+
+**既存仕様との関係**:
+- Spec 9 (Auditor Synthesis): Auditor の "全6件到着まで待機" は、Lead からの completion trigger 受信で完了条件が明確化される
+- Spec 14 (Recovery Protocol): Inspector Recovery Protocol 処理完了後にトリガーが送信される。Auditor Recovery Protocol はトリガー送信後の安全ネットとして維持される
+
+**決定根拠**: D14 decision (decisions.md) 参照

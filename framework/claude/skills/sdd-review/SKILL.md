@@ -65,6 +65,7 @@ Spawn (via `TeammateTool`) 6 design Inspectors + 1 design Auditor:
 - `sdd-auditor-design` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
 Inspectors send CPF results directly to Auditor via `SendMessageTool`.
+Apply **Inspector Completion Protocol** (see below) to track completions and trigger Auditor synthesis.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Implementation Review
@@ -79,6 +80,7 @@ Spawn (via `TeammateTool`) 6 impl Inspectors + 1 impl Auditor:
 - `sdd-auditor-impl` (opus): "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
 
 Inspectors send CPF results directly to Auditor via `SendMessageTool`.
+Apply **Inspector Completion Protocol** (see below) to track completions and trigger Auditor synthesis.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
 
 ### Dead Code Review
@@ -94,7 +96,45 @@ Parse Mode from arguments (default: `full`):
 | `tests` | dead-tests |
 
 Spawn (via `TeammateTool`) selected dead-code Inspectors + `sdd-auditor-dead-code` (opus).
+Apply **Inspector Completion Protocol** (see below) to track completions and trigger Auditor synthesis.
 Read Auditor's verdict from completion output. Dismiss all review teammates.
+
+### Inspector Completion Protocol
+
+AC: design-review.S15.AC1 — AC: design-review.S15.AC2 — AC: design-review.S15.AC3 — AC: design-review.S15.AC4 — AC: design-review.S15.AC5 — AC: design-review.S15.AC6
+
+This protocol applies uniformly to all three review types (Design, Implementation, Dead Code).
+
+**Step A — Track Inspector completions**
+
+After spawning all teammates, monitor each Inspector's idle notification as it arrives. Maintain a list of completed Inspector names:
+
+```
+completed_inspectors = []      # append each Inspector name as its idle notification arrives
+expected_count = N             # 6 for design/impl, 1–4 for dead-code depending on mode
+```
+
+**Step B — Handle unavailable Inspectors**
+
+If an Inspector becomes unresponsive, follow the **Inspector Recovery Protocol** in CLAUDE.md §Teammate Recovery Protocol (requestShutdown → re-spawn with new name, 1 retry). Once the recovery attempt is resolved (success or failure), continue tracking. An Inspector that fails both spawn attempts is recorded as unavailable.
+
+**Step C — Send completion trigger to Auditor**
+
+Once all expected Inspectors are complete (every Inspector has either sent its results and gone idle, or been resolved via Recovery Protocol), send a `SendMessageTool` message to the Auditor:
+
+**Normal case (all Inspectors completed):**
+```
+ALL_INSPECTORS_COMPLETE: {N}/{N} results delivered. Inspectors: {comma-separated completed names}. Synthesize and output your verdict now.
+```
+
+**Unavailable-Inspector case:**
+```
+ALL_INSPECTORS_COMPLETE: {available}/{expected} results delivered. Inspectors: {comma-separated completed names}. Missing: {comma-separated unavailable names}. Proceed with {available}/{expected} results. Synthesize and output your verdict now.
+```
+
+**Step D — Await Auditor verdict**
+
+After sending the completion trigger, await the Auditor's verdict from its completion output (idle notification). If the Auditor goes idle without outputting a verdict, follow the **Auditor Recovery Protocol** in CLAUDE.md §Teammate Recovery Protocol as the safety net.
 
 ### Consensus Mode (`--consensus N`)
 
@@ -104,6 +144,7 @@ When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
    Use unique Auditor names per pipeline: `auditor-{type}-1`, `auditor-{type}-2`, ...
    Each Inspector: `"Feature: {feature}, Report to: auditor-{type}-{n}"`
    Each Auditor: `"Feature: {feature}, Expect: {inspector_count} Inspector results via SendMessage"`
+   Apply **Inspector Completion Protocol** independently per pipeline: each pipeline's Inspectors are tracked separately and each pipeline sends its own completion trigger to its own Auditor.
 2. Read all N Auditors' verdicts from completion output. Dismiss all teammates.
 3. Aggregate VERIFIED sections across N verdicts:
    - Key each finding by `{category}|{location}`
