@@ -105,7 +105,7 @@ After Single-Spec Roadmap Ensure:
 
 ### Step 3: Execute
 
-Follow **Run Mode → Step 4 → Design Phase** (Architect spawn, completion report, dismiss). Context:
+Spawn Architect via **`TeammateTool`** (NOT Task tool). Follow Run Mode → Step 4 → Design Phase. Context:
 - Feature: {feature}
 - Mode: {new|existing}
 - User-instructions: {from arguments, or empty}
@@ -144,14 +144,14 @@ After Single-Spec Roadmap Ensure:
 
 Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 
-- **REGENERATE**: `tasks.yaml` does not exist OR `orchestration.last_phase_action` is null → Spawn TaskGenerator (see Run Mode → Step 4 → Implementation Phase steps 1-5). After TaskGenerator completes: set `orchestration.last_phase_action = "tasks-generated"`
+- **REGENERATE**: `tasks.yaml` does not exist OR `orchestration.last_phase_action` is null → Spawn TaskGenerator via **`TeammateTool`** (see Run Mode → Step 4 → Implementation Phase steps 1-5). After TaskGenerator completes: set `orchestration.last_phase_action = "tasks-generated"`
 - **RESUME**: `tasks.yaml` exists AND `last_phase_action` == `"tasks-generated"` → Use existing tasks.yaml
 - **TASK RE-EXECUTION**: `phase` == `implementation-complete` AND `{task-numbers}` provided → Use existing tasks.yaml, filter to specified tasks
 - **COMPLETED WITHOUT TASK SPEC**: `phase` == `implementation-complete` AND no task-numbers → Ask user: "A) Specify task numbers to re-run, B) Re-design first (`/sdd-roadmap design {feature}`), C) Abort"
 
 ### Step 3: Execute
 
-Follow **Run Mode → Step 4 → Implementation Phase** (steps 6-11 for Builder spawn). If `{task-numbers}` provided: filter to specified task numbers only.
+Spawn Builder(s) via **`TeammateTool`** (NOT Task tool). Follow Run Mode → Step 4 → Implementation Phase (steps 6-11). If `{task-numbers}` provided: filter to specified task numbers only.
 
 After ALL Builders complete, update spec.yaml:
 - Set `phase` = `implementation-complete`
@@ -188,6 +188,8 @@ If first argument after "review" is not one of `design`, `impl`, `dead-code`:
 **Dead Code Review**: No phase gate (operates on entire codebase).
 
 ### Step 3: Execute
+
+Spawn all Inspectors + Auditor via **`TeammateTool`** (NOT Task tool — SubAgents cannot receive SendMessage).
 
 - **Design review (single spec)**: Follow Run Mode → Step 4 → Design Review Phase
 - **Impl review (single spec)**: Follow Run Mode → Step 4 → Implementation Review Phase
