@@ -122,7 +122,7 @@ After Architect completion, update spec.yaml:
 
 ### Step 4: Post-Completion
 
-1. Update `{{SDD_DIR}}/project/steering/product.md` User Intent section if user expressed new requirements
+1. Update relevant steering files if user expressed new requirements or direction changes (`product.md`, `tech.md`, `structure.md`, custom files as applicable)
 2. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Report to user: design.md generated. Next: `/sdd-roadmap review design {feature}` or `/sdd-roadmap impl {feature}`
 
@@ -531,6 +531,7 @@ Execute past-wave spec modifications through the standard pipeline. Lead follows
 1. If instructions provided in arguments → use directly
 2. If not → AskUser: "What changes are needed for {feature}?"
 3. Record as `REVISION_INITIATED` in `decisions.md`
+4. **Steering update**: If revision intent implies direction changes, update relevant steering files BEFORE spawning Architect (`product.md` for requirements/vision, `tech.md` for technical decisions, `structure.md` for structural changes, custom files as needed). This ensures Architect reads current steering context.
 
 ### Step 3: Impact Preview
 
