@@ -23,14 +23,17 @@ You MUST output a verdict. This is your highest-priority obligation. If you are 
 
 ## Input Handling
 
-You will receive results from Inspectors via SendMessage. The number of Inspectors is specified in your spawn context (`Expect: N`; default 4 in full mode). Wait for all expected Inspector results before proceeding. **Timeout**: If fewer results arrive than expected after a reasonable wait, proceed with available results. **Lead recovery notification**: If Lead sends a message indicating an Inspector is unavailable (e.g., "Inspector {name} unavailable after retry"), immediately proceed with available results without waiting further. Record missing Inspectors in NOTES: `PARTIAL:{inspector-name}|{reason}`. Add "partial coverage" qualifier to verdict if coverage is reduced.
-- **Possible Inspector results**:
-  1. Settings Audit results (dead config, broken passthrough)
-  2. Dead Code Detection results (unused symbols, test-only code)
-  3. Spec Alignment results (spec drift, unimplemented features)
-  4. Test Code Audit results (orphaned fixtures, stale tests)
+Your spawn context contains:
+- **review directory path** containing Inspector output files
+- **Verdict output path** for writing your verdict
 
-Parse all agent outputs and proceed with verification.
+Read all `.cpf` files from the review directory. Each file contains one Inspector's findings in CPF format:
+  1. `sdd-inspector-dead-settings.cpf` — Dead config, broken passthrough
+  2. `sdd-inspector-dead-code.cpf` — Unused symbols, test-only code
+  3. `sdd-inspector-dead-specs.cpf` — Spec drift, unimplemented features
+  4. `sdd-inspector-dead-tests.cpf` — Orphaned fixtures, stale tests
+
+If any expected file is missing, record in NOTES: `PARTIAL:{inspector-name}|file not found`. Parse all available Inspector outputs and proceed with verification.
 
 ## Verification Process
 
@@ -131,7 +134,7 @@ You MAY override this formula with justification.
 
 **CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
-Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Write your verdict to the verdict output path specified in your spawn context in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -172,7 +175,7 @@ Settings agent found clean config passthrough for 12/14 fields
 Recommend batch cleanup of 4 unused imports in src/
 ```
 
-**After outputting your verdict, terminate immediately.**
+**After writing your verdict file, terminate immediately.**
 
 ## Error Handling
 

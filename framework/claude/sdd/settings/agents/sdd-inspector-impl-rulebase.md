@@ -112,7 +112,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Send this output to the Auditor specified in your context via SendMessage.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -141,7 +141,7 @@ Task completion: 8/10 (80%)
 Traceability: 14/18 AC (78%)
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**
 
 ## Error Handling
 

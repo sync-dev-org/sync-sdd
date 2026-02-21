@@ -34,7 +34,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Send findings to the Auditor specified in your context via SendMessage using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -59,4 +59,4 @@ NOTES:
 3 dead config fields detected across config pipeline
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**

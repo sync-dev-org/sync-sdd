@@ -203,7 +203,7 @@ Spawn all Inspectors + Auditor via **`TeammateTool`** (NOT Task tool — SubAgen
 
 ### Step 4: Handle Verdict
 
-1. Parse CPF output from Auditor (or consensus verdict)
+1. Parse review output from Auditor (or consensus verdict)
 2. Persist verdict to the appropriate file:
    - **Single-spec review**: `{{SDD_DIR}}/project/specs/{feature}/verdicts.md`
    - **Dead-code review**: `{{SDD_DIR}}/project/specs/verdicts-dead-code.md`
@@ -229,22 +229,37 @@ Spawn all Inspectors + Auditor via **`TeammateTool`** (NOT Task tool — SubAgen
 
 When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
-1. Spawn N pipelines in parallel via `TeammateTool`. Each: same Inspector set + unique Auditor name
-2. Apply Inspector Completion Protocol independently per pipeline
-3. Read all N verdicts. Aggregate VERIFIED sections:
+1. For each pipeline `p` (1..N): create review directory `specs/{feature}/.review-{p}/`
+2. Spawn N sets of Inspectors in parallel via `TeammateTool`. Each Inspector set writes to its own `.review-{p}/` directory
+3. For each pipeline: after all Inspectors complete (tracked via Inspector Completion Protocol), spawn Auditor with `.review-{p}/` as input and `.review-{p}/verdict.cpf` as output
+4. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
    - Key by `{category}|{location}`, count frequency
    - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)
-4. Consensus verdict: all GO → GO; any C/H in Consensus → NO-GO; only M/L → CONDITIONAL
-5. Proceed to Step 4 with consensus verdict
+5. Consensus verdict: all GO → GO; any C/H in Consensus → NO-GO; only M/L → CONDITIONAL
+6. Delete all `.review-{p}/` directories
+7. Proceed to Step 4 with consensus verdict
 
-### Inspector Completion Protocol
+N=1 (default): use `specs/{feature}/.review/` (no `-{p}` suffix).
 
-Apply uniformly to all review types:
+### File-Based Review Protocol
 
-**Step A**: Track Inspector idle notifications. Maintain `completed_inspectors[]` and `expected_count`.
-**Step B**: Handle unavailable Inspectors per CLAUDE.md §Inspector Recovery Protocol.
-**Step C**: Once all Inspectors resolved, send `SendMessageTool` to Auditor: `"ALL_INSPECTORS_COMPLETE: {N}/{expected} results delivered. Inspectors: {names}. Synthesize and output your verdict now."`
-**Step D**: Await Auditor verdict. If idle without verdict → Auditor Recovery Protocol.
+Replaces SendMessage-based communication. All data flows through files.
+
+**review directory**: `{{SDD_DIR}}/project/specs/{feature}/.review/` (or `.review-{p}/` for consensus pipelines, or project-level path for dead-code/cross-check)
+
+**Step A — Spawn Inspectors**: Spawn all Inspectors via `TeammateTool`. Each Inspector's spawn context includes:
+- review output path: `{.review-dir}/{inspector-name}.cpf`
+- Feature/scope context
+
+**Step B — Track Inspector completions**: Monitor idle notifications. Maintain `completed_inspectors[]` and `expected_count`. If an Inspector becomes unresponsive, follow CLAUDE.md §Inspector Recovery Protocol (re-spawn writes to same CPF path).
+
+**Step C — Spawn Auditor**: Once all Inspectors have completed (all `.cpf` files written), spawn Auditor via `TeammateTool`. Auditor's spawn context includes:
+- review directory path (Auditor reads all `.cpf` files)
+- Verdict output path: `{.review-dir}/verdict.cpf`
+
+**Step D — Read verdict**: After Auditor goes idle, read `{.review-dir}/verdict.cpf`. If file does not exist → Auditor failed to write. Re-spawn Auditor (1 retry). If retry also fails → Lead derives conservative verdict from Inspector CPF files directly.
+
+**Step E — Cleanup**: After verdict is processed and persisted to `verdicts.md`, delete the review directory.
 
 ### Next Steps by Verdict
 
@@ -324,16 +339,22 @@ For each ready spec, execute pipeline phases in order:
 7. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
-1. Read agent profiles from `{{SDD_DIR}}/settings/agents/` for each teammate
-2. Spawn (via `TeammateTool`) 6 design Inspectors (sonnet) + design Auditor (opus):
-   - Inspector profiles: `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md`
-   - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-design"
-   - Auditor profile: `sdd-auditor-design.md`
-   - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
-3. Read Auditor's verdict from completion output
-4. Dismiss all review teammates (6 Inspectors + Auditor)
-5. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
-6. Handle verdict:
+
+Follow **File-Based Review Protocol** (see Review Subcommand):
+
+1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/.review/`
+2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`
+3. Spawn (via `TeammateTool`) 6 design Inspectors (sonnet):
+   - Profiles: `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md`
+   - Each context: "Feature: {feature}, review output: `specs/{feature}/.review/{inspector-name}.cpf`"
+4. Track completions (Step B). After all 6 complete:
+5. Spawn design Auditor (opus) with profile `sdd-auditor-design.md`:
+   - Context: "Feature: {feature}, review dir: `specs/{feature}/.review/`, Verdict output: `specs/{feature}/.review/verdict.cpf`"
+6. After Auditor idle → read `verdict.cpf` (Step D)
+7. Dismiss all review teammates
+8. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
+9. Delete review directory
+10. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
    - In **gate mode**: pause for user approval before advancing
@@ -375,16 +396,22 @@ If `--consensus N` is active, apply consensus mode per Review Subcommand §Conse
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Implementation Review Phase
-1. Read agent profiles from `{{SDD_DIR}}/settings/agents/` for each teammate
-2. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet) + impl Auditor (opus):
-   - Inspector profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
-   - Each Inspector context: "Feature: {feature}, Report to: sdd-auditor-impl"
-   - Auditor profile: `sdd-auditor-impl.md`
-   - Auditor context: "Feature: {feature}, Expect: 6 Inspector results via SendMessage"
-3. Read Auditor's verdict from completion output
-4. Dismiss all review teammates (6 Inspectors + Auditor)
-5. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
-6. Handle verdict:
+
+Follow **File-Based Review Protocol** (see Review Subcommand):
+
+1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/.review/`
+2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`
+3. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet):
+   - Profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+   - Each context: "Feature: {feature}, review output: `specs/{feature}/.review/{inspector-name}.cpf`"
+4. Track completions (Step B). After all 6 complete:
+5. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
+   - Context: "Feature: {feature}, review dir: `specs/{feature}/.review/`, Verdict output: `specs/{feature}/.review/verdict.cpf`"
+6. After Auditor idle → read `verdict.cpf` (Step D)
+7. Dismiss all review teammates
+8. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
+9. Delete review directory
+10. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
    - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) via `TeammateTool` with fix instructions → re-review (max 3 retries)
    - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect via `TeammateTool` (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
@@ -430,15 +457,18 @@ Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1.
 
 After all specs in a wave complete individual pipelines:
 
-**a. Impl Cross-Check Review** (wave-scoped):
-0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Collect Consensus findings from previous wave batches. Compare successive batches to identify resolved issues (present in earlier batch Consensus but absent from later). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
-1. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet) + Auditor (opus) with wave-scoped cross-check context:
-   - Inspector profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
-   - Each Inspector context: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED from verdicts-wave.md}, Report to: sdd-auditor-impl"
-   - Auditor profile: `sdd-auditor-impl.md`. Context: "Wave-scoped cross-check, Wave: 1..{N}, Expect: 6 Inspector results"
-2. Read Auditor verdict from completion output
-3. Dismiss all cross-check teammates
-3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`). Same persistence logic as Review Subcommand § Step 4 step 2.
+**a. Impl Cross-Check Review** (wave-scoped, File-Based Review Protocol):
+0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
+1. Create review directory: `{{SDD_DIR}}/project/specs/.review-wave-{N}/`
+2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet):
+   - Profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+   - Each context: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED}, review output: `specs/.review-wave-{N}/{inspector-name}.cpf`"
+3. Track completions. After all 6 complete:
+4. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
+   - Context: "Wave-scoped cross-check, Wave: 1..{N}, review dir: `specs/.review-wave-{N}/`, Verdict output: `specs/.review-wave-{N}/verdict.cpf`"
+5. After Auditor idle → read `verdict.cpf` (File-Based Review Protocol Step D)
+6. Dismiss all cross-check teammates. Delete review directory.
+7. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`).
 4. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
@@ -447,14 +477,17 @@ After all specs in a wave complete individual pipelines:
      c. **Manual fix**: User fixes issues manually, then Lead re-runs Wave QG (counter reset)
    - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect via `TeammateTool` with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
-**b. Dead Code Review** (full codebase):
-1. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 4 dead-code Inspectors (sonnet) + dead-code Auditor (opus):
-   - Inspector profiles: `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}.md`
-   - Each context: "Report to: sdd-auditor-dead-code"
-   - Auditor profile: `sdd-auditor-dead-code.md`. Context: "Expect: 4 Inspector results via SendMessage"
-2. Read Auditor verdict from completion output
-3. Dismiss all dead-code review teammates
-3.5. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
+**b. Dead Code Review** (full codebase, File-Based Review Protocol):
+1. Create review directory: `{{SDD_DIR}}/project/specs/.review-wave-{N}-dc/`
+2. Read agent profiles. Spawn (via `TeammateTool`) 4 dead-code Inspectors (sonnet):
+   - Profiles: `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}.md`
+   - Each context: "review output: `specs/.review-wave-{N}-dc/{inspector-name}.cpf`"
+3. Track completions. After all complete:
+4. Spawn dead-code Auditor (opus) with profile `sdd-auditor-dead-code.md`:
+   - Context: "review dir: `specs/.review-wave-{N}-dc/`, Verdict output: `specs/.review-wave-{N}-dc/verdict.cpf`"
+5. After Auditor idle → read `verdict.cpf`
+6. Dismiss all dead-code review teammates. Delete review directory.
+7. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
 4. Handle verdict:
    - **GO/CONDITIONAL** → Wave N complete, proceed to next wave
    - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review dead-code (max 3 retries → escalate)

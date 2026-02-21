@@ -27,19 +27,21 @@ You MUST output a verdict. This is your highest-priority obligation. If you are 
 
 ## Input Handling
 
-You will receive results from 6 Inspectors via SendMessage. Your spawn context contains:
+Your spawn context contains:
 - **Feature name** (or "cross-check" for all specs, or "wave-scoped-cross-check" with wave number)
 - **Wave number** (if wave-scoped mode)
+- **review directory path** containing Inspector output files
+- **Verdict output path** for writing your verdict
 
-Wait for all 6 Inspector results to arrive via SendMessage before proceeding. **Timeout**: If fewer than 6 results arrive after a reasonable wait, proceed with available results. **Lead recovery notification**: If Lead sends a message indicating an Inspector is unavailable (e.g., "Inspector {name} unavailable after retry"), immediately proceed with available results without waiting further. Record missing Inspectors in NOTES: `PARTIAL:{inspector-name}|{reason}`. Add "partial coverage" qualifier to verdict if coverage is reduced. **Results from 6 agents**:
-  1. Rulebase Review results (SDD compliance)
-  2. Testability Review results (test implementer clarity)
-  3. Architecture Review results (design verifiability)
-  4. Consistency Review results (specifications↔design alignment)
-  5. Best Practices Review results (industry standards)
-  6. Holistic Review results (cross-cutting concerns and blind spots)
+Read all `.cpf` files from the review directory. Each file contains one Inspector's findings in CPF format:
+  1. `sdd-inspector-rulebase.cpf` — SDD compliance
+  2. `sdd-inspector-testability.cpf` — Test implementer clarity
+  3. `sdd-inspector-architecture.cpf` — Design verifiability
+  4. `sdd-inspector-consistency.cpf` — Specifications↔design alignment
+  5. `sdd-inspector-best-practices.cpf` — Industry standards
+  6. `sdd-inspector-holistic.cpf` — Cross-cutting concerns and blind spots
 
-Parse all agent outputs and proceed with verification.
+If any expected file is missing, record in NOTES: `PARTIAL:{inspector-name}|file not found`. Parse all available Inspector outputs and proceed with verification.
 
 When mode is "wave-scoped-cross-check":
 - Findings should be evaluated within the wave scope only
@@ -171,7 +173,7 @@ You MAY override this formula with justification.
 
 **CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
-Output your verdict as your final completion text (Lead reads this directly) in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Write your verdict to the verdict output path specified in your spawn context in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -220,7 +222,7 @@ NOTES:
 Design is generally well-structured with focused issues
 ```
 
-**After outputting your verdict, terminate immediately.**
+**After writing your verdict file, terminate immediately.**
 
 ## Error Handling
 

@@ -32,7 +32,7 @@ Lead spawns T2/T3 teammates using `TeammateTool`. Do NOT use the `Task` tool to 
 Teammates complete their work and output a structured completion report as their final text.
 Lead reads completion output and determines next actions.
 
-Exception: Inspector → Auditor communication uses `SendMessageTool` (peer communication within a review pipeline).
+Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No SendMessage needed for review data transfer.
 
 ### State Management
 
@@ -87,7 +87,7 @@ Lead reads the idle notification and:
 - Determines next action (spawn next teammate, escalate to user, etc.)
 - Requests shutdown of the teammate (teammate approves and terminates)
 
-For review pipelines: Lead spawns Inspectors + Auditor together (all via `TeammateTool`). Inspectors use `SendMessageTool` to send CPF to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
+For review pipelines: Lead spawns Inspectors first (all via `TeammateTool`). Inspectors write CPF findings to `.review/` directory. After all Inspectors complete, Lead spawns Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap §File-Based Review Protocol.
 
 **Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
@@ -95,7 +95,7 @@ For review pipelines: Lead spawns Inspectors + Auditor together (all via `Teamma
 
 - **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
 - **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
-- **Framework convention — SendMessage usage**: Inspector → Auditor peer communication within review pipelines. Lead → Teammate for recovery notifications (see §Teammate Recovery Protocol).
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. SendMessage is reserved for Lead → Teammate recovery notifications only (see §Teammate Recovery Protocol).
 - **Concurrent teammate limit**: 24 (3 pipelines × 7 teammates + headroom). Consensus mode (`--consensus N`) spawns N pipelines in parallel (7×N teammates).
 
 ### Teammate Recovery Protocol
@@ -107,17 +107,16 @@ Recovery procedures when a teammate becomes unresponsive or errors during a revi
 When an Inspector becomes unresponsive or errors during a review pipeline:
 1. Lead checks the arrival status of idle notifications from other Inspectors
 2. Attempt to stop the unresponsive Inspector via `requestShutdown`
-3. Re-spawn an Inspector of the same agent type with a new name via `TeammateTool` (1 retry)
-4. If retry also fails → Lead sends SendMessage to Auditor: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
-5. Auditor proceeds with available results only. Records missing Inspector in NOTES.
+3. Re-spawn an Inspector of the same agent type with a new name via `TeammateTool` (1 retry). Re-spawned Inspector writes to the same `.review/` output path.
+4. If retry also fails → Inspector's `.cpf` file will be missing. Auditor handles this via `PARTIAL:{inspector-name}|file not found` in NOTES.
 
 #### Auditor Recovery
 
-When Auditor goes idle before outputting verdict:
-1. Lead sends SendMessage to Auditor: "Output your verdict now with findings verified so far. Use NOTES: PARTIAL_VERIFICATION if incomplete."
-2. If Auditor responds and outputs verdict → return to normal flow
-3. If no verdict after first nudge → stop via `requestShutdown`, re-spawn Auditor with a new name via `TeammateTool` (1 retry). Embed Inspector CPF results directly in spawn context with instruction: "RECOVERY MODE: Inspector results in spawn context. Skip SendMessage wait. Prioritize verdict output."
-4. If retry also fails → Lead derives a conservative verdict from Inspector results (based on Critical/High counts). Tag with `NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict`.
+When Auditor goes idle without writing `verdict.cpf`:
+1. Lead checks if `verdict.cpf` exists in the `.review/` directory
+2. If file exists → verdict was written successfully, read it
+3. If file does not exist → re-spawn Auditor with a new name via `TeammateTool` (1 retry), same `.review/` directory and verdict path
+4. If retry also fails → Lead derives a conservative verdict from Inspector `.cpf` files directly (based on Critical/High counts). Tag with `NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict`.
 
 ## Project Context
 
