@@ -32,7 +32,7 @@ Lead spawns T2/T3 teammates using `TeammateTool`. Do NOT use the `Task` tool to 
 Teammates complete their work and output a structured completion report as their final text.
 Lead reads completion output and determines next actions.
 
-Exception: Inspector → Auditor communication uses `SendMessageTool` (peer communication within a review pipeline).
+Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No SendMessage needed for review data transfer.
 
 ### State Management
 
@@ -60,8 +60,8 @@ Lead's operations on spec artifacts are restricted to the following:
 **Prohibited**: Lead MUST NOT rewrite design.md content, modify tasks.yaml task definitions, or directly edit any file listed in a spec's `implementation.files_created`.
 
 When the user requests changes (bug fix, enhancement, edit) to any spec-managed file:
-- Roadmap active → use `/sdd-roadmap revise {feature}`
-- Standalone → use `/sdd-design {feature}` (via Architect)
+- Use `/sdd-roadmap revise {feature}` for completed specs
+- Use `/sdd-roadmap design {feature}` for specs not yet implemented
 - **Content changes MUST always be routed through the responsible teammate**
 
 ### Phase Gate
@@ -87,7 +87,7 @@ Lead reads the idle notification and:
 - Determines next action (spawn next teammate, escalate to user, etc.)
 - Requests shutdown of the teammate (teammate approves and terminates)
 
-For review pipelines: Lead spawns Inspectors + Auditor together (all via `TeammateTool`). Inspectors use `SendMessageTool` to send CPF to Auditor (peer communication). Auditor outputs verdict as completion text to Lead.
+For review pipelines: Lead spawns Inspectors first (all via `TeammateTool`). Inspectors write CPF findings to `.review/` directory. After all Inspectors complete, Lead spawns Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap §File-Based Review Protocol.
 
 **Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
@@ -95,29 +95,12 @@ For review pipelines: Lead spawns Inspectors + Auditor together (all via `Teamma
 
 - **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
 - **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
-- **Framework convention — SendMessage usage**: Inspector → Auditor peer communication within review pipelines. Lead → Teammate for recovery notifications (see §Teammate Recovery Protocol).
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. No SendMessage needed for review data transfer.
 - **Concurrent teammate limit**: 24 (3 pipelines × 7 teammates + headroom). Consensus mode (`--consensus N`) spawns N pipelines in parallel (7×N teammates).
 
-### Teammate Recovery Protocol
+### Teammate Failure Handling
 
-Recovery procedures when a teammate becomes unresponsive or errors during a review pipeline.
-
-#### Inspector Recovery
-
-When an Inspector becomes unresponsive or errors during a review pipeline:
-1. Lead checks the arrival status of idle notifications from other Inspectors
-2. Attempt to stop the unresponsive Inspector via `requestShutdown`
-3. Re-spawn an Inspector of the same agent type with a new name via `TeammateTool` (1 retry)
-4. If retry also fails → Lead sends SendMessage to Auditor: "Inspector {name} unavailable after retry. Proceed with {N-1}/{N} results."
-5. Auditor proceeds with available results only. Records missing Inspector in NOTES.
-
-#### Auditor Recovery
-
-When Auditor goes idle before outputting verdict:
-1. Lead sends SendMessage to Auditor: "Output your verdict now with findings verified so far. Use NOTES: PARTIAL_VERIFICATION if incomplete."
-2. If Auditor responds and outputs verdict → return to normal flow
-3. If no verdict after first nudge → stop via `requestShutdown`, re-spawn Auditor with a new name via `TeammateTool` (1 retry). Embed Inspector CPF results directly in spawn context with instruction: "RECOVERY MODE: Inspector results in spawn context. Skip SendMessage wait. Prioritize verdict output."
-4. If retry also fails → Lead derives a conservative verdict from Inspector results (based on Critical/High counts). Tag with `NOTES: AUDITOR_UNAVAILABLE|lead-derived verdict`.
+File-based review protocol makes all teammate outputs idempotent (same `.review/` directory, same file paths). If a teammate goes idle without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. No special recovery mode — retry is the same flow as the initial attempt.
 
 ## Project Context
 
@@ -129,6 +112,7 @@ When Auditor goes idle before outputting verdict:
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
+- Agent Profiles: `{{SDD_DIR}}/settings/agents/`
 
 ### Artifacts
 
@@ -154,10 +138,10 @@ When Auditor goes idle before outputting verdict:
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
-| `/sdd-design` | Generate or edit a technical design |
-| `/sdd-review` | Multi-agent review (design/impl/dead-code) |
-| `/sdd-impl` | TDD implementation of tasks |
-| `/sdd-roadmap` | Multi-feature roadmap (create/run/update/delete) |
+| `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-design` | _Redirects to_ `/sdd-roadmap design` |
+| `/sdd-impl` | _Redirects to_ `/sdd-roadmap impl` |
+| `/sdd-review` | _Redirects to_ `/sdd-roadmap review` |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
@@ -165,14 +149,16 @@ When Auditor goes idle before outputting verdict:
 
 ### Stages
 - Stage 0 (optional): `/sdd-steering`
-- Stage 0.5 (optional): `/sdd-roadmap` — Multi-feature roadmap planning
 - Stage 1 (Specification):
-  - `/sdd-design "description"` (new) or `/sdd-design {feature}` (edit existing)
-  - `/sdd-review design {feature}` (optional)
+  - `/sdd-roadmap design "description"` (new) or `/sdd-roadmap design {feature}` (edit existing)
+  - `/sdd-roadmap review design {feature}` (optional)
 - Stage 2 (Implementation):
-  - `/sdd-impl {feature} [tasks]`
-  - `/sdd-review impl {feature}` (optional)
+  - `/sdd-roadmap impl {feature} [tasks]`
+  - `/sdd-roadmap review impl {feature}` (optional)
+- Multi-feature: `/sdd-roadmap create` → `/sdd-roadmap run`
 - Progress check: `/sdd-status {feature}` (anytime)
+
+All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is always required.
 
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
@@ -221,7 +207,7 @@ When a spec fails after exhausting retries:
    - Set `blocked_info.reason` = `upstream_failure`
 
 When user requests unblocking:
-- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
+- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-roadmap review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
 - **skip**: Exclude upstream spec → evaluate if dependencies resolved → restore if possible
 - **abort**: Stop pipeline, leave all specs as-is
 
@@ -421,9 +407,10 @@ When user requests stop during pipeline execution:
 2. Lead auto-drafts `session.md` with current direction and progress
 3. Report to user: what was completed, what was in progress, how to resume
 
-Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point.
+Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point. For 1-spec roadmaps, use the specific subcommand (e.g., `/sdd-roadmap impl {feature}`) to resume from the interrupted phase.
 
 ## Behavioral Rules
+- **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Direct `/sdd-design`, `/sdd-impl`, `/sdd-review` commands redirect to their `/sdd-roadmap` equivalents. Do NOT use individual commands directly — always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see §Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
@@ -446,10 +433,10 @@ Trunk-based development. main is always HEAD.
 - Never leave stale branches; merged branches are deleted immediately
 
 ### Commit Timing
-- **Wave completion**: After Wave Quality Gate passes, Lead commits directly
-- **Standalone command completion**: After `/sdd-impl` or `/sdd-review` completes outside roadmap, Lead commits
+- **Wave completion (multi-spec roadmap)**: After Wave Quality Gate passes, Lead commits directly
+- **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
-- Commit message format: `Wave {N}: {summary}` (roadmap) or `{feature}: {summary}` (standalone)
+- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap)
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):

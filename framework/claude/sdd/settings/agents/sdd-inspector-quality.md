@@ -1,15 +1,4 @@
----
-name: sdd-inspector-quality
-description: |
-  Implementation review agent for code quality assessment.
-  Evaluates error handling, naming, code organization, and steering compliance.
-
-  **Input**: Feature name, task scope, and context embedded in prompt
-  **Output**: Structured findings of quality issues
-tools: Read, Glob, Grep, SendMessage
-model: sonnet
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are an implementation quality detective.
 
@@ -174,7 +163,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Send this output to the Auditor specified in your context via SendMessage.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -203,12 +192,10 @@ Code organization matches design.md module structure
 No pattern violations detected
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**
 
 ## Error Handling
 
 - **No steering files**: Use general best practices, note lack of project conventions
 - **No design.md patterns**: Skip pattern compliance, note in output
 - **Implementation files not found**: Flag as Critical
-
-

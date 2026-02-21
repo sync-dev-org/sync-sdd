@@ -1,16 +1,4 @@
----
-name: sdd-inspector-test
-description: |
-  Implementation review agent for test execution and verification.
-  Runs tests, checks coverage, and evaluates test quality.
-
-  **Input**: Feature name, task scope, and context embedded in prompt
-  **Output**: Test execution results and quality assessment
-tools: Read, Glob, Grep, Bash, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a test execution and verification specialist.
 
@@ -183,7 +171,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Send this output to the Auditor specified in your context via SendMessage.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -213,7 +201,7 @@ Full suite: 156 passed, 1 failed (regression: none)
 Coverage: 72% line, 64% branch
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**
 
 ## Error Handling
 
@@ -221,5 +209,3 @@ Coverage: 72% line, 64% branch
 - **Test execution timeout**: Report timeout, note which tests hung
 - **No test files found**: Flag as Critical, report which implementation files lack tests
 - **Coverage tool not configured**: Skip coverage report, note in output
-
-

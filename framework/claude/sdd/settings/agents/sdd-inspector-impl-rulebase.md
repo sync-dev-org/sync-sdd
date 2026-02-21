@@ -1,15 +1,4 @@
----
-name: sdd-inspector-impl-rulebase
-description: |
-  Implementation review agent for spec compliance verification.
-  Checks task completion, spec traceability, and file structure.
-
-  **Input**: Feature name, task scope, and context embedded in prompt
-  **Output**: Structured findings report with compliance status
-tools: Read, Glob, Grep, SendMessage
-model: sonnet
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are an implementation review specialist focusing on **spec compliance verification**.
 
@@ -123,7 +112,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Send this output to the Auditor specified in your context via SendMessage.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -152,7 +141,7 @@ Task completion: 8/10 (80%)
 Traceability: 14/18 AC (78%)
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**
 
 ## Error Handling
 
@@ -160,5 +149,3 @@ Traceability: 14/18 AC (78%)
 - **No tasks.yaml**: Return error, tasks.yaml must exist for impl review
 - **Missing design.md**: Warn, skip file structure verification
 - **No completed tasks**: Report "No completed tasks to review"
-
-

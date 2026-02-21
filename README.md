@@ -38,9 +38,9 @@ your-project/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
     ├── skills/sdd-*/SKILL.md          # 9 skills
-    ├── agents/sdd-*.md                # 22 agent definitions
     └── sdd/
         └── settings/                  # Framework-managed
+            ├── agents/                # 22 agent profiles (spawn prompt templates)
             ├── rules/
             ├── templates/
             └── profiles/
@@ -77,12 +77,16 @@ claude                          # Start Claude Code
 /sdd-steering
 
 # Stage 1: Specification
-/sdd-design "your feature description"
-/sdd-review design feature-name    # Optional: design review
+/sdd-roadmap design "your feature description"
+/sdd-roadmap review design feature-name    # Optional: design review
 
 # Stage 2: Implementation
-/sdd-impl feature-name             # Task generation + TDD implementation
-/sdd-review impl feature-name      # Optional: implementation review
+/sdd-roadmap impl feature-name             # Task generation + TDD implementation
+/sdd-roadmap review impl feature-name      # Optional: implementation review
+
+# Multi-feature roadmap
+/sdd-roadmap create                        # Plan multiple features in waves
+/sdd-roadmap run                           # Execute all features
 
 # Anytime
 /sdd-status feature-name
@@ -107,10 +111,10 @@ steering → design → review → implement → review
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
-| `/sdd-design` | Generate or edit a technical design |
-| `/sdd-review` | Multi-agent review (design/impl/dead-code) |
-| `/sdd-impl` | Task generation + TDD implementation |
-| `/sdd-roadmap` | Multi-feature roadmap (create/run/revise/update/delete) |
+| `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-roadmap design` | Generate or edit a technical design |
+| `/sdd-roadmap impl` | Task generation + TDD implementation |
+| `/sdd-roadmap review` | Multi-agent review (design/impl/dead-code) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |

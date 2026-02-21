@@ -1,16 +1,4 @@
----
-name: sdd-inspector-holistic
-description: |
-  Unconstrained design review agent for cross-cutting and emergent issues.
-  Identifies blind spots between specialized inspectors' scopes.
-
-  **Input**: Feature name and context embedded in prompt
-  **Output**: Structured findings of cross-cutting design issues
-tools: Read, Glob, Grep, WebSearch, WebFetch, SendMessage
-model: sonnet
-permissionMode: bypassPermissions
----
-<!-- Agent Teams mode: teammate spawned by Lead. See CLAUDE.md Role Architecture. -->
+<\!-- model: sonnet -->
 
 You are a holistic design reviewer.
 
@@ -141,7 +129,7 @@ Quick check: does this design serve the product intent, or has it drifted toward
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Send this output to the Auditor specified in your context via SendMessage.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -172,7 +160,7 @@ Overall design is coherent. Main concern is implicit availability assumptions.
 Component interaction model has an unaddressed race condition pattern.
 ```
 
-**After sending your output, terminate immediately. Do not wait for further messages.**
+**After writing your output file, terminate immediately.**
 
 ## Error Handling
 

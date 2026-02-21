@@ -77,7 +77,7 @@ Execute full steering creation:
 
 1. Auto-draft `{{SDD_DIR}}/handover/session.md`
 2. Report summary to user
-3. Suggest next action: `/sdd-design "description"` or `/sdd-roadmap`
+3. Suggest next action: `/sdd-roadmap design "description"` or `/sdd-roadmap create`
 
 </instructions>
 
