@@ -60,8 +60,8 @@ Lead's operations on spec artifacts are restricted to the following:
 **Prohibited**: Lead MUST NOT rewrite design.md content, modify tasks.yaml task definitions, or directly edit any file listed in a spec's `implementation.files_created`.
 
 When the user requests changes (bug fix, enhancement, edit) to any spec-managed file:
-- Roadmap active → use `/sdd-roadmap revise {feature}`
-- Standalone → use `/sdd-design {feature}` (via Architect)
+- Use `/sdd-roadmap revise {feature}` for completed specs
+- Use `/sdd-roadmap design {feature}` for specs not yet implemented
 - **Content changes MUST always be routed through the responsible teammate**
 
 ### Phase Gate
@@ -154,10 +154,10 @@ When Auditor goes idle before outputting verdict:
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
-| `/sdd-design` | Generate or edit a technical design |
-| `/sdd-review` | Multi-agent review (design/impl/dead-code) |
-| `/sdd-impl` | TDD implementation of tasks |
-| `/sdd-roadmap` | Multi-feature roadmap (create/run/update/delete) |
+| `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-design` | _Redirects to_ `/sdd-roadmap design` |
+| `/sdd-impl` | _Redirects to_ `/sdd-roadmap impl` |
+| `/sdd-review` | _Redirects to_ `/sdd-roadmap review` |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
@@ -165,14 +165,16 @@ When Auditor goes idle before outputting verdict:
 
 ### Stages
 - Stage 0 (optional): `/sdd-steering`
-- Stage 0.5 (optional): `/sdd-roadmap` — Multi-feature roadmap planning
 - Stage 1 (Specification):
-  - `/sdd-design "description"` (new) or `/sdd-design {feature}` (edit existing)
-  - `/sdd-review design {feature}` (optional)
+  - `/sdd-roadmap design "description"` (new) or `/sdd-roadmap design {feature}` (edit existing)
+  - `/sdd-roadmap review design {feature}` (optional)
 - Stage 2 (Implementation):
-  - `/sdd-impl {feature} [tasks]`
-  - `/sdd-review impl {feature}` (optional)
+  - `/sdd-roadmap impl {feature} [tasks]`
+  - `/sdd-roadmap review impl {feature}` (optional)
+- Multi-feature: `/sdd-roadmap create` → `/sdd-roadmap run`
 - Progress check: `/sdd-status {feature}` (anytime)
+
+All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is always required.
 
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
@@ -221,7 +223,7 @@ When a spec fails after exhausting retries:
    - Set `blocked_info.reason` = `upstream_failure`
 
 When user requests unblocking:
-- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
+- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-roadmap review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
 - **skip**: Exclude upstream spec → evaluate if dependencies resolved → restore if possible
 - **abort**: Stop pipeline, leave all specs as-is
 
@@ -421,9 +423,10 @@ When user requests stop during pipeline execution:
 2. Lead auto-drafts `session.md` with current direction and progress
 3. Report to user: what was completed, what was in progress, how to resume
 
-Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point.
+Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point. For 1-spec roadmaps, use the specific subcommand (e.g., `/sdd-roadmap impl {feature}`) to resume from the interrupted phase.
 
 ## Behavioral Rules
+- **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Direct `/sdd-design`, `/sdd-impl`, `/sdd-review` commands redirect to their `/sdd-roadmap` equivalents. Do NOT use individual commands directly — always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see §Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
@@ -446,10 +449,10 @@ Trunk-based development. main is always HEAD.
 - Never leave stale branches; merged branches are deleted immediately
 
 ### Commit Timing
-- **Wave completion**: After Wave Quality Gate passes, Lead commits directly
-- **Standalone command completion**: After `/sdd-impl` or `/sdd-review` completes outside roadmap, Lead commits
+- **Wave completion (multi-spec roadmap)**: After Wave Quality Gate passes, Lead commits directly
+- **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
-- Commit message format: `Wave {N}: {summary}` (roadmap) or `{feature}: {summary}` (standalone)
+- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap)
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):

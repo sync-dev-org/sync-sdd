@@ -76,6 +76,7 @@ ${BOLD}USAGE${RESET}:
 ${BOLD}OPTIONS${RESET}:
     --update          Update framework files only (preserves user files)
     --version <tag>   Install a specific version (default: latest)
+    --local           Install from local framework/ directory (for development)
     --force           Overwrite existing framework files without prompting
     --uninstall       Remove all SDD framework files
     --help            Show this help message
@@ -107,6 +108,7 @@ EOF
 UPDATE=false
 FORCE=false
 UNINSTALL=false
+LOCAL=false
 VERSION=""
 
 while [ $# -gt 0 ]; do
@@ -114,6 +116,7 @@ while [ $# -gt 0 ]; do
         --update)    UPDATE=true ;;
         --force)     FORCE=true ;;
         --uninstall) UNINSTALL=true ;;
+        --local)     LOCAL=true ;;
         --version)   shift; VERSION="${1:-}" ;;
         --help|-h)   usage ;;
         *)           error "Unknown option: $1"; usage ;;
@@ -168,29 +171,40 @@ if [ ! -d .git ] && [ "$FORCE" = false ]; then
     exit 1
 fi
 
-# --- Download ---
-if [ -n "$VERSION" ]; then
-    ARCHIVE_URL="https://github.com/${REPO}/archive/refs/tags/${VERSION}.tar.gz"
+# --- Source resolution ---
+if [ "$LOCAL" = true ]; then
+    # Local mode: use framework/ from current directory
+    if [ ! -d "framework" ]; then
+        error "No framework/ directory found. Run --local from the sync-sdd repository root."
+        exit 1
+    fi
+    SRC="."
+    info "Installing from local framework/ directory..."
 else
-    ARCHIVE_URL="https://github.com/${REPO}/archive/refs/heads/${DEFAULT_BRANCH}.tar.gz"
-fi
+    # Remote mode: download from GitHub
+    if [ -n "$VERSION" ]; then
+        ARCHIVE_URL="https://github.com/${REPO}/archive/refs/tags/${VERSION}.tar.gz"
+    else
+        ARCHIVE_URL="https://github.com/${REPO}/archive/refs/heads/${DEFAULT_BRANCH}.tar.gz"
+    fi
 
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+    TMPDIR=$(mktemp -d)
+    trap 'rm -rf "$TMPDIR"' EXIT
 
-info "Downloading sync-sdd..."
-if ! curl -LsSf "$ARCHIVE_URL" -o "$TMPDIR/sync-sdd.tar.gz" 2>/dev/null; then
-    error "Failed to download from ${ARCHIVE_URL}"
-    error "Check the repository URL and version tag."
-    exit 1
-fi
+    info "Downloading sync-sdd..."
+    if ! curl -LsSf "$ARCHIVE_URL" -o "$TMPDIR/sync-sdd.tar.gz" 2>/dev/null; then
+        error "Failed to download from ${ARCHIVE_URL}"
+        error "Check the repository URL and version tag."
+        exit 1
+    fi
 
-tar xzf "$TMPDIR/sync-sdd.tar.gz" -C "$TMPDIR"
-SRC=$(find "$TMPDIR" -maxdepth 1 -type d -name "sync-sdd*" | head -1)
+    tar xzf "$TMPDIR/sync-sdd.tar.gz" -C "$TMPDIR"
+    SRC=$(find "$TMPDIR" -maxdepth 1 -type d -name "sync-sdd*" | head -1)
 
-if [ -z "$SRC" ] || [ ! -d "$SRC/framework" ]; then
-    error "Downloaded archive doesn't contain expected framework/ directory"
-    exit 1
+    if [ -z "$SRC" ] || [ ! -d "$SRC/framework" ]; then
+        error "Downloaded archive doesn't contain expected framework/ directory"
+        exit 1
+    fi
 fi
 
 # --- Read versions ---
@@ -518,10 +532,10 @@ if [ "$UPDATE" = false ]; then
     echo ""
     printf "${BOLD}Quick start:${RESET}\n"
     echo "  1. cd your-project"
-    echo "  2. claude                        # Start Claude Code"
-    echo "  3. /sdd-steering                 # Set up project context"
-    echo "  4. /sdd-design \"feature desc\"    # Create a specification"
-    echo "  5. /sdd-impl feature-name        # Implement with TDD"
+    echo "  2. claude                             # Start Claude Code"
+    echo "  3. /sdd-steering                      # Set up project context"
+    echo "  4. /sdd-roadmap design \"feature desc\" # Create a specification"
+    echo "  5. /sdd-roadmap impl feature-name     # Implement with TDD"
 fi
 
 echo ""

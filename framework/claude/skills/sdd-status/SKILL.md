@@ -63,6 +63,6 @@ Format as human-readable markdown report.
 
 ## Error Handling
 
-- **No specs found**: "No specs found. Run `/sdd-design \"description\"` to create."
+- **No specs found**: "No specs found. Run `/sdd-roadmap design \"description\"` to create."
 - **Feature not found**: "Spec '{feature}' not found."
 - **No roadmap**: Show individual spec statuses without wave context

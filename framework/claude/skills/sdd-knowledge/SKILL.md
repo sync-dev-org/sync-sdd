@@ -77,7 +77,7 @@ Review Skill candidates detected by Lead.
 1. Report summary:
    - Created/reviewed entries count
    - Skills created (if any)
-2. Suggest: knowledge is used during `/sdd-review` for context-aware checks
+2. Suggest: knowledge is used during `/sdd-roadmap review` for context-aware checks
 
 </instructions>
 
@@ -90,5 +90,5 @@ Review Skill candidates detected by Lead.
 ## Integration with Reviews
 
 After creating knowledge:
-- `/sdd-review design` can filter by detection phase or category
-- `/sdd-review impl` can filter by `incident-*` for common pitfalls
+- `/sdd-roadmap review design` can filter by detection phase or category
+- `/sdd-roadmap review impl` can filter by `incident-*` for common pitfalls
