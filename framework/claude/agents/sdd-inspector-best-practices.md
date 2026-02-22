@@ -17,7 +17,6 @@ Evaluate design decisions against current industry best practices, identify anti
 - Do NOT check SDD compliance (rulebase agent handles that)
 - Do NOT check testability (testability agent handles that)
 - Do NOT check architecture quality (architecture agent handles that)
-- Use WebSearch/WebFetch to verify technology choices and patterns
 - Think like a senior engineer reviewing technology decisions
 
 ## Input Handling

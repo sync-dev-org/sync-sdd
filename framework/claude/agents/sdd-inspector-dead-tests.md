@@ -19,8 +19,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
 3. **Enumerate fixture definitions**: Trace their usage across all test files
 4. **Compare test imports with source**: Verify tested symbols still exist
-5. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
-6. **Detect stale patterns**: Tests that pass but test nothing meaningful
+5. **Detect stale patterns**: Tests that pass but test nothing meaningful
 
 ## Key Focus Areas
 

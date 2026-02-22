@@ -19,8 +19,7 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 2. **Load project conventions**: Read `{{SDD_DIR}}/project/steering/tech.md` for runtime and command patterns
 3. **Enumerate public symbols**: Functions, classes, methods, constants
 4. **Trace call sites**: Search thoroughly for references to each symbol
-5. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
-6. **Compare exports with usage**: Check `__all__`, public APIs, re-exports
+5. **Compare exports with usage**: Check `__all__`, public APIs, re-exports
 
 ## Key Focus Areas
 

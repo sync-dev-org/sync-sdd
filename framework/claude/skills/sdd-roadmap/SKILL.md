@@ -1,6 +1,6 @@
 ---
 description: Unified spec lifecycle (design, implement, review, roadmap management)
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
+allowed-tools: Task, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: design <feature> | impl <feature> [tasks] | review design|impl|dead-code <feature> [flags] | run [--gate] [--consensus N] | revise <feature> [instructions] | create [-y] | update | delete | -y
 ---
 
@@ -154,7 +154,7 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 
 ### Step 3: Execute
 
-Spawn Builder(s) via `Task(subagent_type="sdd-builder")`. Follow Run Mode → Step 4 → Implementation Phase (steps 5-10). If `{task-numbers}` provided: filter to specified task numbers only.
+Spawn Builder(s) via `Task(subagent_type="sdd-builder")`. Follow Run Mode → Step 4 → Implementation Phase (steps 4-10, skip step 5 for single-spec). If `{task-numbers}` provided: filter to specified task numbers only.
 
 After ALL Builders complete, update spec.yaml:
 - Set `phase` = `implementation-complete`
@@ -231,7 +231,7 @@ When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
 1. For each pipeline `p` (1..N): create review directory `specs/{feature}/.review-{p}/`
 2. Spawn N sets of Inspectors in parallel via `Task(subagent_type=...)`. Each Inspector set writes to its own `.review-{p}/` directory
-3. For each pipeline: after all Inspectors complete (tracked via Inspector Completion Protocol), spawn Auditor with `.review-{p}/` as input and `.review-{p}/verdict.cpf` as output
+3. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `.review-{p}/` as input and `.review-{p}/verdict.cpf` as output
 4. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
    - Key by `{category}|{location}`, count frequency
    - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)
@@ -298,7 +298,7 @@ Lead handles pipeline execution directly.
 
 ### Step 2: Cross-Spec File Ownership Analysis
 
-1. Read all parallel-candidate specs' `design.md` Components sections
+1. Read all parallel-candidate specs' `design.md` Components sections (skip specs without `design.md` — not yet designed)
 2. Detect file scope overlaps between specs in the same wave:
    - For each pair of parallel-candidate specs: compare claimed file paths
    - If intersection is non-empty: flag as overlap
@@ -333,7 +333,12 @@ For each ready spec, execute pipeline phases in order:
    - **Architect loads its own context** (steering, templates, rules, existing code) autonomously in Step 1-2. Do NOT pre-read these files for Architect.
 2. Read Architect's completion report (from Task result)
 3. Verify `design.md` and `research.md` exist
-4. Update spec.yaml: `phase=design-generated`, `version_refs.design={v}`
+4. Update spec.yaml:
+   - If re-edit (`version_refs.design` is non-null): increment `version` minor
+   - Set `version_refs.design` = current `version`
+   - Set `phase` = `design-generated`
+   - Set `orchestration.last_phase_action` = null
+   - Update `changelog`
 5. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
@@ -353,6 +358,7 @@ Follow **File-Based Review Protocol** (see Review Subcommand):
 8. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
+   - **SPEC-UPDATE-NEEDED** → not expected for design review (no implementation to conflict). If received, treat as NO-GO and escalate to user
    - In **gate mode**: pause for user approval before advancing
 9. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
 10. Auto-draft `{{SDD_DIR}}/handover/session.md`
@@ -366,7 +372,7 @@ If `--consensus N` is active, apply consensus mode per Review Subcommand §Conse
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
    - Review findings: from `specs/{feature}/verdicts.md` latest design batch Tracked (if exists)
 2. Read TaskGenerator's completion report (from Task result)
-3. Verify `tasks.yaml` exists
+3. Verify `tasks.yaml` exists. Set `orchestration.last_phase_action = "tasks-generated"`
 4. Read `tasks.yaml` execution plan → determine Builder grouping
 5. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-dispatch TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
 6. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
@@ -406,6 +412,7 @@ Follow **File-Based Review Protocol** (see Review Subcommand):
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
    - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) via `Task(subagent_type="sdd-builder")` with fix instructions → re-review (max 3 retries)
    - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect via `Task(subagent_type="sdd-architect")` (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
+   - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 4. Escalate to user at aggregate 4.
    - In **gate mode**: pause for user approval
 9. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
 10. Auto-draft `{{SDD_DIR}}/handover/session.md`

@@ -24,7 +24,6 @@ Perform an unconstrained review of the implementation, looking for issues that f
 - If you find an issue that clearly belongs to a single specialist domain (pure spec compliance, pure interface verification, pure test quality, pure code quality, pure consistency), you MAY still report it, but PREFER cross-cutting findings
 - Do NOT duplicate findings just to pad your report — if specialists will obviously catch it, skip it
 - Think like a senior engineer doing a final code review before merge
-- Use WebSearch/WebFetch when you need to verify assumptions about libraries, APIs, or runtime behaviors
 
 ## Input Handling
 

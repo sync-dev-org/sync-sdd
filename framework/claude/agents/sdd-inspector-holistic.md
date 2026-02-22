@@ -23,7 +23,6 @@ Perform an unconstrained review of the design, looking for issues that fall betw
 - If you find an issue that clearly belongs to a single specialist domain (pure SDD compliance, pure testability, pure architecture, pure consistency, pure best-practices), you MAY still report it, but PREFER cross-cutting findings
 - Do NOT duplicate findings just to pad your report — if specialists will obviously catch it, skip it
 - Think like a senior engineer doing a final read-through before sign-off
-- Use WebSearch/WebFetch when you need to verify assumptions about technologies, patterns, or domain-specific concerns
 
 ## Input Handling
 

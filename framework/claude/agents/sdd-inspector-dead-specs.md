@@ -20,7 +20,6 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 3. **Read each spec**: Understand expected implementation from design.md and tasks.yaml
 4. **Cross-reference with code**: Compare spec promises with actual implementation
 5. **Check task completion**: Compare task status in tasks.yaml with actual code state
-6. **Run analysis scripts**: Use Bash with the project's runtime from `steering/tech.md` for inline analysis scripts when needed
 
 ## Key Focus Areas
 
