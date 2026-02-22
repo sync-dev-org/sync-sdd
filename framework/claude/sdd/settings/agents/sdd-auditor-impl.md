@@ -41,6 +41,7 @@ Read all `.cpf` files from the review directory. Each file contains one Inspecto
   4. `sdd-inspector-quality.cpf` — Error handling, naming, organization
   5. `sdd-inspector-impl-consistency.cpf` — Cross-feature patterns
   6. `sdd-inspector-impl-holistic.cpf` — Cross-cutting concerns and blind spots
+  7. `sdd-inspector-e2e.cpf` — E2E functional + visual design review (web projects only, may be absent)
 
 If any expected file is missing, record in NOTES: `PARTIAL:{inspector-name}|file not found`. Parse all available Inspector outputs and proceed with verification.
 

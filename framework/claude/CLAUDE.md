@@ -24,7 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teamma
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
-| T3 | **Inspector** | Individual review perspectives. 6 inspectors spawned in parallel (design/impl), 4 (dead-code). Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. 6 inspectors (design/impl) +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
 
 ### Chain of Command
 

@@ -401,10 +401,11 @@ Follow **File-Based Review Protocol** (see Review Subcommand):
 
 1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/.review/`
 2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`
-3. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet):
-   - Profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+3. Spawn (via `TeammateTool`) impl Inspectors (sonnet):
+   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+   - **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e.md`
    - Each context: "Feature: {feature}, review output: `specs/{feature}/.review/{inspector-name}.cpf`"
-4. Track completions (Step B). After all 6 complete:
+4. Track completions (Step B). After all inspectors complete (6 or 7):
 5. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
    - Context: "Feature: {feature}, review dir: `specs/{feature}/.review/`, Verdict output: `specs/{feature}/.review/verdict.cpf`"
 6. After Auditor idle → read `verdict.cpf` (Step D)
@@ -460,10 +461,11 @@ After all specs in a wave complete individual pipelines:
 **a. Impl Cross-Check Review** (wave-scoped, File-Based Review Protocol):
 0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
 1. Create review directory: `{{SDD_DIR}}/project/specs/.review-wave-{N}/`
-2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) 6 impl Inspectors (sonnet):
-   - Profiles: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) impl Inspectors (sonnet):
+   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
+   - **Web projects**: also spawn `sdd-inspector-e2e.md`
    - Each context: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED}, review output: `specs/.review-wave-{N}/{inspector-name}.cpf`"
-3. Track completions. After all 6 complete:
+3. Track completions. After all inspectors complete (6 or 7):
 4. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
    - Context: "Wave-scoped cross-check, Wave: 1..{N}, review dir: `specs/.review-wave-{N}/`, Verdict output: `specs/.review-wave-{N}/verdict.cpf`"
 5. After Auditor idle → read `verdict.cpf` (File-Based Review Protocol Step D)

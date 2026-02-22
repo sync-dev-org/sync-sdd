@@ -21,7 +21,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.18.2
+curl -LsSf <url>/install.sh | sh -s -- --version v0.19.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -40,7 +40,7 @@ your-project/
     ├── skills/sdd-*/SKILL.md          # 9 skills
     └── sdd/
         └── settings/                  # Framework-managed
-            ├── agents/                # 22 agent profiles (spawn prompt templates)
+            ├── agents/                # 23 agent profiles (spawn prompt templates)
             ├── rules/
             ├── templates/
             └── profiles/
