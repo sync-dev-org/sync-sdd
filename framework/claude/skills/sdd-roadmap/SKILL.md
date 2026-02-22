@@ -20,7 +20,7 @@ $ARGUMENTS = "design {feature-or-description}"     → Design Subcommand
 $ARGUMENTS = "impl {feature} [task-numbers]"        → Impl Subcommand
 $ARGUMENTS = "review design {feature}"              → Review Subcommand
 $ARGUMENTS = "review impl {feature} [tasks]"        → Review Subcommand
-$ARGUMENTS = "review dead-code [subtype]"           → Review Subcommand
+$ARGUMENTS = "review dead-code"                      → Review Subcommand
 $ARGUMENTS = "review {type} {feature} --consensus N" → Review Subcommand
 $ARGUMENTS = "review design --cross-check"          → Review Subcommand
 $ARGUMENTS = "review impl --cross-check"            → Review Subcommand
@@ -118,6 +118,8 @@ When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 7. Proceed to verdict handling with consensus verdict
 
 N=1 (default): use `specs/{feature}/_review/` (no `-{p}` suffix).
+
+**Consensus + wave-scoped**: `_review-wave-{N}-{p}/` (wave number + pipeline number). Dead-code: `_review-wave-{N}-dc-{p}/`.
 
 ### Verdict Persistence Format
 

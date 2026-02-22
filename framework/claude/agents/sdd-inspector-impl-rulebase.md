@@ -153,9 +153,9 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 - **Missing Spec**: Return CPF error:
   ```
   VERDICT:ERROR
-  SCOPE:spec|{feature}
+  SCOPE:{feature}
   ISSUES:
-  CRITICAL|setup|spec.yaml|Spec '{feature}' not found
+  C|setup|spec.yaml|Spec '{feature}' not found
   NOTES:
   Unable to proceed — spec not found
   ```

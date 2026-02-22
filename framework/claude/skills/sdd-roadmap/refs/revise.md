@@ -62,7 +62,7 @@ After revision pipeline completes (spec returns to `implementation-complete`):
 1. For each direct dependent spec that is `implementation-complete`:
    - Present to user per-spec:
      a. **Re-review**: Run impl review only (`/sdd-roadmap review impl {dep}`)
-     b. **Re-implement**: Reset to `design-generated`, full cascade
+     b. **Re-implement**: Reset to `design-generated`, full cascade (Architect re-designs against updated upstream → Design Review → TaskGenerator → Builder → Impl Review)
      c. **Skip**: Accept current state
    - Record each decision in `decisions.md` as `USER_DECISION`
 2. Execute user's choices sequentially

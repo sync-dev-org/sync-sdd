@@ -46,7 +46,7 @@ Execute design review per `refs/review.md` (Design Review section).
 
 Handle verdict:
 - **GO/CONDITIONAL** → Proceed to Implementation Phase (counters are NOT reset — see CLAUDE.md §Counter Reset)
-- **NO-GO** → increment `retry_count`. Dispatch Architect via `Task(subagent_type="sdd-architect")` with fix instructions. After fix: reset `orchestration.last_phase_action = null`. Phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
+- **NO-GO** → increment `retry_count`. Dispatch Architect via `Task(subagent_type="sdd-architect")` with fix instructions. If Architect fails (no valid completion report): escalate entire spec to user. After successful fix: reset `orchestration.last_phase_action = null`. Phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
@@ -63,7 +63,7 @@ Execute impl review per `refs/review.md` (Impl Review section).
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
-- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions → re-review (max 5 retries)
+- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: set `phase = implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries)
 - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: Architect (with SPEC_FEEDBACK) → TaskGenerator → Builder → re-run Impl Review. All tasks fully re-implemented.
 - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate at 6.
 - In **gate mode**: pause for user approval
@@ -106,7 +106,10 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 2. Persist verdict to `specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code
-   - **NO-GO** → map to target spec(s), increment `retry_count`, re-dispatch Builder(s), re-run cross-check. Max 5 retries (aggregate cap 6). On exhaustion: escalate (proceed / abort wave / manual fix)
+   - **NO-GO** → map to target spec(s), increment `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user with options:
+     - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
+     - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
+     - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
    - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`, cascade: Architect → TaskGenerator → Builder → individual Impl Review → re-run cross-check
 
 **b. Dead Code Review**:
@@ -114,7 +117,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 2. Persist verdict to `specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
-   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries → escalate)
+   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`

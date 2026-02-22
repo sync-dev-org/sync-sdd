@@ -144,9 +144,17 @@ File-based review protocol makes all SubAgent outputs idempotent (same `_review/
 - Editing specs triggers full cascade: design → implementation
 - On SPEC-UPDATE-NEEDED verdict: fix the spec first, then re-implement via cascade
 
+### Stages
+- Stage 0 (optional): `/sdd-steering`
+- Stage 1 (Specification): `/sdd-roadmap design` → `/sdd-roadmap review design` (optional)
+- Stage 2 (Implementation): `/sdd-roadmap impl` → `/sdd-roadmap review impl` (optional)
+- Multi-feature: `/sdd-roadmap create` → `/sdd-roadmap run`
+- Progress check: `/sdd-status` (anytime)
+
 ### Auto-Fix Counter Limits
 
 - `retry_count`: max 5 (NO-GO only). `spec_update_count`: max 2 (SPEC-UPDATE-NEEDED only). Aggregate cap: 6.
+- **Exception**: Dead-Code Review NO-GO: max 3 retries (dead-code findings are simpler scope; exhaustion → escalate).
 - CONDITIONAL = GO (proceed). Counters are NOT reset on intermediate GO/CONDITIONAL.
 - Counter reset triggers: wave completion, user escalation decision, `/sdd-roadmap revise` start.
 - Full auto-fix loop, wave quality gate, and blocking protocol details: see sdd-roadmap `refs/run.md`.
@@ -252,7 +260,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 
 ## Knowledge Auto-Accumulation
 
-- Builder/Inspector report learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
+- Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
 - Lead collects tagged reports from SubAgent Task results and writes to `buffer.md`
 - On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
 - Skill emergence: When buffer.md Knowledge Buffer contains 2+ `[PATTERN]` entries sharing the same category AND description pattern, Lead adds a Skill candidate entry to buffer.md Skill Candidates section. Surfaced to user via `/sdd-knowledge --skills` or at wave completion. Lead does NOT auto-create Skill files without user approval.

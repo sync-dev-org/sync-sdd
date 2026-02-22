@@ -6,7 +6,7 @@
 **Usage**:
 - Record issues found during implementation that should have been caught earlier.
 - Document detection points for each SDD phase (specifications, design, tasks, impl).
-- Enable context-aware knowledge retrieval during `/sdd-review` commands.
+- Enable context-aware knowledge retrieval during `/sdd-roadmap review` commands.
 
 **Naming Convention**: `{category}-{pattern-name}.md`
 - Categories: `state`, `api`, `async`, `data`, `security`, `integration`

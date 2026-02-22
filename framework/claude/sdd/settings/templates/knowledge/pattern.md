@@ -6,7 +6,7 @@
 **Usage**:
 - Record successful approaches that should be replicated.
 - Provide guidance for common scenarios.
-- Enable proactive pattern application during `/sdd-review` commands.
+- Enable proactive pattern application during `/sdd-roadmap review` commands.
 
 **Naming Convention**: `pattern-{category}-{name}.md`
 - Categories: `state`, `api`, `async`, `data`, `security`, `integration`

@@ -103,7 +103,7 @@ Feature: {feature}
 Tasks completed: {list}
 Files: {created/modified file paths}
 Tests: {pass count}/{total count}
-Phase: {design-generated | implementation-complete}
+Status: {all-tasks-complete | partial}
 
 {Knowledge tags if any}
 ```

@@ -66,8 +66,28 @@ If `--consensus N`, apply Consensus Mode protocol (see Router).
 When review is invoked standalone (not within run/revise pipeline):
 1. Display formatted verdict report to user
 2. **No auto-fix**: Report verdict and stop. Auto-fix loops are only executed within pipeline orchestration.
-3. **Process STEERING entries**: CODIFY → apply directly. PROPOSE → present to user for approval.
+3. **Process STEERING entries** (see below)
 4. Auto-draft `{{SDD_DIR}}/handover/session.md`
+
+## Steering Feedback Loop Processing
+
+When Auditor verdict contains a `STEERING:` section, process **after** handling the verdict (GO/NO-GO/etc.) but **before** advancing to the next phase.
+
+1. **Parse**: Each `STEERING:` line has format: `{CODIFY|PROPOSE}|{target file}|{decision text}`
+2. **Route by level**:
+
+| Level | Action | Blocks pipeline |
+|-------|--------|----------------|
+| `CODIFY` | Update `steering/{target file}` directly + append to `decisions.md` (STEERING_UPDATE) | No |
+| `PROPOSE` | Present to user for approval | Yes |
+
+3. **PROPOSE handling**:
+   - On approval → update `steering/{target file}` + append to `decisions.md` (STEERING_UPDATE)
+   - On rejection → append to `decisions.md` as STEERING_EXCEPTION (with Reason, Steering-ref), or USER_DECISION if simply rejected
+
+## Inspector Error Handling
+
+If an Inspector CPF file contains `VERDICT:ERROR` (Inspector could not execute): treat as "Inspector unavailable" — no findings from that Inspector. Proceed with remaining Inspectors' results. Note in Auditor context that Inspector {name} was unavailable.
 
 ## Verdict Destination by Review Type
 

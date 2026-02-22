@@ -32,7 +32,7 @@ $ARGUMENTS = "--impact {feature}"  → Same as above
 
 For each wave in roadmap:
 - Wave completion percentage
-- Specs in each phase (design-generated / implementation-complete / blocked)
+- Specs in each phase (initialized / design-generated / implementation-complete / blocked)
 - Blocked specs with `blocked_info` details (blocked_by, reason)
 
 ### Individual Spec Status (when feature specified)
