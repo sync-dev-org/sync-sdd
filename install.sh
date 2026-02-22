@@ -133,7 +133,8 @@ if [ "$UNINSTALL" = true ]; then
     rm -f .claude/commands/sdd-*.md   # legacy cleanup
     rm -f .claude/agents/sdd-*.md
     rm -rf .claude/sdd/settings/rules/ \
-           .claude/sdd/settings/templates/
+           .claude/sdd/settings/templates/ \
+           .claude/sdd/settings/profiles/
     rm -f .claude/sdd/.version
 
     # Remove SDD section from CLAUDE.md (preserve user content)
@@ -523,7 +524,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".claude/sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
-    remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "*.md"
+    remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal
     find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true

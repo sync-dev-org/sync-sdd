@@ -17,7 +17,7 @@ Verify that web application user flows work end-to-end in a real browser, and ev
 - Do NOT verify unit tests, code style, or spec traceability (other inspectors handle those)
 - Use `playwright-cli` for all browser interactions — do NOT use Playwright MCP or Python Playwright
 - Use exact command patterns from `steering/tech.md` Common Commands for dev server startup
-- If `playwright-cli` is not installed, record in NOTES and terminate immediately (do not block the pipeline)
+- If `playwright-cli` is not installed, attempt auto-install (`npm install -g @playwright/cli@latest && playwright-cli install`). If install fails, record in NOTES and terminate (do not block the pipeline)
 - Evaluate visual design with professional rigor but avoid subjective nitpicking
 
 ## playwright-cli Reference
@@ -107,7 +107,12 @@ You will receive a prompt containing:
 ### Pre-Flight
 
 1. Verify playwright-cli is installed: `playwright-cli --version`
-   - If not installed: output `VERDICT:GO` with `NOTES: SKIPPED|playwright-cli not installed`, write to file, terminate
+   - If not installed: attempt auto-install:
+     1. `npm install -g @playwright/cli@latest`
+     2. `playwright-cli install`
+     3. Verify: `playwright-cli --version`
+     - If install succeeds: continue with execution
+     - If install fails: output `VERDICT:GO` with `NOTES: SKIPPED|playwright-cli install failed`, write to file, terminate
 2. Determine dev server command from `steering/tech.md` Common Commands
 3. Start dev server via Bash (background process)
 4. Wait for server to be ready (retry URL access with brief delays)
@@ -199,7 +204,7 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 
 ## Error Handling
 
-- **playwright-cli not installed**: Output GO verdict with NOTES: SKIPPED, terminate (non-blocking)
+- **playwright-cli not installed**: Attempt auto-install (`npm install -g @playwright/cli@latest && playwright-cli install`). If install fails: output GO verdict with NOTES: SKIPPED, terminate (non-blocking)
 - **Dev server fails to start**: Flag as Critical, report error, terminate
 - **Page timeout**: Flag as High, note which URL timed out, continue with remaining flows
 - **No user flows in design.md**: Report "No testable user flows found in design.md" in NOTES

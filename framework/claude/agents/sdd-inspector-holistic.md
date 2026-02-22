@@ -133,7 +133,7 @@ Quick check: does this design serve the product intent, or has it drifted toward
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/_review/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -169,5 +169,4 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 ## Error Handling
 
 - **No Design Found**: Flag as Critical — cannot perform holistic review without design
-- **Web Search Fails**: Proceed with analysis based on available context, note limited research
 - **No Steering Files**: Proceed with general engineering judgment, note lack of project context

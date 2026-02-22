@@ -126,26 +126,10 @@ Autonomously decide research depth based on:
 - Are error handling patterns standard?
 - Are logging/monitoring practices adequate?
 
-## Web Research Strategy
-
-### Search Topics (prioritized)
-1. Technologies/frameworks mentioned in design → latest versions, deprecations
-2. Design patterns used → known issues, better alternatives
-3. Domain-specific best practices → industry standards
-4. Security considerations → OWASP, known vulnerabilities
-5. Performance patterns → benchmarks, optimization techniques
-
-### Sources to Prioritize
-- Official documentation (highest authority)
-- RFCs and specifications
-- Major tech company engineering blogs
-- Well-known technical publications
-- GitHub issues/discussions for specific libraries
-
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/_review/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -179,5 +163,4 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 ## Error Handling
 
 - **No Design Found**: Limited review based on requirements technology mentions
-- **Web Search Fails**: Proceed with known patterns, note limited research
 - **No Technology Mentions**: Report "No specific technology choices to evaluate"

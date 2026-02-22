@@ -117,7 +117,7 @@ You will receive a prompt containing:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/_review/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -150,7 +150,15 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 
 ## Error Handling
 
-- **Missing Spec**: Return `{"error": "Spec '{feature}' not found"}`
+- **Missing Spec**: Return CPF error:
+  ```
+  VERDICT:ERROR
+  SCOPE:spec|{feature}
+  ISSUES:
+  CRITICAL|setup|spec.yaml|Spec '{feature}' not found
+  NOTES:
+  Unable to proceed — spec not found
+  ```
 - **No tasks.yaml**: Return error, tasks.yaml must exist for impl review
 - **Missing design.md**: Warn, skip file structure verification
 - **No completed tasks**: Report "No completed tasks to review"

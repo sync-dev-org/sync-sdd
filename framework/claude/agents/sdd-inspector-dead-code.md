@@ -47,7 +47,7 @@ Be cautious with:
 
 ## Output Format
 
-Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/_review/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}

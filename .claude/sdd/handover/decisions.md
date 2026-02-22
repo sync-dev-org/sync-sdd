@@ -159,9 +159,23 @@
 - Impact: 9 spec revision (3 full + 6 lightweight)。feature/subagent-migration ブランチで作業
 - Source: ユーザー指示
 
-[2026-02-22T20:10:00Z] D30: REVISION_INITIATED | core-architecture SubAgent 移行
-- Context: Agent Teams (TeammateTool/SendMessageTool) は実質的に機能せず、Lead は規約を無視して Task ツールで起動し、teammate 間の直接通信に意味がない
-- Decision: (1) 全23エージェントを .claude/agents/ に移動し YAML frontmatter 化 (2) CLAUDE.md を SubAgent アーキテクチャに書き換え (3) SKILL.md の全 TeammateTool を Task(subagent_type=...) に置換 (4) settings.json から AGENT_TEAMS 削除 (5) install.sh パス変更
-- Reason: SubAgent は Claude Code の正規機能。Agent Teams は experimental で Lead が遵守できない。ファイルベースレビューは維持（理由変更: 漏洩防止 → コンテキスト分離）
-- Impact: 9 spec revision (3 full + 6 lightweight)。feature/subagent-migration ブランチで作業
+[2026-02-22T20:05:00Z] D30: REVISION_INITIATED | core-architecture SubAgent 移行
+- Context: Agent Teams → SubAgent 移行の Phase 1
+- Decision: core-architecture spec を revise し CLAUDE.md + 23 agent ファイル移行
+- Reason: 新アーキテクチャの基盤定義が最優先
+- Impact: CLAUDE.md 書き換え、23 agent 移動+YAML化、settings.json 更新準備
 - Source: ユーザー指示
+
+[2026-02-22T22:00:00Z] D31: SESSION_END | Agent Teams → SubAgent 移行 (v0.20.0)
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-22T23:00:00Z] D32: SESSION_START | Resume session
+- Context: v0.20.0 リリース完了後の再開。全15 spec implementation-complete。SubAgent 動作検証未実施
+
+[2026-02-22T23:30:00Z] D33: SESSION_END | v0.20.0 実装レビュー + 検出問題修正
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-22T23:45:00Z] D34: SESSION_START | Resume session
+- Context: v0.20.0 実装レビュー+修正完了後の再開。未コミット変更あり（framework/claude/ 3ファイル + handover）

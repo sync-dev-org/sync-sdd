@@ -10,7 +10,7 @@ argument-hint: [-y] [custom]
 
 ## Core Task
 
-Manage project steering documents. Lead handles directly (no teammate delegation) since it requires user interaction.
+Manage project steering documents. Lead handles directly (no SubAgent dispatch needed) since it requires user interaction.
 
 **Before any steering operation**, read `{{SDD_DIR}}/settings/rules/steering-principles.md` and apply its principles (content granularity, security, quality standards, preservation rules) throughout.
 
@@ -66,7 +66,7 @@ Execute full steering creation:
 
 1. Ask for custom steering topic (suggest: API standards, testing, security, DB, auth, etc.)
 2. Check if a matching template exists in `{{SDD_DIR}}/settings/templates/steering-custom/`:
-   - `api-standards.md`, `authentication.md`, `database.md`, `deployment.md`, `error-handling.md`, `security.md`, `testing.md`
+   - `api-standards.md`, `authentication.md`, `database.md`, `deployment.md`, `error-handling.md`, `security.md`, `testing.md`, `ui.md`
    - If match found: use as base template, pre-fill structure and sections
    - If no match: generate structure from scratch
 3. Optional codebase analysis

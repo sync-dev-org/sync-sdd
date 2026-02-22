@@ -140,7 +140,7 @@ Consider production runtime concerns:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/cpf/{your-inspector-name}.cpf`).
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/_review/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
@@ -176,6 +176,5 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 ## Error Handling
 
 - **No Design Found**: Proceed with code-only review, note missing design context
-- **Web Search Fails**: Proceed with analysis based on available context, note limited research
 - **Implementation Files Not Found**: Flag as Critical
 - **No Steering Files**: Use general best practices, note lack of project conventions

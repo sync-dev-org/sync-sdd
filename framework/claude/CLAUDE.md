@@ -23,7 +23,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
-| T3 | **Inspector** | Individual review perspectives. 6 inspectors (design/impl) +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. 6 design + 6 impl inspectors +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
 
 ### Chain of Command
 
@@ -31,7 +31,7 @@ Lead dispatches T2/T3 SubAgents using `Task` tool with `subagent_type` parameter
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 
-Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No inter-agent messaging needed for review data transfer.
+Review pipelines use **file-based communication**: Inspectors write CPF files to a `_review/` directory, Auditor reads them and writes `verdict.cpf`. No inter-agent messaging needed for review data transfer.
 
 Review SubAgents (Inspector/Auditor) MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). After writing their output file, they return ONLY `WRITTEN:{path}` as their final text. All detailed analysis goes into the CPF output file.
 
@@ -87,7 +87,7 @@ Lead reads the Task result and:
 - Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
 - Determines next action (dispatch next SubAgent, escalate to user, etc.)
 
-For review pipelines: Lead dispatches Inspectors first (all via `Task`). Inspectors write CPF findings to `.review/` directory. After all Inspectors complete, Lead dispatches Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap File-Based Review Protocol.
+For review pipelines: Lead dispatches Inspectors first (all via `Task`). Inspectors write CPF findings to `_review/` directory. After all Inspectors complete, Lead dispatches Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap File-Based Review Protocol.
 
 **Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's Task result as it returns. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dispatch next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
@@ -95,12 +95,12 @@ For review pipelines: Lead dispatches Inspectors first (all via `Task`). Inspect
 
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
-- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. No inter-agent messaging needed for review data transfer.
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `_review/` directory, Auditor reads them. No inter-agent messaging needed for review data transfer.
 - **Concurrent SubAgent limit**: 24 (3 pipelines x 7 SubAgents + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel (7xN SubAgents).
 
 ### SubAgent Failure Handling
 
-File-based review protocol makes all SubAgent outputs idempotent (same `.review/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
+File-based review protocol makes all SubAgent outputs idempotent (same `_review/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
 
 ## Project Context
 
@@ -163,33 +163,36 @@ All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
   - Revision: `implementation-complete` → `design-generated` → (full pipeline) → `implementation-complete`
+  - Re-design (with user confirm): `implementation-complete` → `design-generated`
 - Each phase gate is enforced by the next command
 - Keep steering current and verify alignment with `/sdd-status`
 
 ### SPEC-Code Atomicity
 - SPEC changes (design.md, tasks.yaml) and code changes belong in the same logical unit
 - Editing specs triggers full cascade: design → implementation
-- On SPEC-UPDATE-NEEDED verdict: fix the spec first, do not re-implement
+- On SPEC-UPDATE-NEEDED verdict: fix the spec first, then re-implement via cascade
 
 ### Auto-Fix Loop (Review)
 
 CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/{feature}/verdicts.md` Tracked section). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
 1. Extract fix instructions from Auditor's verdict
-2. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
+2. Track counters: `retry_count` for NO-GO (max 5), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
 3. Determine fix scope and dispatch fix SubAgents (all via `Task`):
-   - **NO-GO (design review)** → dispatch Architect with fix instructions
-   - **NO-GO (impl review)** → dispatch Builder(s) with fix instructions
-   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: dispatch Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder. All tasks fully re-implemented.
+   - **NO-GO (design review)** → dispatch Architect with fix instructions. After fix: reset `orchestration.last_phase_action = null`. Re-run Design Review.
+   - **NO-GO (impl review)** → dispatch Builder(s) with fix instructions. Re-run Implementation Review.
+   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: dispatch Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-run the originating review. All tasks fully re-implemented.
    - **Structural changes** → auto-fix in full-auto mode, escalate in `--gate` mode
-   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → dispatch with fix instructions
-4. After fix, dispatch review pipeline (Inspectors + Auditor) again
-5. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2 → escalate to user
-6. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 4. Escalate to user at aggregate 4.
+   - **NO-GO (wave quality gate)** → map findings to file paths → identify target spec(s) → increment target spec's `retry_count` → dispatch responsible Builder(s) with fix instructions → re-run Impl Cross-Check Review
+   - **SPEC-UPDATE-NEEDED (wave quality gate)** → increment target spec's `spec_update_count` → cascade Architect → TaskGenerator → Builder → re-run Impl Cross-Check Review
+4. After fix, re-run the originating review phase (single-spec review or wave-scoped cross-check)
+5. If `retry_count` ≥ 5 or `spec_update_count` ≥ 2 → escalate to user
+6. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate to user at aggregate 6.
+7. **Counter reset**: Counters are NOT reset on intermediate GO/CONDITIONAL verdicts. Reset triggers: wave completion (all specs pass Wave QG), user escalation decision, or `/sdd-roadmap revise` start.
 
 ### Wave Quality Gate (Roadmap)
 - After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
-- Issues found → re-dispatch responsible Builder(s) from file ownership records → re-review
-- Max 3 retries per gate → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
+- Issues found → identify target spec(s) → increment target spec's counters → re-dispatch responsible Builder(s) → re-run Impl Cross-Check Review
+- Max 5 retries per spec (aggregate cap 6 with spec_update_count) → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
 - Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
 - CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/verdicts-wave.md`)
 - Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N
@@ -206,17 +209,18 @@ When a spec fails after exhausting retries:
    - Set `blocked_info.reason` = `upstream_failure`
 
 When user requests unblocking:
-- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-roadmap review impl` if needed). Only after verification: restore downstream phase from `blocked_at_phase` → clear `blocked_info`
-- **skip**: Exclude upstream spec → evaluate if dependencies resolved → restore if possible
+- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-roadmap review impl` if needed). After verification: for each downstream spec where `blocked_info.blocked_by` == `{upstream}`: restore `phase` from `blocked_info.blocked_at_phase`, clear `blocked_info` fields. Update `roadmap.md` blocked status. Resume pipeline from restored phase.
+- **skip**: Exclude upstream spec. For each downstream spec whose only blocker was the skipped spec: warn user "Downstream spec {name} depends on skipped {upstream}. Its implementation may reference missing functionality." User confirms per downstream spec: proceed (restore phase) / keep blocked / remove dependency. For specs with additional blockers: remain blocked.
 - **abort**: Stop pipeline, leave all specs as-is
 
 ### Auto-Fix Loop Details
 
-- `retry_count`: incremented only on NO-GO (max 3). CONDITIONAL does NOT count. **Reset to 0 on GO/CONDITIONAL verdict.**
-- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`. **Reset to 0 on GO/CONDITIONAL verdict.**
+- `retry_count`: incremented only on NO-GO (max 5). CONDITIONAL does NOT count. **No intermediate reset** — counters persist across review phases within a pipeline.
+- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`. **No intermediate reset.**
+- **Counter reset triggers**: (1) Wave completion — after Wave QG passes, reset all specs' counters in the wave. (2) User escalation — after user decides (fix/skip/abort), reset affected spec's counters. (3) Revise start — reset target spec's counters.
 - Cascade during Architect failure: escalate entire spec to user
 - Structural changes (spec split, etc.): escalate to user, record DIRECTION_CHANGE in decisions.md
-- Design Review Auto-Fix: after fix, phase remains `design-generated`
+- Design Review Auto-Fix: after fix, reset `orchestration.last_phase_action = null`, phase remains `design-generated`
 - SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's dispatch prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
 
 ### File Ownership (Cross-Spec, Advisory)
@@ -360,6 +364,7 @@ Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modif
 ## Knowledge Buffer
 - [PATTERN] {description} (source: {spec} {role}, task {N})
 - [INCIDENT] {description} (source: {spec} {role}, task {N})
+- [REFERENCE] {description} (source: {spec} {role}, task {N})
 
 ## Skill Candidates
 - **{name}**: Detected in {specs} ({N} occurrences)
@@ -419,6 +424,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **No comment preamble in Bash commands**: The `command` argument to Bash must begin with the executable. Do not prepend `#` comment lines. Use the Bash tool's `description` parameter for human-readable context.
 - **Use steering Common Commands**: When running project tools (test, lint, build, format, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
+- **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
 
 ## Git Workflow
 
