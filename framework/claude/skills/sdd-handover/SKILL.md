@@ -33,7 +33,7 @@ Ask user:
 
 ## Step 3: Generate Handover Document
 
-Generate comprehensive session.md following the format defined in CLAUDE.md:
+Generate comprehensive session.md following the template at `{{SDD_DIR}}/settings/templates/handover/session.md`:
 
 ### Direction (from Lead perspective + user input)
 - Immediate Next Action

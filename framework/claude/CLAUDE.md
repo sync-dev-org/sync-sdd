@@ -75,21 +75,11 @@ Before dispatching any SubAgent, Lead MUST verify:
 
 ### SubAgent Lifecycle
 
-Lead dispatches SubAgents using `Task` tool. Each SubAgent:
-1. Receives context in the Task prompt (feature, paths, scope, instructions)
-2. Executes its work autonomously
-3. Returns a structured completion report as the Task result
-4. Auto-terminates after returning the result
+Lead dispatches SubAgents via `Task` tool. SubAgents execute autonomously and return a completion report. Lead reads the result, updates spec.yaml metadata, auto-drafts session.md, and determines next action.
 
-Lead reads the Task result and:
-- Extracts results (artifacts created, test results, knowledge tags, blocker info)
-- Updates spec.yaml metadata (phase, version_refs, changelog)
-- Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
-- Determines next action (dispatch next SubAgent, escalate to user, etc.)
+**Builder parallel coordination**: As each Builder completes, immediately update tasks.yaml (mark `done`), collect files, store knowledge tags. Final spec.yaml update only after ALL Builders complete.
 
-For review pipelines: Lead dispatches Inspectors first (all via `Task`). Inspectors write CPF findings to `_review/` directory. After all Inspectors complete, Lead dispatches Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap File-Based Review Protocol.
-
-**Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's Task result as it returns. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dispatch next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
+Operational details (dispatch prompts, review protocol, incremental processing): see sdd-roadmap `refs/run.md`.
 
 ### SubAgent Platform Constraints
 
@@ -133,107 +123,33 @@ File-based review protocol makes all SubAgent outputs idempotent (same `_review/
 
 ## Workflow
 
-### Commands (9)
+### Commands (6)
 
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
-| `/sdd-design` | _Redirects to_ `/sdd-roadmap design` |
-| `/sdd-impl` | _Redirects to_ `/sdd-roadmap impl` |
-| `/sdd-review` | _Redirects to_ `/sdd-roadmap review` |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 
-### Stages
-- Stage 0 (optional): `/sdd-steering`
-- Stage 1 (Specification):
-  - `/sdd-roadmap design "description"` (new) or `/sdd-roadmap design {feature}` (edit existing)
-  - `/sdd-roadmap review design {feature}` (optional)
-- Stage 2 (Implementation):
-  - `/sdd-roadmap impl {feature} [tasks]`
-  - `/sdd-roadmap review impl {feature}` (optional)
-- Multi-feature: `/sdd-roadmap create` → `/sdd-roadmap run`
-- Progress check: `/sdd-status {feature}` (anytime)
-
-All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is always required.
-
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)
-  - Revision: `implementation-complete` → `design-generated` → (full pipeline) → `implementation-complete`
-  - Re-design (with user confirm): `implementation-complete` → `design-generated`
-- Each phase gate is enforced by the next command
-- Keep steering current and verify alignment with `/sdd-status`
+- Revision: `implementation-complete` → `design-generated` → (full pipeline) → `implementation-complete`
+- All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is always required.
 
 ### SPEC-Code Atomicity
 - SPEC changes (design.md, tasks.yaml) and code changes belong in the same logical unit
 - Editing specs triggers full cascade: design → implementation
 - On SPEC-UPDATE-NEEDED verdict: fix the spec first, then re-implement via cascade
 
-### Auto-Fix Loop (Review)
+### Auto-Fix Counter Limits
 
-CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/{feature}/verdicts.md` Tracked section). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
-1. Extract fix instructions from Auditor's verdict
-2. Track counters: `retry_count` for NO-GO (max 5), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
-3. Determine fix scope and dispatch fix SubAgents (all via `Task`):
-   - **NO-GO (design review)** → dispatch Architect with fix instructions. After fix: reset `orchestration.last_phase_action = null`. Re-run Design Review.
-   - **NO-GO (impl review)** → dispatch Builder(s) with fix instructions. Re-run Implementation Review.
-   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: dispatch Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-run the originating review. All tasks fully re-implemented.
-   - **Structural changes** → auto-fix in full-auto mode, escalate in `--gate` mode
-   - **NO-GO (wave quality gate)** → map findings to file paths → identify target spec(s) → increment target spec's `retry_count` → dispatch responsible Builder(s) with fix instructions → re-run Impl Cross-Check Review
-   - **SPEC-UPDATE-NEEDED (wave quality gate)** → increment target spec's `spec_update_count` → cascade Architect → TaskGenerator → Builder → re-run Impl Cross-Check Review
-4. After fix, re-run the originating review phase (single-spec review or wave-scoped cross-check)
-5. If `retry_count` ≥ 5 or `spec_update_count` ≥ 2 → escalate to user
-6. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate to user at aggregate 6.
-7. **Counter reset**: Counters are NOT reset on intermediate GO/CONDITIONAL verdicts. Reset triggers: wave completion (all specs pass Wave QG), user escalation decision, or `/sdd-roadmap revise` start.
-
-### Wave Quality Gate (Roadmap)
-- After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
-- Issues found → identify target spec(s) → increment target spec's counters → re-dispatch responsible Builder(s) → re-run Impl Cross-Check Review
-- Max 5 retries per spec (aggregate cap 6 with spec_update_count) → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
-- Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
-- CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/verdicts-wave.md`)
-- Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N
-- **NEW issue detection**: Lead reads `specs/verdicts-wave.md` to collect resolved issues from waves 1..{N-1}. Lead includes in Inspector dispatch context: "Previously resolved issues: {resolved findings from verdicts-wave.md}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
-
-### Blocking/Unblocking Protocol
-
-When a spec fails after exhausting retries:
-1. Traverse dependency graph → identify all downstream specs
-2. For each downstream spec:
-   - Save current phase to `blocked_info.blocked_at_phase`
-   - Set `phase` = `blocked`
-   - Set `blocked_info.blocked_by` = `{failed_spec}`
-   - Set `blocked_info.reason` = `upstream_failure`
-
-When user requests unblocking:
-- **fix**: Verify upstream spec phase is `implementation-complete` (re-run `/sdd-roadmap review impl` if needed). After verification: for each downstream spec where `blocked_info.blocked_by` == `{upstream}`: restore `phase` from `blocked_info.blocked_at_phase`, clear `blocked_info` fields. Update `roadmap.md` blocked status. Resume pipeline from restored phase.
-- **skip**: Exclude upstream spec. For each downstream spec whose only blocker was the skipped spec: warn user "Downstream spec {name} depends on skipped {upstream}. Its implementation may reference missing functionality." User confirms per downstream spec: proceed (restore phase) / keep blocked / remove dependency. For specs with additional blockers: remain blocked.
-- **abort**: Stop pipeline, leave all specs as-is
-
-### Auto-Fix Loop Details
-
-- `retry_count`: incremented only on NO-GO (max 5). CONDITIONAL does NOT count. **No intermediate reset** — counters persist across review phases within a pipeline.
-- `spec_update_count`: incremented only on SPEC-UPDATE-NEEDED (max 2). Separate from `retry_count`. **No intermediate reset.**
-- **Counter reset triggers**: (1) Wave completion — after Wave QG passes, reset all specs' counters in the wave. (2) User escalation — after user decides (fix/skip/abort), reset affected spec's counters. (3) Revise start — reset target spec's counters.
-- Cascade during Architect failure: escalate entire spec to user
-- Structural changes (spec split, etc.): escalate to user, record DIRECTION_CHANGE in decisions.md
-- Design Review Auto-Fix: after fix, reset `orchestration.last_phase_action = null`, phase remains `design-generated`
-- SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's dispatch prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
-
-### File Ownership (Cross-Spec, Advisory)
-
-File ownership is **advisory**: it guides Builder task assignment and auto-fix routing but is not enforced at the file system level. Builders may read files outside their assigned scope; they SHOULD NOT write to files owned by another spec's Builder unless the task explicitly requires cross-spec integration.
-
-- `buffer.md`: Lead has exclusive write access (no parallel write conflicts)
-- Cross-Spec file overlap resolution (Layer 2, Lead responsibility):
-  1. After all parallel specs' tasks.yaml are generated, collect file lists from each execution section
-  2. Detect overlap: for each file pair (group_A, group_B) where both claim the same file
-  3. If A and B are in same wave (parallel candidates): serialize the overlapping specs OR partition file ownership by re-dispatching TaskGenerator with file exclusion constraints
-  4. If A depends on B (or vice versa): OK (already serialized by dependency)
-  5. Record final file ownership assignments for auto-fix routing
+- `retry_count`: max 5 (NO-GO only). `spec_update_count`: max 2 (SPEC-UPDATE-NEEDED only). Aggregate cap: 6.
+- CONDITIONAL = GO (proceed). Counters are NOT reset on intermediate GO/CONDITIONAL.
+- Counter reset triggers: wave completion, user escalation decision, `/sdd-roadmap revise` start.
+- Full auto-fix loop, wave quality gate, and blocking protocol details: see sdd-roadmap `refs/run.md`.
 
 ### decisions.md Recording
 
@@ -261,21 +177,7 @@ Auditor references User Intent during every review for:
 
 ### Steering Feedback Loop
 
-Auditor verdicts may include a `STEERING:` section with two levels:
-
-| Level | Meaning | Processing | Blocks pipeline |
-|-------|---------|-----------|----------------|
-| `CODIFY` | Document existing implicit pattern | Lead applies directly + appends to decisions.md | No |
-| `PROPOSE` | New constraint affecting future work | Lead presents to user for approval | Yes |
-
-When Auditor verdict contains a `STEERING:` section:
-1. Parse `STEERING:` lines: `{CODIFY|PROPOSE}|{target file}|{decision text}`
-2. Route by level:
-   - **CODIFY** → Update `steering/{target file}` directly + append to `decisions.md` with Reason (STEERING_UPDATE)
-   - **PROPOSE** → Present to user for approval
-     - On approval → update `steering/{target file}` + append to `decisions.md` (STEERING_UPDATE)
-     - On rejection → append to `decisions.md`: STEERING_EXCEPTION with Reason and Steering-ref, or USER_DECISION if simply rejected
-3. Process STEERING entries **after** handling the verdict (GO/NO-GO/etc.) but **before** advancing to the next phase
+Auditor verdicts may include `STEERING:` entries: `CODIFY` (Lead applies directly) or `PROPOSE` (Lead presents to user for approval). Process **after** handling the verdict but **before** advancing to the next phase. Full processing rules: see sdd-roadmap `refs/review.md`.
 
 ## Handover (Session Persistence)
 
@@ -309,45 +211,7 @@ session.md is written in two modes:
 
 ### session.md Format
 
-```markdown
-# Session Handover
-**Generated**: {YYYY-MM-DD}
-**Branch**: {branch}
-**Session Goal**: {confirmed with user}
-
-## Direction
-### Immediate Next Action
-{specific command or step}
-
-### Active Goals
-{progress toward objectives — table or bullet list, independent of roadmap}
-
-### Key Decisions
-**Continuing from previous sessions:**
-{numbered list — decision + brief rationale, ref decisions.md for details}
-
-**Added this session:**
-{same format}
-
-### Warnings
-{constraints, risks, caveats for the next Lead}
-
-## Session Context
-### Tone and Nuance
-{user's temperature, direction nuances — e.g., "experimental, proceed carefully", "user is enthusiastic about this direction"}
-
-### Steering Exceptions
-{intentional deviations from steering best practices — reason + decisions.md ref}
-
-## Accomplished
-{work completed this session}
-
-### Modified Files
-{file list}
-
-## Resume Instructions
-{1-3 steps for next session startup}
-```
+Template: `{{SDD_DIR}}/settings/templates/handover/session.md`
 
 ### decisions.md Format
 
@@ -357,18 +221,7 @@ Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modif
 
 ### buffer.md Format
 
-```markdown
-# Handover Buffer
-**Updated**: {timestamp}
-
-## Knowledge Buffer
-- [PATTERN] {description} (source: {spec} {role}, task {N})
-- [INCIDENT] {description} (source: {spec} {role}, task {N})
-- [REFERENCE] {description} (source: {spec} {role}, task {N})
-
-## Skill Candidates
-- **{name}**: Detected in {specs} ({N} occurrences)
-```
+Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
 
 ### Write Triggers
 
@@ -413,7 +266,7 @@ When user requests stop during pipeline execution:
 Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point. For 1-spec roadmaps, use the specific subcommand (e.g., `/sdd-roadmap impl {feature}`) to resume from the interrupted phase.
 
 ## Behavioral Rules
-- **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Direct `/sdd-design`, `/sdd-impl`, `/sdd-review` commands redirect to their `/sdd-roadmap` equivalents. Do NOT use individual commands directly — always use `/sdd-roadmap {subcommand}`.
+- **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
