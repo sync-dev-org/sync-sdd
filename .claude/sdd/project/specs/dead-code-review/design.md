@@ -19,10 +19,10 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
    - `dead-code specs`: specs モード — dead-specs Inspector のみ
    - `dead-code tests`: tests モード — dead-tests Inspector のみ
 3. Phase Gate が適用されない（コードベース全体を対象とするため、spec.yaml.phase チェック不要）
-4. 選択された Inspector を先に全て `TeammateTool` で spawn する。全 Inspector 完了後に `sdd-auditor-dead-code` を `TeammateTool` で spawn する（`Task` tool は使用しない）
+4. 選択された Inspector を先に全て `Task(subagent_type=...)` で spawn する。全 Inspector 完了後に `sdd-auditor-dead-code` を `Task(subagent_type="sdd-auditor-dead-code")` で spawn する
 5. Inspector は `.review/{inspector-name}.cpf` にファイル書き出し。Auditor は `.review/` から `.cpf` を読み込み `.review/verdict.cpf` を書き出す
 6. Lead は `.review/verdict.cpf` を読み取る
-7. verdict 読み取り後、`.review/` ディレクトリをクリーンアップし、全レビュー teammate を dismiss する
+7. verdict 読み取り後、`.review/` ディレクトリをクリーンアップする
 8. Verdict を `verdicts.md` に永続化（バッチ番号付き）
 9. Verdict をユーザーに human-readable markdown レポートとして表示:
    - Executive Summary（verdict + severity 別 issue 数）
@@ -48,7 +48,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 6. Bash + project runtime で分析スクリプトを実行可能
 7. CPF フォーマット (`VERDICT`, `SCOPE`, `ISSUES`, `NOTES`) で findings を `.review/inspector-dead-settings.cpf` に書き出す
 8. Issue の category は `dead-config` を使用
-9. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
+9. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（Lead コンテキストバジェット保護）
 
 ### Spec 3: Dead-Code Inspector
 **Goal:** 未使用のコードシンボル（関数・クラス・メソッド・インポート）の検出
@@ -76,7 +76,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 10. プロパティ、デコレータ、メタクラス経由の使用をチェック
 11. CPF フォーマットで findings を `.review/inspector-dead-code.cpf` に書き出す
 12. Issue の category は `dead-code` を使用
-13. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
+13. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（Lead コンテキストバジェット保護）
 
 ### Spec 4: Dead-Specs Inspector
 **Goal:** 仕様と実装の整合性検証、spec drift の検出
@@ -99,7 +99,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 9. spec.yaml の phase と実際の状態を確認
 10. CPF フォーマットで findings を `.review/inspector-dead-specs.cpf` に書き出す
 11. Issue の category は `spec-drift` を使用
-12. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
+12. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（Lead コンテキストバジェット保護）
 
 ### Spec 5: Dead-Tests Inspector
 **Goal:** 孤立テスト・陳腐化テスト・古いインターフェースに依存するテストの検出
@@ -122,7 +122,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 8. パラメータ化テストの参照をチェック
 9. CPF フォーマットで findings を `.review/inspector-dead-tests.cpf` に書き出す
 10. Issue の category は `orphaned-test` を使用
-11. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
+11. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（Lead コンテキストバジェット保護）
 
 ### Spec 6: Dead-Code Auditor (Synthesis)
 **Goal:** 4 Inspector の findings をクロスドメイン相関分析し、検証済み統合 verdict を出力
@@ -170,7 +170,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
     - `NOTES:` セクション（合成の所見）
     - 空セクションは省略
 12. Verdict Output Guarantee: processing budget が不足した場合、残りの検証ステップをスキップし、`NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` 付きで verdict を即座に出力する
-13. `WRITTEN:{verdict_file_path}` のみ出力して terminate する。全ての合成は内部で実施する（コンテキスト漏洩防止）。Verdict 出力と terminate はこの AC で完結する
+13. `WRITTEN:{verdict_file_path}` のみ出力して terminate する。全ての合成は内部で実施する（Lead コンテキストバジェット保護）。Verdict 出力と terminate はこの AC で完結する
 
 ### Non-Goals
 - コード品質レビュー（impl-review spec のスコープ）
@@ -198,14 +198,14 @@ Inspector の検出方法論は「自律的・マルチアングル調査」を�
 ```
 Lead (T1, Opus)
   |
-  |-- spawn (TeammateTool) --> sdd-inspector-dead-settings  (T3, Sonnet)  --+
-  |-- spawn (TeammateTool) --> sdd-inspector-dead-code      (T3, Sonnet)  --| .review/{name}.cpf
-  |-- spawn (TeammateTool) --> sdd-inspector-dead-specs      (T3, Sonnet)  --| (file write)
-  |-- spawn (TeammateTool) --> sdd-inspector-dead-tests      (T3, Sonnet)  --+
+  |-- Task(subagent_type="sdd-inspector-dead-settings") --> (T3, Sonnet)  --+
+  |-- Task(subagent_type="sdd-inspector-dead-code")     --> (T3, Sonnet)  --| .review/{name}.cpf
+  |-- Task(subagent_type="sdd-inspector-dead-specs")    --> (T3, Sonnet)  --| (file write)
+  |-- Task(subagent_type="sdd-inspector-dead-tests")    --> (T3, Sonnet)  --+
   |                                                                         |
-  |   [All Inspectors complete → idle notifications received]               v
+  |   [All Inspectors complete → Task results received]                     v
   |                                                                    .review/ directory
-  |-- spawn (TeammateTool) --> sdd-auditor-dead-code         (T2, Opus)
+  |-- Task(subagent_type="sdd-auditor-dead-code")       --> (T2, Opus)
   |                              reads .review/*.cpf → writes .review/verdict.cpf
   |                                                                         |
   <---- read verdict.cpf --------------------------------------------------+
@@ -215,7 +215,7 @@ Lead (T1, Opus)
 
 **Pattern**: Parallel Fan-Out / Fan-In + File-Based Communication
 
-4 Inspector が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は Agent Teams mode の TeammateTool spawn とファイルシステムベースのデータ転送上に構築されている。
+4 Inspector が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は SubAgent の `Task(subagent_type=...)` spawn とファイルシステムベースのデータ転送上に構築されている。
 
 **Boundary Map**:
 - **Orchestration Layer** (Lead): Pipeline lifecycle management, Phase Gate skip (dead-code は対象外), verdict handling, verdicts.md persistence, `.review/` directory cleanup
@@ -223,7 +223,7 @@ Lead (T1, Opus)
 - **Synthesis Layer** (Auditor, T2): `.review/` から `.cpf` ファイルを読み込み、Cross-domain correlation, deduplication, severity reclassification, verdict を `.review/verdict.cpf` に書き出す
 - **Communication Protocol**: CPF format over filesystem (Inspector → `.review/` → Auditor), verdict file (Auditor → `.review/verdict.cpf` → Lead)
 
-**Steering Compliance**: Agent Teams architecture に準拠。TeammateTool で spawn。レビューデータ転送はファイルベース（`.review/` ディレクトリ）。Task tool は使用しない。
+**Steering Compliance**: SubAgent architecture に準拠。`Task(subagent_type=...)` で spawn。レビューデータ転送はファイルベース（`.review/` ディレクトリ）。
 
 ### Model Assignment
 
@@ -257,8 +257,8 @@ Lead (T1, Opus)
 
 - **Inspector → `.review/`**: Inspector は findings を `.review/{inspector-name}.cpf` にファイル書き出し。Inspector はファイル書き出し後に即座に terminate。
 - **Auditor ← `.review/`**: Auditor は `.review/` ディレクトリから全 `.cpf` ファイルを読み込み、合成後に `.review/verdict.cpf` を書き出す。
-- **Lead ← `.review/verdict.cpf`**: Lead は Auditor の completion output（idle notification）から verdict ファイルパスを確認し、`verdict.cpf` を読み取る。
-- **出力抑制ルール**: Inspector/Auditor はファイル書き出し後、`WRITTEN:{path}` のみ出力して terminate する。分析テキストは出力しない（Agent Teams idle notification 経由のコンテキスト漏洩防止）。
+- **Lead ← `.review/verdict.cpf`**: Lead は Auditor の Task result から verdict ファイルパスを確認し、`verdict.cpf` を読み取る。
+- **出力抑制ルール**: Inspector/Auditor はファイル書き出し後、`WRITTEN:{path}` のみ出力して terminate する。分析テキストは出力しない（Lead コンテキストバジェット保護）。
 
 ### Mode Selection Matrix
 
@@ -297,10 +297,10 @@ sequenceDiagram
     Lead->>Lead: Phase Gate skip (dead-code は対象外)
 
     par Spawn 4 Inspectors
-        Lead->>Settings: TeammateTool spawn (sonnet)
-        Lead->>Code: TeammateTool spawn (sonnet)
-        Lead->>Specs: TeammateTool spawn (sonnet)
-        Lead->>Tests: TeammateTool spawn (sonnet)
+        Lead->>Settings: Task(subagent_type="sdd-inspector-dead-settings")
+        Lead->>Code: Task(subagent_type="sdd-inspector-dead-code")
+        Lead->>Specs: Task(subagent_type="sdd-inspector-dead-specs")
+        Lead->>Tests: Task(subagent_type="sdd-inspector-dead-tests")
     end
 
     par 4 Inspectors investigate independently
@@ -317,10 +317,9 @@ sequenceDiagram
         Tests->>RD: Write inspector-dead-tests.cpf
     end
 
-    Note over Lead: All Inspectors complete<br/>(idle notifications received)
+    Note over Lead: All Inspectors complete<br/>(Task results received)
 
-    Lead->>Lead: Dismiss all Inspectors
-    Lead->>Auditor: TeammateTool spawn (opus)
+    Lead->>Auditor: Task(subagent_type="sdd-auditor-dead-code")
 
     Auditor->>RD: Read all .cpf files
     Auditor->>Auditor: Step 1: Cross-domain correlation
@@ -333,13 +332,12 @@ sequenceDiagram
     Auditor->>Auditor: Step 8: Synthesize verdict
     Auditor->>RD: Write verdict.cpf
 
-    Auditor-->>Lead: Completion output (verdict file path)
+    Auditor-->>Lead: Task result (verdict file path)
 
     Lead->>RD: Read verdict.cpf
     Lead->>Lead: Parse verdict
     Lead->>Lead: Persist to verdicts.md (B{seq})
     Lead->>Lead: Clean up .review/ directory
-    Lead->>Lead: Dismiss Auditor
     Lead->>Lead: Format human-readable report
     Lead->>User: Display report
     Lead->>Lead: Auto-draft session.md
@@ -364,7 +362,7 @@ sequenceDiagram
         Note over Lead: 利用可能な .cpf ファイルで続行
     end
 
-    Lead->>Auditor: TeammateTool spawn (opus)
+    Lead->>Auditor: Task(subagent_type="sdd-auditor-dead-code")
     Auditor->>RD: Read available .cpf files
     Auditor->>Auditor: NOTES: PARTIAL:{name}|not-available
     Auditor->>RD: Write verdict.cpf
@@ -390,7 +388,7 @@ Dead-code モードは sdd-roadmap review 内の分岐として実装。Design/I
 **責務**:
 - 引数パース（`dead-code [settings|code|specs|tests]`）
 - モード別 Inspector セットの決定
-- TeammateTool による Inspector の並列 spawn → 全 Inspector 完了後に Auditor spawn
+- `Task(subagent_type=...)` による Inspector の並列 spawn → 全 Inspector 完了後に Auditor spawn
 - `.review/verdict.cpf` の読み取り
 - `.review/` ディレクトリのクリーンアップ
 - verdicts.md への永続化
@@ -408,7 +406,7 @@ Dead-code モードは sdd-roadmap review 内の分岐として実装。Design/I
 
 ### Component 2: sdd-inspector-dead-settings
 
-**ファイル**: `framework/claude/sdd/settings/agents/sdd-inspector-dead-settings.md`
+**ファイル**: `.claude/agents/sdd-inspector-dead-settings.md`
 
 **検出方法論**:
 設定の「定義 → 中間レイヤー → 最終消費者」パススルーチェーンをトレースし、途切れたチェーンを検出する。特にデフォルト値を持つ設定は、パススルーが壊れていても静かに「動作」するため、最も検出が難しい dead config パターン。
@@ -426,7 +424,7 @@ Dead-code モードは sdd-roadmap review 内の分岐として実装。Design/I
 
 ### Component 3: sdd-inspector-dead-code
 
-**ファイル**: `framework/claude/sdd/settings/agents/sdd-inspector-dead-code.md`
+**ファイル**: `.claude/agents/sdd-inspector-dead-code.md`
 
 **検出方法論**:
 public symbols を列挙し、call site を徹底的にトレースする。単純な grep を超え、実際の call relationship を追跡。クラスメソッドの継承経由の使用、プロパティ・デコレータ・メタクラス経由の使用を含む。
@@ -451,7 +449,7 @@ public symbols を列挙し、call site を徹底的にトレースする。単�
 
 ### Component 4: sdd-inspector-dead-specs
 
-**ファイル**: `framework/claude/sdd/settings/agents/sdd-inspector-dead-specs.md`
+**ファイル**: `.claude/agents/sdd-inspector-dead-specs.md`
 
 **検出方法論**:
 Spec ディレクトリの design.md + tasks.yaml を読み取り、実際のコードベースとクロスリファレンス。インターフェース定義、依存関係図、タスクステータスの3軸で整合性を検証。
@@ -470,7 +468,7 @@ Spec ディレクトリの design.md + tasks.yaml を読み取り、実際のコ
 
 ### Component 5: sdd-inspector-dead-tests
 
-**ファイル**: `framework/claude/sdd/settings/agents/sdd-inspector-dead-tests.md`
+**ファイル**: `.claude/agents/sdd-inspector-dead-tests.md`
 
 **検出方法論**:
 テストディレクトリを探索し、fixture 定義の使用トレース、テスト import の存在確認、mock オブジェクトの実装一致確認を行う。conftest.py の継承チェーンを含む全レベルの fixture を対象とする。
@@ -490,7 +488,7 @@ Spec ディレクトリの design.md + tasks.yaml を読み取り、実際のコ
 
 ### Component 6: sdd-auditor-dead-code
 
-**ファイル**: `framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md`
+**ファイル**: `.claude/agents/sdd-auditor-dead-code.md`
 
 **合成プロセス**: 8-step verification pipeline
 
@@ -535,11 +533,11 @@ Auditor は根拠付きでこの判定式をオーバーライド可能。
 | Component | Domain/Layer | Intent | Files |
 |-----------|--------------|--------|-------|
 | `/sdd-roadmap review` | Skill | レビューオーケストレーション（共有） | `framework/claude/skills/sdd-roadmap/SKILL.md` |
-| sdd-auditor-dead-code | Agent (T2) | Dead-code verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md` |
-| sdd-inspector-dead-settings | Agent (T3) | 未使用設定検出 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-settings.md` |
-| sdd-inspector-dead-code | Agent (T3) | 未使用コード検出 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-code.md` |
-| sdd-inspector-dead-specs | Agent (T3) | 仕様乖離検出 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-specs.md` |
-| sdd-inspector-dead-tests | Agent (T3) | テスト陳腐化検出 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-tests.md` |
+| sdd-auditor-dead-code | SubAgent (T2) | Dead-code verdict 合成 | `.claude/agents/sdd-auditor-dead-code.md` |
+| sdd-inspector-dead-settings | SubAgent (T3) | 未使用設定検出 | `.claude/agents/sdd-inspector-dead-settings.md` |
+| sdd-inspector-dead-code | SubAgent (T3) | 未使用コード検出 | `.claude/agents/sdd-inspector-dead-code.md` |
+| sdd-inspector-dead-specs | SubAgent (T3) | 仕様乖離検出 | `.claude/agents/sdd-inspector-dead-specs.md` |
+| sdd-inspector-dead-tests | SubAgent (T3) | テスト陳腐化検出 | `.claude/agents/sdd-inspector-dead-tests.md` |
 
 ## Error Handling
 
@@ -563,8 +561,8 @@ Auditor は根拠付きでこの判定式をオーバーライド可能。
 ## Testing Strategy
 
 ### Agent Definition Verification
-- 各 Inspector agent 定義（`framework/claude/sdd/settings/agents/sdd-inspector-dead-*.md`）に正しい tools リスト（Read, Glob, Grep, Bash）が含まれること
-- Auditor agent 定義（`framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md`）に正しい tools リスト（Read, Glob, Grep）と `model: opus` が含まれること
+- 各 Inspector SubAgent 定義（`.claude/agents/sdd-inspector-dead-*.md`）に正しい tools リスト（Read, Glob, Grep, Bash）が含まれること
+- Auditor SubAgent 定義（`.claude/agents/sdd-auditor-dead-code.md`）に正しい tools リスト（Read, Glob, Grep）と `model: opus` が含まれること
 
 ### Pipeline Integration Tests
 - Full mode: 4 Inspector spawn → `.review/` ファイル書き出し → Auditor spawn → verdict.cpf 書き出しの E2E フロー
@@ -629,3 +627,11 @@ Auditor は根拠付きでこの判定式をオーバーライド可能。
 - Communication Protocol セクションに出力抑制ルールのノートを追加
 
 **適用範囲**: 全レビュータイプ共通（design-review / impl-review / dead-code review の Inspector および Auditor 全員に同ルールが適用される）。
+
+### Rev 1.4.0 — SubAgent Migration
+- Agent file path: `sdd/settings/agents/` → `.claude/agents/` (YAML frontmatter format)
+- Spawn mechanism: `TeammateTool` → `Task(subagent_type=...)` for all 4 Inspectors + Auditor
+- Communication: idle notification → Task result
+- Output suppression rationale: idle notification leak prevention → Lead context budget protection
+- `dismiss`/`shutdown` references removed (not applicable to SubAgent model)
+- Behavioral content unchanged

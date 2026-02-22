@@ -100,14 +100,14 @@ SDD フレームワークの配布・インストール・アップデート・�
 7. ユーザーがマーカー外に記述した内容は全操作（インストール/更新/アンインストール）で保持される
 
 ### Spec 7: settings.json 管理
-**Goal:** Agent Teams 設定を含むデフォルト設定の管理
+**Goal:** デフォルト設定の管理（Agent Teams 設定は v0.20.0 で削除済み）
 
 **Acceptance Criteria:**
 1. `settings.json` が存在しない場合: フレームワークのデフォルト設定をコピーする
 2. `settings.json` が存在し `--update` の場合: 既存を保持する
 3. `settings.json` が存在し `--force` の場合: 確認なしで上書きする
 4. `settings.json` が存在し通常モードの場合: 上書き確認プロンプトを表示する
-5. 上書き拒否時: Agent Teams 設定（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`）の手動追加を案内する
+5. 上書き拒否時: 設定ファイルの手動確認を案内する（Agent Teams 設定は v0.20.0 で削除済み）
 6. アンインストール時: `settings.json` は削除せず、カスタマイズ残存の可能性を警告する
 
 ### Spec 8: Stale ファイルクリーンアップ
@@ -159,7 +159,10 @@ SDD フレームワークの配布・インストール・アップデート・�
    - `.claude/agents/sdd-*.md` ファイルが存在する場合、`.claude/sdd/settings/agents/` に移動する
    - 移動先ディレクトリが存在しない場合は `mkdir -p` で作成する
    - `.claude/agents/` ディレクトリが空になった場合、ディレクトリ自体を削除する
-8. 各マイグレーションはバージョン順に連鎖実行する（v0.4.0 → v0.7.0 → v0.9.0 → v0.10.0 → v0.15.0 → v0.18.0）
+8. **v0.20.0 マイグレーション（Agent Teams → SubAgent アーキテクチャ）:**
+   - `settings.json` から `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` エントリを削除する（SubAgent アーキテクチャでは不要）
+   - `.claude/agents/` ディレクトリが残存する場合は削除する（v0.18.0 マイグレーション未適用の環境向けフォールバック）
+9. 各マイグレーションはバージョン順に連鎖実行する（v0.4.0 → v0.7.0 → v0.9.0 → v0.10.0 → v0.15.0 → v0.18.0 → v0.20.0）
 9. 0.0.0（未インストール）からの新規インストール時は全マイグレーションが条件チェックで自動スキップされる
 
 ### Spec 10: ユーザーインタラクション
@@ -299,7 +302,7 @@ flowchart TD
     VALIDATE -->|No| DL_ERR([エラー終了])
     VALIDATE -->|Yes| READ_VER[バージョン読み取り]
 
-    READ_VER --> MIGRATION[マイグレーション実行<br/>v0.4.0 → v0.7.0 → v0.9.0<br/>→ v0.10.0 → v0.15.0 → v0.18.0]
+    READ_VER --> MIGRATION[マイグレーション実行<br/>v0.4.0 → v0.7.0 → v0.9.0<br/>→ v0.10.0 → v0.15.0 → v0.18.0 → v0.20.0]
 
     MIGRATION --> INSTALL_FW[フレームワークファイル<br/>コピー]
     INSTALL_FW --> INSTALL_CLAUDE[CLAUDE.md 注入]
@@ -380,8 +383,13 @@ flowchart TD
 
     MIG_18{installed < 0.18.0?}
     MIG_18 -->|Yes| AGENTS[.claude/agents/sdd-*.md を<br/>.claude/sdd/settings/agents/ に移動]
-    MIG_18 -->|No| DONE([マイグレーション完了])
-    AGENTS --> DONE
+    MIG_18 -->|No| MIG_20
+    AGENTS --> MIG_20
+
+    MIG_20{installed < 0.20.0?}
+    MIG_20 -->|Yes| SUBAGENT[settings.json から<br/>AGENT_TEAMS 設定削除<br/>.claude/agents/ 残存確認・削除]
+    MIG_20 -->|No| DONE([マイグレーション完了])
+    SUBAGENT --> DONE
 ```
 
 ## Components and Interfaces
@@ -487,7 +495,7 @@ project-root/
 └── .claude/
     ├── CLAUDE.md                          # マーカー管理
     │   └── <!-- sdd:start --> ... <!-- sdd:end -->
-    ├── settings.json                      # Agent Teams 設定
+    ├── settings.json                      # フレームワーク設定（SubAgent アーキテクチャ; Agent Teams 設定は v0.20.0 で削除）
     ├── settings.local.json                # ユーザーローカル設定 (installer 管理外)
     ├── skills/
     │   └── sdd-*/SKILL.md                 # 9 skills
@@ -568,6 +576,14 @@ POSIX sh の `set -eu` により、未定義変数アクセスとコマンド失
 - パイプ経由（非対話）での実行
 
 ## Revision Notes
+
+### v1.2.0 — SubAgent Migration
+- **Spec 7**: ゴールを「Agent Teams 設定を含む」→「デフォルト設定の管理（Agent Teams 設定は v0.20.0 で削除済み）」に更新
+- **Spec 7 AC-5**: 上書き拒否時の案内から `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 手動追加の言及を削除
+- **Spec 9 AC-8 新設**: v0.20.0 マイグレーション（Agent Teams → SubAgent; settings.json からの AGENT_TEAMS 設定削除）
+- **Spec 9 AC-9 (旧 AC-8)**: マイグレーション連鎖に v0.20.0 を追加
+- **Data Models**: settings.json のコメントを SubAgent アーキテクチャに更新
+- **System Flows**: マイグレーション実行ラベルに v0.20.0 を追加、バージョン比較フロー図に MIG_20 ノード追加
 
 ### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
 - `--local` フラグ追加（開発用ローカルインストール）

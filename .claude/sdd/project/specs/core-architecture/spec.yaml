@@ -2,14 +2,17 @@ feature_name: "core-architecture"
 created_at: "2026-02-20"
 updated_at: "2026-02-22"
 language: "markdown"
-version: "1.1.0"
+version: "1.2.0"
 changelog:
+  - version: "1.2.0"
+    action: "Agent Teams → SubAgent migration: CLAUDE.md rewrite, 23 agent files moved to .claude/agents/ with YAML frontmatter, output suppression rationale updated"
+    timestamp: "2026-02-22"
   - version: "1.1.0"
     action: "v0.18.0 retroactive alignment: file-based review, Recovery Protocol廃止, 個別コマンド廃止"
     timestamp: "2026-02-22"
 version_refs:
-  design: "1.1.0"
-  implementation: "1.0.0"
+  design: "1.2.0"
+  implementation: "1.2.0"
 phase: implementation-complete
 implementation:
   files_created:
@@ -18,7 +21,7 @@ implementation:
 orchestration:
   retry_count: 0
   spec_update_count: 0
-  last_phase_action: null
+  last_phase_action: "impl-complete"
 blocked_info: null
 roadmap:
   wave: 1

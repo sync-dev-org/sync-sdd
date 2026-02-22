@@ -361,6 +361,19 @@ if version_lt "$INSTALLED_VERSION" "0.18.0"; then
     fi
     info "Migrated agents/ -> sdd/settings/agents/ (v0.18.0)"
 fi
+# v0.20.0: Agent definitions moved from .claude/sdd/settings/agents/ to .claude/agents/
+# Also: Agent Teams env var no longer needed
+if version_lt "$INSTALLED_VERSION" "0.20.0"; then
+    if [ -d ".claude/sdd/settings/agents" ]; then
+        mkdir -p .claude/agents
+        for agent_file in .claude/sdd/settings/agents/sdd-*.md; do
+            [ -f "$agent_file" ] || continue
+            mv "$agent_file" ".claude/agents/$(basename "$agent_file")"
+        done
+        rmdir .claude/sdd/settings/agents 2>/dev/null || true
+        info "Migrated sdd/settings/agents/ -> .claude/agents/ (v0.20.0)"
+    fi
+fi
 
 # --- Install framework files ---
 install_file() {
@@ -460,9 +473,6 @@ if [ -f .claude/settings.json ]; then
             install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
         else
             info "Kept existing .claude/settings.json"
-            echo ""
-            info "Ensure your settings.json includes the following for agent team features:"
-            echo "  {\"env\": {\"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS\": \"1\"}}"
         fi
     fi
 else
@@ -473,7 +483,7 @@ fi
 install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
 install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".claude/sdd/settings/profiles"
-install_dir "$SRC/framework/claude/sdd/settings/agents"     ".claude/sdd/settings/agents"
+install_dir "$SRC/framework/claude/agents"     ".claude/agents"
 
 # Write version file
 if [ "$NEW_VERSION" != "0.0.0" ]; then
@@ -513,7 +523,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".claude/sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
-    remove_stale ".claude/sdd/settings/agents"    "$SRC/framework/claude/sdd/settings/agents"     "*.md"
+    remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "*.md"
 
     # Clean up empty directories left after stale file removal
     find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
@@ -532,9 +542,9 @@ fi
 echo ""
 printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/skills/      $(find .claude/skills -name 'SKILL.md' -path '*/sdd-*/*' 2>/dev/null | wc -l | tr -d ' ') skills"
-echo "  .claude/sdd/agents/  $(find .claude/sdd/settings/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
+echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .claude/sdd/         Rules + templates + agents"
+echo "  .claude/sdd/         Rules + templates"
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     echo "  Version:             ${NEW_VERSION}"
 fi

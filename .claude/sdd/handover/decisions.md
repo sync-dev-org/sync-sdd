@@ -151,3 +151,17 @@
 
 [2026-02-22T19:00:00Z] D28: SESSION_START | Resume session
 - Context: v0.19.0 リリース完了後の再開。全15 spec implementation-complete。前セッションの spec 変更（v0.18.2/v0.19.0 retroactive alignment）が未コミット
+
+[2026-02-22T20:00:00Z] D29: DIRECTION_CHANGE | Agent Teams → SubAgent 移行 (v0.20.0)
+- Context: Agent Teams (TeammateTool/SendMessageTool) は実質的に機能せず、Lead は規約を無視して Task ツールで起動し、teammate 間の直接通信に意味がない
+- Decision: (1) 全23エージェントを .claude/agents/ に移動し YAML frontmatter 化 (2) CLAUDE.md を SubAgent アーキテクチャに書き換え (3) SKILL.md の全 TeammateTool を Task(subagent_type=...) に置換 (4) settings.json から AGENT_TEAMS 削除 (5) install.sh パス変更
+- Reason: SubAgent は Claude Code の正規機能。Agent Teams は experimental で Lead が遵守できない。ファイルベースレビューは維持（理由変更: 漏洩防止 → コンテキスト分離）
+- Impact: 9 spec revision (3 full + 6 lightweight)。feature/subagent-migration ブランチで作業
+- Source: ユーザー指示
+
+[2026-02-22T20:10:00Z] D30: REVISION_INITIATED | core-architecture SubAgent 移行
+- Context: Agent Teams (TeammateTool/SendMessageTool) は実質的に機能せず、Lead は規約を無視して Task ツールで起動し、teammate 間の直接通信に意味がない
+- Decision: (1) 全23エージェントを .claude/agents/ に移動し YAML frontmatter 化 (2) CLAUDE.md を SubAgent アーキテクチャに書き換え (3) SKILL.md の全 TeammateTool を Task(subagent_type=...) に置換 (4) settings.json から AGENT_TEAMS 削除 (5) install.sh パス変更
+- Reason: SubAgent は Claude Code の正規機能。Agent Teams は experimental で Lead が遵守できない。ファイルベースレビューは維持（理由変更: 漏洩防止 → コンテキスト分離）
+- Impact: 9 spec revision (3 full + 6 lightweight)。feature/subagent-migration ブランチで作業
+- Source: ユーザー指示

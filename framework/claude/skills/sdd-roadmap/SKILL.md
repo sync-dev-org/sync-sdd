@@ -108,7 +108,7 @@ After Single-Spec Roadmap Ensure:
 
 ### Step 3: Execute
 
-Spawn Architect via **`TeammateTool`** (NOT Task tool). Follow Run Mode → Step 4 → Design Phase. Context:
+Spawn Architect via `Task(subagent_type="sdd-architect")`. Follow Run Mode → Step 4 → Design Phase. Context:
 - Feature: {feature}
 - Mode: {new|existing}
 - User-instructions: {from arguments, or empty}
@@ -147,14 +147,14 @@ After Single-Spec Roadmap Ensure:
 
 Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 
-- **REGENERATE**: `tasks.yaml` does not exist OR `orchestration.last_phase_action` is null → Spawn TaskGenerator via **`TeammateTool`** (see Run Mode → Step 4 → Implementation Phase steps 1-5). After TaskGenerator completes: set `orchestration.last_phase_action = "tasks-generated"`
+- **REGENERATE**: `tasks.yaml` does not exist OR `orchestration.last_phase_action` is null → Spawn TaskGenerator via `Task(subagent_type="sdd-taskgenerator")` (see Run Mode → Step 4 → Implementation Phase steps 1-3). After TaskGenerator completes: set `orchestration.last_phase_action = "tasks-generated"`
 - **RESUME**: `tasks.yaml` exists AND `last_phase_action` == `"tasks-generated"` → Use existing tasks.yaml
 - **TASK RE-EXECUTION**: `phase` == `implementation-complete` AND `{task-numbers}` provided → Use existing tasks.yaml, filter to specified tasks
 - **COMPLETED WITHOUT TASK SPEC**: `phase` == `implementation-complete` AND no task-numbers → Ask user: "A) Specify task numbers to re-run, B) Re-design first (`/sdd-roadmap design {feature}`), C) Abort"
 
 ### Step 3: Execute
 
-Spawn Builder(s) via **`TeammateTool`** (NOT Task tool). Follow Run Mode → Step 4 → Implementation Phase (steps 6-11). If `{task-numbers}` provided: filter to specified task numbers only.
+Spawn Builder(s) via `Task(subagent_type="sdd-builder")`. Follow Run Mode → Step 4 → Implementation Phase (steps 5-10). If `{task-numbers}` provided: filter to specified task numbers only.
 
 After ALL Builders complete, update spec.yaml:
 - Set `phase` = `implementation-complete`
@@ -192,7 +192,7 @@ If first argument after "review" is not one of `design`, `impl`, `dead-code`:
 
 ### Step 3: Execute
 
-Spawn all Inspectors + Auditor via **`TeammateTool`** (NOT Task tool — SubAgents cannot receive SendMessage).
+Spawn all Inspectors + Auditor via `Task(subagent_type=...)`.
 
 - **Design review (single spec)**: Follow Run Mode → Step 4 → Design Review Phase
 - **Impl review (single spec)**: Follow Run Mode → Step 4 → Implementation Review Phase
@@ -230,7 +230,7 @@ Spawn all Inspectors + Auditor via **`TeammateTool`** (NOT Task tool — SubAgen
 When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
 1. For each pipeline `p` (1..N): create review directory `specs/{feature}/.review-{p}/`
-2. Spawn N sets of Inspectors in parallel via `TeammateTool`. Each Inspector set writes to its own `.review-{p}/` directory
+2. Spawn N sets of Inspectors in parallel via `Task(subagent_type=...)`. Each Inspector set writes to its own `.review-{p}/` directory
 3. For each pipeline: after all Inspectors complete (tracked via Inspector Completion Protocol), spawn Auditor with `.review-{p}/` as input and `.review-{p}/verdict.cpf` as output
 4. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
    - Key by `{category}|{location}`, count frequency
@@ -243,21 +243,21 @@ N=1 (default): use `specs/{feature}/.review/` (no `-{p}` suffix).
 
 ### File-Based Review Protocol
 
-All review data flows through files. No SendMessage between teammates.
+All review data flows through files. No inter-agent messaging needed.
 
 **Review directory**: `{{SDD_DIR}}/project/specs/{feature}/.review/` (or `.review-{p}/` for consensus, or project-level `.review-wave-{N}/` for wave QG)
 
-**Step A — Spawn Inspectors**: Spawn all Inspectors via `TeammateTool`. Each Inspector's spawn context includes:
+**Step A — Spawn Inspectors**: Spawn all Inspectors via `Task(subagent_type=...)`. Each Inspector's spawn context includes:
 - Review output path: `{.review-dir}/{inspector-name}.cpf`
 - Feature/scope context
 
-**Step B — Track completions**: Monitor Inspector idle notifications. All outputs are idempotent (same directory, same file paths). Lead uses its own judgment to handle unresponsive Inspectors (retry, skip, or proceed with available results).
+**Step B — Track completions**: Wait for all Inspector Tasks to complete. All outputs are idempotent (same directory, same file paths). Lead uses its own judgment to handle failed Inspectors (retry, skip, or proceed with available results).
 
-**Step C — Spawn Auditor**: After Inspectors complete, spawn Auditor via `TeammateTool`. Auditor's spawn context includes:
+**Step C — Spawn Auditor**: After Inspectors complete, spawn Auditor via `Task(subagent_type=...)`. Auditor's spawn context includes:
 - Review directory path (Auditor reads all `.cpf` files)
 - Verdict output path: `{.review-dir}/verdict.cpf`
 
-**Step D — Read verdict**: After Auditor goes idle, read `{.review-dir}/verdict.cpf`.
+**Step D — Read verdict**: After Auditor Task completes, read `{.review-dir}/verdict.cpf`.
 
 **Step E — Cleanup**: After verdict is persisted to `verdicts.md`, delete the review directory.
 
@@ -326,71 +326,63 @@ Design Review and Impl Review are **mandatory** in roadmap run.
 For each ready spec, execute pipeline phases in order:
 
 #### Design Phase
-1. Read `{{SDD_DIR}}/settings/agents/sdd-architect.md` → embed as spawn instructions
-2. Spawn Architect via `TeammateTool` (opus) with instructions + context:
+1. Spawn Architect via `Task(subagent_type="sdd-architect")` with prompt:
    - Feature: {feature}
    - Mode: {new|existing}
    - User-instructions: {additional user instructions, or empty string if none}
    - **Architect loads its own context** (steering, templates, rules, existing code) autonomously in Step 1-2. Do NOT pre-read these files for Architect.
-3. Read Architect's completion report
-4. Dismiss Architect
-5. Verify `design.md` and `research.md` exist
-6. Update spec.yaml: `phase=design-generated`, `version_refs.design={v}`
-7. Auto-draft `{{SDD_DIR}}/handover/session.md`
+2. Read Architect's completion report (from Task result)
+3. Verify `design.md` and `research.md` exist
+4. Update spec.yaml: `phase=design-generated`, `version_refs.design={v}`
+5. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 #### Design Review Phase
 
 Follow **File-Based Review Protocol** (see Review Subcommand):
 
 1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/.review/`
-2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`
-3. Spawn (via `TeammateTool`) 6 design Inspectors (sonnet):
-   - Profiles: `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md`
+2. Spawn (via `Task(subagent_type=...)`) 6 design Inspectors (sonnet):
+   - SubAgent types: `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}`
    - Each context: "Feature: {feature}, review output: `specs/{feature}/.review/{inspector-name}.cpf`"
-4. Track completions (Step B). After all 6 complete:
-5. Spawn design Auditor (opus) with profile `sdd-auditor-design.md`:
+3. Track completions (Step B). After all 6 complete:
+4. Spawn design Auditor (opus) via `Task(subagent_type="sdd-auditor-design")`:
    - Context: "Feature: {feature}, review dir: `specs/{feature}/.review/`, Verdict output: `specs/{feature}/.review/verdict.cpf`"
-6. After Auditor idle → read `verdict.cpf` (Step D)
-7. Dismiss all review teammates
-8. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
-9. Delete review directory
-10. Handle verdict:
+5. After Auditor Task completes → read `verdict.cpf` (Step D)
+6. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
+7. Delete review directory
+8. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Proceed to Implementation Phase
    - **NO-GO** → Auto-Fix Loop (see CLAUDE.md). After fix, phase remains `design-generated`
    - In **gate mode**: pause for user approval before advancing
-7. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
-8. Auto-draft `{{SDD_DIR}}/handover/session.md`
+9. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+10. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 If `--consensus N` is active, apply consensus mode per Review Subcommand §Consensus Mode.
 
 #### Implementation Phase
-1. Read `{{SDD_DIR}}/settings/agents/sdd-taskgenerator.md` → embed as spawn instructions
-2. Spawn TaskGenerator via `TeammateTool` (sonnet) with instructions + context:
+1. Spawn TaskGenerator via `Task(subagent_type="sdd-taskgenerator")` with prompt:
    - Feature: {feature}
    - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
    - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
    - Review findings: from `specs/{feature}/verdicts.md` latest design batch Tracked (if exists)
-3. Read TaskGenerator's completion report (`TASKGEN_COMPLETE`)
-4. Dismiss TaskGenerator
-5. Verify `tasks.yaml` exists
-6. Read `tasks.yaml` execution plan → determine Builder grouping
-7. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-spawn TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
-8. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
-9. Read `{{SDD_DIR}}/settings/agents/sdd-builder.md` → embed as spawn instructions
-10. Spawn Builder(s) via `TeammateTool` (sonnet) with instructions + context for each work package:
+2. Read TaskGenerator's completion report (from Task result)
+3. Verify `tasks.yaml` exists
+4. Read `tasks.yaml` execution plan → determine Builder grouping
+5. Cross-Spec File Ownership (Layer 2): Lead reads all parallel specs' tasks.yaml execution sections. Detect file overlap → serialize or partition (see Step 2). If partition requires file reassignment, re-dispatch TaskGenerator for affected spec with file exclusion constraints, then re-read tasks.yaml
+6. Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts
+7. Spawn Builder(s) via `Task(subagent_type="sdd-builder")` with prompt for each work package:
     - Feature: {feature}
     - Tasks: {task IDs + summaries + detail bullets}
     - File scope: {assigned files}
     - Design ref: `{{SDD_DIR}}/project/specs/{feature}/design.md`
     - Research ref: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
-11. **Builder incremental processing**: As each Builder completes, immediately:
-   - Read completion report (files, test results, knowledge tags, blockers)
+8. **Builder incremental processing**: As each Builder completes, immediately:
+   - Read completion report (from Task result: files, test results, knowledge tags, blockers)
    - Update tasks.yaml: mark completed tasks as `done`
    - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
-    - If BUILDER_BLOCKED: classify cause (missing dependency → reorder tasks, re-spawn; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
-12. When dependent tasks are unblocked: dismiss completed Builder, spawn next-wave Builders immediately
-13. On ALL Builders complete:
-   - Dismiss remaining Builders
+    - If BUILDER_BLOCKED: classify cause (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
+9. When dependent tasks are unblocked: spawn next-wave Builders immediately
+10. On ALL Builders complete:
    - Aggregate files from all Builder reports
    - Update spec.yaml: `phase=implementation-complete`, `implementation.files_created=[{files}]`, `version_refs.implementation={version}`
    - Auto-draft `{{SDD_DIR}}/handover/session.md`
@@ -400,25 +392,23 @@ If `--consensus N` is active, apply consensus mode per Review Subcommand §Conse
 Follow **File-Based Review Protocol** (see Review Subcommand):
 
 1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/.review/`
-2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`
-3. Spawn (via `TeammateTool`) impl Inspectors (sonnet):
-   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
-   - **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e.md`
+2. Spawn (via `Task(subagent_type=...)`) impl Inspectors (sonnet):
+   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}`
+   - **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e`
    - Each context: "Feature: {feature}, review output: `specs/{feature}/.review/{inspector-name}.cpf`"
-4. Track completions (Step B). After all inspectors complete (6 or 7):
-5. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
+3. Track completions (Step B). After all inspectors complete (6 or 7):
+4. Spawn impl Auditor (opus) via `Task(subagent_type="sdd-auditor-impl")`:
    - Context: "Feature: {feature}, review dir: `specs/{feature}/.review/`, Verdict output: `specs/{feature}/.review/verdict.cpf`"
-6. After Auditor idle → read `verdict.cpf` (Step D)
-7. Dismiss all review teammates
-8. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
-9. Delete review directory
-10. Handle verdict:
+5. After Auditor Task completes → read `verdict.cpf` (Step D)
+6. Persist verdict to `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` (see Review Subcommand § Step 4 step 2)
+7. Delete review directory
+8. Handle verdict:
    - **GO/CONDITIONAL** → reset `retry_count` and `spec_update_count` to 0. Spec pipeline complete
-   - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) via `TeammateTool` with fix instructions → re-review (max 3 retries)
-   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect via `TeammateTool` (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
+   - **NO-GO** → increment `retry_count`. Auto-Fix Loop: spawn Builder(s) via `Task(subagent_type="sdd-builder")` with fix instructions → re-review (max 3 retries)
+   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade fix: spawn Architect via `Task(subagent_type="sdd-architect")` (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder → re-review. All tasks fully re-implemented (no differential).
    - In **gate mode**: pause for user approval
-7. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
-8. Auto-draft `{{SDD_DIR}}/handover/session.md`
+9. Process `STEERING:` entries from verdict (append to `decisions.md` with Reason)
+10. Auto-draft `{{SDD_DIR}}/handover/session.md`
 
 If `--consensus N` is active, apply consensus mode per Review Subcommand §Consensus Mode.
 
@@ -459,40 +449,40 @@ Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1.
 After all specs in a wave complete individual pipelines:
 
 **a. Impl Cross-Check Review** (wave-scoped, File-Based Review Protocol):
-0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Format as PREVIOUSLY_RESOLVED for Inspector spawn context.
+0. **Load previously resolved issues**: Read `{{SDD_DIR}}/project/specs/verdicts-wave.md` (if exists). Format as PREVIOUSLY_RESOLVED for Inspector dispatch context.
 1. Create review directory: `{{SDD_DIR}}/project/specs/.review-wave-{N}/`
-2. Read agent profiles from `{{SDD_DIR}}/settings/agents/`. Spawn (via `TeammateTool`) impl Inspectors (sonnet):
-   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md`
-   - **Web projects**: also spawn `sdd-inspector-e2e.md`
+2. Spawn (via `Task(subagent_type=...)`) impl Inspectors (sonnet):
+   - Standard (6): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}`
+   - **Web projects**: also spawn `sdd-inspector-e2e`
    - Each context: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED}, review output: `specs/.review-wave-{N}/{inspector-name}.cpf`"
 3. Track completions. After all inspectors complete (6 or 7):
-4. Spawn impl Auditor (opus) with profile `sdd-auditor-impl.md`:
+4. Spawn impl Auditor (opus) via `Task(subagent_type="sdd-auditor-impl")`:
    - Context: "Wave-scoped cross-check, Wave: 1..{N}, review dir: `specs/.review-wave-{N}/`, Verdict output: `specs/.review-wave-{N}/verdict.cpf`"
-5. After Auditor idle → read `verdict.cpf` (File-Based Review Protocol Step D)
-6. Dismiss all cross-check teammates. Delete review directory.
+5. After Auditor Task completes → read `verdict.cpf` (File-Based Review Protocol Step D)
+6. Delete review directory.
 7. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`).
-4. Handle verdict:
+8. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code review
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-dispatch via `Task(subagent_type="sdd-builder")` with fix instructions, re-review (max 3 retries). On exhaustion: escalate to user with options:
      a. **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record as `ESCALATION_RESOLVED` in decisions.md with accepted issues listed
      b. **Abort wave**: Stop wave execution, leave specs as-is. Record as `ESCALATION_RESOLVED` with abort reason
      c. **Manual fix**: User fixes issues manually, then Lead re-runs Wave QG (counter reset)
-   - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect via `TeammateTool` with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
+   - **SPEC-UPDATE-NEEDED** → parse Auditor's SPEC_FEEDBACK section to identify the target spec(s). For each affected spec: reset orchestration (`last_phase_action = null`), set `phase = design-generated`, spawn Architect via `Task(subagent_type="sdd-architect")` with SPEC_FEEDBACK → TaskGenerator → Builder → re-review
 
 **b. Dead Code Review** (full codebase, File-Based Review Protocol):
 1. Create review directory: `{{SDD_DIR}}/project/specs/.review-wave-{N}-dc/`
-2. Read agent profiles. Spawn (via `TeammateTool`) 4 dead-code Inspectors (sonnet):
-   - Profiles: `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}.md`
+2. Spawn (via `Task(subagent_type=...)`) 4 dead-code Inspectors (sonnet):
+   - SubAgent types: `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}`
    - Each context: "review output: `specs/.review-wave-{N}-dc/{inspector-name}.cpf`"
 3. Track completions. After all complete:
-4. Spawn dead-code Auditor (opus) with profile `sdd-auditor-dead-code.md`:
+4. Spawn dead-code Auditor (opus) via `Task(subagent_type="sdd-auditor-dead-code")`:
    - Context: "review dir: `specs/.review-wave-{N}-dc/`, Verdict output: `specs/.review-wave-{N}-dc/verdict.cpf`"
-5. After Auditor idle → read `verdict.cpf`
-6. Dismiss all dead-code review teammates. Delete review directory.
+5. After Auditor Task completes → read `verdict.cpf`
+6. Delete review directory.
 7. Persist verdict to `{{SDD_DIR}}/project/specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
-4. Handle verdict:
+8. Handle verdict:
    - **GO/CONDITIONAL** → Wave N complete, proceed to next wave
-   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-spawn via `TeammateTool` with fix instructions, re-review dead-code (max 3 retries → escalate)
+   - **NO-GO** → map findings to file paths, identify responsible Builder(s) from wave's file ownership records, re-dispatch via `Task(subagent_type="sdd-builder")` with fix instructions, re-review dead-code (max 3 retries → escalate)
 
 **c. Post-gate**:
 - Aggregate Knowledge Buffer from `{{SDD_DIR}}/handover/buffer.md`, deduplicate, write to `{{SDD_DIR}}/project/knowledge/` using templates, clear buffer.md
@@ -594,16 +584,16 @@ Execute past-wave spec modifications through the standard pipeline. Lead follows
 
 Standard pipeline with revision context:
 
-All teammates spawned via **`TeammateTool`** with agent profiles from `{{SDD_DIR}}/settings/agents/`.
+All SubAgents spawned via `Task(subagent_type=...)`. Agent profiles loaded automatically from `.claude/agents/`.
 
-1. **Design Phase**: Read `sdd-architect.md` profile. Spawn Architect (opus) with instructions + context:
+1. **Design Phase**: Spawn Architect via `Task(subagent_type="sdd-architect")` with prompt:
    - Feature: {feature}
    - Mode: existing
    - User-instructions: {REVISION_INSTRUCTIONS from Step 2}. Preserve unaffected design sections. Document changes in a '## Revision Notes' subsection.
    - **Architect loads its own context.** Do NOT pre-read files for Architect.
-2. **Design Review Phase**: Same as Run Mode Step 4 Design Review (read Inspector/Auditor profiles, spawn via TeammateTool)
-3. **Implementation Phase**: Same as Run Mode Step 4 Implementation (read TaskGenerator/Builder profiles, spawn via TeammateTool)
-4. **Implementation Review Phase**: Same as Run Mode Step 4 Impl Review (read Inspector/Auditor profiles, spawn via TeammateTool)
+2. **Design Review Phase**: Same as Run Mode Step 4 Design Review (spawn Inspector/Auditor via Task)
+3. **Implementation Phase**: Same as Run Mode Step 4 Implementation (spawn TaskGenerator/Builder via Task)
+4. **Implementation Review Phase**: Same as Run Mode Step 4 Impl Review (spawn Inspector/Auditor via Task)
 
 Auto-fix loop applies normally (retry_count, spec_update_count).
 

@@ -85,7 +85,7 @@
 5. `spec_update_count` は SPEC-UPDATE-NEEDED のみでインクリメント（最大 2）。`retry_count` とは独立
 6. GO/CONDITIONAL verdict で `retry_count` と `spec_update_count` を両方 0 にリセットする
 7. 集約上限: `retry_count + spec_update_count` が 4 に達した時点でユーザーへエスカレーションする
-8. 修復後は review teammates を dismiss し、新しい review pipeline（Inspectors → Auditor、ファイルベース）を再 spawn する
+8. 修復後は新しい review pipeline（Inspectors → Auditor、ファイルベース）を再 spawn する
 9. NO-GO (Wave Quality Gate) → findings をファイルパスにマッピングし、file ownership records から責任 Builder を特定して fix instructions 付きで re-spawn する
 10. Architect 修復失敗時はスペック全体をユーザーへエスカレーションする
 11. 構造変更（spec 分割等）は decisions.md に `DIRECTION_CHANGE` として記録する
@@ -155,7 +155,7 @@
 **Goal:** パイプライン実行中の中断と再開
 
 **Acceptance Criteria:**
-1. ユーザーの stop 要求時に全 active T2/T3 teammates を dismiss する
+1. ユーザーの stop 要求時に全 active T2/T3 SubAgent の実行を停止する
 2. `session.md` に現在の進捗と方向を auto-draft する
 3. 完了済み/進行中/未着手の状態をユーザーに報告する
 4. `/sdd-roadmap run` で全 `spec.yaml` をスキャンしてパイプライン状態を再構築し、中断地点から再開する
@@ -305,14 +305,14 @@ sequenceDiagram
     participant ReviewDir as .review/ directory
     participant Auditor
 
-    Lead->>Inspector1: spawn (all in parallel)
+    Lead->>Inspector1: spawn Task(subagent_type=...) (all in parallel)
     Inspector1->>ReviewDir: Write {name}.cpf
-    Inspector1-->>Lead: idle (completion report)
+    Inspector1-->>Lead: Task result (completion report)
     Note over Lead: Wait for all Inspectors
-    Lead->>Auditor: spawn
+    Lead->>Auditor: spawn Task(subagent_type=...)
     Auditor->>ReviewDir: Read all .cpf files
     Auditor->>ReviewDir: Write verdict.cpf
-    Auditor-->>Lead: idle (completion report)
+    Auditor-->>Lead: Task result (completion report)
     Lead->>ReviewDir: Read verdict.cpf
 ```
 
@@ -395,9 +395,9 @@ flowchart TD
     UserChoice -->|abort| Abort([Pipeline stopped<br/>All specs as-is])
 ```
 
-### Teammate Failure Handling
+### SubAgent Failure Handling
 
-ファイルベースレビュープロトコルにより、全 teammate 出力は冪等（同じ `.review/` ディレクトリ、同じファイルパス）。teammate が出力ファイルを生成せずに idle になった場合、Lead は自身の判断でリトライ、スキップ、または利用可能なファイルから結果を導出する。特別なリカバリモードは不要 — リトライは初回と同じフロー。
+ファイルベースレビュープロトコルにより、全 SubAgent 出力は冪等（同じ `.review/` ディレクトリ、同じファイルパス）。SubAgent が出力ファイルを生成せずに Task result を返した場合、Lead は自身の判断でリトライ、スキップ、または利用可能なファイルから結果を導出する。特別なリカバリモードは不要 — リトライは初回と同じフロー。
 
 ---
 
@@ -441,65 +441,61 @@ flowchart TD
 #### Step 4: Pipeline Execution (per spec)
 
 **Design Phase:**
-1. Architect を `TeammateTool` で spawn する（Feature, Mode, User-instructions を context に含める）
+1. Architect を `Task(subagent_type=...)` で spawn する（Feature, Mode, User-instructions を context に含める）
 2. Architect は自身のコンテキスト（steering, templates, rules, existing code）を自律的に読み込む（Lead は事前読み込みしない）
-3. Architect の completion report を読み取る
-4. Architect を dismiss する
-5. `design.md` と `research.md` の存在を検証する
-6. `spec.yaml` を更新: `phase=design-generated`, `version_refs.design={v}`
+3. Architect の Task result（completion report）を読み取る
+4. `design.md` と `research.md` の存在を検証する
+5. `spec.yaml` を更新: `phase=design-generated`, `version_refs.design={v}`
 
 **Design Review Phase (ファイルベース):**
-1. 6 design Inspectors を `TeammateTool` で spawn する
+1. 6 design Inspectors を `Task(subagent_type=...)` で spawn する
    - Inspector set: rulebase, testability, architecture, consistency, best-practices, holistic
    - 各 Inspector context: "Feature: {feature}, Write findings to: `.review/{inspector-name}.cpf`"
    - Inspectors は各自 `.review/` ディレクトリに CPF ファイルを書き出す
-2. 全 Inspector の completion を待つ
-3. design Auditor を `TeammateTool` で spawn する
+2. 全 Inspector の Task result を待つ
+3. design Auditor を `Task(subagent_type=...)` で spawn する
    - Auditor context: "Feature: {feature}, Read CPF files from: `.review/`, Write verdict to: `.review/verdict.cpf`"
    - Auditor は `.review/` から全 CPF ファイルを読み取り、`verdict.cpf` を書き出す
-4. Auditor の completion を待ち、`.review/verdict.cpf` を読み取る
-5. 全 review teammates（6 Inspectors + Auditor）を dismiss する
-6. verdict を `specs/{feature}/verdicts.md` に永続化する
-7. verdict 処理: GO/CONDITIONAL → カウンターリセット、次フェーズへ。NO-GO → Auto-Fix Loop。Gate mode → ユーザー承認待ち
-8. `STEERING:` エントリを処理する（`decisions.md` に記録）
-9. `--consensus N` 有効時は Consensus Mode を適用する（各パイプラインは `.review-{p}/` に書き出し）
+4. Auditor の Task result を待ち、`.review/verdict.cpf` を読み取る
+5. verdict を `specs/{feature}/verdicts.md` に永続化する
+6. verdict 処理: GO/CONDITIONAL → カウンターリセット、次フェーズへ。NO-GO → Auto-Fix Loop。Gate mode → ユーザー承認待ち
+7. `STEERING:` エントリを処理する（`decisions.md` に記録）
+8. `--consensus N` 有効時は Consensus Mode を適用する（各パイプラインは `.review-{p}/` に書き出し）
 
 **Implementation Phase:**
-1. TaskGenerator を `TeammateTool` で spawn する（Feature, Design, Research, Review findings を context に含める）
-2. `TASKGEN_COMPLETE` 完了レポートを読み取る
-3. TaskGenerator を dismiss する
-4. `tasks.yaml` の存在を検証する
-5. `tasks.yaml` の execution plan を読み込み、Builder grouping を決定する
-6. Layer 2 ファイル所有権チェック（1-Spec Roadmap ではスキップ）: 並列 spec の `tasks.yaml` execution セクションからファイルリストを収集。重複検出 → serialize or partition
-7. `tasks.yaml` の tasks セクションから detail bullets を抽出し、Builder spawn prompts を構成する
-8. Builder(s) を `TeammateTool` で spawn する（Feature, Tasks, File scope, Design ref, Research ref を context に含める）
-9. **Incremental Processing**: 各 Builder 完了時に即座に:
+1. TaskGenerator を `Task(subagent_type=...)` で spawn する（Feature, Design, Research, Review findings を context に含める）
+2. `TASKGEN_COMPLETE` 完了レポート（Task result）を読み取る
+3. `tasks.yaml` の存在を検証する
+4. `tasks.yaml` の execution plan を読み込み、Builder grouping を決定する
+5. Layer 2 ファイル所有権チェック（1-Spec Roadmap ではスキップ）: 並列 spec の `tasks.yaml` execution セクションからファイルリストを収集。重複検出 → serialize or partition
+6. `tasks.yaml` の tasks セクションから detail bullets を抽出し、Builder spawn prompts を構成する
+7. Builder(s) を `Task(subagent_type=...)` で spawn する（Feature, Tasks, File scope, Design ref, Research ref を context に含める）
+8. **Incremental Processing**: 各 Builder の Task result 受信時に即座に:
    - completion report を読み取る（files, test results, knowledge tags, blockers）
    - `tasks.yaml` で完了タスクを `done` にマーク
    - knowledge tags を `buffer.md` に格納
    - BUILDER_BLOCKED 時: 原因分類（依存関係不足→再順序/re-spawn、外部ブロッカー→ユーザーエスカレーション、設計ギャップ→エスカレーション）。`[INCIDENT]` として buffer.md に記録
-10. 依存タスクが unblock されたら、完了 Builder を dismiss し次 wave Builder を即座に spawn する
-11. 全 Builder 完了後: 全 Builder の files を集約し、`spec.yaml` を更新: `phase=implementation-complete`, `implementation.files_created=[...]`, `version_refs.implementation={version}`
+9. 依存タスクが unblock されたら次 wave Builder を即座に spawn する
+10. 全 Builder 完了後: 全 Builder の files を集約し、`spec.yaml` を更新: `phase=implementation-complete`, `implementation.files_created=[...]`, `version_refs.implementation={version}`
 
 **Implementation Review Phase (ファイルベース):**
-1. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を `TeammateTool` で spawn する
+1. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を `Task(subagent_type=...)` で spawn する
    - Inspector set: impl-rulebase, interface, test, quality, impl-consistency, impl-holistic
    - Web プロジェクトの場合: + sdd-inspector-e2e
    - 各 Inspector context: "Feature: {feature}, Write findings to: `.review/{inspector-name}.cpf`"
    - Inspectors は各自 `.review/` ディレクトリに CPF ファイルを書き出す
-2. 全 Inspector の completion を待つ
-3. impl Auditor を `TeammateTool` で spawn する
+2. 全 Inspector の Task result を待つ
+3. impl Auditor を `Task(subagent_type=...)` で spawn する
    - Auditor context: "Feature: {feature}, Read CPF files from: `.review/`, Write verdict to: `.review/verdict.cpf`"
-4. Auditor の completion を待ち、`.review/verdict.cpf` を読み取る
-5. 全 review teammates を dismiss する
-6. verdict を `specs/{feature}/verdicts.md` に永続化する
-7. verdict 処理:
+4. Auditor の Task result を待ち、`.review/verdict.cpf` を読み取る
+5. verdict を `specs/{feature}/verdicts.md` に永続化する
+6. verdict 処理:
    - GO/CONDITIONAL → カウンターリセット。Spec pipeline 完了
    - NO-GO → `retry_count` インクリメント。Builder(s) を fix instructions 付きで re-spawn → re-review（最大 3 リトライ）
    - SPEC-UPDATE-NEEDED → `spec_update_count` インクリメント（最大 2）。`orchestration.last_phase_action = null` リセット、`phase = design-generated` 設定。Architect（SPEC_FEEDBACK 付き）→ TaskGenerator → Builder → re-review のフルカスケード（差分なし、全タスク再実装）
    - Gate mode → ユーザー承認待ち
-8. `STEERING:` エントリを処理する
-9. `--consensus N` 有効時は Consensus Mode を適用する（各パイプラインは `.review-{p}/` に書き出し）
+7. `STEERING:` エントリを処理する
+8. `--consensus N` 有効時は Consensus Mode を適用する（各パイプラインは `.review-{p}/` に書き出し）
 
 #### Step 5: Wave Quality Gate (per wave)
 
@@ -509,20 +505,20 @@ Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blo
 
 **a. Impl Cross-Check Review (wave-scoped, ファイルベース):**
 1. `verdicts-wave.md` から前 Wave バッチの解決済み issues を読み込む（PREVIOUSLY_RESOLVED 構築）
-2. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を Wave スコープ cross-check context 付きで spawn する
+2. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を Wave スコープ cross-check context 付きで `Task(subagent_type=...)` で spawn する
    - 各 Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED}, Write findings to: `.review-wave-{N}/{inspector-name}.cpf`"
    - Inspectors は `.review-wave-{N}/` ディレクトリに CPF ファイルを書き出す
-3. 全 Inspector completion 後、Auditor を spawn する
+3. 全 Inspector Task result 受信後、Auditor を `Task(subagent_type=...)` で spawn する
    - Auditor: "Wave-scoped cross-check, Wave: 1..{N}, Read from: `.review-wave-{N}/`, Write verdict to: `.review-wave-{N}/verdict.cpf`"
 4. verdict を `verdicts-wave.md` にバッチ `[W{wave}-B{seq}]` で永続化する
 5. verdict 処理: GO/CONDITIONAL → Dead Code Review へ。NO-GO → Builder re-spawn → re-review（最大 3 リトライ → エスカレーション）。SPEC-UPDATE-NEEDED → 対象 spec 特定 → Architect カスケード
 
 **b. Dead Code Review (full codebase, ファイルベース):**
-1. 4 dead-code Inspectors を spawn する
+1. 4 dead-code Inspectors を `Task(subagent_type=...)` で spawn する
    - Inspectors: dead-settings, dead-code, dead-specs, dead-tests
    - 各 Inspector: "Write findings to: `.review-wave-{N}-dc/{inspector-name}.cpf`"
    - Inspectors は `.review-wave-{N}-dc/` ディレクトリに CPF ファイルを書き出す
-2. 全 Inspector completion 後、dead-code Auditor を spawn する
+2. 全 Inspector Task result 受信後、dead-code Auditor を `Task(subagent_type=...)` で spawn する
    - Auditor: "Read from: `.review-wave-{N}-dc/`, Write verdict to: `.review-wave-{N}-dc/verdict.cpf`"
 3. verdict を `verdicts-wave.md` にバッチ `[W{wave}-DC-B{seq}]` で永続化する
 4. verdict 処理: GO/CONDITIONAL → Wave 完了。NO-GO → Builder re-spawn → re-review dead-code（最大 3 リトライ → エスカレーション）
@@ -582,15 +578,15 @@ Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blo
 | sdd-design skill | Skill (redirect stub) | `/sdd-roadmap design` へのリダイレクト | `framework/claude/skills/sdd-design/SKILL.md` |
 | sdd-impl skill | Skill (redirect stub) | `/sdd-roadmap impl` へのリダイレクト | `framework/claude/skills/sdd-impl/SKILL.md` |
 | sdd-review skill | Skill (redirect stub) | `/sdd-roadmap review` へのリダイレクト | `framework/claude/skills/sdd-review/SKILL.md` |
-| sdd-architect agent | Agent (T2) | Design 生成・revision | `framework/claude/sdd/settings/agents/sdd-architect.md` |
-| sdd-taskgenerator agent | Agent (T3) | タスク分解・execution plan | `framework/claude/sdd/settings/agents/sdd-taskgenerator.md` |
-| sdd-builder agent | Agent (T3) | TDD 実装 | `framework/claude/sdd/settings/agents/sdd-builder.md` |
-| sdd-auditor-design agent | Agent (T2) | Design verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-design.md` |
-| sdd-auditor-impl agent | Agent (T2) | Impl verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-impl.md` |
-| sdd-auditor-dead-code agent | Agent (T2) | Dead code verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md` |
-| Design Inspector set (6) | Agent (T3) | 設計レビュー視点 | `framework/claude/sdd/settings/agents/sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md` |
-| Impl Inspector set (6+1) | Agent (T3) | 実装レビュー視点 | Standard: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md` + Web: `sdd-inspector-e2e.md` |
-| Dead-Code Inspector set (4) | Agent (T3) | Dead code レビュー視点 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-{settings,code,specs,tests}.md` |
+| sdd-architect agent | SubAgent (T2) | Design 生成・revision | `.claude/agents/sdd-architect.md` |
+| sdd-taskgenerator agent | SubAgent (T3) | タスク分解・execution plan | `.claude/agents/sdd-taskgenerator.md` |
+| sdd-builder agent | SubAgent (T3) | TDD 実装 | `.claude/agents/sdd-builder.md` |
+| sdd-auditor-design agent | SubAgent (T2) | Design verdict 合成 | `.claude/agents/sdd-auditor-design.md` |
+| sdd-auditor-impl agent | SubAgent (T2) | Impl verdict 合成 | `.claude/agents/sdd-auditor-impl.md` |
+| sdd-auditor-dead-code agent | SubAgent (T2) | Dead code verdict 合成 | `.claude/agents/sdd-auditor-dead-code.md` |
+| Design Inspector set (6) | SubAgent (T3) | 設計レビュー視点 | `.claude/agents/sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md` |
+| Impl Inspector set (6+1) | SubAgent (T3) | 実装レビュー視点 | Standard: `.claude/agents/sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md` + Web: `.claude/agents/sdd-inspector-e2e.md` |
+| Dead-Code Inspector set (4) | SubAgent (T3) | Dead code レビュー視点 | `.claude/agents/sdd-inspector-dead-{settings,code,specs,tests}.md` |
 | spec.yaml | State | Spec フェーズ・メタデータ管理 | `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` |
 | roadmap.md | Artifact | ロードマップ定義 | `{{SDD_DIR}}/project/specs/roadmap.md` |
 | verdicts.md | Artifact | Spec-level verdict 永続化 | `{{SDD_DIR}}/project/specs/{feature}/verdicts.md` |
@@ -610,12 +606,12 @@ Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blo
 
 | From | To | Method | Data |
 |------|----|--------|------|
-| Lead | Architect / TaskGenerator / Builder | TeammateTool spawn | Spawn context (feature, paths, instructions) |
-| Lead | Inspectors | TeammateTool spawn | Spawn context (feature, review type, scope, output path) |
-| Lead | Auditor | TeammateTool spawn (after Inspectors complete) | Spawn context (feature, review type, input/output paths) |
+| Lead | Architect / TaskGenerator / Builder | Task(subagent_type=...) spawn | Spawn context (feature, paths, instructions) |
+| Lead | Inspectors | Task(subagent_type=...) spawn | Spawn context (feature, review type, scope, output path) |
+| Lead | Auditor | Task(subagent_type=...) spawn (after Inspectors complete) | Spawn context (feature, review type, input/output paths) |
 | Inspector | Auditor | ファイルベース（`.review/` ディレクトリ） | CPF findings files |
 | Auditor | Lead | ファイルベース（`verdict.cpf`） | Verdict CPF file |
-| Teammate | Lead | Idle notification (completion output) | Structured completion report |
+| SubAgent | Lead | Task result (completion output) | Structured completion report |
 
 ### State Transitions (spec.yaml.phase)
 
@@ -635,11 +631,11 @@ blocked ──[Unblock: fix/skip]──→ {blocked_at_phase}
 | `spec_update_count` | SPEC-UPDATE-NEEDED verdict | 2 | GO/CONDITIONAL verdict | Per spec |
 | Aggregate cap | `retry_count + spec_update_count` | 4 | -- | Per spec |
 
-### Concurrent Teammate Limits
+### Concurrent SubAgent Limits
 
-| Configuration | Max Teammates | Breakdown |
+| Configuration | Max SubAgents | Breakdown |
 |---------------|---------------|-----------|
-| Standard | 24 | 3 pipelines x 7 teammates + headroom |
+| Standard | 24 | 3 pipelines x 7 SubAgents + headroom |
 | Consensus N | 7 x N | Per pipeline: 6 Inspectors + 1 Auditor |
 | Design review | 7 | 6 Inspectors + 1 Auditor (sequential: Inspectors first, then Auditor) |
 | Impl review | 7-8 | 6-7 Inspectors + 1 Auditor (Web プロジェクト: +1 E2E Inspector) |
@@ -682,14 +678,22 @@ blocked ──[Unblock: fix/skip]──→ {blocked_at_phase}
 | Spec failure (retries exhausted) | Blocking Protocol: block downstream specs, report impact, present options |
 | Spec conflicts (file overlap) | Serialize (preferred) or Partition (1-Spec Roadmap ではスキップ) |
 | Architect failure during cascade | Escalate entire spec to user |
-| User stop request | Pipeline Stop Protocol: dismiss all, auto-draft session.md, report state |
-| Teammate fails to produce output | Lead uses own judgment: retry, skip, or derive from available files |
+| User stop request | Pipeline Stop Protocol: stop all active SubAgents, auto-draft session.md, report state |
+| SubAgent fails to produce output | Lead uses own judgment: retry, skip, or derive from available files |
 | Unknown subcommand | Display help message with available subcommands |
 | Spec not enrolled in roadmap | BLOCK: "{feature} exists but is not enrolled in the roadmap" |
 
 ---
 
 ## Revision Notes
+
+### v1.3.0 — SubAgent Migration
+- **TeammateTool → Task(subagent_type=...)**: SF-2 Step 4 全フェーズ（Design / Design Review / Implementation / Impl Review）および Step 5（Wave Quality Gate の Impl Cross-Check / Dead Code Review）の spawn 記述を更新
+- **idle notification → Task result**: File-Based Review Protocol シーケンス図、Design Phase 手順、Design Review / Impl Review の completion 待機記述を更新
+- **dismiss 参照の削除**: Design Phase（旧手順 4）、Design Review Phase（旧手順 5）、Implementation Phase（旧手順 10）から dismiss 手順を削除
+- **teammate → SubAgent**: Spec 12 AC-1、SubAgent Failure Handling セクション（旧 Teammate Failure Handling）、Inter-Component Communication テーブル（Teammate → SubAgent 行）、Concurrent Teammate Limits → Concurrent SubAgent Limits
+- **Agent profile パス更新**: Components テーブルの全 agent 行を `framework/claude/sdd/settings/agents/` → `.claude/agents/` に更新。Agent 列を「Agent (T2/T3)」→「SubAgent (T2/T3)」に更新
+- **Error Handling テーブル**: "dismiss all" → "stop all active SubAgents"、"Teammate fails" → "SubAgent fails"
 
 ### v1.2.0 (2026-02-22) — v0.19.0 E2E Inspector 条件付き追加
 

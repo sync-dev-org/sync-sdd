@@ -17,11 +17,11 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 3. `design --wave N` 引数で wave N までの spec を対象にした wave-scoped 設計レビューが起動する
 4. Phase Gate: `specs/{feature}/design.md` の存在を確認し、存在しない場合はエラーメッセージを返す
 5. Phase Gate: `spec.yaml.phase` が `blocked` の場合、"{feature} is blocked by {blocked_info.blocked_by}" でブロックする
-6. 6 Inspector を先に全て `TeammateTool` で spawn する。全 Inspector 完了後に Auditor を `TeammateTool` で spawn する（`Task` tool は使用しない）
+6. 6 Inspector を先に全て `Task(subagent_type=...)` で spawn する。全 Inspector 完了後に Auditor を `Task(subagent_type="sdd-auditor-design")` で spawn する
 7. Inspector は Sonnet モデル、Auditor は Opus モデルで spawn される
 8. Auditor の spawn 時に `session.md` の Steering Exceptions セクションを含める（存在する場合）
 9. Lead は `.review/verdict.cpf` を `.review/` ディレクトリから読み取る
-10. verdict 読み取り後、`.review/` ディレクトリをクリーンアップし、全レビュー teammate を dismiss する
+10. verdict 読み取り後、`.review/` ディレクトリをクリーンアップする
 
 ### Spec 2: Inspector Parallel Execution (6 Agents)
 **Goal:** 6つの独立したレビュー視点が並列に設計ドキュメントを検査し、CPF 形式で findings を `.review/` ディレクトリにファイル出力する
@@ -32,7 +32,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 3. 各 Inspector は自身の担当領域のみを検査し、他 Inspector の領域と重複しない
 4. 各 Inspector は CPF 形式（`VERDICT:`, `SCOPE:`, `ISSUES:`, `NOTES:`）で findings を出力する
 5. 各 Inspector は `.review/{inspector-name}.cpf` ファイルに CPF findings を書き出す
-6. 各 Inspector はファイル書き出し後、テキスト出力として `WRITTEN:{file_path}` の1行のみを出力し、即座に terminate する。全ての解析はエージェント内部で完結させ、分析テキストは出力しない（idle notification 経由のコンテキスト漏洩防止）
+6. 各 Inspector はファイル書き出し後、テキスト出力として `WRITTEN:{file_path}` の1行のみを出力し、即座に terminate する。全ての解析はエージェント内部で完結させ、分析テキストは出力しない（Lead コンテキストバジェット保護）
 7. Single spec mode: 対象 spec の design.md と spec.yaml を読み込む
 8. Cross-check mode: 全 spec の design.md を読み込み、横断的な問題を検出する
 9. Wave-scoped mode: wave <= N の spec のみをフィルタし、将来 wave の機能不足を flag しない
@@ -48,7 +48,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Traceability Check: 全 design component が spec にトレースでき、orphan component / orphan spec がないことを確認する
 6. Specifications section に内部実装詳細（class 名、function signature、DB schema）が含まれていないことを検証する
 7. Design sections に新規 acceptance criteria が含まれていないことを検証する（scope creep 検出）
-8. CPF findings を `.review/inspector-rulebase.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+8. CPF findings を `.review/inspector-rulebase.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 4: Testability Inspector
 **Goal:** テスト実装者の視点から設計の明確性を評価する（"テストを推測なしに書けるか？"）
@@ -61,7 +61,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Mockability 検証: 外部依存関係がモック可能で、依存インターフェースが明確に定義されていることを確認する
 6. Edge Case Coverage: null/empty/undefined ケース、エラーシナリオの列挙、concurrent access シナリオが対処されていることを確認する
 7. Cross-check mode: 共有コンポーネントの曖昧な振る舞い、統合ポイントのテスト契約不足、不整合なエラーハンドリングパターンを検出する
-8. CPF findings を `.review/inspector-testability.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+8. CPF findings を `.review/inspector-testability.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 5: Architecture Inspector
 **Goal:** コンポーネント境界、インターフェース契約、状態遷移、ハンドオフポイントの設計検証可能性を評価する
@@ -74,7 +74,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Dependency Architecture 検証: コンポーネント間依存関係が非循環で、外部依存が分離されていることを確認する
 6. 関連 spec の design.md を読み込み、cross-spec の依存関係分析を実施する
 7. Cross-check mode: 共有コンポーネントの責務競合、API 互換性、データモデル整合性、循環依存を検出する
-8. CPF findings を `.review/inspector-architecture.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+8. CPF findings を `.review/inspector-architecture.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 6: Consistency Inspector
 **Goal:** Specifications section と Design sections の間の整合性を検証する（ギャップとスコープクリープの検出）
@@ -87,7 +87,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Scope Boundary Verification: 他の spec に属する機能が含まれていないことを確認する
 6. 関連 spec を読み込み、スコープ重複を検出する
 7. Cross-check mode: cross-spec の仕様矛盾、共有仕様の設計乖離、"誰の責任でもない" ギャップを検出する
-8. CPF findings を `.review/inspector-consistency.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+8. CPF findings を `.review/inspector-consistency.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 7: Best Practices Inspector
 **Goal:** 設計決定を業界標準とベストプラクティスに照らして評価する
@@ -100,7 +100,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. WebSearch/WebFetch を使用して技術選択とパターンを検証する
 6. Knowledge context（pattern-*.md, reference-*.md）を読み込んで既知パターンを参照する
 7. Steering context（特に tech.md）を参照して技術的制約との整合性を確認する
-8. CPF findings を `.review/inspector-best-practices.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+8. CPF findings を `.review/inspector-best-practices.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 8: Holistic Inspector
 **Goal:** 専門 Inspector 間の隙間に落ちる横断的・創発的課題を検出する
@@ -115,7 +115,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 7. 他 Inspector が明らかに検出する単一ドメインの問題ではなく、cross-cutting findings を優先する
 8. WebSearch/WebFetch を必要に応じて使用する
 9. findings を CPF カテゴリ（blind-spot, implicit-assumption, emergent-risk, feasibility-concern, cross-cutting, missing-context）で分類する
-10. CPF findings を `.review/inspector-holistic.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
+10. CPF findings を `.review/inspector-holistic.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない — Lead コンテキストバジェット保護）
 
 ### Spec 9: Design Auditor Synthesis
 **Goal:** 6 Inspector の findings を cross-check・検証・統合し、最終 verdict を出力する
@@ -136,7 +136,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 13. CPF 形式で verdict を `.review/verdict.cpf` に書き出す（VERDICT, SCOPE, VERIFIED, REMOVED, RESOLVED, STEERING, NOTES セクション）
 14. Verdict Output Guarantee: 処理バジェットが尽きそうな場合、即座に Step 9 にスキップし `NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` 付きで verdict を出力する
 15. Large-scope review (wave-scoped-cross-check, cross-check) では Inspector 報告の evidence のみで処理し、spec ファイルの再読み込みは行わない
-16. テキスト出力として `WRITTEN:{verdict_file_path}` の1行のみを出力し、即座に terminate する。全ての合成処理はエージェント内部で完結させ、分析テキストは出力しない（idle notification 経由のコンテキスト漏洩防止）
+16. テキスト出力として `WRITTEN:{verdict_file_path}` の1行のみを出力し、即座に terminate する。全ての合成処理はエージェント内部で完結させ、分析テキストは出力しない（Lead コンテキストバジェット保護）
 
 ### Spec 10: Consensus Mode
 **Goal:** `--consensus N` オプションにより N 本のパイプラインを並列実行し、閾値ベースの合意形成で verdict のノイズを低減する
@@ -215,7 +215,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 
 **Pattern**: Parallel Fan-Out / Fan-In + File-Based Communication
 
-6 Inspector が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は Agent Teams mode の TeammateTool spawn とファイルシステムベースのデータ転送上に構築されている。
+6 Inspector が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は SubAgent の `Task(subagent_type=...)` spawn とファイルシステムベースのデータ転送上に構築されている。
 
 **Boundary Map**:
 - **Orchestration Layer** (Lead): Pipeline lifecycle management, phase gate, verdict handling, STEERING processing, verdicts.md persistence, `.review/` directory cleanup
@@ -223,7 +223,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 - **Synthesis Layer** (Auditor, T2): `.review/` から `.cpf` ファイルを読み込み、Cross-check, deduplication, severity reclassification, verdict を `.review/verdict.cpf` に書き出す
 - **Communication Protocol**: CPF format over filesystem (Inspector → `.review/` → Auditor), verdict file (Auditor → `.review/verdict.cpf` → Lead)
 
-**Steering Compliance**: Agent Teams architecture に準拠。TeammateTool で spawn。レビューデータ転送はファイルベース（`.review/` ディレクトリ）。Task tool は使用しない。
+**Steering Compliance**: SubAgent architecture に準拠。`Task(subagent_type=...)` で spawn。レビューデータ転送はファイルベース（`.review/` ディレクトリ）。
 
 ### Technology Stack
 
@@ -257,12 +257,12 @@ sequenceDiagram
     L->>L: Phase Gate Check<br/>(design.md exists? blocked?)
 
     par Spawn All Inspectors
-        L->>IR: TeammateTool spawn (sonnet)
-        L->>IT: TeammateTool spawn (sonnet)
-        L->>IA: TeammateTool spawn (sonnet)
-        L->>IC: TeammateTool spawn (sonnet)
-        L->>IB: TeammateTool spawn (sonnet)
-        L->>IH: TeammateTool spawn (sonnet)
+        L->>IR: Task(subagent_type="sdd-inspector-rulebase")
+        L->>IT: Task(subagent_type="sdd-inspector-testability")
+        L->>IA: Task(subagent_type="sdd-inspector-architecture")
+        L->>IC: Task(subagent_type="sdd-inspector-consistency")
+        L->>IB: Task(subagent_type="sdd-inspector-best-practices")
+        L->>IH: Task(subagent_type="sdd-inspector-holistic")
     end
 
     par Inspector Parallel Execution
@@ -283,21 +283,19 @@ sequenceDiagram
         IH->>RD: Write inspector-holistic.cpf
     end
 
-    Note over L: All Inspectors complete<br/>(idle notifications received)
+    Note over L: All Inspectors complete<br/>(Task results received)
 
-    L->>L: Dismiss all Inspectors
-    L->>A: TeammateTool spawn (opus)<br/>+ Steering Exceptions context
+    L->>A: Task(subagent_type="sdd-auditor-design")<br/>+ Steering Exceptions context
 
     A->>RD: Read all .cpf files
     A->>A: Cross-check → Contradiction Detection<br/>→ False Positive Check → Coverage<br/>→ Dedup → Severity Reclass<br/>→ Over-Engineering Check<br/>→ Decision Suggestions → Verdict
     A->>RD: Write verdict.cpf
 
-    A-->>L: Completion output (verdict file path)
+    A-->>L: Task result (verdict file path)
 
     L->>RD: Read verdict.cpf
     L->>L: Persist to verdicts.md
     L->>L: Clean up .review/ directory
-    L->>L: Dismiss Auditor
     L->>L: Handle verdict<br/>(GO/CONDITIONAL/NO-GO)
     L->>L: Process STEERING entries
     L->>L: Auto-draft session.md
@@ -350,7 +348,6 @@ sequenceDiagram
     L->>L: Aggregate VERIFIED sections<br/>Key: {category}|{location}<br/>threshold = ceil(N * 0.6)
     L->>L: freq >= threshold → Consensus<br/>freq < threshold → Noise
     L->>L: Determine consensus verdict
-    L->>L: Dismiss all teammates
     L->>L: Clean up .review-{p}/ directories
     L->>L: Persist to verdicts.md
     L->>U: Display consensus report
@@ -396,7 +393,7 @@ flowchart TD
 
 | Specification | Summary | Components | Interfaces | Flows |
 |--------------|---------|------------|------------|-------|
-| 1 | Pipeline orchestration | sdd-roadmap review (Lead logic) | TeammateTool spawn, verdict.cpf read | Main Flow |
+| 1 | Pipeline orchestration | sdd-roadmap review (Lead logic) | Task(subagent_type=...) spawn, verdict.cpf read | Main Flow |
 | 2 | Inspector parallel execution | 6 Inspector agents | `.review/{name}.cpf` file write | Main Flow (parallel section) |
 | 3 | Rulebase Inspector | sdd-inspector-rulebase | `.review/inspector-rulebase.cpf` | Inspector execution |
 | 4 | Testability Inspector | sdd-inspector-testability | `.review/inspector-testability.cpf` | Inspector execution |
@@ -414,7 +411,7 @@ flowchart TD
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|-----------------|-----------|
-| sdd-roadmap review | Orchestration | Pipeline lifecycle, verdict handling | 1, 10, 11, 12, 13 | TeammateTool, `.review/`, verdicts.md | Skill |
+| sdd-roadmap review | Orchestration | Pipeline lifecycle, verdict handling | 1, 10, 11, 12, 13 | Task tool, `.review/`, verdicts.md | Skill |
 | sdd-auditor-design | Synthesis | Finding cross-check, verdict output | 9 | `.review/*.cpf` (input), `.review/verdict.cpf` (output) | Service |
 | sdd-inspector-rulebase | Inspection | SDD compliance | 2, 3 | design.md, template, rules | Service |
 | sdd-inspector-testability | Inspection | Test clarity | 2, 4 | design.md, steering | Service |
@@ -436,9 +433,9 @@ flowchart TD
 **Responsibilities & Constraints**
 - 引数解析: `design {feature}`, `design --cross-check`, `design --wave N`, `design {feature} --consensus N`
 - Phase Gate: design.md 存在確認、blocked 状態チェック（phase restriction なし）
-- Inspector spawn: 6 Inspector (sonnet) を TeammateTool で並列 spawn。各 Inspector に `.review/` ディレクトリパスを含める
-- Inspector 完了待機: 各 Inspector の idle notification を監視し、全 Inspector 完了を確認する
-- Auditor spawn: 全 Inspector 完了後に Auditor (opus) を TeammateTool で spawn。Auditor は `.review/` ディレクトリから `.cpf` ファイルを読み込む
+- Inspector spawn: 6 Inspector (sonnet) を Task(subagent_type=...) で並列 spawn。各 Inspector に `.review/` ディレクトリパスを含める
+- Inspector 完了待機: 各 Inspector の Task result を受信し、全 Inspector 完了を確認する
+- Auditor spawn: 全 Inspector 完了後に Auditor (opus) を Task(subagent_type="sdd-auditor-design") で spawn。Auditor は `.review/` ディレクトリから `.cpf` ファイルを読み込む
 - Verdict 読み取り: Auditor 完了後、`.review/verdict.cpf` を読み取る
 - `.review/` クリーンアップ: verdict 読み取り後にディレクトリを削除する
 - Consensus mode: N pipeline 並列 spawn。各パイプラインは `.review-{p}/` ディレクトリを使用。各パイプラインで Inspector 全完了後に Auditor を spawn
@@ -450,7 +447,7 @@ flowchart TD
 
 **Dependencies**
 - Inbound: User command via Lead (P0)
-- Outbound: TeammateTool (P0), `.review/` directory (P0), verdicts.md (P0), session.md (P1), decisions.md (P1)
+- Outbound: Task tool (P0), `.review/` directory (P0), verdicts.md (P0), session.md (P1), decisions.md (P1)
 
 **Contracts**: Skill [x]
 
@@ -470,17 +467,17 @@ sdd-roadmap review:
     - Error: missing → "Spec '{feature}' not found"
 
   spawn_inspectors(config: ReviewConfig) -> InspectorSet
-    - Spawns 6 Inspectors via TeammateTool
+    - Spawns 6 Inspectors via Task(subagent_type=...)
     - Each Inspector receives .review/ directory path
     - Consensus: N * 6 Inspectors, each set writes to .review-{p}/
 
   wait_inspectors_complete(inspectors: InspectorSet) -> CompletionStatus
-    - Monitors idle notifications
+    - Awaits Task results
     - Returns {completed: string[], missing: string[], all_complete: boolean}
 
   spawn_auditor(config: ReviewConfig, status: CompletionStatus) -> Auditor
     - Precondition: status.all_complete == true
-    - Spawns Auditor (opus) via TeammateTool
+    - Spawns Auditor (opus) via Task(subagent_type="sdd-auditor-design")
     - Auditor reads .review/*.cpf and writes .review/verdict.cpf
 
   read_verdict(review_dir: string) -> CPFVerdict
@@ -524,7 +521,7 @@ InspectorRulebase:
     - Outputs ONLY "WRITTEN:{file_path}" as single line of text, then terminates
     - NO analysis text output (applies to all 6 Inspectors — output suppression protocol)
 ```
-> **出力抑制プロトコル**: 全 Inspector (6) は CPF ファイル書き出し後、`WRITTEN:{path}` の1行のみをテキスト出力として送出し、即座に terminate する。分析テキストの出力は禁止（idle notification 経由のコンテキスト漏洩防止）。この制約は Auditor にも同様に適用される。
+> **出力抑制プロトコル**: 全 Inspector (6) は CPF ファイル書き出し後、`WRITTEN:{path}` の1行のみをテキスト出力として送出し、即座に terminate する。分析テキストの出力は禁止（Lead コンテキストバジェット保護）。この制約は Auditor にも同様に適用される。
 
 ##### CPF Output Format
 ```
@@ -834,9 +831,9 @@ ROADMAP_ADVISORY:
 ## Testing Strategy
 
 ### Agent Definition Verification
-- 各 Inspector agent 定義（`framework/claude/sdd/settings/agents/sdd-inspector-*.md`）に正しい tools リスト（Read, Glob, Grep, Bash）が含まれること
+- 各 Inspector SubAgent 定義（`.claude/agents/sdd-inspector-*.md`）に正しい tools リスト（Read, Glob, Grep, Bash）が含まれること
 - Best Practices / Holistic Inspector に追加 tools（WebSearch, WebFetch）と `permissionMode: bypassPermissions` が含まれること
-- Auditor agent 定義（`framework/claude/sdd/settings/agents/sdd-auditor-design.md`）に正しい tools リスト（Read, Glob, Grep, Bash）と `model: opus` が含まれること
+- Auditor SubAgent 定義（`.claude/agents/sdd-auditor-design.md`）に正しい tools リスト（Read, Glob, Grep, Bash）と `model: opus` が含まれること
 
 ### Pipeline Integration Tests
 - Single spec mode: 6 Inspector spawn → `.review/` ファイル書き出し → Auditor spawn → verdict.cpf 書き出しの E2E フロー
@@ -921,4 +918,12 @@ ROADMAP_ADVISORY:
   - Spec 9 AC 16: `WRITTEN:{verdict_file_path}` の1行のみ出力し terminate する旨に変更
   - Components > Inspection Layer > InspectorRulebase Service Interface: 出力抑制プロトコルの注記を追加（全 6 Inspector に共通適用）
 
-**適用範囲**: 全レビュータイプ共通（impl-review, dead-code-review も同様の変更が適用される）。`WRITTEN:{path}` は全レビュー teammate の唯一の許可テキスト出力。
+**適用範囲**: 全レビュータイプ共通（impl-review, dead-code-review も同様の変更が適用される）。`WRITTEN:{path}` は全レビュー SubAgent の唯一の許可テキスト出力。
+
+### v1.4.0 — SubAgent Migration
+- Agent file path: `sdd/settings/agents/` → `.claude/agents/` (YAML frontmatter format)
+- Spawn mechanism: `TeammateTool` → `Task(subagent_type=...)` for all 6 Inspectors + Auditor
+- Communication: idle notification → Task result
+- Output suppression rationale: idle notification leak prevention → Lead context budget protection
+- `dismiss`/`shutdown` references removed (not applicable to SubAgent model)
+- Behavioral content unchanged

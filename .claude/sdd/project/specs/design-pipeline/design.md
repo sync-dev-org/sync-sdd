@@ -4,7 +4,7 @@
 
 ### Introduction
 
-フィーチャー設計生成パイプライン。`/sdd-design` は `/sdd-roadmap design` へのリダイレクトスタブであり、正式なエントリポイントは `/sdd-roadmap design` である。Lead として機能し、入力モード検出・Phase Gate 検証・新規 spec 初期化を行った上で、Architect (T2) を `TeammateTool` で spawn する。Architect は自律的に Discovery（full / light / minimal）を実行し、コードベース分析・外部調査を経て `design.md` と `research.md` を生成する。完了後、Lead が `spec.yaml` のメタデータ（phase, version_refs, changelog）を更新し、session.md を auto-draft する。
+フィーチャー設計生成パイプライン。`/sdd-design` は `/sdd-roadmap design` へのリダイレクトスタブであり、正式なエントリポイントは `/sdd-roadmap design` である。Lead として機能し、入力モード検出・Phase Gate 検証・新規 spec 初期化を行った上で、Architect (T2) を `Task(subagent_type="sdd-architect")` で spawn する。Architect は自律的に Discovery（full / light / minimal）を実行し、コードベース分析・外部調査を経て `design.md` と `research.md` を生成する。完了後、Lead が `spec.yaml` のメタデータ（phase, version_refs, changelog）を更新し、session.md を auto-draft する。
 
 本パイプラインはフレームワークの Stage 1（Specification）に位置し、`/sdd-roadmap impl` や `/sdd-roadmap review design` の前提となる。
 
@@ -36,14 +36,14 @@
 
 ### Spec 3: Architect Spawning and Lifecycle Management
 
-**Goal:** Lead が Architect を `TeammateTool` で spawn し、completion report を受け取った後に spec.yaml を正しく更新する。
+**Goal:** Lead が Architect を `Task(subagent_type="sdd-architect")` で spawn し、Task result として completion report を受け取った後に spec.yaml を正しく更新する。
 
 **Acceptance Criteria:**
 
-1. `TeammateTool` を使用して Architect を spawn する。spawn context に Feature name, Mode (new/existing), User-instructions を含める
+1. `Task(subagent_type="sdd-architect")` を使用して Architect を spawn する。spawn context に Feature name, Mode (new/existing), User-instructions を含める
 2. Architect の context loading（steering, templates, rules, existing code）は Architect 自身が自律的に行う。Lead は事前にこれらのファイルを読み込まない
-3. Architect の `ARCHITECT_COMPLETE` レポートを受信し、内容を解析する
-4. Architect dismiss 後、`design.md` と `research.md` が spec ディレクトリに存在することを検証する
+3. Architect の `ARCHITECT_COMPLETE` レポートを Task result として受信し、内容を解析する
+4. Architect 完了後、`design.md` と `research.md` が spec ディレクトリに存在することを検証する
 5. 再編集の場合（`version_refs.design` が non-null）、`spec.yaml.version` の minor を increment する
 6. `spec.yaml.version_refs.design` を現在の `version` に設定する
 7. `spec.yaml.phase` を `design-generated` に設定する
@@ -202,16 +202,16 @@ graph TB
 **Architecture Integration**:
 - **Selected pattern**: Dispatcher-Worker パターン。sdd-design skill が Dispatcher (Lead) として入力検証・lifecycle management を担い、sdd-architect agent が Worker (Architect) として設計生成を自律実行する
 - **Domain boundaries**: Lead は spec.yaml の所有権を持ち、Architect は design.md / research.md の所有権を持つ。相互に越境しない
-- **Existing patterns preserved**: Agent Teams の `TeammateTool` spawn → completion report → dismiss lifecycle に準拠
+- **Existing patterns preserved**: SubAgent の `Task(subagent_type="sdd-architect")` spawn → Task result → completion report lifecycle に準拠
 - **Steering compliance**: CLAUDE.md の Role Architecture、Artifact Ownership、Phase Gate ルールに完全準拠
 
 ### Technology Stack
 
 | Layer | Choice / Version | Role in Feature | Notes |
 |-------|------------------|-----------------|-------|
-| Agent Framework | Claude Code Agent Teams | Lead-Architect spawn/dismiss lifecycle | `TeammateTool` で spawn |
+| Agent Framework | Claude Code SubAgent | Lead-Architect spawn lifecycle | `Task(subagent_type="sdd-architect")` で spawn |
 | Lead Runtime | Claude Opus (T1) | Input detection, Phase Gate, spec.yaml updates | sdd-design skill |
-| Architect Runtime | Claude Opus (T2) | Discovery, design generation | sdd-architect agent |
+| Architect Runtime | Claude Opus (T2) | Discovery, design generation | sdd-architect SubAgent |
 | External Research | WebSearch / WebFetch | Full Discovery での外部調査 | Architect のみ使用 |
 | File System | Markdown / YAML | 全 artifacts の永続化 | spec.yaml, design.md, research.md |
 
@@ -223,7 +223,7 @@ graph TB
 sequenceDiagram
     participant User
     participant Lead as Lead (sdd-design skill)
-    participant TT as TeammateTool
+    participant TT as Task(subagent_type)
     participant Arch as Architect (T2)
     participant FS as File System
 
@@ -251,9 +251,9 @@ sequenceDiagram
         end
     end
 
-    Lead->>TT: Spawn Architect with context
+    Lead->>TT: Task(subagent_type="sdd-architect") with context
     Note over TT: Feature, Mode, User-instructions
-    TT->>Arch: Create teammate
+    TT->>Arch: Create SubAgent
 
     Arch->>FS: Read spec.yaml, steering/, templates, rules
     Arch->>Arch: Classify Feature Type
@@ -268,9 +268,8 @@ sequenceDiagram
 
     Arch->>FS: Write research.md
     Arch->>FS: Write design.md
-    Arch-->>Lead: ARCHITECT_COMPLETE report (idle notification)
+    Arch-->>Lead: ARCHITECT_COMPLETE report (Task result)
 
-    Lead->>TT: Dismiss Architect
     Lead->>FS: Verify design.md and research.md exist
     Lead->>FS: Update spec.yaml (phase, version_refs, changelog)
     Lead->>FS: Auto-draft session.md
@@ -317,7 +316,7 @@ flowchart TD
 |---------------|---------|------------|------------|
 | 1.1-1.7 | Input mode detection, spec initialization | sdd-design skill | `$ARGUMENTS` parse, init.yaml template |
 | 2.1-2.5 | Phase Gate verification | sdd-design skill | spec.yaml phase/roadmap/blocked_info fields |
-| 3.1-3.9 | Architect spawn, lifecycle, spec.yaml update | sdd-design skill | TeammateTool spawn, ARCHITECT_COMPLETE report |
+| 3.1-3.9 | Architect spawn, lifecycle, spec.yaml update | sdd-design skill | Task(subagent_type="sdd-architect") spawn, ARCHITECT_COMPLETE report |
 | 4.1-4.15 | Architect autonomous workflow | sdd-architect agent | Context files, design.md/research.md output |
 | 5.1-5.9 | Discovery mode selection and execution | sdd-architect agent, discovery rules | design-discovery-full.md, design-discovery-light.md |
 | 6.1-6.8 | Design principles enforcement | design-principles.md | design.md template structure |
@@ -328,7 +327,7 @@ flowchart TD
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|------------------|-----------|
-| sdd-design skill | Skill (T1 Lead) | Architect spawn と phase lifecycle 管理 | 1, 2, 3, 7, 8 | TeammateTool (P0), spec.yaml (P0), init.yaml (P1) | Service |
+| sdd-design skill | Skill (T1 Lead) | Architect spawn と phase lifecycle 管理 | 1, 2, 3, 7, 8 | Task tool (P0), spec.yaml (P0), init.yaml (P1) | Service |
 | sdd-architect agent | Agent (T2) | 設計/調査ドキュメントの自律生成 | 4, 5, 6 | steering/ (P0), templates (P0), rules (P0) | Service |
 | design-discovery-full | Rule | 新規/複雑 feature の包括的調査プロセス | 5.1-5.3 | WebSearch (P1), WebFetch (P1) | -- |
 | design-discovery-light | Rule | 既存システム拡張の統合重視調査プロセス | 5.4-5.8 | Codebase scan tools (P1) | -- |
@@ -350,16 +349,16 @@ flowchart TD
 - ユーザー入力の parse と mode detection（New Spec / Existing Spec）
 - Phase Gate 検証（blocked, implementation-complete + roadmap, implementation-complete standalone, initialized/design-generated）
 - New Spec の場合の spec directory 作成と spec.yaml 初期化
-- `TeammateTool` を使用した Architect spawn（context: Feature, Mode, User-instructions）
+- `Task(subagent_type="sdd-architect")` を使用した Architect spawn（context: Feature, Mode, User-instructions）
 - Architect の事前 context loading を行わない（Architect の自律性を尊重）
-- `ARCHITECT_COMPLETE` レポートの受信と解析
-- Architect dismiss 後の artifact 検証（design.md, research.md の存在確認）
+- `ARCHITECT_COMPLETE` レポートの受信と解析（Task result として取得）
+- Architect 完了後の artifact 検証（design.md, research.md の存在確認）
 - `spec.yaml` の metadata 更新（phase, version_refs, changelog, orchestration.last_phase_action）
 - session.md auto-draft と user 報告
 
 **Dependencies**
 - Inbound: User command (`/sdd-design {args}`) (P0)
-- Outbound: TeammateTool -- Architect spawn/dismiss (P0)
+- Outbound: Task tool -- Architect spawn (P0)
 - Outbound: spec.yaml -- phase/version state management (P0)
 - Outbound: init.yaml template -- new spec initialization (P1)
 - Outbound: session.md -- post-completion auto-draft (P1)
@@ -374,7 +373,7 @@ SddDesignSkill:
   execute(arguments: string) -> void
     Step 1: parse_input(arguments) -> {feature: string, mode: "new" | "existing"}
     Step 2: verify_phase_gate(feature) -> "pass" | "block" | "confirm"
-    Step 3: spawn_architect(feature, mode, user_instructions) -> ARCHITECT_COMPLETE report
+    Step 3: spawn_architect(feature, mode, user_instructions) -> ARCHITECT_COMPLETE report  # via Task(subagent_type="sdd-architect")
     Step 4: post_completion(feature, report) -> void
 ```
 
@@ -593,7 +592,7 @@ Key findings: {2-3 critical insights}
 
 ### Error Strategy
 
-エラーは発生箇所に応じて即座にユーザーに報告し、不正な状態での teammate spawn を防止する。Architect spawn 前のエラーは Lead が処理し、Architect 内部のエラーは completion report の欠如として Lead が検出する。
+エラーは発生箇所に応じて即座にユーザーに報告し、不正な状態での SubAgent spawn を防止する。Architect spawn 前のエラーは Lead が処理し、Architect 内部のエラーは Task result の欠如として Lead が検出する。
 
 ### Error Categories and Responses
 
@@ -605,7 +604,7 @@ Key findings: {2-3 critical insights}
 | Phase blocked | Business Logic | `"{feature} is blocked by {blocked_info.blocked_by}"` | upstream spec の解決 |
 | Phase impl-complete + roadmap | Business Logic | `"/sdd-roadmap revise {feature}"` の案内 | ユーザーが roadmap revise を実行 |
 | User rejects re-design | Business Logic | 処理中止 | ユーザーが再度コマンド実行 |
-| design.md/research.md missing after Architect | System Error | Architect の成果物検証失敗 | Architect の再 spawn |
+| design.md/research.md missing after Architect | System Error | Architect の成果物検証失敗 | Architect の再 spawn（Task 再実行） |
 
 ## Testing Strategy
 
@@ -632,3 +631,10 @@ Key findings: {2-3 critical insights}
 - `/sdd-design` は `/sdd-roadmap design` へのリダイレクトスタブに変更
 - 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新
 - Agent 定義パス: `framework/claude/agents/` → `framework/claude/sdd/settings/agents/`
+
+### v1.2.0 — SubAgent Migration
+- Agent file path: `sdd/settings/agents/` → `.claude/agents/` (YAML frontmatter format)
+- Spawn mechanism: `TeammateTool` → `Task(subagent_type="sdd-architect")`
+- Communication: idle notification → Task result
+- Output suppression rationale: idle notification leak prevention → Lead context budget protection
+- Behavioral content unchanged

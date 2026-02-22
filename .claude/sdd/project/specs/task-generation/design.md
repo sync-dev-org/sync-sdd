@@ -106,10 +106,9 @@
 
 **Acceptance Criteria:**
 1. tasks.yaml が存在しない、または `orchestration.last_phase_action` が null の場合に REGENERATE モードを発動
-2. Lead が TeammateTool で TaskGenerator を spawn し、feature name, design path, research path (存在する場合), review findings (verdicts.md の latest design batch Tracked, 存在する場合) をコンテキストとして渡す
-3. TaskGenerator の `TASKGEN_COMPLETE` レポートを読み取る
-4. TaskGenerator を dismiss する
-5. tasks.yaml の存在を検証する
+2. Lead が Task(subagent_type="sdd-taskgenerator") で TaskGenerator を spawn し、feature name, design path, research path (存在する場合), review findings (verdicts.md の latest design batch Tracked, 存在する場合) をコンテキストとして渡す
+3. TaskGenerator の `TASKGEN_COMPLETE` レポートを Task result として読み取る
+4. tasks.yaml の存在を検証する
 6. `spec.yaml.orchestration.last_phase_action` を `"tasks-generated"` に更新する
 
 ### Non-Goals
@@ -159,20 +158,20 @@ Builder spawn (tdd-execution scope)
 ```
 
 **Architecture Integration**:
-- Selected pattern: 1:1 Lead-Teammate pipeline (TaskGenerator は単一インスタンスで動作)
+- Selected pattern: 1:1 Lead-SubAgent pipeline (TaskGenerator は単一インスタンスで動作)
 - Domain boundary: TaskGenerator は tasks.yaml の生成のみを担当。spec.yaml の更新は Lead、タスクの実行は Builder
-- Existing patterns preserved: Agent Teams の TeammateTool spawn / idle notification / dismiss パターン
+- Existing patterns preserved: SubAgent の `Task(subagent_type="sdd-taskgenerator")` spawn → Task result パターン
 - Artifact ownership: tasks.yaml の構造変更は TaskGenerator のみ。Lead は status 更新のみ許可
 
 ### Technology Stack
 
 | Layer | Choice / Version | Role in Feature | Notes |
 |-------|------------------|-----------------|-------|
-| Agent Definition | Markdown (sdd-taskgenerator.md) | TaskGenerator の振る舞い定義 | model: sonnet |
+| Agent Definition | YAML frontmatter (sdd-taskgenerator.md) | TaskGenerator の振る舞い定義 | model: sonnet |
 | Rule Definition | Markdown (tasks-generation.md) | タスク分解・並列化ルール | TaskGenerator が実行時に読み込む |
 | Skill Orchestration | Markdown (sdd-roadmap/SKILL.md) | REGENERATE mode で spawn を制御 | Lead が実行 |
 | Output Format | YAML (tasks.yaml) | タスク定義と execution plan | 2セクション構成 |
-| Agent Infrastructure | Claude Code Agent Teams | TeammateTool spawn/dismiss | Experimental API |
+| Agent Infrastructure | Claude Code SubAgent | Task(subagent_type=...) spawn | .claude/agents/ YAML frontmatter format |
 
 ## System Flows
 
@@ -190,7 +189,7 @@ flowchart TD
     C -->|"impl-complete AND task-numbers"| F["TASK RE-EXECUTION → Step 3"]
     C -->|"impl-complete AND no task-numbers"| G["Ask User: re-run / re-design / abort"]
 
-    D --> H["Spawn TaskGenerator via TeammateTool"]
+    D --> H["Spawn TaskGenerator via Task(subagent_type=sdd-taskgenerator)"]
 
     H --> I["Step 1: Load Context"]
     I --> I1["Read spec.yaml"]
@@ -219,9 +218,8 @@ flowchart TD
     K4 --> L["Step 4: Write tasks.yaml"]
     L --> M["Output TASKGEN_COMPLETE report"]
 
-    M --> N["Lead reads completion report"]
-    N --> O["Lead dismisses TaskGenerator"]
-    O --> P["Lead verifies tasks.yaml exists"]
+    M --> N["Lead reads Task result (completion report)"]
+    N --> P["Lead verifies tasks.yaml exists"]
     P --> Q["Lead updates last_phase_action = tasks-generated"]
     Q --> R["Proceed to Builder spawn (Step 3)"]
 ```
@@ -293,7 +291,7 @@ flowchart LR
 
 | Component | Domain/Layer | Intent | Req Coverage | Files |
 |-----------|--------------|--------|--------------|-------|
-| sdd-taskgenerator agent | Agent (T3 Execute) | design.md → tasks.yaml 変換 | 1, 4, 7 | `framework/claude/sdd/settings/agents/sdd-taskgenerator.md` |
+| sdd-taskgenerator agent | Agent (T3 Execute) | design.md → tasks.yaml 変換 | 1, 4, 7 | `.claude/agents/sdd-taskgenerator.md` |
 | tasks-generation rule | Rule (Settings) | タスク分解・並列化・出力形式ルール | 2, 3, 4, 5, 6, 7, 8, 9 | `framework/claude/sdd/settings/rules/tasks-generation.md` |
 | sdd-roadmap impl (Step 2) | Skill (Orchestration) | REGENERATE mode での TaskGenerator spawn | 10 | `framework/claude/skills/sdd-roadmap/SKILL.md` |
 
@@ -315,10 +313,10 @@ flowchart LR
 - spec.yaml は更新しない（Lead の artifact ownership boundary）
 - tasks.yaml の生成のみが成果物（他の artifacts は変更しない）
 
-**Agent Profile**: `sdd/settings/agents/sdd-taskgenerator.md` — Lead が spawn prompt に埋め込み、`TeammateTool` で spawn する
+**Agent Profile**: `.claude/agents/sdd-taskgenerator.md` — Lead が `Task(subagent_type="sdd-taskgenerator")` で spawn する
 
 **Dependencies**
-- Inbound: Lead (TeammateTool spawn) — feature name, design path, research path, review findings (P0)
+- Inbound: Lead (Task spawn) — feature name, design path, research path, review findings (P0)
 - Inbound: design.md — Specifications, Components, Architecture Pattern & Boundary Map (P0)
 - Inbound: research.md — 調査記録 (P1, optional)
 - Inbound: steering/ — プロジェクトコンテキスト (P1)
@@ -394,8 +392,8 @@ Execution: {N} waves, {M} groups
 
 **Responsibilities & Constraints**
 - Phase Gate を通過した後の REGENERATE 判定（tasks.yaml なし OR last_phase_action null）
-- TaskGenerator を TeammateTool で spawn（コンテキスト付与）
-- TASKGEN_COMPLETE レポートの読み取りと TaskGenerator の dismiss
+- TaskGenerator を Task(subagent_type="sdd-taskgenerator") で spawn（コンテキスト付与）
+- TASKGEN_COMPLETE レポートの読み取り（Task result として取得）
 - tasks.yaml 存在の検証
 - `spec.yaml.orchestration.last_phase_action` = `"tasks-generated"` への更新
 
@@ -505,3 +503,10 @@ TaskGenerator のエラーは Lead (sdd-impl skill) が検知し、ユーザー�
 ### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
 - Agent 定義パス: `framework/claude/agents/sdd-taskgenerator.md` → `framework/claude/sdd/settings/agents/sdd-taskgenerator.md`
 - 個別コマンド参照を `/sdd-roadmap` サブコマンドに更新
+
+### v1.2.0 — SubAgent Migration
+- Agent file path: `sdd/settings/agents/` → `.claude/agents/` (YAML frontmatter format)
+- Spawn mechanism: `TeammateTool` → `Task(subagent_type="sdd-taskgenerator")`
+- Communication: idle notification → Task result
+- Output suppression rationale: idle notification leak prevention → Lead context budget protection
+- Behavioral content unchanged

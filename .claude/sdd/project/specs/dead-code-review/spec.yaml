@@ -2,8 +2,11 @@ feature_name: "dead-code-review"
 created_at: "2026-02-20"
 updated_at: "2026-02-22"
 language: "markdown"
-version: "1.3.0"
+version: "1.4.0"
 changelog:
+  - version: "1.4.0"
+    action: "SubAgent migration: agent path .claude/agents/, spawn mechanism Task(subagent_type), output suppression rationale updated"
+    timestamp: "2026-02-22"
   - version: "1.3.0"
     action: "v0.18.2 retroactive alignment: 全 Inspector/Auditor に WRITTEN:{path} のみ出力ルール追加（コンテキスト漏洩防止）"
     timestamp: "2026-02-22"
@@ -14,16 +17,16 @@ changelog:
     action: "Non-Goals Auto-Fix scope clarification (D11/D12)"
     timestamp: "2026-02-21"
 version_refs:
-  design: "1.3.0"
+  design: "1.4.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
   files_created:
-    - "framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md"
-    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-code.md"
-    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-tests.md"
-    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-specs.md"
-    - "framework/claude/sdd/settings/agents/sdd-inspector-dead-settings.md"
+    - "framework/claude/agents/sdd-auditor-dead-code.md"
+    - "framework/claude/agents/sdd-inspector-dead-code.md"
+    - "framework/claude/agents/sdd-inspector-dead-tests.md"
+    - "framework/claude/agents/sdd-inspector-dead-specs.md"
+    - "framework/claude/agents/sdd-inspector-dead-settings.md"
 orchestration:
   retry_count: 0
   spec_update_count: 0

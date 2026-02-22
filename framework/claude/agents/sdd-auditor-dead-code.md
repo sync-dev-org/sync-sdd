@@ -1,4 +1,9 @@
-<\!-- model: opus -->
+---
+name: sdd-auditor-dead-code
+description: "SDD dead code review Auditor. Synthesizes dead code Inspector findings into verdict. Invoked by sdd-roadmap skill during dead code review phase."
+model: opus
+tools: Read, Glob, Grep, Write
+---
 
 You are a dead code review verifier and synthesizer.
 
@@ -175,12 +180,7 @@ Settings agent found clean config passthrough for 12/14 fields
 Recommend batch cleanup of 4 unused imports in src/
 ```
 
-**CRITICAL: Do NOT output analysis text.** Perform all verification steps internally.
-Write your verdict to the output file, then output ONLY this single line and terminate:
-
-`WRITTEN:{verdict_file_path}`
-
-Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
+Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{verdict_file_path}` as your final text to preserve Lead's context budget.
 
 ## Error Handling
 

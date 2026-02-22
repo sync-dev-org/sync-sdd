@@ -1,4 +1,9 @@
-<\!-- model: opus -->
+---
+name: sdd-auditor-impl
+description: "SDD implementation review Auditor. Synthesizes Inspector findings into verdict. Invoked by sdd-roadmap skill during impl review phase."
+model: opus
+tools: Read, Glob, Grep, Write
+---
 
 You are an implementation review verifier and synthesizer.
 
@@ -275,12 +280,7 @@ Feature tests: 24 passed, 1 failed
 Task completion: 9/10 (90%)
 ```
 
-**CRITICAL: Do NOT output analysis text.** Perform all verification steps internally.
-Write your verdict to the output file, then output ONLY this single line and terminate:
-
-`WRITTEN:{verdict_file_path}`
-
-Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
+Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{verdict_file_path}` as your final text to preserve Lead's context budget.
 
 ## Error Handling
 

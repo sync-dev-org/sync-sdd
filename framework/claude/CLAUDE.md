@@ -2,10 +2,9 @@
 
 Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
-> **Architecture**: Agent Teams mode (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `settings.json`).
-> Agents communicate via spawn/dismiss/SendMessage. Do NOT convert to subagent-only architecture.
-> **Note**: Agent Teams is an experimental feature. API changes may require framework updates.
-> Internal tool names: `TeammateTool` (spawn/shutdown/cleanup), `SendMessageTool` (direct/broadcast/shutdown_request).
+> **Architecture**: SubAgent mode via `Task` tool with `subagent_type` parameter.
+> Lead dispatches work to SubAgents defined in `.claude/agents/`. SubAgents auto-execute and return results.
+> SubAgent definitions use YAML frontmatter for model, tools, and description.
 
 ## Role Architecture
 
@@ -13,13 +12,13 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ```
 Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
-Tier 2: Brain    ─── Architect / Auditor ────────────── (Teammate, Opus)
-Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teammate ×N, Sonnet)
+Tier 2: Brain    ─── Architect / Auditor ────────────── (SubAgent, Opus)
+Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAgent ×N, Sonnet)
 ```
 
 | Tier | Role | Responsibility |
 |------|------|---------------|
-| T1 | **Lead** | User interaction, phase gate checks, spawn planning, progress tracking, teammate lifecycle management, spec.yaml updates, Knowledge aggregation. |
+| T1 | **Lead** | User interaction, phase gate checks, dispatch planning, progress tracking, SubAgent orchestration, spec.yaml updates, Knowledge aggregation. |
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
@@ -28,23 +27,23 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teamma
 
 ### Chain of Command
 
-Lead spawns T2/T3 teammates using `TeammateTool`. Do NOT use the `Task` tool to spawn teammates — `Task` creates isolated subagents that cannot participate in Agent Teams messaging (`SendMessageTool` will not reach them).
-Teammates complete their work and output a structured completion report as their final text.
-Lead reads completion output and determines next actions.
+Lead dispatches T2/T3 SubAgents using `Task` tool with `subagent_type` parameter (e.g., `Task(subagent_type="sdd-architect", prompt="...")`). SubAgents are defined in `.claude/agents/` with YAML frontmatter specifying model, tools, and description.
+SubAgents execute their work autonomously and return a structured completion report as their Task result.
+Lead reads the Task result and determines next actions.
 
-Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No SendMessage needed for review data transfer.
+Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No inter-agent messaging needed for review data transfer.
 
-Review teammates (Inspector/Auditor) MUST suppress text output to prevent context leakage via idle notifications. After writing their output file, they output ONLY `WRITTEN:{path}` and terminate. All analysis is internal.
+Review SubAgents (Inspector/Auditor) MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). After writing their output file, they return ONLY `WRITTEN:{path}` as their final text. All detailed analysis goes into the CPF output file.
 
 ### State Management
 
-**spec.yaml is owned by Lead.** T2/T3 teammates MUST NOT update spec.yaml directly.
-- Teammates produce work artifacts (design.md, tasks.yaml, code) and output completion reports
+**spec.yaml is owned by Lead.** T2/T3 SubAgents MUST NOT update spec.yaml directly.
+- SubAgents produce work artifacts (design.md, tasks.yaml, code) and return completion reports
 - Lead validates results, computes metadata updates (phase, version_refs, changelog)
 - Lead updates spec.yaml directly
 
 ```
-User ──→ Lead ──→ T2/T3 Teammates
+User ──→ Lead ──→ T2/T3 SubAgents
               ◄──
 ```
 
@@ -64,45 +63,44 @@ Lead's operations on spec artifacts are restricted to the following:
 When the user requests changes (bug fix, enhancement, edit) to any spec-managed file:
 - Use `/sdd-roadmap revise {feature}` for completed specs
 - Use `/sdd-roadmap design {feature}` for specs not yet implemented
-- **Content changes MUST always be routed through the responsible teammate**
+- **Content changes MUST always be routed through the responsible SubAgent**
 
 ### Phase Gate
 
-Before spawning any teammate, Lead MUST verify:
+Before dispatching any SubAgent, Lead MUST verify:
 - `spec.yaml.phase` is appropriate for the requested operation
 - If `spec.yaml.phase` is `blocked`: BLOCK with "{feature} is blocked by {blocked_info.blocked_by}"
 - If `spec.yaml.phase` is unrecognized: BLOCK with "Unknown phase '{phase}'"
-- On failure: report error to user (do NOT spawn teammates unnecessarily)
+- On failure: report error to user (do NOT dispatch SubAgents unnecessarily)
 
-### Teammate Lifecycle
+### SubAgent Lifecycle
 
-Lead spawns teammates using `TeammateTool`. Each teammate:
-1. Receives context in spawn prompt (feature, paths, scope, instructions)
+Lead dispatches SubAgents using `Task` tool. Each SubAgent:
+1. Receives context in the Task prompt (feature, paths, scope, instructions)
 2. Executes its work autonomously
-3. Outputs a structured completion report as final text
-4. Goes idle automatically (sends idle notification to Lead)
+3. Returns a structured completion report as the Task result
+4. Auto-terminates after returning the result
 
-Lead reads the idle notification and:
+Lead reads the Task result and:
 - Extracts results (artifacts created, test results, knowledge tags, blocker info)
 - Updates spec.yaml metadata (phase, version_refs, changelog)
 - Auto-drafts session.md, records decisions to decisions.md, updates buffer.md
-- Determines next action (spawn next teammate, escalate to user, etc.)
-- Requests shutdown of the teammate (teammate approves and terminates)
+- Determines next action (dispatch next SubAgent, escalate to user, etc.)
 
-For review pipelines: Lead spawns Inspectors first (all via `TeammateTool`). Inspectors write CPF findings to `.review/` directory. After all Inspectors complete, Lead spawns Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap §File-Based Review Protocol.
+For review pipelines: Lead dispatches Inspectors first (all via `Task`). Inspectors write CPF findings to `.review/` directory. After all Inspectors complete, Lead dispatches Auditor which reads CPF files and writes `verdict.cpf`. Lead reads the verdict file. See sdd-roadmap File-Based Review Protocol.
 
-**Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's completion report as it arrives. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dismiss completed Builder and spawn next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
+**Builder parallel coordination** (incremental processing): When multiple Builders run in parallel, Lead reads each Builder's Task result as it returns. On each completion: update tasks.yaml (mark completed tasks as `done`), collect files, store knowledge tags. If next-wave tasks are now unblocked, dispatch next-wave Builders immediately. Final spec.yaml update (phase, implementation.files_created) happens only after ALL Builders complete.
 
-### Agent Teams Known Constraints
+### SubAgent Platform Constraints
 
-- **No shared memory**: Teammates do not share conversation context. All context must be passed via spawn prompt or SendMessage payload.
-- **Messaging is bidirectional**: Lead ↔ Teammate, Teammate ↔ Teammate all supported via SendMessage. However, the framework's standard communication pattern is: Lead reads teammate's idle notification output (not message-based).
-- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. No SendMessage needed for review data transfer.
-- **Concurrent teammate limit**: 24 (3 pipelines × 7 teammates + headroom). Consensus mode (`--consensus N`) spawns N pipelines in parallel (7×N teammates).
+- **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
+- **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `.review/` directory, Auditor reads them. No inter-agent messaging needed for review data transfer.
+- **Concurrent SubAgent limit**: 24 (3 pipelines x 7 SubAgents + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel (7xN SubAgents).
 
-### Teammate Failure Handling
+### SubAgent Failure Handling
 
-File-based review protocol makes all teammate outputs idempotent (same `.review/` directory, same file paths). If a teammate goes idle without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. No special recovery mode — retry is the same flow as the initial attempt.
+File-based review protocol makes all SubAgent outputs idempotent (same `.review/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
 
 ## Project Context
 
@@ -114,7 +112,7 @@ File-based review protocol makes all teammate outputs idempotent (same `.review/
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
-- Agent Profiles: `{{SDD_DIR}}/settings/agents/`
+- Agent Profiles: `.claude/agents/`
 
 ### Artifacts
 
@@ -177,26 +175,25 @@ All lifecycle operations auto-create a 1-spec roadmap if none exists. Roadmap is
 
 CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/{feature}/verdicts.md` Tracked section). Auto-fix triggers on NO-GO or SPEC-UPDATE-NEEDED only:
 1. Extract fix instructions from Auditor's verdict
-2. Dismiss review teammates
-3. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
-4. Determine fix scope and spawn fix teammates (all via `TeammateTool`):
-   - **NO-GO (design review)** → spawn Architect with fix instructions
-   - **NO-GO (impl review)** → spawn Builder(s) with fix instructions
-   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: spawn Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder. All tasks fully re-implemented.
+2. Track counters: `retry_count` for NO-GO (max 3), `spec_update_count` for SPEC-UPDATE-NEEDED (max 2, separate)
+3. Determine fix scope and dispatch fix SubAgents (all via `Task`):
+   - **NO-GO (design review)** → dispatch Architect with fix instructions
+   - **NO-GO (impl review)** → dispatch Builder(s) with fix instructions
+   - **SPEC-UPDATE-NEEDED** → reset `orchestration.last_phase_action = null`, set `phase = design-generated`, then cascade: dispatch Architect (with SPEC_FEEDBACK from Auditor) → TaskGenerator → Builder. All tasks fully re-implemented.
    - **Structural changes** → auto-fix in full-auto mode, escalate in `--gate` mode
-   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → spawn with fix instructions
-5. After fix, dismiss fix teammates, then spawn review pipeline (Inspectors + Auditor) again
-6. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2 → escalate to user
-7. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 4. Escalate to user at aggregate 4.
+   - **NO-GO (wave quality gate)** → map findings to file paths → identify responsible Builder(s) from file ownership records → dispatch with fix instructions
+4. After fix, dispatch review pipeline (Inspectors + Auditor) again
+5. If `retry_count` ≥ 3 or `spec_update_count` ≥ 2 → escalate to user
+6. **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 4. Escalate to user at aggregate 4.
 
 ### Wave Quality Gate (Roadmap)
 - After all specs in a wave complete: Impl Cross-Check review (wave-scoped) → Dead Code review
-- Issues found → re-spawn responsible Builder(s) from file ownership records → re-review
+- Issues found → re-dispatch responsible Builder(s) from file ownership records → re-review
 - Max 3 retries per gate → escalate to user. On escalation, user chooses: proceed to Dead Code review despite issues, or abort wave
 - Wave completion condition: all specs in wave are `implementation-complete` or `blocked`
 - CONDITIONAL = GO (proceed; remaining issues are persisted to `specs/verdicts-wave.md`)
 - Wave scope is cumulative: Wave N quality gate re-inspects ALL code from Waves 1..N
-- **NEW issue detection**: Lead reads `specs/verdicts-wave.md` to collect resolved issues from waves 1..{N-1}. Lead includes in Inspector spawn context: "Previously resolved issues: {resolved findings from verdicts-wave.md}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
+- **NEW issue detection**: Lead reads `specs/verdicts-wave.md` to collect resolved issues from waves 1..{N-1}. Lead includes in Inspector dispatch context: "Previously resolved issues: {resolved findings from verdicts-wave.md}". Inspectors MUST NOT re-flag resolved items. If an issue recurs after being marked resolved, flag as REGRESSION (upgrade severity by one level).
 
 ### Blocking/Unblocking Protocol
 
@@ -220,7 +217,7 @@ When user requests unblocking:
 - Cascade during Architect failure: escalate entire spec to user
 - Structural changes (spec split, etc.): escalate to user, record DIRECTION_CHANGE in decisions.md
 - Design Review Auto-Fix: after fix, phase remains `design-generated`
-- SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's spawn prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
+- SPEC-UPDATE-NEEDED cascade: Lead resets `orchestration.last_phase_action = null`, sets `phase = design-generated`, passes SPEC_FEEDBACK from Auditor to Architect's dispatch prompt. All tasks are fully re-implemented (no differential — Builder overwrites)
 
 ### File Ownership (Cross-Spec, Advisory)
 
@@ -230,7 +227,7 @@ File ownership is **advisory**: it guides Builder task assignment and auto-fix r
 - Cross-Spec file overlap resolution (Layer 2, Lead responsibility):
   1. After all parallel specs' tasks.yaml are generated, collect file lists from each execution section
   2. Detect overlap: for each file pair (group_A, group_B) where both claim the same file
-  3. If A and B are in same wave (parallel candidates): serialize the overlapping specs OR partition file ownership by re-spawning TaskGenerator with file exclusion constraints
+  3. If A and B are in same wave (parallel candidates): serialize the overlapping specs OR partition file ownership by re-dispatching TaskGenerator with file exclusion constraints
   4. If A depends on B (or vice versa): OK (already serialized by dependency)
   5. Record final file ownership assignments for auto-fix routing
 
@@ -398,22 +395,21 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 ## Knowledge Auto-Accumulation
 
 - Builder/Inspector report learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead collects tagged reports from teammate completion outputs and writes to `buffer.md`
+- Lead collects tagged reports from SubAgent Task results and writes to `buffer.md`
 - On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
 - Skill emergence: When buffer.md Knowledge Buffer contains 2+ `[PATTERN]` entries sharing the same category AND description pattern, Lead adds a Skill candidate entry to buffer.md Skill Candidates section. Surfaced to user via `/sdd-knowledge --skills` or at wave completion. Lead does NOT auto-create Skill files without user approval.
 
 ## Pipeline Stop Protocol
 
 When user requests stop during pipeline execution:
-1. Lead dismisses all active T2/T3 teammates
-2. Lead auto-drafts `session.md` with current direction and progress
-3. Report to user: what was completed, what was in progress, how to resume
+1. Lead auto-drafts `session.md` with current direction and progress
+2. Report to user: what was completed, what was in progress, how to resume
 
 Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point. For 1-spec roadmaps, use the specific subcommand (e.g., `/sdd-roadmap impl {feature}`) to resume from the interrupted phase.
 
 ## Behavioral Rules
 - **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Direct `/sdd-design`, `/sdd-impl`, `/sdd-review` commands redirect to their `/sdd-roadmap` equivalents. Do NOT use individual commands directly — always use `/sdd-roadmap {subcommand}`.
-- **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see §Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
+- **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
 - After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
 - Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
