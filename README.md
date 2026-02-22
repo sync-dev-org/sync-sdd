@@ -2,9 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-AI-DLC (AI Development Life Cycle) with 3-tier Agent Team architecture, phase-gated workflow, and specification traceability.
-
-> **Agent Teams mode**: `settings.json` の `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` により、spawn/dismiss/SendMessage が有効。これは意図的な設計選択。
+AI-DLC (AI Development Life Cycle) with 3-tier SubAgent architecture, phase-gated workflow, and specification traceability.
 
 ## Install
 
@@ -21,7 +19,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.19.0
+curl -LsSf <url>/install.sh | sh -s -- --version v0.20.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -38,9 +36,9 @@ your-project/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
     ├── skills/sdd-*/SKILL.md          # 9 skills
+    ├── agents/sdd-*.md               # 23 SubAgent definitions (YAML frontmatter)
     └── sdd/
         └── settings/                  # Framework-managed
-            ├── agents/                # 23 agent profiles (spawn prompt templates)
             ├── rules/
             ├── templates/
             └── profiles/
@@ -61,11 +59,11 @@ Reset all project files: `rm -rf .claude/sdd/project`
 
 ```
 Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
-Tier 2: Brain    ─── Architect / Auditor ────────── (Teammate, Opus)
-Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (Teammate ×N, Sonnet)
+Tier 2: Brain    ─── Architect / Auditor ────────── (SubAgent, Opus)
+Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAgent ×N, Sonnet)
 ```
 
-Lead handles user interaction, phase gates, spawn planning, and teammate lifecycle management. All work is delegated through the Agent Team hierarchy.
+Lead handles user interaction, phase gates, dispatch planning, and SubAgent orchestration. All work is delegated via `Task(subagent_type=...)` to agents defined in `.claude/agents/`.
 
 ## Quick start
 
