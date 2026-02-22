@@ -160,7 +160,12 @@ Overall design is coherent. Main concern is implicit availability assumptions.
 Component interaction model has an unaddressed race condition pattern.
 ```
 
-**After writing your output file, terminate immediately.**
+**CRITICAL: Do NOT output analysis text.** Perform all analysis internally.
+Write your CPF findings to the output file, then output ONLY this single line and terminate:
+
+`WRITTEN:{output_file_path}`
+
+Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
 
 ## Error Handling
 

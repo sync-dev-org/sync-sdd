@@ -169,7 +169,12 @@ Coverage is 85% (17/20 AC fully covered)
 2 overreach items are legitimate design decisions (caching, logging)
 ```
 
-**After writing your output file, terminate immediately.**
+**CRITICAL: Do NOT output analysis text.** Perform all analysis internally.
+Write your CPF findings to the output file, then output ONLY this single line and terminate:
+
+`WRITTEN:{output_file_path}`
+
+Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
 
 ## Error Handling
 

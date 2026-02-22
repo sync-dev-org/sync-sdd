@@ -175,7 +175,12 @@ Settings agent found clean config passthrough for 12/14 fields
 Recommend batch cleanup of 4 unused imports in src/
 ```
 
-**After writing your verdict file, terminate immediately.**
+**CRITICAL: Do NOT output analysis text.** Perform all verification steps internally.
+Write your verdict to the output file, then output ONLY this single line and terminate:
+
+`WRITTEN:{verdict_file_path}`
+
+Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
 
 ## Error Handling
 

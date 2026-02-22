@@ -34,6 +34,8 @@ Lead reads completion output and determines next actions.
 
 Review pipelines use **file-based communication**: Inspectors write CPF files to a `.review/` directory, Auditor reads them and writes `verdict.cpf`. No SendMessage needed for review data transfer.
 
+Review teammates (Inspector/Auditor) MUST suppress text output to prevent context leakage via idle notifications. After writing their output file, they output ONLY `WRITTEN:{path}` and terminate. All analysis is internal.
+
 ### State Management
 
 **spec.yaml is owned by Lead.** T2/T3 teammates MUST NOT update spec.yaml directly.

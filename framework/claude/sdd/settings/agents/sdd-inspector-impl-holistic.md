@@ -167,7 +167,12 @@ Code structure matches design well. Main concern is error path resource cleanup.
 Two modules implicitly share assumptions about environment variable formats.
 ```
 
-**After writing your output file, terminate immediately.**
+**CRITICAL: Do NOT output analysis text.** Perform all analysis internally.
+Write your CPF findings to the output file, then output ONLY this single line and terminate:
+
+`WRITTEN:{output_file_path}`
+
+Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
 
 ## Error Handling
 

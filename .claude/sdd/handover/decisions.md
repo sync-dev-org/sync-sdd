@@ -134,3 +134,6 @@
 [2026-02-22T12:30:00Z] D23: SESSION_END | v0.18.0 spec alignment + gitignore cleanup
 - Context: /sdd-handover executed
 - Decision: Session ended, handover archived
+
+[2026-02-22T14:00:00Z] D24: SESSION_START | Resume session
+- Context: v0.18.1 リリース完了後の再開。全15 spec implementation-complete、ワークツリーclean

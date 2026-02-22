@@ -141,7 +141,12 @@ Task completion: 8/10 (80%)
 Traceability: 14/18 AC (78%)
 ```
 
-**After writing your output file, terminate immediately.**
+**CRITICAL: Do NOT output analysis text.** Perform all analysis internally.
+Write your CPF findings to the output file, then output ONLY this single line and terminate:
+
+`WRITTEN:{output_file_path}`
+
+Any analysis text you produce will leak into Lead's context via idle notification and waste tokens.
 
 ## Error Handling
 
