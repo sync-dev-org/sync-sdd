@@ -95,7 +95,7 @@
 
 **Acceptance Criteria:**
 1. Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blocked` であること
-2. Impl Cross-Check Review を累積スコープ（Wave 1..N）で実行する（6 impl Inspectors が `.review-wave-{N}/` に CPF ファイル書き出し → Auditor が読み取り `verdict.cpf` 書き出し）
+2. Impl Cross-Check Review を累積スコープ（Wave 1..N）で実行する（6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）が `.review-wave-{N}/` に CPF ファイル書き出し → Auditor が読み取り `verdict.cpf` 書き出し）
 3. `verdicts-wave.md` から前 Wave の解決済み issues を読み込み、Inspector spawn context に PREVIOUSLY_RESOLVED として含める
 4. 解決済み issue が再発した場合は REGRESSION タグを付与し、severity を 1 段階引き上げる
 5. Cross-Check verdict を `verdicts-wave.md` にバッチ `[W{wave}-B{seq}]` ヘッダーで永続化する
@@ -285,7 +285,7 @@ flowchart TD
     Builder --> BuilderDone{All Builders<br/>Complete?}
     BuilderDone -->|Blocked| BuilderBlock[Classify Blocker<br/>Reorder / Escalate]
     BuilderBlock --> Builder
-    BuilderDone -->|Yes| ImplReview[Impl Review Phase<br/>6 Inspectors → .review/<br/>Auditor reads → verdict.cpf]
+    BuilderDone -->|Yes| ImplReview[Impl Review Phase<br/>6-7 Inspectors (+E2E for web) → .review/<br/>Auditor reads → verdict.cpf]
     ImplReview --> IRVerdict{Verdict?}
     IRVerdict -->|GO / CONDITIONAL| SpecDone([Spec Complete<br/>phase = implementation-complete])
     IRVerdict -->|NO-GO| IRFix[Auto-Fix: Builder re-spawn]
@@ -482,8 +482,9 @@ flowchart TD
 11. 全 Builder 完了後: 全 Builder の files を集約し、`spec.yaml` を更新: `phase=implementation-complete`, `implementation.files_created=[...]`, `version_refs.implementation={version}`
 
 **Implementation Review Phase (ファイルベース):**
-1. 6 impl Inspectors を `TeammateTool` で spawn する
+1. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を `TeammateTool` で spawn する
    - Inspector set: impl-rulebase, interface, test, quality, impl-consistency, impl-holistic
+   - Web プロジェクトの場合: + sdd-inspector-e2e
    - 各 Inspector context: "Feature: {feature}, Write findings to: `.review/{inspector-name}.cpf`"
    - Inspectors は各自 `.review/` ディレクトリに CPF ファイルを書き出す
 2. 全 Inspector の completion を待つ
@@ -508,7 +509,7 @@ Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blo
 
 **a. Impl Cross-Check Review (wave-scoped, ファイルベース):**
 1. `verdicts-wave.md` から前 Wave バッチの解決済み issues を読み込む（PREVIOUSLY_RESOLVED 構築）
-2. 6 impl Inspectors を Wave スコープ cross-check context 付きで spawn する
+2. 6 impl Inspectors（Web プロジェクトの場合は + E2E Inspector で計 7）を Wave スコープ cross-check context 付きで spawn する
    - 各 Inspector: "Wave-scoped cross-check, Wave: 1..{N}, Previously resolved: {PREVIOUSLY_RESOLVED}, Write findings to: `.review-wave-{N}/{inspector-name}.cpf`"
    - Inspectors は `.review-wave-{N}/` ディレクトリに CPF ファイルを書き出す
 3. 全 Inspector completion 後、Auditor を spawn する
@@ -588,7 +589,7 @@ Wave 完了条件: Wave 内全 spec が `implementation-complete` または `blo
 | sdd-auditor-impl agent | Agent (T2) | Impl verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-impl.md` |
 | sdd-auditor-dead-code agent | Agent (T2) | Dead code verdict 合成 | `framework/claude/sdd/settings/agents/sdd-auditor-dead-code.md` |
 | Design Inspector set (6) | Agent (T3) | 設計レビュー視点 | `framework/claude/sdd/settings/agents/sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}.md` |
-| Impl Inspector set (6) | Agent (T3) | 実装レビュー視点 | `framework/claude/sdd/settings/agents/sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md` |
+| Impl Inspector set (6+1) | Agent (T3) | 実装レビュー視点 | Standard: `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}.md` + Web: `sdd-inspector-e2e.md` |
 | Dead-Code Inspector set (4) | Agent (T3) | Dead code レビュー視点 | `framework/claude/sdd/settings/agents/sdd-inspector-dead-{settings,code,specs,tests}.md` |
 | spec.yaml | State | Spec フェーズ・メタデータ管理 | `{{SDD_DIR}}/project/specs/{feature}/spec.yaml` |
 | roadmap.md | Artifact | ロードマップ定義 | `{{SDD_DIR}}/project/specs/roadmap.md` |
@@ -641,9 +642,9 @@ blocked ──[Unblock: fix/skip]──→ {blocked_at_phase}
 | Standard | 24 | 3 pipelines x 7 teammates + headroom |
 | Consensus N | 7 x N | Per pipeline: 6 Inspectors + 1 Auditor |
 | Design review | 7 | 6 Inspectors + 1 Auditor (sequential: Inspectors first, then Auditor) |
-| Impl review | 7 | 6 Inspectors + 1 Auditor (sequential: Inspectors first, then Auditor) |
+| Impl review | 7-8 | 6-7 Inspectors + 1 Auditor (Web プロジェクト: +1 E2E Inspector) |
 | Dead-code review | 5 | 4 Inspectors + 1 Auditor (sequential: Inspectors first, then Auditor) |
-| Wave QG (cross-check + dead-code) | 12 | 7 (cross-check) + 5 (dead-code), sequential |
+| Wave QG (cross-check + dead-code) | 12-13 | 7-8 (cross-check) + 5 (dead-code), sequential (Web プロジェクト: cross-check +1 E2E Inspector) |
 
 ### Review Directory Structure
 
@@ -689,6 +690,19 @@ blocked ──[Unblock: fix/skip]──→ {blocked_at_phase}
 ---
 
 ## Revision Notes
+
+### v1.2.0 (2026-02-22) — v0.19.0 E2E Inspector 条件付き追加
+
+- **背景**: v0.19.0 で E2E Inspector（`sdd-inspector-e2e.md`）が Web プロジェクト条件付きで追加された
+- **変更内容**: Impl Review Inspector 数を 6 → 6 または 7（Web プロジェクト）に更新。以下のセクションを更新:
+  - Spec 7（Wave Quality Gate）AC 2: 6 → 6+E2E（Web プロジェクト）
+  - SF-2 Step 4（Implementation Review Phase）: Inspector spawn 記述と Inspector set リストに E2E 条件付き追加
+  - SF-2 Step 5a（Impl Cross-Check Review）: Inspector spawn 記述に E2E 条件付き追加
+  - Components テーブル: Impl Inspector set (6) → (6+1)、E2E Inspector ファイル追記
+  - Concurrent Teammate Limits テーブル: Impl review / Wave QG の上限を 7-8 / 12-13 に更新
+  - Pipeline Execution Flow (mermaid): ImplReview ラベルを "6-7 Inspectors (+E2E for web)" に更新
+- **Web プロジェクト判定**: `steering/tech.md` に Web スタック指標（React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend 等）を含む場合を Web プロジェクトとみなす
+- **E2E Inspector の非ブロッキング**: playwright-cli 未インストール時は E2E Inspector は GO + NOTES: SKIPPED を出力し、パイプラインをブロックしない
 
 ### v1.1.0 (2026-02-22) — v0.18.0 Retroactive Alignment
 - Roadmap Router: `/sdd-roadmap` を統合エントリポイントとして design/impl/review サブコマンド追加（Spec 1, Spec 2 新設）

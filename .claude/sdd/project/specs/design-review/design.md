@@ -32,7 +32,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 3. 各 Inspector は自身の担当領域のみを検査し、他 Inspector の領域と重複しない
 4. 各 Inspector は CPF 形式（`VERDICT:`, `SCOPE:`, `ISSUES:`, `NOTES:`）で findings を出力する
 5. 各 Inspector は `.review/{inspector-name}.cpf` ファイルに CPF findings を書き出す
-6. 各 Inspector はファイル書き出し後、即座に terminate する（追加メッセージを待たない）
+6. 各 Inspector はファイル書き出し後、テキスト出力として `WRITTEN:{file_path}` の1行のみを出力し、即座に terminate する。全ての解析はエージェント内部で完結させ、分析テキストは出力しない（idle notification 経由のコンテキスト漏洩防止）
 7. Single spec mode: 対象 spec の design.md と spec.yaml を読み込む
 8. Cross-check mode: 全 spec の design.md を読み込み、横断的な問題を検出する
 9. Wave-scoped mode: wave <= N の spec のみをフィルタし、将来 wave の機能不足を flag しない
@@ -48,7 +48,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Traceability Check: 全 design component が spec にトレースでき、orphan component / orphan spec がないことを確認する
 6. Specifications section に内部実装詳細（class 名、function signature、DB schema）が含まれていないことを検証する
 7. Design sections に新規 acceptance criteria が含まれていないことを検証する（scope creep 検出）
-8. CPF findings を `.review/inspector-rulebase.cpf` に書き出す
+8. CPF findings を `.review/inspector-rulebase.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 4: Testability Inspector
 **Goal:** テスト実装者の視点から設計の明確性を評価する（"テストを推測なしに書けるか？"）
@@ -61,7 +61,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Mockability 検証: 外部依存関係がモック可能で、依存インターフェースが明確に定義されていることを確認する
 6. Edge Case Coverage: null/empty/undefined ケース、エラーシナリオの列挙、concurrent access シナリオが対処されていることを確認する
 7. Cross-check mode: 共有コンポーネントの曖昧な振る舞い、統合ポイントのテスト契約不足、不整合なエラーハンドリングパターンを検出する
-8. CPF findings を `.review/inspector-testability.cpf` に書き出す
+8. CPF findings を `.review/inspector-testability.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 5: Architecture Inspector
 **Goal:** コンポーネント境界、インターフェース契約、状態遷移、ハンドオフポイントの設計検証可能性を評価する
@@ -74,7 +74,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Dependency Architecture 検証: コンポーネント間依存関係が非循環で、外部依存が分離されていることを確認する
 6. 関連 spec の design.md を読み込み、cross-spec の依存関係分析を実施する
 7. Cross-check mode: 共有コンポーネントの責務競合、API 互換性、データモデル整合性、循環依存を検出する
-8. CPF findings を `.review/inspector-architecture.cpf` に書き出す
+8. CPF findings を `.review/inspector-architecture.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 6: Consistency Inspector
 **Goal:** Specifications section と Design sections の間の整合性を検証する（ギャップとスコープクリープの検出）
@@ -87,7 +87,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. Scope Boundary Verification: 他の spec に属する機能が含まれていないことを確認する
 6. 関連 spec を読み込み、スコープ重複を検出する
 7. Cross-check mode: cross-spec の仕様矛盾、共有仕様の設計乖離、"誰の責任でもない" ギャップを検出する
-8. CPF findings を `.review/inspector-consistency.cpf` に書き出す
+8. CPF findings を `.review/inspector-consistency.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 7: Best Practices Inspector
 **Goal:** 設計決定を業界標準とベストプラクティスに照らして評価する
@@ -100,7 +100,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. WebSearch/WebFetch を使用して技術選択とパターンを検証する
 6. Knowledge context（pattern-*.md, reference-*.md）を読み込んで既知パターンを参照する
 7. Steering context（特に tech.md）を参照して技術的制約との整合性を確認する
-8. CPF findings を `.review/inspector-best-practices.cpf` に書き出す
+8. CPF findings を `.review/inspector-best-practices.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 8: Holistic Inspector
 **Goal:** 専門 Inspector 間の隙間に落ちる横断的・創発的課題を検出する
@@ -115,7 +115,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 7. 他 Inspector が明らかに検出する単一ドメインの問題ではなく、cross-cutting findings を優先する
 8. WebSearch/WebFetch を必要に応じて使用する
 9. findings を CPF カテゴリ（blind-spot, implicit-assumption, emergent-risk, feasibility-concern, cross-cutting, missing-context）で分類する
-10. CPF findings を `.review/inspector-holistic.cpf` に書き出す
+10. CPF findings を `.review/inspector-holistic.cpf` に書き出す。書き出し後は `WRITTEN:{file_path}` の1行のみを出力し、terminate する（分析テキストを出力しない）
 
 ### Spec 9: Design Auditor Synthesis
 **Goal:** 6 Inspector の findings を cross-check・検証・統合し、最終 verdict を出力する
@@ -136,7 +136,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 13. CPF 形式で verdict を `.review/verdict.cpf` に書き出す（VERDICT, SCOPE, VERIFIED, REMOVED, RESOLVED, STEERING, NOTES セクション）
 14. Verdict Output Guarantee: 処理バジェットが尽きそうな場合、即座に Step 9 にスキップし `NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` 付きで verdict を出力する
 15. Large-scope review (wave-scoped-cross-check, cross-check) では Inspector 報告の evidence のみで処理し、spec ファイルの再読み込みは行わない
-16. Completion report を出力し、verdict ファイルのパスを含める
+16. テキスト出力として `WRITTEN:{verdict_file_path}` の1行のみを出力し、即座に terminate する。全ての合成処理はエージェント内部で完結させ、分析テキストは出力しない（idle notification 経由のコンテキスト漏洩防止）
 
 ### Spec 10: Consensus Mode
 **Goal:** `--consensus N` オプションにより N 本のパイプラインを並列実行し、閾値ベースの合意形成で verdict のノイズを低減する
@@ -521,8 +521,10 @@ InspectorRulebase:
   execute(feature: string, review_dir: string) -> void
     - Loads context autonomously
     - Writes CPF findings to {review_dir}/inspector-rulebase.cpf
-    - Terminates immediately after writing
+    - Outputs ONLY "WRITTEN:{file_path}" as single line of text, then terminates
+    - NO analysis text output (applies to all 6 Inspectors — output suppression protocol)
 ```
+> **出力抑制プロトコル**: 全 Inspector (6) は CPF ファイル書き出し後、`WRITTEN:{path}` の1行のみをテキスト出力として送出し、即座に terminate する。分析テキストの出力は禁止（idle notification 経由のコンテキスト漏洩防止）。この制約は Auditor にも同様に適用される。
 
 ##### CPF Output Format
 ```
@@ -902,3 +904,21 @@ ROADMAP_ADVISORY:
 
 **既存 Revision Notes との関係**:
 - v1.1.0 の Spec 15 (Inspector Completion Trigger) は v1.2.0 で順次 spawn に置き換えられたため、Spec 自体は削除された。v1.1.0 の記述は歴史的記録として保持する
+
+### v1.3.0 (2026-02-22) — v0.18.2 Output Suppression Rule
+
+**背景**: v0.18.2 で発見された Agent Teams idle notification のコンテキスト漏洩問題。Inspector/Auditor がファイル書き出し後にテキスト出力（分析内容など）を行うと、そのテキストが idle notification のペイロードに含まれて Lead コンテキストに漏洩し、意図しないコンテキスト汚染が発生することが判明した。
+
+**変更内容**:
+- **全 Inspector (6) + Auditor に `WRITTEN:{path}` のみ出力ルールを追加**
+  - Spec 2 AC 6: ファイル書き出し後に `WRITTEN:{file_path}` の1行のみを出力し terminate する旨を追記。分析テキスト出力禁止を明示
+  - Spec 3 AC 8 (Rulebase): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 4 AC 8 (Testability): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 5 AC 8 (Architecture): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 6 AC 8 (Consistency): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 7 AC 8 (Best Practices): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 8 AC 10 (Holistic): CPF 書き出し後の出力抑制ルールを追加
+  - Spec 9 AC 16: `WRITTEN:{verdict_file_path}` の1行のみ出力し terminate する旨に変更
+  - Components > Inspection Layer > InspectorRulebase Service Interface: 出力抑制プロトコルの注記を追加（全 6 Inspector に共通適用）
+
+**適用範囲**: 全レビュータイプ共通（impl-review, dead-code-review も同様の変更が適用される）。`WRITTEN:{path}` は全レビュー teammate の唯一の許可テキスト出力。

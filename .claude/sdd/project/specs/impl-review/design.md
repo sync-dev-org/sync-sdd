@@ -17,9 +17,9 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 4. `impl --wave N` で Wave スコープレビューが実行できる
 5. Phase Gate: `design.md` と `tasks.yaml` の存在を確認し、`phase` が `implementation-complete` であることを検証する
 6. `phase` が `blocked` の場合は "{feature} is blocked by {blocked_info.blocked_by}" でブロックする
-7. 6 Inspector を先に全て `TeammateTool` で spawn する。全 Inspector 完了後に Auditor を `TeammateTool` で spawn する（`Task` tool は使用しない）
+7. Standard 6 Inspector + Web プロジェクトの場合は E2E Inspector（計 6 or 7）を `TeammateTool` で spawn する。全 Inspector 完了後に Auditor を `TeammateTool` で spawn する（`Task` tool は使用しない）
 8. 各 Inspector に "Feature: {feature}" のコンテキストと `.review/` ディレクトリパスを渡す
-9. 各 Inspector は `.review/{inspector-name}.cpf` に CPF findings を書き出す
+9. 各 Inspector は `.review/{inspector-name}.cpf` に CPF findings を書き出す。書き出し後 `WRITTEN:{file_path}` のみ出力して terminate。分析テキストは出力しない（コンテキスト漏洩防止）
 10. Auditor spawn 時に `handover/session.md` の Steering Exceptions セクションを含める
 11. Auditor は `.review/` ディレクトリから全 `.cpf` ファイルを読み込み、`.review/verdict.cpf` に verdict を書き出す
 12. Lead は `.review/verdict.cpf` を読み取り、verdicts.md に永続化し、`.review/` をクリーンアップする
@@ -29,7 +29,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 **Goal:** `--consensus N` オプションによる複数パイプライン並列実行と合意形成
 
 **Acceptance Criteria:**
-1. `--consensus N` 指定時、N 個のパイプラインを並列 spawn する (各パイプライン: 6 Inspector + 1 Auditor)
+1. `--consensus N` 指定時、N 個のパイプラインを並列 spawn する (各パイプライン: 6 or 7 Inspector + 1 Auditor)
 2. 各パイプラインの Auditor に一意の名前を付与する: `auditor-impl-1`, `auditor-impl-2`, ...
 3. 各パイプラインは独自の `.review-{p}/` ディレクトリを使用する（`.review-1/`, `.review-2/`, ...）。各 Inspector は対応するパイプラインの `.review-{p}/` に findings を書き出し、Auditor は同ディレクトリから読み込み・書き出す
 4. 各パイプラインで Inspector 全完了後に Auditor を spawn する（順次 spawn）
@@ -39,7 +39,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 8. 閾値未満の finding を Noise に分類する
 9. 合意 verdict の決定: 全 N 個が GO → GO、Consensus に C/H issue → NO-GO、Consensus に M/L のみ → CONDITIONAL
 10. N=1 (デフォルト) の場合は集約をスキップし、単一パイプラインとして直接実行する
-11. Concurrent teammate limit: 7 * N teammates（24 上限を超える N は実行不可）
+11. Concurrent teammate limit: 7 * N teammates（Web プロジェクトの場合は 8 * N）（24 上限を超える N は実行不可）
 
 ### Spec 3: Rulebase Inspector (`sdd-inspector-impl-rulebase`)
 **Goal:** Spec 準拠検証 -- タスク完了、spec traceability、ファイル構造の検証
@@ -52,7 +52,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 5. **AC-Test Traceability**: テストファイル内の `AC: {feature}.S{N}.AC{M}` マーカーを Grep で検索し、各 AC のテストカバレッジ率を報告する。マーカーが一切見つからない場合は advisory として報告する
 6. **Spec Metadata Integrity**: spec.yaml のステータスと tasks.yaml の実際の完了状態の整合性を確認する
 7. Wave-Scoped Cross-Check Mode: `roadmap.wave <= N` の spec のみスコープに含め、将来 wave の機能不足をフラグしない
-8. CPF findings を `.review/inspector-impl-rulebase.cpf` に書き出し、即座に terminate する
+8. CPF findings を `.review/inspector-impl-rulebase.cpf` に書き出し、`WRITTEN:.review/inspector-impl-rulebase.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 9. Severity は C/H/M/L の 4 段階、カテゴリは `task-incomplete`, `traceability-missing`, `file-missing`, `file-unexpected`, `metadata-mismatch` 等
 
 ### Spec 4: Interface Inspector (`sdd-inspector-interface`)
@@ -67,7 +67,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 6. **Cross-Module Interface Check**: feature 内のモジュール間インターフェースが設計と一致することを確認する
 7. Common Failure Modes の検出: 引数数不一致、引数順序間違い、return type 不一致、Optional/Required の混同、型境界不一致
 8. Mock を信頼せず、ACTUAL source code を読んで比較する (Core Philosophy: "DO NOT TRUST mocks")
-9. CPF findings を `.review/inspector-interface.cpf` に書き出し、即座に terminate する
+9. CPF findings を `.review/inspector-interface.cpf` に書き出し、`WRITTEN:.review/inspector-interface.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 10. カテゴリは `signature-mismatch`, `call-site-error`, `dependency-wrong` 等。signature mismatch は Critical として分類
 
 ### Spec 5: Test Inspector (`sdd-inspector-test`)
@@ -85,7 +85,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 9. **AC Marker Coverage**: テストファイル内の `AC: {feature}.S{N}.AC{M}` マーカーを Grep し、coverage < 80% の場合 severity H でフラグする。Stale マーカーは severity L でフラグする
 10. **Design Testing Strategy Alignment**: 実際のテストと design.md の Testing Strategy セクションを比較し、不足カテゴリを "Strategy not implemented" でフラグする
 11. tools に `Bash` を含み、`permissionMode: bypassPermissions` でテスト実行の権限を持つ
-12. CPF findings を `.review/inspector-test.cpf` に書き出し、即座に terminate する
+12. CPF findings を `.review/inspector-test.cpf` に書き出し、`WRITTEN:.review/inspector-test.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 
 ### Spec 6: Quality Inspector (`sdd-inspector-quality`)
 **Goal:** コード品質評価 -- エラー処理、命名、コード組織、steering 準拠
@@ -99,7 +99,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 6. **Dead Code and Unused Imports**: 未使用 import、到達不能コード、コメントアウトされたコード、未使用変数/関数を検出する
 7. **Design Pattern Compliance**: design.md で指定されたデザインパターン（singleton, factory 等）の正確な実装を検証する
 8. Cross-Check Mode で feature 横断の品質一貫性を評価する
-9. CPF findings を `.review/inspector-quality.cpf` に書き出し、即座に terminate する
+9. CPF findings を `.review/inspector-quality.cpf` に書き出し、`WRITTEN:.review/inspector-quality.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 10. カテゴリは `error-handling-drift`, `dead-code`, `naming-violation`, `logging-violation`, `pattern-violation`, `organization-drift` 等
 
 ### Spec 7: Consistency Inspector (`sdd-inspector-impl-consistency`)
@@ -115,7 +115,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 7. **Shared Resource Access Patterns**: database、cache、config、logging への統一的なアクセスパターンを検証する
 8. Cross-Check Mode で全 feature の体系的な一貫性評価を実行する
 9. 単一 feature の場合は他の codebase との比較でレビュー（比較対象がない場合は skip して報告）
-10. CPF findings を `.review/inspector-impl-consistency.cpf` に書き出し、即座に terminate する
+10. CPF findings を `.review/inspector-impl-consistency.cpf` に書き出し、`WRITTEN:.review/inspector-impl-consistency.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 11. カテゴリは `type-mismatch`, `interface-inconsistency`, `error-handling-inconsistency`, `import-pattern` 等
 
 ### Spec 8: Holistic Inspector (`sdd-inspector-impl-holistic`)
@@ -132,14 +132,27 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 8. tools に `WebSearch`, `WebFetch` を含み、ライブラリ/API のランタイム動作を検証する権限を持つ
 9. `permissionMode: bypassPermissions` で WebSearch/WebFetch のネットワークアクセス制限を回避する
 10. 他の Inspector が明らかに検出する問題は重複報告を避け、cross-cutting な findings を優先する
-11. CPF findings を `.review/inspector-impl-holistic.cpf` に書き出し、即座に terminate する
+11. CPF findings を `.review/inspector-impl-holistic.cpf` に書き出し、`WRITTEN:.review/inspector-impl-holistic.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
 12. カテゴリは `blind-spot`, `semantic-drift`, `resource-leak`, `race-condition`, `implicit-coupling`, `integration-gap`, `operational-risk`
+
+### Spec 8a: E2E Inspector (`sdd-inspector-e2e`, Web Projects Only)
+**Goal:** Web プロジェクトにおける E2E 機能テスト + ビジュアルデザイン評価
+
+**Acceptance Criteria:**
+1. Web プロジェクト（steering/tech.md に React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend 等の Web スタック指標を含む）の場合のみ spawn される
+2. playwright-cli を使用して design.md の Acceptance Criteria ベースのユーザーフロー E2E テストを実行する（Phase A）
+3. スクリーンショットキャプチャとマルチモーダル解析でビジュアルデザイン評価を実施する（Phase B）
+4. steering/ui.md のデザインシステム基準と spec の design.md を参照する
+5. playwright-cli 未インストール時は GO verdict + `NOTES: SKIPPED|playwright-cli not installed` で非ブロッキング終了する
+6. CPF findings を `.review/inspector-e2e.cpf` に書き出し、`WRITTEN:.review/inspector-e2e.cpf` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない
+7. カテゴリは `e2e-flow`, `e2e-visual-system`, `e2e-visual-quality`
+8. tools: Bash, Read, Glob, Grep。permissionMode: bypassPermissions
 
 ### Spec 9: Implementation Auditor (`sdd-auditor-impl`)
 **Goal:** 6 Inspector の findings を cross-check・検証・合成し、最終 verdict を出力する
 
 **Acceptance Criteria:**
-1. `.review/` ディレクトリから全 `.cpf` ファイルを読み込む（6 Inspector の findings）。利用可能な `.cpf` ファイルが 6 未満の場合、存在するファイルで処理を進行し、NOTES に `PARTIAL:{inspector-name}|not-available` を記録する
+1. `.review/` ディレクトリから全 `.cpf` ファイルを読み込む（6 or 7 Inspector の findings。E2E Inspector が存在する場合を含む）。利用可能な `.cpf` ファイルが期待数未満の場合、存在するファイルで処理を進行し、NOTES に `PARTIAL:{inspector-name}|not-available` を記録する
 2. **Step 1 - Cross-Check Between Agents**: findings 間の支持・矛盾を検出し、複数 agent 確認で confidence 上昇、単一 agent 発見で要検証とする
 3. **Spec Defect Detection**: 複数 agent が仕様を unimplementable と判定した場合、`specifications` or `design` phase に分類する。曖昧な場合は `specifications` を優先する
 4. **Step 2 - Contradiction Detection**: Agent 間の矛盾パターン（signature matches vs call fails、all passing vs wrong arg count 等）を 5 つのルールで解決する
@@ -156,7 +169,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 15. **Simplicity Bias**: AI complexity bias（過剰なエラー処理、ヘルパー、設定可能化の推奨）に対抗し、"Does the design specify this?" で判断する
 16. CPF verdict を `.review/verdict.cpf` に書き出す: `VERDICT`, `SCOPE`, `VERIFIED`, `REMOVED`, `RESOLVED`, `SPEC_FEEDBACK`, `STEERING`, `NOTES`, `ROADMAP_ADVISORY` (wave-scoped のみ)
 17. **STEERING セクション**: `CODIFY` (暗黙パターンの文書化、自動適用) / `PROPOSE` (新制約、ユーザー承認必要) の 2 レベル
-18. Completion report を出力し、verdict ファイルのパスを含める。その後 terminate する
+18. `WRITTEN:{verdict_file_path}` のみ出力して terminate する。全ての合成は内部で実施する（コンテキスト漏洩防止）
 
 ### Spec 10: Verdict Persistence
 **Goal:** verdicts.md への verdict 永続化と issue tracking
@@ -194,7 +207,7 @@ Consensus mode (`--consensus N`) では N 本のパイプラインを並列実�
 
 ## Overview
 
-Stage 2 (Implementation) の品質ゲート。設計レビュー（design-review spec）と同じ 6+1 Inspector-Auditor パターンを踏襲するが、実装コードの品質に特化した Inspector セットを使用する。
+Stage 2 (Implementation) の品質ゲート。設計レビュー（design-review spec）と同じ 6+1 Inspector-Auditor パターンを踏襲するが、実装コードの品質に特化した Inspector セットを使用する。Web プロジェクトでは E2E Inspector が追加され、6 or 7 Inspector 構成となる。
 
 **Purpose**: Implementation review pipeline は design.md の設計通りに実装が行われているか、品質基準を満たしているかを6つの独立した視点から並列検査する。各 Inspector が `.review/` ディレクトリに CPF findings を書き出し、Auditor が統合 verdict を出力することで、implementation 完了後の品質ゲートとして機能する。
 
@@ -212,18 +225,18 @@ Stage 2 (Implementation) の品質ゲート。設計レビュー（design-review
 
 **Pattern**: Parallel Fan-Out / Fan-In + File-Based Communication
 
-6 Inspector が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は Agent Teams mode の TeammateTool spawn とファイルシステムベースのデータ転送上に構築されている。
+6 Inspector（Web プロジェクトでは E2E Inspector を加えて 6 or 7）が Fan-Out で並列実行され、`.review/` ディレクトリへのファイル書き出しで findings を永続化する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで Fan-In 合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。この pattern は Agent Teams mode の TeammateTool spawn とファイルシステムベースのデータ転送上に構築されている。
 
 **Boundary Map**:
 - **Orchestration Layer** (Lead): Pipeline lifecycle management, phase gate, verdict handling, STEERING processing, verdicts.md persistence, `.review/` directory cleanup
-- **Inspection Layer** (6 Inspectors, T3): 独立した並列検査。各 Inspector は自身のスコープのみを検査し、他 Inspector と直接通信しない。findings を `.review/{inspector-name}.cpf` に書き出す
+- **Inspection Layer** (6 or 7 Inspectors, T3): 独立した並列検査。各 Inspector は自身のスコープのみを検査し、他 Inspector と直接通信しない。findings を `.review/{inspector-name}.cpf` に書き出す。E2E Inspector は Web プロジェクトのみ追加
 - **Synthesis Layer** (Auditor, T2): `.review/` から `.cpf` ファイルを読み込み、Cross-check, deduplication, severity reclassification, verdict を `.review/verdict.cpf` に書き出す
 - **Communication Protocol**: CPF format over filesystem (Inspector → `.review/` → Auditor), verdict file (Auditor → `.review/verdict.cpf` → Lead)
 
 **Steering Compliance**: Agent Teams architecture に準拠。TeammateTool で spawn。レビューデータ転送はファイルベース（`.review/` ディレクトリ）。Task tool は使用しない。
 
 ```
-6+1 Fan-Out/Fan-In Review Pipeline (File-Based)
+6(+1) Fan-Out/Fan-In Review Pipeline (File-Based)
 ==================================================
 
   Lead (T1, Dispatcher)
@@ -233,7 +246,8 @@ Stage 2 (Implementation) の品質ゲート。設計レビュー（design-review
     |                        ├── Inspector-Test (T3, Sonnet)             ├── .review/{name}.cpf ──→ .review/ directory
     |                        ├── Inspector-Quality (T3, Sonnet)          │
     |                        ├── Inspector-Impl-Consistency (T3, Sonnet) │
-    |                        └── Inspector-Impl-Holistic (T3, Sonnet)    ┘
+    |                        ├── Inspector-Impl-Holistic (T3, Sonnet)    │
+    |   (Web projects)       └── Inspector-E2E (T3, Sonnet)             ┘
     |
     |   (All Inspectors complete → idle notifications received)
     |
@@ -250,7 +264,7 @@ Stage 2 (Implementation) の品質ゲート。設計レビュー（design-review
     └── Process STEERING entries
 ```
 
-Inspector は全て並列実行（互いに独立）。各 Inspector は自律的にコンテキストを読み込み、独自の視点でレビューを実行し、CPF フォーマットで `.review/{inspector-name}.cpf` にファイル出力する。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで cross-check と合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。
+Inspector は全て並列実行（互いに独立）。各 Inspector は自律的にコンテキストを読み込み、独自の視点でレビューを実行し、CPF フォーマットで `.review/{inspector-name}.cpf` にファイル出力する。E2E Inspector は Web プロジェクトの場合のみ spawn される。全 Inspector 完了後に Auditor が spawn され、`.review/` ディレクトリから `.cpf` ファイルを読み込んで cross-check と合成を行い、`verdict.cpf` を書き出す。Lead は `verdict.cpf` から verdict を読み取る。
 
 ### Technology Stack
 
@@ -258,7 +272,7 @@ Inspector は全て並列実行（互いに独立）。各 Inspector は自律�
 |-------|------------------|-----------------|-------|
 | Orchestration | Lead (Opus) | Pipeline spawn, verdict handling, persistence | T1 role |
 | Synthesis | Auditor (Opus) | Finding cross-check, verdict generation | T2 role, requires higher reasoning |
-| Inspection | 6 Inspectors (Sonnet) | Parallel implementation review | T3 role, sufficient for focused inspection |
+| Inspection | 6 Inspectors (Sonnet) + E2E Inspector (Web のみ) | Parallel implementation review | T3 role, sufficient for focused inspection。Web プロジェクトでは playwright-cli ベース E2E Inspector が追加 |
 | Communication | CPF over filesystem (`.review/`) | Inter-agent structured data transfer | Token-efficient pipe-delimited format, file-based |
 | Lifecycle | TeammateTool | Spawn / Shutdown | Lead が全 teammate を管理 |
 | Persistence | verdicts.md (Markdown) | Verdict 履歴 & issue tracking | Batch 番号付き追記 |
@@ -525,6 +539,7 @@ flowchart TD
 | sdd-inspector-quality | Agent (T3, Sonnet) | コード品質 -- エラー処理、命名、組織、logging、dead code | `framework/claude/sdd/settings/agents/sdd-inspector-quality.md` |
 | sdd-inspector-impl-consistency | Agent (T3, Sonnet) | クロスフィーチャー整合性 -- 型、パターン、共有リソースアクセス | `framework/claude/sdd/settings/agents/sdd-inspector-impl-consistency.md` |
 | sdd-inspector-impl-holistic | Agent (T3, Sonnet) | 横断的課題 -- semantic drift、resource leak、race condition、blind spot | `framework/claude/sdd/settings/agents/sdd-inspector-impl-holistic.md` |
+| sdd-inspector-e2e | Agent (T3, Sonnet, Web のみ) | E2E 機能テスト + ビジュアルデザイン評価 -- playwright-cli ベース（Web プロジェクト条件付き） | `framework/claude/sdd/settings/agents/sdd-inspector-e2e.md` |
 | verdicts.md | Artifact | Verdict 履歴 & issue tracking | `specs/{feature}/verdicts.md` |
 
 ### Inspector Detail Matrix
@@ -537,6 +552,7 @@ flowchart TD
 | quality | Read, Glob, Grep | default | Yes (全ファイル Read) | No | error-handling-drift, dead-code, naming-violation, logging-violation, pattern-violation |
 | impl-consistency | Read, Glob, Grep | default | Yes (feature + 他 feature) | No | type-mismatch, interface-inconsistency, error-handling-inconsistency, import-pattern |
 | impl-holistic | Read, Glob, Grep, WebSearch, WebFetch | bypassPermissions | Yes (全ファイル + knowledge) | No (WebSearch/Fetch のみ) | blind-spot, semantic-drift, resource-leak, race-condition, implicit-coupling, integration-gap, operational-risk |
+| e2e (Web のみ) | Bash, Read, Glob, Grep | bypassPermissions | Yes | Yes (playwright-cli) | e2e-flow, e2e-visual-system, e2e-visual-quality |
 
 ### Auditor Verification Steps
 
@@ -680,3 +696,7 @@ Override: Auditor MAY override with justification
 - Agent 定義パス: framework/claude/agents/ → framework/claude/sdd/settings/agents/
 - コマンド参照: /sdd-review → /sdd-roadmap review
 - Recovery Protocol 廃止 → Teammate Failure Handling
+
+### v1.2.0 (2026-02-22) — v0.18.2 + v0.19.0 Retroactive Alignment
+- **v0.18.2**: 全 Inspector（Spec 3〜8）および Auditor（Spec 9）に出力抑制ルールを追加。CPF ファイル書き出し後 `WRITTEN:{file_path}` のみ出力して terminate する。全ての分析はテキスト出力せず内部で実施（コンテキスト漏洩防止）
+- **v0.19.0**: E2E Inspector (`sdd-inspector-e2e.md`) を Web プロジェクト条件付きで追加（Spec 8a）。playwright-cli ベースの E2E 機能テスト（Phase A）+ スクリーンショットキャプチャによるビジュアルデザイン評価（Phase B）。Inspector 数: 6 → 6 or 7（Web プロジェクト時）。Concurrent limit: 7×N → 7 or 8 × N。Spec 1 AC 7、Spec 2 AC 1、Spec 9 AC 1、Overview、Architecture、Component Overview、Inspector Detail Matrix、Technology Stack を更新

@@ -48,7 +48,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 6. Bash + project runtime で分析スクリプトを実行可能
 7. CPF フォーマット (`VERDICT`, `SCOPE`, `ISSUES`, `NOTES`) で findings を `.review/inspector-dead-settings.cpf` に書き出す
 8. Issue の category は `dead-config` を使用
-9. ファイル書き出し後、即座に terminate（追加メッセージを待たない）
+9. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
 
 ### Spec 3: Dead-Code Inspector
 **Goal:** 未使用のコードシンボル（関数・クラス・メソッド・インポート）の検出
@@ -76,7 +76,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 10. プロパティ、デコレータ、メタクラス経由の使用をチェック
 11. CPF フォーマットで findings を `.review/inspector-dead-code.cpf` に書き出す
 12. Issue の category は `dead-code` を使用
-13. ファイル書き出し後、即座に terminate
+13. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
 
 ### Spec 4: Dead-Specs Inspector
 **Goal:** 仕様と実装の整合性検証、spec drift の検出
@@ -99,7 +99,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 9. spec.yaml の phase と実際の状態を確認
 10. CPF フォーマットで findings を `.review/inspector-dead-specs.cpf` に書き出す
 11. Issue の category は `spec-drift` を使用
-12. ファイル書き出し後、即座に terminate
+12. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
 
 ### Spec 5: Dead-Tests Inspector
 **Goal:** 孤立テスト・陳腐化テスト・古いインターフェースに依存するテストの検出
@@ -122,7 +122,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
 8. パラメータ化テストの参照をチェック
 9. CPF フォーマットで findings を `.review/inspector-dead-tests.cpf` に書き出す
 10. Issue の category は `orphaned-test` を使用
-11. ファイル書き出し後、即座に terminate
+11. ファイル書き出し後、`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）
 
 ### Spec 6: Dead-Code Auditor (Synthesis)
 **Goal:** 4 Inspector の findings をクロスドメイン相関分析し、検証済み統合 verdict を出力
@@ -170,8 +170,7 @@ Wave Quality Gate の一部として実行される場合、`.review-wave-{N}-dc
     - `NOTES:` セクション（合成の所見）
     - 空セクションは省略
 12. Verdict Output Guarantee: processing budget が不足した場合、残りの検証ステップをスキップし、`NOTES: PARTIAL_VERIFICATION|steps completed: {1..N}` 付きで verdict を即座に出力する
-13. Completion report を出力し、verdict ファイルのパスを含める
-14. Verdict 出力後、即座に terminate
+13. `WRITTEN:{verdict_file_path}` のみ出力して terminate する。全ての合成は内部で実施する（コンテキスト漏洩防止）。Verdict 出力と terminate はこの AC で完結する
 
 ### Non-Goals
 - コード品質レビュー（impl-review spec のスコープ）
@@ -259,6 +258,7 @@ Lead (T1, Opus)
 - **Inspector → `.review/`**: Inspector は findings を `.review/{inspector-name}.cpf` にファイル書き出し。Inspector はファイル書き出し後に即座に terminate。
 - **Auditor ← `.review/`**: Auditor は `.review/` ディレクトリから全 `.cpf` ファイルを読み込み、合成後に `.review/verdict.cpf` を書き出す。
 - **Lead ← `.review/verdict.cpf`**: Lead は Auditor の completion output（idle notification）から verdict ファイルパスを確認し、`verdict.cpf` を読み取る。
+- **出力抑制ルール**: Inspector/Auditor はファイル書き出し後、`WRITTEN:{path}` のみ出力して terminate する。分析テキストは出力しない（Agent Teams idle notification 経由のコンテキスト漏洩防止）。
 
 ### Mode Selection Matrix
 
@@ -618,3 +618,14 @@ Auditor は根拠付きでこの判定式をオーバーライド可能。
 
 **既存 Revision Notes との関係**:
 - v1.1.0 の Non-Goals 明確化は変更なし（内容はそのまま保持）
+
+### Rev 1.3.0 (2026-02-22) — v0.18.2 Output Suppression Rule
+
+**背景**: v0.18.2 で発見された Agent Teams idle notification のコンテキスト漏洩問題。Inspector/Auditor がテキスト出力を行うと、idle notification 経由で Lead のコンテキストに漏洩し、不要なトークン消費や意図しない情報混入が生じることが判明した。
+
+**変更内容**:
+- 全 Inspector (Spec 2–5) の terminate AC を「ファイル書き出し後、即座に terminate」から「`WRITTEN:{file_path}` のみ出力して terminate する。全ての分析は内部で実施し、テキスト出力しない（コンテキスト漏洩防止）」に更新
+- Spec 6 (Dead-Code Auditor) AC 13 を「Completion report を出力し、verdict ファイルのパスを含める」から「`WRITTEN:{verdict_file_path}` のみ出力して terminate する。全ての合成は内部で実施する（コンテキスト漏洩防止）」に更新。AC 14（Verdict 出力後、即座に terminate）は AC 13 に統合して削除
+- Communication Protocol セクションに出力抑制ルールのノートを追加
+
+**適用範囲**: 全レビュータイプ共通（design-review / impl-review / dead-code review の Inspector および Auditor 全員に同ルールが適用される）。

@@ -2,13 +2,16 @@ feature_name: "impl-review"
 created_at: "2026-02-20"
 updated_at: "2026-02-22"
 language: "markdown"
-version: "1.1.0"
+version: "1.2.0"
 changelog:
+  - version: "1.2.0"
+    action: "v0.18.2/v0.19.0 retroactive alignment: WRITTEN:{path} 出力抑制 + E2E Inspector (Web プロジェクト条件付き) 追加"
+    timestamp: "2026-02-22"
   - version: "1.1.0"
     action: "v0.18.0 retroactive alignment: ファイルベースレビュー, agent パス更新, コマンド参照更新"
     timestamp: "2026-02-22"
 version_refs:
-  design: "1.1.0"
+  design: "1.2.0"
   implementation: "1.0.0"
 phase: implementation-complete
 implementation:
@@ -20,6 +23,7 @@ implementation:
     - "framework/claude/sdd/settings/agents/sdd-inspector-quality.md"
     - "framework/claude/sdd/settings/agents/sdd-inspector-impl-consistency.md"
     - "framework/claude/sdd/settings/agents/sdd-inspector-impl-holistic.md"
+    - "framework/claude/sdd/settings/agents/sdd-inspector-e2e.md"
 orchestration:
   retry_count: 0
   spec_update_count: 0
