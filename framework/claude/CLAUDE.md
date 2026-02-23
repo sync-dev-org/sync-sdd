@@ -81,12 +81,26 @@ Lead dispatches SubAgents via `Task` tool. SubAgents execute autonomously and re
 
 Operational details (dispatch prompts, review protocol, incremental processing): see sdd-roadmap `refs/run.md`.
 
+### Parallel Execution Model
+
+Roadmap execution maximizes parallelism at multiple levels:
+
+- **Wave Scheduling** (planning): Foundation-First placement, topological-sort-based wave assignment, parallelism report. See sdd-roadmap `refs/crud.md`.
+- **Design Fan-Out**: Independent specs within a wave have their Architects dispatched in parallel.
+- **Spec Stagger**: Specs within the same wave can be at different pipeline phases simultaneously (e.g., spec-a in Impl while spec-b in Design Review). Lead uses a ready-spec dispatch loop.
+- **Design Lookahead**: Next-wave Design starts once current-wave dependencies reach `design-generated`, before current-wave Implementation completes. Impl is gated on Wave QG.
+- **Wave Bypass**: Island specs (no dependencies, no dependents) run as independent fast-track pipelines outside the wave structure.
+- **Builder parallelism**: Within a spec, multiple Builders execute in parallel per TaskGenerator groupings.
+- **Inspector parallelism**: All Inspectors for a review dispatch in parallel; Auditor synthesizes after all complete.
+
+See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
+
 ### SubAgent Platform Constraints
 
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
 - **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
-- **Concurrent SubAgent limit**: 24 (max 8 per pipeline × 3 types + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel.
+- **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution. Consensus mode (`--consensus N`) dispatches N pipelines in parallel.
 
 ### SubAgent Failure Handling
 

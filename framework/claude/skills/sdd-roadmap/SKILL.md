@@ -55,12 +55,16 @@ When a lifecycle subcommand (design, impl, review) is detected:
 2. **If roadmap exists**: Verify the target spec is enrolled
    - Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`
    - If `spec.yaml.roadmap` is non-null → proceed to subcommand execution
-   - If spec not found AND subcommand is `design` → **auto-add to roadmap**:
+   - If spec not found AND subcommand is `design` → **auto-add to roadmap (with Backfill)**:
      1. Create spec directory, initialize spec.yaml from template
-     2. Determine next wave number: max(existing waves) + 1
-     3. Set `spec.yaml.roadmap = {wave: N+1, dependencies: []}`
+     2. **Backfill check**: Analyze if new spec can join an existing wave:
+        a. New spec has `dependencies: []` (no dependencies yet at design time)
+        b. Find highest incomplete wave where adding a dependency-free spec causes no conflict
+        c. If backfill possible: present option — "Add to Wave {N} (with {M} existing specs)" or "New Wave {max+1}"
+        d. If `-y` flag or no backfill possible: default to `max(existing waves) + 1`
+     3. Set `spec.yaml.roadmap = {wave: chosen_wave, dependencies: []}`
      4. Update `roadmap.md` Wave Overview with new spec entry
-     5. Inform user: "Added {feature} to roadmap (Wave {N+1})."
+     5. Inform user: "Added {feature} to roadmap (Wave {N})."
      6. Proceed to subcommand execution
    - If spec not found AND subcommand is `impl`/`review` → BLOCK: "Spec '{feature}' not found. Use `/sdd-roadmap design \"description\"` to create."
    - If spec exists but `spec.yaml.roadmap` is null → BLOCK: "{feature} exists but is not enrolled in the roadmap. Use `/sdd-roadmap update` to sync."

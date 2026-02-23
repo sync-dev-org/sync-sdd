@@ -24,48 +24,108 @@ File ownership is **advisory**: it guides Builder task assignment and auto-fix r
 
 ## Step 3: Schedule Specs
 
-Determine which specs can run in parallel (same wave, no file overlap, no dependency).
-For each spec, track individual pipeline state:
-```
-spec-a: [Design] → [Design Review] → [Impl] → [Impl Review]
-spec-b:   [Design] → [Design Review] → ...
-spec-c:         (waiting on spec-a) → [Design] → ...
-```
+### Island Spec Detection (Wave Bypass)
+
+Before wave scheduling, identify **island specs** — specs that are fully independent:
+1. Has no `roadmap.dependencies`
+2. No other spec lists it in their `dependencies`
+3. Extract island specs to **fast-track lane** — they run outside the wave structure
+
+Fast-track execution:
+- Full pipeline: Design → Design Review → Impl → Impl Review
+- 1-Spec Roadmap Optimizations apply: skip Wave QG
+- Individual commit: `{feature}: {summary}`
+- Runs in parallel with wave-bound specs
+- Does NOT participate in Wave QG cross-check
+
+If Impl-phase Layer 2 file ownership check discovers overlap between a fast-track spec and a wave-bound spec, demote the fast-track spec back to wave-bound and serialize.
+
+### Wave Spec Scheduling
+
+For wave-bound specs, track per-spec pipeline state and determine readiness dynamically (see Step 4 Dispatch Loop).
 
 Design Review and Impl Review are **mandatory** in roadmap run.
 
-## Step 4: Execute Per-Spec Pipelines
+## Step 4: Parallel Dispatch Loop
 
-For each ready spec, execute pipeline phases in order:
+Specs within a wave advance through phases concurrently (**Spec Stagger**). Instead of processing one spec's full pipeline before starting the next, Lead dispatches the next ready phase for any eligible spec.
 
-### Design Phase
+### Dispatch Loop
 
-Execute per `refs/design.md` (Steps 1-3). After completion, update spec.yaml per design.md Step 3.
+```
+For each wave (sequential):
 
-### Design Review Phase
+  Initialize:
+    ready_specs = wave-bound specs at their current phase
+    active = {}  # spec → running SubAgent task(s)
 
+  Loop:
+    1. ADVANCE: For each spec in wave (not active, not blocked):
+       - Determine next phase based on Readiness Rules (phase + verdict history)
+       - If ready: dispatch phase, add to active set
+
+    2. LOOKAHEAD: Check next-wave Design eligibility (see Design Lookahead below)
+
+    3. WAIT: Wait for any active SubAgent to complete
+
+    4. PROCESS: Handle completion (see Phase Handlers below)
+       - Update spec.yaml
+       - Remove from active set
+       - New completions may unblock other specs → loop back to step 1
+
+    5. EXIT: If all wave specs `implementation-complete` or `blocked` → Wave QG (Step 7)
+```
+
+### Readiness Rules
+
+A spec can advance to its next phase when ALL conditions are met:
+
+| Next Phase | Conditions |
+|-----------|------------|
+| **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
+| **Design Review** | Phase is `design-generated`. No additional conditions. |
+| **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
+| **Impl Review** | All Builders for this spec have completed. |
+
+**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect")`.
+
+### Design Lookahead
+
+During the dispatch loop, check if next-wave specs can begin Design early:
+
+1. For each Wave N+1 spec at `initialized`:
+   - All its `roadmap.dependencies` in Wave N have `design.md` available (reached `design-generated`)?
+   - If yes: dispatch Architect (same as Design Fan-Out)
+2. Lookahead eligibility is **dynamically computed** from spec.yaml phase + dependency state — no persistent tracking needed. On resume, re-evaluate: any Wave N+1 spec at `initialized` whose Wave N dependencies are `design-generated` is eligible.
+3. Lookahead specs proceed through Design and Design Review only — they do NOT start Implementation until Wave N QG passes
+4. **Staleness guard**: If a Wave N spec's design changes (NO-GO → Architect re-dispatch), check if any lookahead spec depends on it. If yes: invalidate lookahead design, mark for re-design after Wave N QG
+
+### Phase Handlers
+
+#### Design completion
+Execute per `refs/design.md` (Steps 1-3). After Architect completes, update spec.yaml per design.md Step 3.
+
+#### Design Review completion
 Execute design review per `refs/review.md` (Design Review section).
 
 Handle verdict:
-- **GO/CONDITIONAL** → Proceed to Implementation Phase (counters are NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
-- **NO-GO** → increment `retry_count`. Dispatch Architect via `Task(subagent_type="sdd-architect")` with fix instructions. If Architect fails (no valid completion report): escalate entire spec to user. After successful fix: reset `orchestration.last_phase_action = null`. Phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
+- **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
 Process `STEERING:` entries from verdict. Auto-draft session.md.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
-### Implementation Phase
+#### Implementation completion
+Execute per `refs/impl.md` (Steps 1-3). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
-Execute per `refs/impl.md` (Steps 1-3). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between parallel specs → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
-
-### Implementation Review Phase
-
+#### Impl Review completion
 Execute impl review per `refs/review.md` (Impl Review section).
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
-- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: set `phase = implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries)
+- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: phase remains `implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries)
 - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: Architect (with SPEC_FEEDBACK) → TaskGenerator → Builder → re-run Impl Review. All tasks fully re-implemented.
 - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate at 6.
 - In **gate mode**: pause for user approval

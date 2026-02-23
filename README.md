@@ -2,7 +2,22 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-AI-DLC (AI Development Life Cycle) with 3-tier SubAgent architecture, phase-gated workflow, and specification traceability.
+Your AI development team — 23 specialized SubAgents orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
+
+## Why sync-sdd
+
+**The problem**: AI coding assistants are powerful but chaotic. Without structure, you get inconsistent quality, no traceability, and designs that drift from intent.
+
+**The solution**: sync-sdd brings software engineering discipline to AI-assisted development. Every feature flows through a spec-driven pipeline — design, review, implement, review — with phase gates that prevent skipping steps and multi-agent reviews that catch what a single perspective misses.
+
+### Key capabilities
+
+- **23 SubAgents, 3 tiers** — Architect designs, Builders implement with TDD, 6+ Inspectors review from different angles, Auditor synthesizes the verdict. Each agent has a focused specialty.
+- **Aggressive parallelism** — Specs within a wave execute at different phases simultaneously. Design Fan-Out dispatches multiple Architects in parallel. Design Lookahead starts the next wave's design before the current wave finishes. Island specs bypass wave boundaries entirely.
+- **Foundation-First scheduling** — Models, shared libraries, and error handling are automatically prioritized to Wave 1. Dependency-aware topological sorting minimizes wave count and maximizes parallel throughput.
+- **Self-correcting reviews** — NO-GO verdicts trigger automatic fix loops (up to 5 retries). SPEC-UPDATE-NEEDED cascades back through the full pipeline. Dead-code review catches orphaned artifacts. Consensus mode runs multiple independent review pipelines for high-confidence findings.
+- **Specification traceability** — Every implementation traces back to a design. Phase gates enforce order. Version tracking detects stale implementations. SPEC-Code atomicity keeps design and code in sync.
+- **Cross-session continuity** — Session handover, decision logs, and knowledge accumulation persist across conversations. Resume any interrupted pipeline from exactly where it stopped.
 
 ## Install
 
@@ -19,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.23.1
+curl -LsSf <url>/install.sh | sh -s -- --version v1.0.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -36,34 +51,56 @@ your-project/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
     ├── skills/sdd-*/SKILL.md          # 7 skills
-    ├── agents/sdd-*.md               # 23 SubAgent definitions (YAML frontmatter)
+    ├── agents/sdd-*.md               # 23 SubAgent definitions
     └── sdd/
-        └── settings/                  # Framework-managed
-            ├── rules/
-            ├── templates/
-            └── profiles/
+        └── settings/                  # Rules, templates, profiles
 ```
 
-Your project files (created through the workflow) are never touched by `--update`:
+Your project files are never touched by `--update`:
 
 ```
 .claude/sdd/project/steering/      # Project context and decisions
 .claude/sdd/project/specs/         # Feature specifications
 .claude/sdd/project/knowledge/     # Reusable learnings
-.claude/sdd/handover/              # Session continuity (auto-persisted)
+.claude/sdd/handover/              # Session continuity
 ```
-
-Reset all project files: `rm -rf .claude/sdd/project`
 
 ## Architecture
 
 ```
-Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
-Tier 2: Brain    ─── Architect / Auditor ────────── (SubAgent, Opus)
-Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAgent ×N, Sonnet)
+Tier 1: Command  ─── Lead ─────────────────────────── (Opus)
+Tier 2: Brain    ─── Architect / Auditor ────────────── (Opus)
+Tier 3: Execute  ─── TaskGenerator / Builder / Inspector (Sonnet x N)
 ```
 
-Lead handles user interaction, phase gates, dispatch planning, and SubAgent orchestration. All work is delegated via `Task(subagent_type=...)` to agents defined in `.claude/agents/`.
+**Lead** orchestrates everything — user interaction, phase gates, dispatch planning, SubAgent coordination, and state management.
+
+**Architect** generates technical designs with research and discovery. **Auditor** synthesizes multi-Inspector findings into GO / CONDITIONAL / NO-GO / SPEC-UPDATE-NEEDED verdicts.
+
+**TaskGenerator** decomposes designs into parallelizable tasks. **Builder** implements via TDD (RED-GREEN-REFACTOR). **Inspector** provides focused review perspectives — 6 for design, 6+1 for implementation, 4 for dead-code.
+
+## Parallel execution model
+
+sync-sdd maximizes throughput at every level:
+
+```
+Wave 1 ──────────────────────────────────────────────────
+  spec-a: [Design] → [Design Review] → [Impl ████████] → [Impl Review]
+  spec-b:    [Design] → [Design Review ██] → [Impl ██████████] → ...
+  spec-c:       [Design █████] → [Design Review] → [Impl ██████] → ...
+  island-x: [Design] → [Review] → [Impl] → [Review] → commit ✓
+                                     ↓ (Lookahead)
+Wave 2 ──────────────────────────────────────────────────
+  spec-d:          [Design ███████] → [Design Review ███] → (wait for W1 QG) → [Impl] → ...
+```
+
+| Strategy | What it does |
+|----------|-------------|
+| **Design Fan-Out** | Independent specs get their Architects dispatched simultaneously |
+| **Spec Stagger** | Specs within a wave overlap phases — one in Impl while another in Design Review |
+| **Design Lookahead** | Next-wave design starts as soon as dependencies are designed, before current wave implements |
+| **Wave Bypass** | Fully independent specs run their own pipeline, skip wave boundaries |
+| **Foundation-First** | Models, shared libs, error handling auto-prioritized to Wave 1 |
 
 ## Quick start
 
@@ -79,15 +116,12 @@ claude                          # Start Claude Code
 /sdd-roadmap review design feature-name    # Optional: design review
 
 # Stage 2: Implementation
-/sdd-roadmap impl feature-name             # Task generation + TDD implementation
+/sdd-roadmap impl feature-name             # Task generation + TDD
 /sdd-roadmap review impl feature-name      # Optional: implementation review
 
 # Multi-feature roadmap
-/sdd-roadmap create                        # Plan multiple features in waves
-/sdd-roadmap run                           # Execute all features
-
-# Anytime
-/sdd-status feature-name
+/sdd-roadmap create                        # Plan features in waves
+/sdd-roadmap run                           # Execute all — parallel by default
 ```
 
 ## Workflow
@@ -98,11 +132,13 @@ steering → design → review → implement → review
               └── SPEC_FEEDBACK (if needed) ─┘
 ```
 
-**Phase gates** enforce order: you can't implement without a design.
+**Phase gates** enforce order: you can't implement without a design. Version tracking prevents stale implementations.
 
-**Version tracking** prevents stale implementations: if a spec changes, tasks and implementation are re-validated.
+**Auto-fix loop**: NO-GO reviews trigger automatic fixes (max 5 retries, dead-code max 3). SPEC-UPDATE-NEEDED cascades through the full pipeline — Architect re-designs, TaskGenerator re-plans, Builder re-implements.
 
-**Auto-fix loop**: NO-GO reviews trigger automatic spec/impl fixes (max 5 retries, dead-code max 3) before escalating to user.
+**Multi-agent review**: 6+ Inspectors examine the work from different angles (architecture, consistency, testability, quality, best practices, holistic). An Auditor synthesizes findings into a single verdict. Consensus mode (`--consensus N`) runs N independent pipelines and filters noise through frequency thresholds.
+
+**Knowledge accumulation**: Builders report patterns, incidents, and references. Lead aggregates them per wave into a reusable knowledge base that grows with your project.
 
 ## Commands
 
@@ -110,10 +146,12 @@ steering → design → review → implement → review
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
-| `/sdd-roadmap design` | Generate or edit a technical design |
-| `/sdd-roadmap impl` | Task generation + TDD implementation |
-| `/sdd-roadmap review` | Multi-agent review (design/impl/dead-code) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-knowledge` | Manage reusable knowledge entries |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
+| `/sdd-review-self` | Self-review for framework development |
+
+## License
+
+MIT
