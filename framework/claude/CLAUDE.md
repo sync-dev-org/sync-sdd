@@ -20,7 +20,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 |------|------|---------------|
 | T1 | **Lead** | User interaction, phase gate checks, dispatch planning, progress tracking, SubAgent orchestration, spec.yaml updates, Knowledge aggregation. |
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
-| T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
+| T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
 | T3 | **Inspector** | Individual review perspectives. 6 design + 6 impl inspectors +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
@@ -86,7 +86,7 @@ Operational details (dispatch prompts, review protocol, incremental processing):
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
 - **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
-- **Concurrent SubAgent limit**: 24 (3 pipelines x 7 SubAgents + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel (7xN SubAgents).
+- **Concurrent SubAgent limit**: 24 (max 8 per pipeline × 3 types + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel.
 
 ### SubAgent Failure Handling
 
@@ -102,6 +102,7 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
+- Profiles: `{{SDD_DIR}}/settings/profiles/`
 - Agent Profiles: `.claude/agents/`
 
 ### Artifacts
@@ -163,10 +164,12 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 
 Lead records the following decision types as a standard behavior:
 - `USER_DECISION`: when user makes an explicit choice
+- `STEERING_UPDATE`: steering modified
 - `DIRECTION_CHANGE`: spec split, wave restructure, scope change
 - `ESCALATION_RESOLVED`: outcome of an escalation to user
 - `REVISION_INITIATED`: user-initiated past-wave spec revision
-- `SESSION_START`: auto-append on session resume
+- `STEERING_EXCEPTION`: intentional deviation from steering (prevents review false-positives)
+- `SESSION_START`/`SESSION_END`: session lifecycle
 
 ## Product Intent
 

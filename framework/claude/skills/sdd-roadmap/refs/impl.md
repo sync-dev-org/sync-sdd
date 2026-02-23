@@ -62,6 +62,6 @@ After ALL Builders complete, update spec.yaml:
 
 ## Step 4: Post-Completion
 
-1. Flush Knowledge Buffer to `{{SDD_DIR}}/project/knowledge/` (aggregate, deduplicate, write using templates, clear buffer.md)
+1. **1-spec roadmap only**: Flush Knowledge Buffer to `{{SDD_DIR}}/project/knowledge/` (aggregate, deduplicate, write using templates, clear buffer.md). Multi-spec roadmaps skip this — wave completion (run.md Post-gate) handles flush.
 2. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`

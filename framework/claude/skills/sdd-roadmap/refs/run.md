@@ -47,7 +47,7 @@ Execute per `refs/design.md` (Steps 1-3). After completion, update spec.yaml per
 Execute design review per `refs/review.md` (Design Review section).
 
 Handle verdict:
-- **GO/CONDITIONAL** → Proceed to Implementation Phase (counters are NOT reset — see CLAUDE.md §Counter Reset)
+- **GO/CONDITIONAL** → Proceed to Implementation Phase (counters are NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
 - **NO-GO** → increment `retry_count`. Dispatch Architect via `Task(subagent_type="sdd-architect")` with fix instructions. If Architect fails (no valid completion report): escalate entire spec to user. After successful fix: reset `orchestration.last_phase_action = null`. Phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
