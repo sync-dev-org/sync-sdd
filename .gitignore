@@ -17,8 +17,7 @@
 .claude/CLAUDE.md
 .claude/settings.json
 .claude/skills/
-.claude/sdd/settings/
-.claude/sdd/.version
+.claude/sdd/
 
 # Local-only directories
 docs/
