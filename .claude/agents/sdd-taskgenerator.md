@@ -36,6 +36,7 @@ Read:
 - Use language specified in spec.yaml
 - Map ALL specifications from design.md to tasks
 - Include detail bullets: actionable implementation guidance per task
+- Apply steering context to detail bullets: embed `tech.md` Common Commands for test/build/lint steps, reference `structure.md` Directory Patterns for file placement, include custom steering constraints as explicit conditions (see tasks-generation.md Steering Integration)
 - If review findings are provided, incorporate relevant findings into task detail bullets (e.g., add implementation notes to address flagged anti-patterns or ambiguities)
 - Mark parallel-capable tasks with `p: true`
 - Apply specs/acs references for traceability

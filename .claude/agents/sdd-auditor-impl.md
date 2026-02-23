@@ -38,6 +38,7 @@ Your spawn context contains:
 - **Wave number** (if wave-scoped mode)
 - **review directory path** containing Inspector output files
 - **Verdict output path** for writing your verdict
+- **Builder SelfCheck warnings** (optional): items flagged by Builder's self-validation. Use as attention points when evaluating Inspector findings — they highlight areas the Builder itself identified as potentially problematic, but are not authoritative findings on their own.
 
 Read all `.cpf` files from the review directory. Each file contains one Inspector's findings in CPF format:
   1. `sdd-inspector-impl-rulebase.cpf` — Task completion, traceability, file structure
