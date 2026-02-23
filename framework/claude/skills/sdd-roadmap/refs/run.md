@@ -62,11 +62,11 @@ For each wave (sequential):
   Loop:
     1. ADVANCE: For each spec in wave (not active, not blocked):
        - Determine next phase based on Readiness Rules (phase + verdict history)
-       - If ready: dispatch phase, add to active set
+       - If ready: dispatch phase (run_in_background: true), add to active set
 
     2. LOOKAHEAD: Check next-wave Design eligibility (see Design Lookahead below)
 
-    3. WAIT: Wait for any active SubAgent to complete
+    3. WAIT: Poll active SubAgents via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
 
     4. PROCESS: Handle completion (see Phase Handlers below)
        - Update spec.yaml
@@ -87,7 +87,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | All Builders for this spec have completed. |
 
-**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect")`.
+**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Lead continues the dispatch loop immediately.
 
 ### Design Lookahead
 

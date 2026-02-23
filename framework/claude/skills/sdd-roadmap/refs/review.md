@@ -53,11 +53,11 @@ Spawn via review execution flow (below):
    - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
 2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1)
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/`)
-4. Spawn all Inspectors via `Task(subagent_type=...)`. Each context includes:
+4. Spawn all Inspectors via `Task(subagent_type=..., run_in_background=true)`. Each context includes:
    - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
-5. Wait for all Inspector Tasks to complete. Handle failed Inspectors: retry, skip, or proceed with available results.
-6. Spawn Auditor via `Task(subagent_type=...)`. Context includes:
+5. Wait for all Inspector Tasks to complete (poll via `TaskOutput`). Handle failed Inspectors: retry, skip, or proceed with available results.
+6. Spawn Auditor via `Task(subagent_type=..., run_in_background=true)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
    - Verdict output path: `{scope-dir}/active/verdict.cpf`
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`

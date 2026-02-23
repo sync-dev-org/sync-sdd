@@ -75,7 +75,9 @@ Before dispatching any SubAgent, Lead MUST verify:
 
 ### SubAgent Lifecycle
 
-Lead dispatches SubAgents via `Task` tool. SubAgents execute autonomously and return a completion report. Lead reads the result, updates spec.yaml metadata, auto-drafts session.md, and determines next action.
+Lead dispatches SubAgents via `Task` tool with `run_in_background: true` by default. This prevents Lead from blocking on SubAgent completion — Lead continues the dispatch loop, checking readiness of other specs and performing housekeeping while SubAgents execute. Lead uses `TaskOutput` to collect results when needed.
+
+**Exception**: When Lead has no other work to do (e.g., single-spec roadmap with one active SubAgent), foreground dispatch is acceptable.
 
 **Builder parallel coordination**: As each Builder completes, immediately update tasks.yaml (mark `done`), collect files, store knowledge tags. Final spec.yaml update only after ALL Builders complete.
 

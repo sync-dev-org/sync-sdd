@@ -21,7 +21,7 @@ Triggered by: `$ARGUMENTS = "design {feature-or-description}"`
 
 ## Step 3: Execute
 
-Spawn Architect via `Task(subagent_type="sdd-architect")` with prompt:
+Spawn Architect via `Task(subagent_type="sdd-architect", run_in_background=true)` with prompt:
 - Feature: {feature}
 - Mode: {new|existing}
 - User-instructions: {from arguments, or empty}
