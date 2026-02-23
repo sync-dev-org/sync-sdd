@@ -19,7 +19,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v0.22.0
+curl -LsSf <url>/install.sh | sh -s -- --version v0.23.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -35,7 +35,7 @@ your-project/
 └── .claude/
     ├── CLAUDE.md                      # Framework instructions (auto-loaded)
     ├── settings.json                  # Default settings
-    ├── skills/sdd-*/SKILL.md          # 9 skills
+    ├── skills/sdd-*/SKILL.md          # 7 skills
     ├── agents/sdd-*.md               # 23 SubAgent definitions (YAML frontmatter)
     └── sdd/
         └── settings/                  # Framework-managed
@@ -102,7 +102,7 @@ steering → design → review → implement → review
 
 **Version tracking** prevents stale implementations: if a spec changes, tasks and implementation are re-validated.
 
-**Auto-fix loop**: NO-GO reviews trigger automatic spec/impl fixes (max 3 retries) before escalating to user.
+**Auto-fix loop**: NO-GO reviews trigger automatic spec/impl fixes (max 5 retries, dead-code max 3) before escalating to user.
 
 ## Commands
 

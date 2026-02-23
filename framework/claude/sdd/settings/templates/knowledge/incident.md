@@ -8,9 +8,9 @@
 - Document detection points for each SDD phase (specifications, design, tasks, impl).
 - Enable context-aware knowledge retrieval during `/sdd-roadmap review` commands.
 
-**Naming Convention**: `{category}-{pattern-name}.md`
+**Naming Convention**: `incident-{category}-{name}.md`
 - Categories: `state`, `api`, `async`, `data`, `security`, `integration`
-- Example: `state-cache-recovery-reset.md`, `api-retry-backoff.md`
+- Example: `incident-state-cache-recovery-reset.md`, `incident-api-retry-backoff.md`
 ---
 
 ## Metadata

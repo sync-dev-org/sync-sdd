@@ -27,7 +27,7 @@ Spawn TaskGenerator via `Task(subagent_type="sdd-taskgenerator")` with prompt:
 - Feature: {feature}
 - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
 - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
-- Review findings: from `specs/{feature}/verdicts.md` latest design batch Tracked (if exists)
+- Review findings: from `specs/{feature}/reviews/verdicts.md` latest design batch Tracked (if exists)
 
 Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 

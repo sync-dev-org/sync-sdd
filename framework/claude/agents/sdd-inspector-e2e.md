@@ -167,7 +167,7 @@ After functional testing, evaluate saved screenshots:
 ## Output Format
 
 Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context.
+Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}

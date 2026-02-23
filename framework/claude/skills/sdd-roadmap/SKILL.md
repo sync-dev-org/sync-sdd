@@ -107,19 +107,18 @@ Then follow the instructions in the loaded file.
 
 When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
-1. For each pipeline `p` (1..N): create review directory `specs/{feature}/_review-{p}/`
-2. Spawn N sets of Inspectors in parallel. Each Inspector set writes to its own `_review-{p}/` directory
-3. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `_review-{p}/` as input and `_review-{p}/verdict.cpf` as output
-4. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
+1. Determine review scope directory (see `refs/review.md` Step 1) and B{seq} from `{scope-dir}/verdicts.md` (increment max existing, or start at 1)
+2. For each pipeline `p` (1..N): create review directory `specs/{feature}/reviews/active-{p}/`
+3. Spawn N sets of Inspectors in parallel. Each Inspector set writes to its own `reviews/active-{p}/` directory
+4. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `reviews/active-{p}/` as input and `reviews/active-{p}/verdict.cpf` as output
+5. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
    - Key by `{category}|{location}`, count frequency
    - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)
-5. Consensus verdict: no findings above threshold → GO; any C/H findings ≥ threshold → NO-GO; only M/L findings ≥ threshold → CONDITIONAL
-6. Delete all `_review-{p}/` directories
-7. Proceed to verdict handling with consensus verdict
+6. Consensus verdict: no findings above threshold → GO; any C/H findings ≥ threshold → NO-GO; only M/L findings ≥ threshold → CONDITIONAL
+7. Archive: rename `reviews/active-{p}/` → `reviews/B{seq}/pipeline-{p}/`
+8. Proceed to verdict handling with consensus verdict
 
-N=1 (default): use `specs/{feature}/_review/` (no `-{p}` suffix).
-
-**Consensus + wave-scoped**: `_review-wave-{N}-{p}/` (wave number + pipeline number). Dead-code: `_review-wave-{N}-dc-{p}/`.
+N=1 (default): use `specs/{feature}/reviews/active/` (no `-{p}` suffix). Archive to `reviews/B{seq}/`.
 
 ### Verdict Persistence Format
 

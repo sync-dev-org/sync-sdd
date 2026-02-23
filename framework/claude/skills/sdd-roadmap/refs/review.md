@@ -36,7 +36,7 @@ Spawn via review execution flow (below):
 
 **Cross-check / wave-scoped mode**: Same Inspector set + Auditor. Context includes:
 - Wave scope: cumulative (Wave N re-inspects ALL code from Waves 1..N)
-- Previously resolved issues: read `specs/verdicts-wave.md`, include as PREVIOUSLY_RESOLVED in Inspector context. Inspectors MUST NOT re-flag resolved items. Recurrence = REGRESSION (upgrade severity).
+- Previously resolved issues: read `{{SDD_DIR}}/project/reviews/wave/verdicts.md`, include as PREVIOUSLY_RESOLVED in Inspector context. Inspectors MUST NOT re-flag resolved items. Recurrence = REGRESSION (upgrade severity).
 
 ## Dead-Code Review
 
@@ -46,18 +46,24 @@ Spawn via review execution flow (below):
 
 ## Review Execution Flow
 
-1. Create review directory: `{{SDD_DIR}}/project/specs/{feature}/_review/` (or `_review-wave-{N}/` for wave QG, `_review-wave-{N}-dc/` for dead-code)
-2. Spawn all Inspectors via `Task(subagent_type=...)`. Each context includes:
-   - Review output path: `{_review-dir}/{inspector-name}.cpf`
+1. Determine review scope directory:
+   - **Per-feature** (design/impl): `{{SDD_DIR}}/project/specs/{feature}/reviews/`
+   - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/`
+   - **Project-level** (cross-check): `{{SDD_DIR}}/project/reviews/cross-check/`
+   - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
+2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1)
+3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/`)
+4. Spawn all Inspectors via `Task(subagent_type=...)`. Each context includes:
+   - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
-3. Wait for all Inspector Tasks to complete. Handle failed Inspectors: retry, skip, or proceed with available results.
-4. Spawn Auditor via `Task(subagent_type=...)`. Context includes:
+5. Wait for all Inspector Tasks to complete. Handle failed Inspectors: retry, skip, or proceed with available results.
+6. Spawn Auditor via `Task(subagent_type=...)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
-   - Verdict output path: `{_review-dir}/verdict.cpf`
+   - Verdict output path: `{scope-dir}/active/verdict.cpf`
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`
-5. Read `{_review-dir}/verdict.cpf`
-6. Persist verdict (see Router → Verdict Persistence Format)
-7. Delete review directory
+7. Read `{scope-dir}/active/verdict.cpf`
+8. Persist verdict to `{scope-dir}/verdicts.md` (see Router → Verdict Persistence Format)
+9. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/` (consensus: `active-{p}/` → `B{seq}/pipeline-{p}/`)
 
 If `--consensus N`, apply Consensus Mode protocol (see Router).
 
@@ -91,10 +97,13 @@ If an Inspector CPF file contains `VERDICT:ERROR` (Inspector could not execute):
 
 ## Verdict Destination by Review Type
 
-- **Single-spec review**: `{{SDD_DIR}}/project/specs/{feature}/verdicts.md`
-- **Dead-code review**: `{{SDD_DIR}}/project/specs/verdicts-dead-code.md`
-- **Cross-check review**: `{{SDD_DIR}}/project/specs/verdicts-cross-check.md`
-- **Wave-scoped review**: `{{SDD_DIR}}/project/specs/verdicts-wave.md`
+All verdict files follow the same pattern: `{scope-dir}/verdicts.md`
+
+- **Single-spec review**: `{{SDD_DIR}}/project/specs/{feature}/reviews/verdicts.md`
+- **Dead-code review**: `{{SDD_DIR}}/project/reviews/dead-code/verdicts.md`
+- **Cross-check review**: `{{SDD_DIR}}/project/reviews/cross-check/verdicts.md`
+- **Wave-scoped review**: `{{SDD_DIR}}/project/reviews/wave/verdicts.md`
+- **Self-review** (framework-internal): `{{SDD_DIR}}/project/reviews/self/verdicts.md`
 
 ## Next Steps by Verdict
 

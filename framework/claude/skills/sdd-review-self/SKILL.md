@@ -60,9 +60,11 @@ $REVIEW_SCOPE:
 
 ## Step 4: Parallel Review (Phase 1)
 
+Set `$SCOPE_DIR` = `{{SDD_DIR}}/project/reviews/self/`. Create `$SCOPE_DIR/active/` directory.
+
 Launch review agents via `Task(subagent_type="general-purpose")`. All agents run in background (`run_in_background: true`).
 
-Each agent's prompt = static template + `$REVIEW_SCOPE` as file list + `$CHANGE_CONTEXT` appended.
+Each agent's prompt = static template + `$REVIEW_SCOPE` as file list + `$CHANGE_CONTEXT` appended + output instruction: "Write your full report to `{$SCOPE_DIR}/active/agent-{N}-{name}.md` AND return it as your Task result."
 
 Required output format for each agent:
 
@@ -274,9 +276,23 @@ After false positive removal, assign final severity:
 - **MEDIUM**: Ambiguity or missing detail that may cause confusion but has workarounds.
 - **LOW**: Cosmetic, documentation-only, or minor inconsistency.
 
-## Step 6: Report Output (Phase 3)
+## Step 6: Report Output + Verdict Persistence (Phase 3)
 
-Output the final report directly to user (not written to file):
+### 6.1 Persist Results
+
+1. Determine B{seq}: read `$SCOPE_DIR/verdicts.md`, increment max existing batch number (or start at 1)
+2. Write consolidated report to `$SCOPE_DIR/active/report.md`
+3. Append batch entry to `$SCOPE_DIR/verdicts.md`:
+   ```
+   ## [B{seq}] {mode} | {date} | v{version} | agents:{completed}/{dispatched}
+   C:{n} H:{n} M:{n} L:{n} | FP:{n} eliminated
+   Files: {comma-separated list of files with confirmed findings}
+   ```
+4. Archive: rename `$SCOPE_DIR/active/` → `$SCOPE_DIR/B{seq}/`
+
+### 6.2 Report to User
+
+Output the final report directly to user:
 
 ```markdown
 # SDD Framework Self-Review Report

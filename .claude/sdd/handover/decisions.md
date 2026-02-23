@@ -179,3 +179,24 @@
 
 [2026-02-22T23:45:00Z] D34: SESSION_START | Resume session
 - Context: v0.20.0 実装レビュー+修正完了後の再開。未コミット変更あり（framework/claude/ 3ファイル + handover）
+
+[2026-02-23T01:00:00Z] D35: SESSION_END | v0.21.0 徹底レビュー + 全修正 + リリース
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-22T00:00:00Z] D36: SESSION_START | Resume session
+- Context: v0.21.0 リリース完了後の再開。全15 spec implementation-complete。SubAgent 動作検証未実施
+
+[2026-02-23T01:00:00Z] D37: SESSION_END | CLAUDE.md スリム化 + sdd-roadmap Progressive Disclosure
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-23T02:00:00Z] D38: SESSION_START | Resume session
+- Context: v0.21.0 リリース完了後。CLAUDE.md スリム化 + Progressive Disclosure 完了済み。SubAgent 動作検証未実施
+
+[2026-02-23T03:00:00Z] D39: SESSION_END | 徹底レビュー + 全修正 + sdd-review-self + v0.22.0
+- Context: /sdd-handover executed
+- Decision: Session ended, handover archived
+
+[2026-02-23T10:00:00Z] D40: SESSION_START | Resume session
+- Context: v0.22.0 リリース完了後の再開。全15 spec implementation-complete。SubAgent 動作検証未実施

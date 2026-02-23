@@ -22,7 +22,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
-| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT] tags. |
+| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
 | T3 | **Inspector** | Individual review perspectives. 6 design + 6 impl inspectors +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
 
 ### Chain of Command
@@ -31,7 +31,7 @@ Lead dispatches T2/T3 SubAgents using `Task` tool with `subagent_type` parameter
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 
-Review pipelines use **file-based communication**: Inspectors write CPF files to a `_review/` directory, Auditor reads them and writes `verdict.cpf`. No inter-agent messaging needed for review data transfer.
+Review pipelines use **file-based communication**: Inspectors write CPF files to `reviews/active/` directory, Auditor reads them and writes `verdict.cpf`. After verdict is persisted, the directory is renamed to `reviews/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
 
 Review SubAgents (Inspector/Auditor) MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). After writing their output file, they return ONLY `WRITTEN:{path}` as their final text. All detailed analysis goes into the CPF output file.
 
@@ -85,12 +85,12 @@ Operational details (dispatch prompts, review protocol, incremental processing):
 
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
-- **Framework convention — file-based review**: Inspectors write `.cpf` files to `_review/` directory, Auditor reads them. No inter-agent messaging needed for review data transfer.
+- **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
 - **Concurrent SubAgent limit**: 24 (3 pipelines x 7 SubAgents + headroom). Consensus mode (`--consensus N`) dispatches N pipelines in parallel (7xN SubAgents).
 
 ### SubAgent Failure Handling
 
-File-based review protocol makes all SubAgent outputs idempotent (same `_review/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
+File-based review protocol makes all SubAgent outputs idempotent (same `reviews/active/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
 
 ## Project Context
 
@@ -225,7 +225,7 @@ Template: `{{SDD_DIR}}/settings/templates/handover/session.md`
 
 Append-only structured log. Each entry: `[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}` followed by fields: Context, Decision, Reason, Impact, Source, Steering-ref (if STEERING_EXCEPTION).
 
-Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
+Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `REVISION_INITIATED` (user-initiated past-wave spec revision), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
 
 ### buffer.md Format
 
@@ -251,7 +251,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
    - Absent → first session: skip to step 6
    - Present → resume session: proceed
 2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
-2a. Read `{{SDD_DIR}}/project/specs/*/verdicts.md` → active review state per spec (latest batch Tracked)
+2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked)
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending Knowledge/Skill candidates
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically

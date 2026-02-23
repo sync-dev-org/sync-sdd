@@ -60,5 +60,5 @@ For each difference:
 ## Delete Mode
 
 1. Require explicit "RESET" confirmation
-2. Delete roadmap.md, all spec directories, and project-level verdict files (`verdicts-wave.md`, `verdicts-dead-code.md`, `verdicts-cross-check.md`)
+2. Delete roadmap.md, all spec directories, and project-level reviews directory (`{{SDD_DIR}}/project/reviews/`)
 3. Optionally reinitialize via Create mode

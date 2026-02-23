@@ -11,6 +11,8 @@ Orchestration reference. Lead handles pipeline execution directly. References ph
 
 ## Step 2: Cross-Spec File Ownership Analysis
 
+File ownership is **advisory**: it guides Builder task assignment and auto-fix routing but is not enforced at the file system level. Builders may read files outside their assigned scope; they SHOULD NOT write to files owned by another spec's Builder unless the task explicitly requires cross-spec integration.
+
 1. Read all parallel-candidate specs' `design.md` Components sections (skip specs without `design.md`)
 2. Detect file scope overlaps between specs in the same wave
 3. Resolve overlaps:
@@ -103,7 +105,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 
 **a. Impl Cross-Check Review** (wave-scoped):
 1. Execute impl review per `refs/review.md` (Impl Review, wave-scoped context: Waves 1..N, previously-resolved tracking)
-2. Persist verdict to `specs/verdicts-wave.md` (header: `[W{wave}-B{seq}]`)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code
    - **NO-GO** → map to target spec(s), increment `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user with options:
@@ -114,7 +116,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 
 **b. Dead Code Review**:
 1. Execute dead-code review per `refs/review.md` (Dead-Code Review section)
-2. Persist verdict to `specs/verdicts-wave.md` (header: `[W{wave}-DC-B{seq}]`)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
