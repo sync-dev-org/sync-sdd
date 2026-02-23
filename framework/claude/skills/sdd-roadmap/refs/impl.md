@@ -46,9 +46,13 @@ Spawn Builder(s) via `Task(subagent_type="sdd-builder")` with prompt for each wo
 If `{task-numbers}` provided: filter to specified task numbers only.
 
 **Builder incremental processing**: As each Builder completes, immediately:
-- Read completion report (from Task result: files, test results, knowledge tags, blockers)
+- Read completion report (from Task result: files, test results, knowledge tags, SelfCheck, blockers)
 - Update tasks.yaml: mark completed tasks as `done`
 - Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
+- Process SelfCheck result:
+  - `PASS` → normal processing
+  - `WARN({items})` → log items. Pass as attention points to Auditor when dispatching impl review
+  - `FAIL-RETRY-2({items})` → Lead judgment: continue (if items are minor) or re-dispatch Builder with fix context
 - If BUILDER_BLOCKED: classify cause (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
 
 When dependent tasks are unblocked: spawn next-wave Builders immediately.

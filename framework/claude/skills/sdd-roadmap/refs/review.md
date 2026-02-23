@@ -61,6 +61,7 @@ Spawn via review execution flow (below):
    - Review directory path (Auditor reads all `.cpf` files)
    - Verdict output path: `{scope-dir}/active/verdict.cpf`
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`
+   - Builder SelfCheck warnings (if any, from impl phase): items flagged as WARN during Builder self-validation — treat as attention points, not authoritative findings
 7. Read `{scope-dir}/active/verdict.cpf`
 8. Persist verdict to `{scope-dir}/verdicts.md` (see Router → Verdict Persistence Format)
 9. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/` (consensus: `active-{p}/` → `B{seq}/pipeline-{p}/`)

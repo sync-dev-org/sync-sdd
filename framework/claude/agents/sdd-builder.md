@@ -53,8 +53,19 @@ For each assigned task, follow the TDD cycle:
    - All tests pass (new and existing)
    - No regressions in existing functionality
 
-5. **MARK COMPLETE**:
-   - Verify all ACs referenced by this task have matching test markers
+5. **SELF-CHECK - Pre-Review Quality Gate**:
+   Validate implementation quality before reporting completion:
+   1. **AC coverage**: All ACs assigned to this task have matching `AC:` test markers → PASS/FAIL
+   2. **Scope compliance**: All created/modified files are within assigned file scope → PASS/FAIL
+   3. **No TODOs/placeholders**: No `TODO`, `FIXME`, `HACK`, or placeholder code left → PASS/WARN
+   4. **Import resolution**: All imports reference existing modules (no broken dependencies) → PASS/FAIL
+   5. **Design alignment**: Key design decisions (patterns, naming, architecture) match design.md → PASS/WARN
+
+   On FAIL: attempt to fix and re-verify (max 2 internal retries). After 2 failures, report as FAIL-RETRY-2 in completion output (Lead decides next action).
+   On WARN: report in completion output, continue.
+
+6. **MARK COMPLETE**:
+   - Confirm all self-checks passed or reported
 
 ### Step 3: Finalize Tasks
 
@@ -103,6 +114,7 @@ Feature: {feature}
 Tasks completed: {list}
 Files: {created/modified file paths}
 Tests: {pass count}/{total count}
+SelfCheck: {PASS | WARN({items}) | FAIL-RETRY-{N}({items})}
 Status: {all-tasks-complete | partial}
 
 {Knowledge tags if any}

@@ -22,7 +22,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
-| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR cycle. Reports [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
+| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
 | T3 | **Inspector** | Individual review perspectives. 6 design + 6 impl inspectors +1 E2E (web projects), 4 (dead-code). Outputs CPF findings. |
 
 ### Chain of Command

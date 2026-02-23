@@ -13,13 +13,23 @@ Focus on capabilities and outcomes, not code structure.
 - Data relationships and workflows
 
 **Avoid**:
-- File paths and directory structure
+- Inventing file paths — use `structure.md` Directory Patterns when referencing locations
 - Function/method names and signatures
 - Type definitions and interfaces
 - Class names and API contracts
 - Specific data structures
 
-**Rationale**: Implementation details (files, methods, types) are defined in design.md. Tasks describe the functional work to be done.
+**Rationale**: Implementation details (files, methods, types) are defined in design.md. Tasks describe the functional work to be done. However, steering-defined conventions (directory patterns, commands, standards) should be referenced concretely in detail bullets to reduce Builder interpretation drift.
+
+### Steering Integration
+
+Detail bullets SHOULD reference steering context to make tasks self-contained:
+
+- **`tech.md` Common Commands**: Embed test/build/lint commands in detail bullets (e.g., "Run `uv run pytest tests/unit/` to verify" instead of "Run tests")
+- **`structure.md` Directory Patterns**: Reference file placement conventions (e.g., "Add route handler following feature-based layout in `src/features/{name}/`" instead of "Add route handler")
+- **Custom steering**: Include domain-specific constraints as explicit conditions (e.g., "Ensure JWT expiry follows security steering (max 15 min)")
+
+This gives Builders concrete guidance without inventing implementation details.
 
 ### 2. Task Integration & Progression
 
