@@ -9,16 +9,8 @@
 *.swo
 *~
 
-# Claude Code local
-.claude/settings.local.json
-.claude/memory/
-
-# Installed SDD framework (source is framework/, install via install.sh)
-.claude/CLAUDE.md
-.claude/settings.json
-.claude/agents/
-.claude/skills/
-.claude/sdd/
+# Claude Code (install target is .claude/, source is framework/)
+.claude/
 
 # Local-only directories
 docs/
