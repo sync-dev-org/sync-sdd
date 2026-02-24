@@ -57,11 +57,11 @@ import { helper } from './utils';
 
 ## Suggested Permissions
 ```
-Bash(npm:*)
-Bash(npx:*)
-Bash(pnpm:*)
-Bash(bun:*)
-Bash(node:*)
+Bash(npm *)
+Bash(npx *)
+Bash(pnpm *)
+Bash(bun *)
+Bash(node *)
 ```
 
 ## Version Management

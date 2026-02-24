@@ -56,9 +56,9 @@ use super::helpers;
 
 ## Suggested Permissions
 ```
-Bash(cargo:*)
-Bash(rustup:*)
-Bash(rustc:*)
+Bash(cargo *)
+Bash(rustup *)
+Bash(rustc *)
 ```
 
 ## Version Management

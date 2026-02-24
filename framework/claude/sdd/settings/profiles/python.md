@@ -88,7 +88,7 @@ testpaths = ["tests"]
 
 ## Suggested Permissions
 ```
-Bash(uv:*)
+Bash(uv *)
 ```
 
 ## Version Management
