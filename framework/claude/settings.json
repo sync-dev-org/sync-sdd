@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "acceptEdits",
     "allow": [
       "Skill(sdd-roadmap)",
       "Skill(sdd-steering)",
