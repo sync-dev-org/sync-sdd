@@ -61,7 +61,7 @@ After ALL Builders complete, update spec.yaml:
 - Set `phase` = `implementation-complete`
 - Update `implementation.files_created`: For TASK RE-EXECUTION mode, merge new files into existing list (union). For full execution, set to `[{aggregated files}]`
 - Set `version_refs.implementation` = current `version`
-- Set `orchestration.last_phase_action` = `"impl-complete"`
+- Set `orchestration.last_phase_action` = `"implementation-complete"`
 - Update `changelog`
 
 ## Step 4: Post-Completion
