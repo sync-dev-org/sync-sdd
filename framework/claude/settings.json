@@ -6,7 +6,7 @@
       "Skill(sdd-steering)",
       "Skill(sdd-status)",
       "Skill(sdd-handover)",
-      "Skill(sdd-knowledge)",
+
       "Skill(sdd-release)",
       "Skill(sdd-review-self)",
       "Task(sdd-architect)",

@@ -53,11 +53,6 @@ You will receive a prompt containing:
    - Use Glob to verify which files exist
    - Read ALL implementation files
 
-4. **Knowledge Context** (if available):
-   - Glob `{{SDD_DIR}}/project/knowledge/incident-*.md` for past incidents
-   - Glob `{{SDD_DIR}}/project/knowledge/pattern-*.md` for established patterns
-   - Read relevant entries to inform holistic evaluation
-
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:

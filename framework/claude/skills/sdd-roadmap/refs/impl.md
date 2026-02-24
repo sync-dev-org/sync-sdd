@@ -48,7 +48,10 @@ If `{task-numbers}` provided: filter to specified task numbers only.
 **Builder incremental processing**: As each Builder completes, immediately:
 - Read completion report (from Task result: files, test results, knowledge tags, SelfCheck, blockers)
 - Update tasks.yaml: mark completed tasks as `done`
-- Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`
+- Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`:
+    1. Scan completion report for lines starting with `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
+    2. If tags found: read current buffer.md (or create from template), append new entries with source `(source: {feature} Builder, task {N})`, overwrite buffer.md
+    3. If no tags: skip
 - Process SelfCheck result:
   - `PASS` → normal processing
   - `WARN({items})` → log items. Pass as attention points to Auditor when dispatching impl review
@@ -66,6 +69,5 @@ After ALL Builders complete, update spec.yaml:
 
 ## Step 4: Post-Completion
 
-1. **1-spec roadmap only**: Flush Knowledge Buffer to `{{SDD_DIR}}/project/knowledge/` (aggregate, deduplicate, write using templates, clear buffer.md). Multi-spec roadmaps skip this — wave completion (run.md Post-gate) handles flush.
-2. Auto-draft `{{SDD_DIR}}/handover/session.md`
+1. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`

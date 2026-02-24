@@ -18,7 +18,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 
 | Tier | Role | Responsibility |
 |------|------|---------------|
-| T1 | **Lead** | User interaction, phase gate checks, dispatch planning, progress tracking, SubAgent orchestration, spec.yaml updates, Knowledge aggregation. |
+| T1 | **Lead** | User interaction, phase gate checks, dispatch planning, progress tracking, SubAgent orchestration, spec.yaml updates. |
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
@@ -113,7 +113,6 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 - **SDD Root**: `{{SDD_DIR}}` = `.sdd`
 - Steering: `{{SDD_DIR}}/project/steering/`
 - Specs: `{{SDD_DIR}}/project/specs/` (cross-cutting briefs/verdicts: `specs/.cross-cutting/{id}/`)
-- Knowledge: `{{SDD_DIR}}/project/knowledge/`
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
@@ -127,11 +126,9 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 | **Steering** | Project-specific | Project-wide rules, context, decisions | No |
 | **Specs** | Feature-specific | Design + architecture + tasks for a feature | No |
 | **Verdicts** | Feature/Wave-specific | Review verdicts, consensus findings, issue tracking | No |
-| **Knowledge** | Cross-project | Reusable insights, patterns, incidents | Yes |
 
 - Project-specific decisions (tech stack, architecture) → Steering
 - Feature implementation details → Specs
-- Reusable patterns and lessons learned → Knowledge
 
 ### Active Specifications
 - Check `{{SDD_DIR}}/project/specs/` for active specifications
@@ -139,7 +136,7 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 
 ## Workflow
 
-### Commands (6)
+### Commands (5)
 
 | Command | Description |
 |---------|-------------|
@@ -147,7 +144,6 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
-| `/sdd-knowledge` | Manage reusable knowledge entries |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 
 ### Phase-Driven Workflow
@@ -213,7 +209,7 @@ Session context is persisted to `{{SDD_DIR}}/handover/` for cross-session contin
 |------|----------|---------|
 | `session.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
 | `decisions.md` | Append-only (never overwrite) | Decisions with rationale, steering updates, steering exceptions |
-| `buffer.md` | Overwrite (auto) | Knowledge Buffer + Skill candidates (temporary data) |
+| `buffer.md` | Overwrite (auto) | Knowledge tags from Builder reports |
 | `sessions/` | Archive | Dated copies of session.md created by `/sdd-handover` |
 
 Pipeline state is NOT stored in handover — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
@@ -258,8 +254,6 @@ Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
 | User decision | decisions.md | Auto-append with Reason |
 | STEERING change | decisions.md | Auto-append with Reason |
 | Direction change | decisions.md | Auto-append with Reason |
-| Knowledge tag received | buffer.md | Auto-overwrite |
-| Wave completion (knowledge flush) | buffer.md | Clear after flush to knowledge/ |
 | Session start | decisions.md | SESSION_START auto-append |
 
 ### Session Resume
@@ -271,7 +265,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
 2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked)
 3. Read latest N entries from `decisions.md` → recent decision history
-4. Read `buffer.md` → pending Knowledge/Skill candidates
+4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
@@ -283,9 +277,8 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 ## Knowledge Auto-Accumulation
 
 - Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead collects tagged reports from SubAgent Task results and writes to `buffer.md`
-- On wave completion: Lead aggregates, deduplicates, and writes to `{{SDD_DIR}}/project/knowledge/`
-- Skill emergence: When buffer.md Knowledge Buffer contains 2+ `[PATTERN]` entries sharing the same category AND description pattern, Lead adds a Skill candidate entry to buffer.md Skill Candidates section. Surfaced to user via `/sdd-knowledge --skills` or at wave completion. Lead does NOT auto-create Skill files without user approval.
+- Lead collects tagged reports from SubAgent Task results and appends to `{{SDD_DIR}}/handover/buffer.md`
+- buffer.md persists across sessions via handover. No auto-flush to separate files.
 
 ## Pipeline Stop Protocol
 

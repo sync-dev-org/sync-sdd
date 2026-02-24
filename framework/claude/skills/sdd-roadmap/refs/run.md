@@ -183,7 +183,6 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`
-- Aggregate Knowledge Buffer, deduplicate, write to `{{SDD_DIR}}/project/knowledge/`, clear buffer.md
 - Commit: `Wave {N}: {summary}`
 - Auto-draft session.md
 

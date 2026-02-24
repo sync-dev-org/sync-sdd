@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.2.2
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.2.3
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -88,13 +88,12 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .claude/settings.json        Default settings (prompt before overwrite)
 
     .sdd/settings/rules/         Development rules
-    .sdd/settings/templates/     Spec/steering/knowledge templates
+    .sdd/settings/templates/     Spec/steering templates
     .sdd/.version                Installed framework version
 
 ${BOLD}USER FILES${RESET} (never touched by installer):
     .sdd/project/steering/       Project-specific steering
     .sdd/project/specs/          Feature specifications
-    .sdd/project/knowledge/      Knowledge base entries
     .sdd/handover/               Session continuity (auto-persisted)
     .claude/settings.local.json  Local setting overrides
 
@@ -237,7 +236,7 @@ fi
 migrate_kiro_to_sdd() {
     [ -d .kiro ] || return 0
     info "Detected legacy .kiro/ directory"
-    for dir in steering specs knowledge; do
+    for dir in steering specs; do
         if [ -d ".kiro/$dir" ]; then
             if [ -d ".claude/sdd/project/$dir" ]; then
                 warn ".claude/sdd/project/$dir already exists, skipping .kiro/$dir migration"

@@ -17,7 +17,7 @@ Your AI development team — 24 specialized SubAgents orchestrated by a Lead, tu
 - **Foundation-First scheduling** — Models, shared libraries, and error handling are automatically prioritized to Wave 1. Dependency-aware topological sorting minimizes wave count and maximizes parallel throughput.
 - **Self-correcting reviews** — NO-GO verdicts trigger automatic fix loops (up to 5 retries). SPEC-UPDATE-NEEDED cascades back through the full pipeline. Dead-code review catches orphaned artifacts. Consensus mode runs multiple independent review pipelines for high-confidence findings.
 - **Specification traceability** — Every implementation traces back to a design. Phase gates enforce order. Version tracking detects stale implementations. SPEC-Code atomicity keeps design and code in sync.
-- **Cross-session continuity** — Session handover, decision logs, and knowledge accumulation persist across conversations. Resume any interrupted pipeline from exactly where it stopped.
+- **Cross-session continuity** — Session handover and decision logs persist across conversations. Resume any interrupted pipeline from exactly where it stopped.
 
 ## Install
 
@@ -30,11 +30,11 @@ Run from your project root. Requires `curl` and `tar`.
 ### Options
 
 ```sh
-# Update framework files (preserves your steering/specs/knowledge)
+# Update framework files (preserves your steering/specs)
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.2.2
+curl -LsSf <url>/install.sh | sh -s -- --version v1.2.3
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -61,7 +61,6 @@ Your project files are never touched by `--update`:
 ```
 .sdd/project/steering/             # Project context and decisions
 .sdd/project/specs/                # Feature specifications
-.sdd/project/knowledge/            # Reusable learnings
 .sdd/handover/                     # Session continuity
 ```
 
@@ -138,7 +137,7 @@ steering → design → review → implement → review
 
 **Multi-agent review**: 6+ Inspectors examine the work from different angles (architecture, consistency, testability, quality, best practices, holistic). An Auditor synthesizes findings into a single verdict. Consensus mode (`--consensus N`) runs N independent pipelines and filters noise through frequency thresholds.
 
-**Knowledge accumulation**: Builders report patterns, incidents, and references. Lead aggregates them per wave into a reusable knowledge base that grows with your project.
+**Knowledge accumulation**: Builders report patterns, incidents, and references via tagged completion reports. Lead collects them into a handover buffer that persists across sessions.
 
 ## Commands
 
@@ -148,7 +147,6 @@ steering → design → review → implement → review
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
-| `/sdd-knowledge` | Manage reusable knowledge entries |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-review-self` | Self-review for framework development |
 

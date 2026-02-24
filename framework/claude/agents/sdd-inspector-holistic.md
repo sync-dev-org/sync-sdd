@@ -47,11 +47,6 @@ You will receive a prompt containing:
      - `structure.md` - Project structure
      - Any custom steering files
 
-3. **Knowledge Context** (if available):
-   - Glob `{{SDD_DIR}}/project/knowledge/pattern-*.md` for established patterns
-   - Glob `{{SDD_DIR}}/project/knowledge/incident-*.md` for past incidents
-   - Read relevant entries to inform holistic evaluation
-
 ### Wave-Scoped Cross-Check Mode (wave number provided)
 
 1. **Resolve Wave Scope**:
