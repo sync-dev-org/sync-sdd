@@ -110,7 +110,7 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 ## Project Context
 
 ### Paths
-- **SDD Root**: `{{SDD_DIR}}` = `.claude/sdd`
+- **SDD Root**: `{{SDD_DIR}}` = `.sdd`
 - Steering: `{{SDD_DIR}}/project/steering/`
 - Specs: `{{SDD_DIR}}/project/specs/` (cross-cutting briefs/verdicts: `specs/.cross-cutting/{id}/`)
 - Knowledge: `{{SDD_DIR}}/project/knowledge/`

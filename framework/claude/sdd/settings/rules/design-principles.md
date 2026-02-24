@@ -65,7 +65,7 @@
 ## Section Authoring Guidance
 
 ### Global Ordering
-- Default flow: Specifications (including Non-Goals) → Overview → Architecture (including Technology Stack) → System Flows → Specifications Traceability → Components & Interfaces → Data Models → Error Handling → Testing Strategy → Optional sections.
+- Default flow: Specifications (including Non-Goals) → Overview → Architecture (including Technology Stack) → System Flows → Specifications Traceability → Components and Interfaces → Data Models → Error Handling → Testing Strategy → Optional sections.
 - Teams may swap Traceability earlier or place Data Models nearer Architecture when it improves clarity, but keep section headings intact.
 - Within each section, follow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
 
@@ -93,7 +93,7 @@
 - Prefer the component summary table for simple mappings; reserve the full traceability table for complex or compliance-sensitive specs.
 - Re-run this mapping whenever specs or components change to avoid drift.
 
-### Components & Interfaces Authoring
+### Components and Interfaces Authoring
 - Group components by domain/layer and provide one block per component.
 - Begin with a summary table listing Component, Domain, Intent, Requirement coverage, key dependencies, and selected contracts.
 - Table fields: Intent (one line), Requirements (`2.1, 2.3`), Owner/Reviewers (optional).

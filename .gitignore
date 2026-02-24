@@ -12,6 +12,9 @@
 # Claude Code (install target is .claude/, source is framework/)
 .claude/
 
+# SDD project data (install target is .sdd/, source is framework/claude/sdd/)
+.sdd/
+
 # Local-only directories
 docs/
 examples/

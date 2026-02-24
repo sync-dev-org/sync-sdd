@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.1.2
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.2.0
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -87,19 +87,19 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .claude/CLAUDE.md            Framework instructions (appended between markers)
     .claude/settings.json        Default settings (prompt before overwrite)
 
-    .claude/sdd/settings/rules/      Development rules
-    .claude/sdd/settings/templates/  Spec/steering/knowledge templates
-    .claude/sdd/.version             Installed framework version
+    .sdd/settings/rules/         Development rules
+    .sdd/settings/templates/     Spec/steering/knowledge templates
+    .sdd/.version                Installed framework version
 
 ${BOLD}USER FILES${RESET} (never touched by installer):
-    .claude/sdd/project/steering/    Project-specific steering
-    .claude/sdd/project/specs/       Feature specifications
-    .claude/sdd/project/knowledge/   Knowledge base entries
-    .claude/sdd/handover/            Session continuity (auto-persisted)
-    .claude/settings.local.json      Local setting overrides
+    .sdd/project/steering/       Project-specific steering
+    .sdd/project/specs/          Feature specifications
+    .sdd/project/knowledge/      Knowledge base entries
+    .sdd/handover/               Session continuity (auto-persisted)
+    .claude/settings.local.json  Local setting overrides
 
 ${BOLD}CHECK VERSION${RESET}:
-    cat .claude/sdd/.version
+    cat .sdd/.version
 EOF
     exit 0
 }
@@ -132,6 +132,11 @@ if [ "$UNINSTALL" = true ]; then
     rm -rf .claude/skills/sdd-*/
     rm -f .claude/commands/sdd-*.md   # legacy cleanup
     rm -f .claude/agents/sdd-*.md
+    rm -rf .sdd/settings/rules/ \
+           .sdd/settings/templates/ \
+           .sdd/settings/profiles/
+    rm -f .sdd/.version
+    # Also clean old locations (pre-v1.2.0)
     rm -rf .claude/sdd/settings/rules/ \
            .claude/sdd/settings/templates/ \
            .claude/sdd/settings/profiles/
@@ -154,14 +159,15 @@ if [ "$UNINSTALL" = true ]; then
     fi
 
     # Clean up empty directories
-    rmdir .claude/skills .claude/commands .claude/agents .claude/sdd/settings .claude/sdd 2>/dev/null || true
+    rmdir .sdd/settings .claude/sdd/settings .claude/sdd 2>/dev/null || true
+    rmdir .claude/skills .claude/commands .claude/agents 2>/dev/null || true
 
     if [ -f .claude/settings.json ]; then
         warn ".claude/settings.json was left in place (may contain your customizations)"
     fi
 
     success "SDD framework files removed"
-    info "User files (.claude/sdd/project/) were preserved"
+    info "User files (.sdd/project/) were preserved"
     exit 0
 fi
 
@@ -214,7 +220,9 @@ if [ -f "$SRC/VERSION" ]; then
 else
     NEW_VERSION="0.0.0"
 fi
-if [ -f .claude/sdd/.version ]; then
+if [ -f .sdd/.version ]; then
+    read -r INSTALLED_VERSION < .sdd/.version
+elif [ -f .claude/sdd/.version ]; then
     read -r INSTALLED_VERSION < .claude/sdd/.version
 else
     INSTALLED_VERSION="0.0.0"
@@ -375,6 +383,27 @@ if version_lt "$INSTALLED_VERSION" "0.20.0"; then
         info "Migrated sdd/settings/agents/ -> .claude/agents/ (v0.20.0)"
     fi
 fi
+# v1.2.0: SDD data moved from .claude/sdd/ to .sdd/
+if version_lt "$INSTALLED_VERSION" "1.2.0"; then
+    for dir in settings project handover; do
+        if [ -d ".claude/sdd/$dir" ]; then
+            if [ -d ".sdd/$dir" ]; then
+                warn ".sdd/$dir already exists, skipping .claude/sdd/$dir migration"
+            else
+                mkdir -p .sdd
+                mv ".claude/sdd/$dir" ".sdd/$dir"
+                info "Migrated .claude/sdd/$dir -> .sdd/$dir"
+            fi
+        fi
+    done
+    if [ -f .claude/sdd/.version ]; then
+        mkdir -p .sdd
+        mv .claude/sdd/.version .sdd/.version
+    fi
+    # Clean up empty .claude/sdd/
+    rmdir .claude/sdd 2>/dev/null || true
+    info "SDD data root moved to .sdd/ (v1.2.0)"
+fi
 
 # --- Install framework files ---
 install_file() {
@@ -480,16 +509,24 @@ else
     install_file "$SRC/framework/claude/settings.json" ".claude/settings.json"
 fi
 
-# .claude/sdd/settings/ framework files
-install_dir "$SRC/framework/claude/sdd/settings/rules"     ".claude/sdd/settings/rules"
-install_dir "$SRC/framework/claude/sdd/settings/templates"  ".claude/sdd/settings/templates"
-install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".claude/sdd/settings/profiles"
+# .sdd/settings/ framework files
+install_dir "$SRC/framework/claude/sdd/settings/rules"     ".sdd/settings/rules"
+install_dir "$SRC/framework/claude/sdd/settings/templates"  ".sdd/settings/templates"
+install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".sdd/settings/profiles"
 install_dir "$SRC/framework/claude/agents"     ".claude/agents"
 
 # Write version file
 if [ "$NEW_VERSION" != "0.0.0" ]; then
-    mkdir -p .claude/sdd
-    printf '%s\n' "$NEW_VERSION" > .claude/sdd/.version
+    mkdir -p .sdd
+    printf '%s\n' "$NEW_VERSION" > .sdd/.version
+fi
+
+# Ensure .sdd/ is gitignored
+if [ -f .gitignore ]; then
+    if ! grep -q '\.sdd' .gitignore; then
+        printf '\n# SDD project data\n.sdd/\n' >> .gitignore
+        info "Added .sdd/ to .gitignore"
+    fi
 fi
 
 # --- Remove stale framework files on update ---
@@ -521,14 +558,14 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
             warn "Removed stale skill: $skill_dir"
         fi
     done
-    remove_stale ".claude/sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
-    remove_stale ".claude/sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
-    remove_stale ".claude/sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
+    remove_stale ".sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
+    remove_stale ".sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
+    remove_stale ".sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
     remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal
-    find .claude/sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
-    find .claude/sdd/settings/profiles -depth -type d -empty -delete 2>/dev/null || true
+    find .sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
+    find .sdd/settings/profiles -depth -type d -empty -delete 2>/dev/null || true
     find .claude/skills -depth -type d -empty -delete 2>/dev/null || true
 fi
 
@@ -545,7 +582,7 @@ printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/skills/      $(find .claude/skills -name 'SKILL.md' -path '*/sdd-*/*' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .claude/sdd/         Rules + templates"
+echo "  .sdd/                Rules + templates"
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     echo "  Version:             ${NEW_VERSION}"
 fi

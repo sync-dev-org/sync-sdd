@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.1.2
+curl -LsSf <url>/install.sh | sh -s -- --version v1.2.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -47,22 +47,22 @@ curl -LsSf <url>/install.sh | sh -s -- --uninstall
 
 ```
 your-project/
-└── .claude/
-    ├── CLAUDE.md                      # Framework instructions (auto-loaded)
-    ├── settings.json                  # Default settings
-    ├── skills/sdd-*/SKILL.md          # 7 skills
-    ├── agents/sdd-*.md               # 24 SubAgent definitions
-    └── sdd/
-        └── settings/                  # Rules, templates, profiles
+├── .claude/
+│   ├── CLAUDE.md                      # Framework instructions (auto-loaded)
+│   ├── settings.json                  # Default settings
+│   ├── skills/sdd-*/SKILL.md          # 7 skills
+│   └── agents/sdd-*.md               # 24 SubAgent definitions
+└── .sdd/
+    └── settings/                      # Rules, templates, profiles
 ```
 
 Your project files are never touched by `--update`:
 
 ```
-.claude/sdd/project/steering/      # Project context and decisions
-.claude/sdd/project/specs/         # Feature specifications
-.claude/sdd/project/knowledge/     # Reusable learnings
-.claude/sdd/handover/              # Session continuity
+.sdd/project/steering/             # Project context and decisions
+.sdd/project/specs/                # Feature specifications
+.sdd/project/knowledge/            # Reusable learnings
+.sdd/handover/                     # Session continuity
 ```
 
 ## Architecture
