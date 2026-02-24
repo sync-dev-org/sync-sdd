@@ -31,7 +31,7 @@ Spawn via review execution flow (below):
 
 Spawn via review execution flow (below):
 - Standard impl Inspectors (6, sonnet): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}`
-- **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e`
+- **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e` and `sdd-inspector-visual` (Lead manages dev server lifecycle — see Web Inspector Server Protocol below)
 - Impl Auditor (opus): `sdd-auditor-impl`
 
 **Cross-check / wave-scoped mode**: Same Inspector set + Auditor. Context includes:
@@ -44,6 +44,24 @@ Spawn via review execution flow (below):
 - 4 dead-code Inspectors (sonnet): `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}`
 - Dead-code Auditor (opus): `sdd-auditor-dead-code`
 
+## Web Inspector Server Protocol (Web Projects Only)
+
+When impl review includes web inspectors (`sdd-inspector-e2e` and `sdd-inspector-visual`), Lead manages the dev server lifecycle:
+
+1. **Server Start** (before Inspector dispatch):
+   - Read dev server command from `steering/tech.md` Common Commands
+   - If no dev server command found: skip server start, dispatch web inspectors without server URL (they will report "Server URL not accessible" and terminate gracefully)
+   - Start dev server via Bash (background process)
+   - Wait for server ready (retry URL access with brief delays)
+   - Record server URL (e.g., `http://localhost:3000`)
+
+2. **Inspector Dispatch**: Include server URL in spawn context for `sdd-inspector-e2e` and `sdd-inspector-visual`. Both inspectors use the already-running server — they do NOT start or stop it.
+
+3. **Server Stop** (after all Inspectors complete, before Auditor dispatch):
+   - Kill the background dev server process
+
+If server fails to start: dispatch web inspectors anyway (they will report the error in their CPF output and terminate gracefully).
+
 ## Review Execution Flow
 
 1. Determine review scope directory:
@@ -53,10 +71,13 @@ Spawn via review execution flow (below):
    - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
 2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1)
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/`)
+3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
 4. Spawn all Inspectors via `Task(subagent_type=..., run_in_background=true)`. Each context includes:
    - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
+   - **Web inspectors**: also include server URL
 5. Wait for all Inspector Tasks to complete (poll via `TaskOutput`). Handle failed Inspectors: retry, skip, or proceed with available results.
+5a. **Web projects (impl review only)**: Stop dev server per Web Inspector Server Protocol above.
 6. Spawn Auditor via `Task(subagent_type=..., run_in_background=true)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
    - Verdict output path: `{scope-dir}/active/verdict.cpf`

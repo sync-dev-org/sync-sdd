@@ -46,4 +46,4 @@
 <!-- e.g., "No gradients", "No rounded corners > 8px", "No auto-playing media" -->
 
 ---
-_This file is referenced by sdd-inspector-e2e during impl review for visual design evaluation._
+_This file is referenced by sdd-inspector-visual during impl review for visual design evaluation._
