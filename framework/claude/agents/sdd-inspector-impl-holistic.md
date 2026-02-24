@@ -83,7 +83,8 @@ You will receive a prompt containing:
 1. **All Specs**:
    - Glob `{{SDD_DIR}}/project/specs/*/spec.yaml`
    - Read design.md for each feature
-   - Identify all implementation file paths
+   - Identify all implementation file paths (from spec.yaml `implementation.files_created`)
+   - Read all implementation files
 
 2. **Steering Context**:
    - Read entire `{{SDD_DIR}}/project/steering/` directory for project-wide conventions

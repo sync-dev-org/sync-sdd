@@ -5,9 +5,9 @@ Orchestration reference. Two modes: **Single-Spec** (targeted revision of one sp
 ## Mode Detection
 
 ```
-Arguments parsing:
+Arguments parsing (Lead checks first word after "revise" against existing spec names):
   "revise <feature> [instructions]"  → feature matches known spec name → Single-Spec Mode (Part A)
-  "revise [instructions]"            → no feature name               → Cross-Cutting Mode (Part B)
+  "revise [instructions]"            → no feature name match           → Cross-Cutting Mode (Part B)
 
 Escalation:
   Single-Spec Mode Step 3 detects 2+ affected specs → propose switch to Cross-Cutting Mode
@@ -71,7 +71,7 @@ Standard pipeline with revision context. References phase execution refs for det
 1. **Design**: Execute per `refs/design.md` with revision context:
    - Feature: {feature}, Mode: existing
    - User-instructions: {REVISION_INSTRUCTIONS from Step 2}. Preserve unaffected design sections. Document changes in '## Revision Notes'.
-   After completion: verify design.md, update spec.yaml (phase=design-generated, last_phase_action=null).
+   After completion: verify design.md, update spec.yaml (increment `version`, phase=design-generated, last_phase_action=null).
 2. **Design Review**: Execute per `refs/review.md` (Design Review section).
    Handle verdict per CLAUDE.md counter limits.
 3. **Implementation**: Execute per `refs/impl.md`.
@@ -88,7 +88,7 @@ After revision pipeline completes (spec returns to `implementation-complete`):
 1. For each direct dependent spec that is `implementation-complete`:
    - Present to user per-spec:
      a. **Re-review**: Run impl review only (`/sdd-roadmap review impl {dep}`)
-     b. **Re-implement**: Reset to `design-generated`, full cascade (Architect re-designs against updated upstream → Design Review → TaskGenerator → Builder → Impl Review)
+     b. **Re-implement**: Reset `phase=design-generated`, `last_phase_action=null`, full cascade (Architect re-designs against updated upstream → Design Review → TaskGenerator → Builder → Impl Review)
      c. **Skip**: Accept current state
      d. **Cross-cutting revision**: Switch to cross-cutting mode for coordinated downstream revision
    - Record each decision in `decisions.md` as `USER_DECISION`
@@ -219,6 +219,7 @@ For each tier (sequential):
   3. Design Review:
      - Dispatch per spec (parallel) per refs/review.md
      - Handle verdicts per CLAUDE.md counter limits
+     - SPEC-UPDATE-NEEDED is not expected for design review. If received, escalate immediately
 
   4. Implementation:
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
@@ -240,7 +241,7 @@ For each tier (sequential):
 After all tiers complete, verify cross-spec consistency:
 
 1. Execute wave-scoped cross-check impl review (same mechanism as run.md Step 7a) across ALL affected specs (all FULL specs from all tiers)
-2. Persist verdict to `specs/.cross-cutting/{id}/verdicts.md`
+2. Persist verdict to `specs/.cross-cutting/{id}/verdicts.md` (NOT `reviews/wave/verdicts.md` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
    - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user

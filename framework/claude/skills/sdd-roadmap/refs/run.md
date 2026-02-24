@@ -85,7 +85,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
 | **Design Review** | Phase is `design-generated`. No additional conditions. |
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
-| **Impl Review** | All Builders for this spec have completed. |
+| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Lead continues the dispatch loop immediately.
 
@@ -125,7 +125,7 @@ Execute impl review per `refs/review.md` (Impl Review section).
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
-- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: phase remains `implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries)
+- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: phase remains `implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries, aggregate cap 6)
 - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: Architect (with SPEC_FEEDBACK) → TaskGenerator → Builder → re-run Impl Review. All tasks fully re-implemented.
 - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate at 6.
 - In **gate mode**: pause for user approval
@@ -168,7 +168,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code
-   - **NO-GO** → map to target spec(s), increment `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user with options:
+   - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:
      - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
@@ -179,7 +179,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
-   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
+   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, separate from per-spec aggregate cap → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`

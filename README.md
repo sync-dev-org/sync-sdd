@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.2.3
+curl -LsSf <url>/install.sh | sh -s -- --version v1.2.4
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -50,7 +50,7 @@ your-project/
 ├── .claude/
 │   ├── CLAUDE.md                      # Framework instructions (auto-loaded)
 │   ├── settings.json                  # Default settings
-│   ├── skills/sdd-*/SKILL.md          # 7 skills
+│   ├── skills/sdd-*/SKILL.md          # 6 skills
 │   └── agents/sdd-*.md               # 24 SubAgent definitions
 └── .sdd/
     └── settings/                      # Rules, templates, profiles

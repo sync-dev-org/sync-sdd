@@ -69,8 +69,8 @@ If server fails to start: dispatch web inspectors anyway (they will report the e
    - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/`
    - **Project-level** (cross-check): `{{SDD_DIR}}/project/reviews/cross-check/`
    - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
-2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1)
-3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/`)
+2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode, B{seq} is determined once and shared across all N pipelines.
+3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
 4. Spawn all Inspectors via `Task(subagent_type=..., run_in_background=true)`. Each context includes:
    - Review output path: `{scope-dir}/active/{inspector-name}.cpf`

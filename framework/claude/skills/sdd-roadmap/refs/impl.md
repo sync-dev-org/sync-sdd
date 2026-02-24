@@ -70,4 +70,4 @@ After ALL Builders complete, update spec.yaml:
 ## Step 4: Post-Completion
 
 1. Auto-draft `{{SDD_DIR}}/handover/session.md`
-3. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`
+2. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`
