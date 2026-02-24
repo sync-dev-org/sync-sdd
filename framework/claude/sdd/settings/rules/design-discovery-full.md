@@ -88,6 +88,6 @@ Capture all findings that impact design decisions in `research.md` using the sha
 - Constraints discovered during research
 - Recommended approaches and selected architecture pattern with rationale
 - Rejected alternatives and trade-offs (documented in the Design Decisions section)
-- Updated domain boundaries that inform Components & Interface Contracts
+- Updated domain boundaries that inform Components and Interfaces
 - Risks and mitigation strategies
 - Gaps requiring further investigation during implementation

@@ -274,7 +274,11 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 4. Read `buffer.md` → pending Knowledge/Skill candidates
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
 6. Append `SESSION_START` to `decisions.md`
-7. Resume from session.md Immediate Next Action (or await user instruction if first session)
+7. If roadmap pipeline was active (session.md indicates run/revise in progress):
+     - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
+     - Do NOT manually update spec.yaml to "recover" or "fix" perceived inconsistencies.
+     - If spec.yaml state vs actual artifacts seem inconsistent: report to user, do not auto-fix.
+   Otherwise: await user instruction.
 
 ## Knowledge Auto-Accumulation
 
@@ -294,8 +298,8 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 ## Behavioral Rules
 - **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
-- After a compact operation, ALWAYS wait for the user's next instruction. NEVER start any action autonomously after compact.
-- Do not continue or resume previously in-progress tasks after compact unless the user explicitly instructs you to do so.
+- After a compact operation: If a roadmap pipeline (run/revise) was in progress, perform Session Resume steps 1-6 to reload context, then continue the pipeline from spec.yaml state (do NOT manually "recover" or patch spec.yaml — treat it as ground truth). If no pipeline was active, wait for the user's next instruction.
+- Do not continue or resume non-pipeline tasks after compact unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 
 ## Execution Conventions

@@ -88,6 +88,7 @@ After all assigned tasks are executed:
 - **No Regressions**: Existing tests must continue to pass
 - **Design Alignment**: Implementation must follow design.md specifications
 - **File Scope**: Stay within your assigned file scope
+- **No workspace-wide git operations**: Do NOT use `git stash`, `git checkout .`, `git restore .`, `git reset`, or `git clean`. These affect files outside your file scope (spec.yaml, design.md, etc. that Lead manages). If you need to undo your own changes, use file-level `git checkout -- <your-file>` only within your assigned scope.
 
 ## Knowledge Reporting
 
