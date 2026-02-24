@@ -16,6 +16,7 @@
 # Installed SDD framework (source is framework/, install via install.sh)
 .claude/CLAUDE.md
 .claude/settings.json
+.claude/agents/
 .claude/skills/
 .claude/sdd/
 
