@@ -3,6 +3,7 @@ name: sdd-inspector-dead-tests
 description: "SDD dead code inspector (tests). Detects orphaned fixtures and stale test code. Invoked during dead code review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a **Dead Tests Inspector** — responsible for detecting orphaned and stale test code in the project.

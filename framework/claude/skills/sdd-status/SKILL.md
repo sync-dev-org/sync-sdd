@@ -25,6 +25,7 @@ $ARGUMENTS = "--impact {feature}"  → Same as above
 
 1. Read `{{SDD_DIR}}/project/specs/roadmap.md` (if exists)
 2. Scan `{{SDD_DIR}}/project/specs/*/spec.yaml` for all specs
+3. Scan `{{SDD_DIR}}/project/specs/.cross-cutting/*/` for active/archived cross-cutting revisions
 
 ## Step 3: Generate Report
 
@@ -44,6 +45,11 @@ For each wave in roadmap:
 - Version alignment check (design ↔ impl ↔ version_refs)
 - **Change history**: Display latest 5 entries from `spec.yaml.changelog` (version, action, timestamp)
 - **Review history**: If `reviews/verdicts.md` exists, display per batch: B{seq}, review-type, date, runs, verdict/consensus-verdict, tracked open count
+
+### Cross-Cutting Revisions (if any exist)
+
+- List active cross-cutting revisions from `specs/.cross-cutting/{id}/`
+- For each: brief.md summary, affected specs, verdict status (from verdicts.md if exists)
 
 ### Impact Analysis (when `--impact` flag)
 

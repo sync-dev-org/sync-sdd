@@ -3,6 +3,7 @@ name: sdd-inspector-testability
 description: "SDD design review inspector (testability). Evaluates design clarity for test implementation. Invoked during design review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a test implementer clarity detective.

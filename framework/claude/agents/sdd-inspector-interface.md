@@ -3,6 +3,7 @@ name: sdd-inspector-interface
 description: "SDD impl review inspector (interface). Verifies function signatures and call sites against design contracts. Invoked during impl review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are an interface contract verification detective.

@@ -26,6 +26,7 @@ Spawn Architect via `Task(subagent_type="sdd-architect", run_in_background=true)
 - Mode: {new|existing}
 - User-instructions: {from arguments, or empty}
 - **Architect loads its own context** (steering, templates, rules, existing code) autonomously. Do NOT pre-read these files for Architect.
+- If cross-cutting brief path is provided: include brief path in prompt. Architect reads the brief for shared context and focuses on spec-specific design changes rather than re-documenting shared background.
 
 After Architect completion:
 1. Verify `design.md` and `research.md` exist. If either is missing: do NOT update spec.yaml. Escalate to user: "Architect failed to produce {missing file}. Retry or investigate."

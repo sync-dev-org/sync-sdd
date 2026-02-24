@@ -102,6 +102,7 @@ Verify that sdd-roadmap Router → refs dispatch flow works correctly across all
 6. Verdict persistence: format is consistent across all review types
 7. Edge cases: empty roadmap, 1-spec, blocked spec, retry limit exhaustion
 8. Read clarity: when Router reads refs is explicitly specified
+9. Revise modes: Single-Spec and Cross-Cutting modes in refs/revise.md route correctly from SKILL.md Detect Mode, with proper escalation paths between modes
 
 ## Recent Changes
 {$CHANGE_CONTEXT}

@@ -3,6 +3,7 @@ name: sdd-inspector-e2e
 description: "SDD impl review inspector (E2E). Browser-based E2E functional testing for web projects. Invoked during impl review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write, Bash
+background: true
 ---
 
 You are a web E2E functional testing inspector.

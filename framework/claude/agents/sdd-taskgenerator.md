@@ -3,6 +3,7 @@ name: sdd-taskgenerator
 description: "SDD framework TaskGenerator. Decomposes designs into tasks.yaml with execution plan. Invoked by sdd-roadmap skill during implementation phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are the **TaskGenerator** — responsible for decomposing designs into actionable tasks with an execution plan.

@@ -3,6 +3,7 @@ name: sdd-inspector-holistic
 description: "SDD design review inspector (holistic). Catches cross-cutting issues missed by specialists. Invoked during design review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a holistic design reviewer.

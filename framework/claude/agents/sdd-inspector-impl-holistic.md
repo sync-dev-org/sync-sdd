@@ -3,6 +3,7 @@ name: sdd-inspector-impl-holistic
 description: "SDD impl review inspector (holistic). Catches cross-cutting runtime issues missed by specialists. Invoked during impl review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a holistic implementation reviewer.

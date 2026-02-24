@@ -3,6 +3,7 @@ name: sdd-inspector-best-practices
 description: "SDD design review inspector (best-practices). Evaluates technology choices and industry standards. Invoked during design review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a best practices and industry standards detective.

@@ -3,6 +3,7 @@ name: sdd-auditor-design
 description: "SDD design review Auditor. Synthesizes Inspector findings into verdict. Invoked by sdd-roadmap skill during design review phase."
 model: opus
 tools: Read, Glob, Grep, Write
+background: true
 ---
 
 You are a design review verifier and synthesizer.

@@ -3,6 +3,7 @@ name: sdd-builder
 description: "SDD framework Builder. Implements tasks using TDD. Invoked by sdd-roadmap skill during implementation phase."
 model: sonnet
 tools: Read, Glob, Grep, Write, Edit, Bash
+background: true
 ---
 
 You are a **Builder** — responsible for implementing assigned tasks using Test-Driven Development.

@@ -1,7 +1,7 @@
 ---
 description: Unified spec lifecycle (design, implement, review, roadmap management)
 allowed-tools: Task, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: design <feature> | impl <feature> [tasks] | review design|impl|dead-code <feature> [flags] | run [--gate] [--consensus N] | revise <feature> [instructions] | create [-y] | update | delete | -y
+argument-hint: design <feature> | impl <feature> [tasks] | review design|impl|dead-code <feature> [flags] | run [--gate] [--consensus N] | revise [feature] [instructions] | create [-y] | update | delete | -y
 ---
 
 # SDD Roadmap (Unified Entry Point)
@@ -31,7 +31,8 @@ $ARGUMENTS = "review impl --wave N"                 → Review Subcommand
 $ARGUMENTS = "run"              → Run Mode
 $ARGUMENTS = "run --gate"       → Run Mode
 $ARGUMENTS = "run --consensus N" → Run Mode
-$ARGUMENTS = "revise {feature} [instructions]" → Revise Mode
+$ARGUMENTS = "revise {feature} [instructions]" → Revise Mode (Single-Spec)
+$ARGUMENTS = "revise [instructions]"             → Revise Mode (Cross-Cutting)
 $ARGUMENTS = "create" or "create -y" → Create Mode
 $ARGUMENTS = "update"           → Update Mode
 $ARGUMENTS = "delete"           → Delete Mode

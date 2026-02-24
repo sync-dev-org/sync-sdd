@@ -92,6 +92,7 @@ Roadmap execution maximizes parallelism at multiple levels:
 - **Wave Bypass**: Island specs (no dependencies, no dependents) run as independent fast-track pipelines outside the wave structure.
 - **Builder parallelism**: Within a spec, multiple Builders execute in parallel per TaskGenerator groupings.
 - **Inspector parallelism**: All Inspectors for a review dispatch in parallel; Auditor synthesizes after all complete.
+- **Cross-Cutting Parallelism**: Tier-based parallel revision for multi-spec changes. Impact analysis classifies specs (FULL/AUDIT/SKIP), triage eliminates unnecessary work, and execution tiers run in parallel within each tier. See sdd-roadmap `refs/revise.md` Part B.
 
 See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 
@@ -111,7 +112,7 @@ File-based review protocol makes all SubAgent outputs idempotent (same `reviews/
 ### Paths
 - **SDD Root**: `{{SDD_DIR}}` = `.claude/sdd`
 - Steering: `{{SDD_DIR}}/project/steering/`
-- Specs: `{{SDD_DIR}}/project/specs/`
+- Specs: `{{SDD_DIR}}/project/specs/` (cross-cutting briefs/verdicts: `specs/.cross-cutting/{id}/`)
 - Knowledge: `{{SDD_DIR}}/project/knowledge/`
 - Handover: `{{SDD_DIR}}/handover/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
@@ -181,7 +182,7 @@ Lead records the following decision types as a standard behavior:
 - `STEERING_UPDATE`: steering modified
 - `DIRECTION_CHANGE`: spec split, wave restructure, scope change
 - `ESCALATION_RESOLVED`: outcome of an escalation to user
-- `REVISION_INITIATED`: user-initiated past-wave spec revision
+- `REVISION_INITIATED`: user-initiated past-wave spec revision (append `(cross-cutting)` for multi-spec revisions)
 - `STEERING_EXCEPTION`: intentional deviation from steering (prevents review false-positives)
 - `SESSION_START`/`SESSION_END`: session lifecycle
 
@@ -242,7 +243,7 @@ Template: `{{SDD_DIR}}/settings/templates/handover/session.md`
 
 Append-only structured log. Each entry: `[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}` followed by fields: Context, Decision, Reason, Impact, Source, Steering-ref (if STEERING_EXCEPTION).
 
-Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `REVISION_INITIATED` (user-initiated past-wave spec revision), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
+Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `REVISION_INITIATED` (user-initiated past-wave spec revision; append `(cross-cutting)` for multi-spec revisions), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
 
 ### buffer.md Format
 
@@ -318,7 +319,7 @@ Trunk-based development. main is always HEAD.
 - **Wave completion (multi-spec roadmap)**: After Wave Quality Gate passes, Lead commits directly
 - **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
-- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap)
+- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision)
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):

@@ -125,6 +125,7 @@ All verdict files follow the same pattern: `{scope-dir}/verdicts.md`
 - **Dead-code review**: `{{SDD_DIR}}/project/reviews/dead-code/verdicts.md`
 - **Cross-check review**: `{{SDD_DIR}}/project/reviews/cross-check/verdicts.md`
 - **Wave-scoped review**: `{{SDD_DIR}}/project/reviews/wave/verdicts.md`
+- **Cross-cutting review**: `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/verdicts.md`
 - **Self-review** (framework-internal): `{{SDD_DIR}}/project/reviews/self/verdicts.md`
 
 ## Next Steps by Verdict
