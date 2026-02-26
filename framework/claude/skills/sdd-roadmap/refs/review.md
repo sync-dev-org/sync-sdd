@@ -62,6 +62,8 @@ When impl review includes web inspectors (`sdd-inspector-e2e` and `sdd-inspector
 
 If server fails to start: dispatch web inspectors anyway (they will report the error in their CPF output and terminate gracefully).
 
+> **Dispatch loop context**: Within `run.md` dispatch loop, this flow is decomposed into dispatch-loop events (see run.md §Review Decomposition). The sequential flow below applies to standalone review invocations.
+
 ## Review Execution Flow
 
 1. Determine review scope directory:

@@ -58,23 +58,50 @@ For each wave (sequential):
   Initialize:
     ready_specs = wave-bound specs at their current phase
     active = {}  # spec → running SubAgent task(s)
+    review_state = {}  # spec → {phase: inspecting|auditing, inspector_tasks, auditor_task, b_seq, scope_dir}
 
   Loop:
     1. ADVANCE: For each spec in wave (not active, not blocked):
        - Determine next phase based on Readiness Rules (phase + verdict history)
        - If ready: dispatch phase (run_in_background: true), add to active set
+       - For review phases: decomposed dispatch per §Review Decomposition
 
     2. LOOKAHEAD: Check next-wave Design eligibility (see Design Lookahead below)
 
-    3. WAIT: Poll active SubAgents via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
+    3. WAIT: Poll all active tasks (Architects, Builders, individual Inspectors, Auditors) via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
 
-    4. PROCESS: Handle completion (see Phase Handlers below)
-       - Update spec.yaml
-       - Remove from active set
-       - New completions may unblock other specs → loop back to step 1
+    4. PROCESS: Handle completion
+       - Review sub-phase (Inspector/Auditor): advance per §Review Decomposition
+       - Phase completion (Design/Impl/TaskGenerator/Builder): handle per Phase Handlers, update spec.yaml as specified
+       - Remove completed task from active set
+       - Loop back to step 1 (completions may unblock other specs or enable next phase for same spec)
 
-    5. EXIT: If all wave specs `implementation-complete` or `blocked` → Wave QG (Step 7)
+    5. EXIT: If no spec has a dispatchable next phase (per Readiness Rules) and active is empty → Wave QG (Step 7)
 ```
+
+### Review Decomposition (Dispatch Loop Context)
+
+Within the dispatch loop, reviews are NOT atomic operations. They decompose into dispatch-loop events so that one spec's review completion immediately triggers the next phase for that spec (Spec Stagger). Standalone reviews (`/sdd-roadmap review design {feature}`) use review.md's sequential flow as-is.
+
+**Sub-phases**:
+
+1. **DISPATCH-INSPECTORS** (triggered from ADVANCE when spec is ready for review):
+   - Execute review.md steps 1-4 (scope dir, B{seq}, create active dir, web server start if applicable, spawn all Inspectors)
+   - Add Inspector tasks to `active[spec]`, set `review_state[spec].phase = inspecting`
+   - **Return to dispatch loop immediately** — do not wait for Inspectors
+
+2. **INSPECTORS-COMPLETE** (triggered from PROCESS when ALL Inspectors for a spec finish):
+   - Execute review.md steps 5, 5a (handle failures, stop web server if applicable)
+   - Spawn Auditor (review.md step 6), update `active[spec]` to Auditor task
+   - Set `review_state[spec].phase = auditing`
+
+3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
+   - Execute review.md steps 7-9 (read verdict, persist to verdicts.md, archive active → B{seq})
+   - Remove from `active` and `review_state`
+   - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO)
+   - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review
+
+**NO-GO flow**: Phase Handler dispatches Architect with fix instructions directly from PROCESS (not via ADVANCE). After Architect completes, ADVANCE re-evaluates readiness and dispatches new review (Readiness Rules: last verdict is NO-GO → DR eligible).
 
 ### Readiness Rules
 
@@ -83,9 +110,9 @@ A spec can advance to its next phase when ALL conditions are met:
 | Next Phase | Conditions |
 |-----------|------------|
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
-| **Design Review** | Phase is `design-generated`. No additional conditions. |
+| **Design Review** | Phase is `design-generated`. No GO/CONDITIONAL verdict in `verdicts.md` latest design batch (verdict absent or last is NO-GO). |
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
-| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. |
+| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Lead continues the dispatch loop immediately.
 
@@ -106,7 +133,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 Execute per `refs/design.md` (Steps 1-3). After Architect completes, update spec.yaml per design.md Step 3.
 
 #### Design Review completion
-Execute design review per `refs/review.md` (Design Review section).
+In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
@@ -121,7 +148,7 @@ For `--consensus N`, apply Consensus Mode protocol (see Router).
 Execute per `refs/impl.md` (Steps 1-3). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
 #### Impl Review completion
-Execute impl review per `refs/review.md` (Impl Review section).
+In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
