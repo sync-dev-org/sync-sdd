@@ -28,6 +28,7 @@ You receive context from Lead including:
 Read all necessary context:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `tasks.yaml`
 - **Entire `{{SDD_DIR}}/project/steering/` directory** — especially `tech.md` Common Commands for all Bash execution
+- **Conventions brief** (if path provided in prompt): observed codebase patterns for naming, error handling, schema design, imports, testing
 
 ### Step 2: Execute with TDD
 
@@ -87,6 +88,7 @@ After all assigned tasks are executed:
 - **Test Coverage**: All new code must have tests
 - **No Regressions**: Existing tests must continue to pass
 - **Design Alignment**: Implementation must follow design.md specifications
+- **Convention Alignment**: When a conventions brief is provided, follow its patterns for naming, error handling, schema design, and imports. Steering overrides the brief on conflict.
 - **File Scope**: Stay within your assigned file scope
 - **No workspace-wide git operations**: Do NOT use `git stash`, `git checkout .`, `git restore .`, `git reset`, or `git clean`. These affect files outside your file scope (spec.yaml, design.md, etc. that Lead manages). If you need to undo your own changes, use file-level `git checkout -- <your-file>` only within your assigned scope.
 

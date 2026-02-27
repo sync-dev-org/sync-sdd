@@ -22,6 +22,44 @@ File ownership is **advisory**: it guides Builder task assignment and auto-fix r
 5. Record final file ownership assignments for auto-fix routing
 6. buffer.md: Lead has exclusive write access
 
+## Step 2.5: Wave Context Generation
+
+Before dispatching any Architect or Builder, Lead generates shared context artifacts to ensure consistency across parallel agents.
+
+### Conventions Brief
+
+Lead scans the existing codebase using Grep/Glob and generates a conventions brief capturing observed patterns:
+
+1. **Scan targets** (skip if no existing source code):
+   - Naming: function/class/constant patterns from existing source files
+   - Error handling: exception patterns, error message formats
+   - Schema: model/entity patterns, FK naming
+   - Imports: ordering conventions
+   - Testing: file placement, assert style, fixture patterns
+2. **Merge steering context**: overlay `tech.md` Development Standards and `structure.md` Directory Patterns
+3. **Append buffer.md knowledge**: include `[PATTERN]`/`[INCIDENT]` entries from `{{SDD_DIR}}/handover/buffer.md` (if exists)
+4. **Write** to `.sdd/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `.sdd/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
+5. Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
+
+**Greenfield projects**: If no source files exist, generate from steering only. Brief may contain only steering extracts and buffer knowledge. Pilot Stagger (impl.md) becomes the primary convention-seeding mechanism.
+
+**Steering precedence**: Conventions brief captures *observed practice*. If brief conflicts with steering, steering wins. State this in the brief header.
+
+### Shared Research (Architect-only, conditional)
+
+When 2+ Architects will be dispatched in parallel (Design Fan-Out), Lead generates a shared research context to reduce redundant discovery:
+
+1. Extract common technology stack decisions from steering
+2. Identify shared dependencies across wave specs (from spec.yaml descriptions + roadmap context)
+3. If previous waves completed: summarize relevant findings from their `research.md` files
+4. Write to `.sdd/project/specs/.wave-context/{wave-N}/shared-research.md` (free-form, no template — content varies by project context)
+
+Skip if only 1 Architect will be dispatched (1-spec roadmap or single spec in wave).
+
+### Conventions Brief Update (Post-Design)
+
+After all Architects in a wave complete Design, Lead may update the conventions brief with design-derived conventions (e.g., shared interface patterns, agreed data model styles from design.md files) before Implementation begins. This is a lightweight supplement, not a full regeneration.
+
 ## Step 3: Schedule Specs
 
 ### Island Spec Detection (Wave Bypass)
@@ -114,7 +152,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
 
-**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Lead continues the dispatch loop immediately.
+**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
 
 ### Design Lookahead
 
@@ -145,7 +183,7 @@ Process `STEERING:` entries from verdict. Auto-draft session.md.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-3). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
+Execute per `refs/impl.md` (Steps 1-3). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.

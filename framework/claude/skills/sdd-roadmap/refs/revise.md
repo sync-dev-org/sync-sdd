@@ -209,28 +209,35 @@ For each tier (sequential):
      - Reset orchestration.last_phase_action = null
      - Set phase = design-generated
 
-  2. Design Fan-Out:
+  2. Wave Context Generation:
+     - Generate conventions brief per run.md Step 2.5 (scan codebase + steering + buffer.md)
+     - Generate shared research if 2+ Architects in tier (include cross-cutting brief as additional context)
+     - Store in specs/.cross-cutting/{id}/ alongside brief.md
+
+  3. Design Fan-Out:
      - Dispatch Architects in parallel (run_in_background: true)
      - Each Architect prompt includes:
        a. refs/design.md revision context (Mode: existing, User-instructions: revision intent)
        b. Cross-cutting brief path → Architect reads brief for shared context
-       c. "Focus on spec-specific design changes. Shared background is in the brief."
+       c. Conventions brief path + shared research path (from step 2)
+       d. "Focus on spec-specific design changes. Shared background is in the brief."
 
-  3. Design Review:
+  4. Design Review:
      - Dispatch per spec (parallel) per refs/review.md
      - Handle verdicts per CLAUDE.md counter limits
      - SPEC-UPDATE-NEEDED is not expected for design review. If received, escalate immediately
 
-  4. Implementation:
+  5. Implementation:
+     - Update conventions brief with design-derived conventions (run.md Step 2.5 Post-Design)
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
-     - TaskGenerator → Builder (parallel per spec, serialize on file overlap)
+     - TaskGenerator → Builder per refs/impl.md (includes conventions brief path, Pilot Stagger Protocol)
      - After ALL Builders complete per spec: update spec.yaml
 
-  5. Impl Review:
+  6. Impl Review:
      - Dispatch per spec (parallel) per refs/review.md
      - Handle verdicts per CLAUDE.md counter limits
 
-  6. Tier Checkpoint:
+  7. Tier Checkpoint:
      - All specs in tier must reach implementation-complete
      - Auto-fix loop applies per spec (standard counter limits)
      - On exhaustion: escalate to user, block tier progression

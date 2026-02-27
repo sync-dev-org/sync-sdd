@@ -93,6 +93,7 @@ Roadmap execution maximizes parallelism at multiple levels:
 - **Builder parallelism**: Within a spec, multiple Builders execute in parallel per TaskGenerator groupings.
 - **Inspector parallelism**: All Inspectors for a review dispatch in parallel; Auditor synthesizes after all complete.
 - **Cross-Cutting Parallelism**: Tier-based parallel revision for multi-spec changes. Impact analysis classifies specs (FULL/AUDIT/SKIP), triage eliminates unnecessary work, and execution tiers run in parallel within each tier. See sdd-roadmap `refs/revise.md` Part B.
+- **Wave Context**: Shared context artifacts (conventions brief, shared research) generated before Agent dispatch to ensure consistency across parallel Agents. Conventions brief captures observed codebase patterns (naming, error handling, schema, imports); shared research eliminates redundant Architect discovery. Pilot Stagger seeds conventions from the first Builder group's output. See sdd-roadmap `refs/run.md` Step 2.5 and `refs/impl.md` Pilot Stagger Protocol.
 
 See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 

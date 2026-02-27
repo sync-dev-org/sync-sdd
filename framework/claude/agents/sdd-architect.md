@@ -29,6 +29,8 @@ Read all necessary context:
 - `{{SDD_DIR}}/settings/templates/specs/design.md` for document structure
 - `{{SDD_DIR}}/settings/rules/design-principles.md` for design principles
 - `{{SDD_DIR}}/settings/templates/specs/research.md` for discovery log structure
+- **Conventions brief** (if path provided in prompt): observed codebase patterns for naming, error handling, schema, etc.
+- **Shared research** (if path provided in prompt): common technology decisions and prior-wave findings to avoid redundant discovery
 
 Version consistency check (skip if `version_refs` not present):
 - Read `version` and `version_refs` from spec.yaml (default: `version ?? "1.0.0"`, `version_refs ?? {}`)
@@ -42,7 +44,7 @@ Version consistency check (skip if `version_refs` not present):
    - **Simple Addition** (CRUD/UI) → Minimal or no discovery
    - **Complex Integration** → Comprehensive analysis required
 
-2. **Execute Appropriate Discovery Process**:
+2. **Execute Appropriate Discovery Process** (reference shared research and conventions brief to avoid re-discovering known patterns — focus discovery on spec-specific aspects):
 
    **For Complex/New Features**:
    - Read and execute `{{SDD_DIR}}/settings/rules/design-discovery-full.md`

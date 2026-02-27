@@ -30,6 +30,7 @@ Read:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `research.md` (if exists)
 - `{{SDD_DIR}}/project/steering/` (entire directory)
 - `{{SDD_DIR}}/settings/rules/tasks-generation.md`
+- **Conventions brief** (if path provided in prompt): observed codebase patterns
 
 ### Step 2: Generate Tasks
 
@@ -38,6 +39,7 @@ Read:
 - Map ALL specifications from design.md to tasks
 - Include detail bullets: actionable implementation guidance per task
 - Apply steering context to detail bullets: embed `tech.md` Common Commands for test/build/lint steps, reference `structure.md` Directory Patterns for file placement, include custom steering constraints as explicit conditions (see tasks-generation.md Steering Integration)
+- If conventions brief provided: embed concrete convention references into detail bullets (e.g., "Follow error pattern in src/api/routes.py:23-35", "Use snake_case per conventions brief")
 - If review findings are provided, incorporate relevant findings into task detail bullets (e.g., add implementation notes to address flagged anti-patterns or ambiguities)
 - Mark parallel-capable tasks with `p: true`
 - Apply specs/acs references for traceability
