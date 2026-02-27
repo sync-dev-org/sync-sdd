@@ -2,14 +2,14 @@
 
 Phase execution reference. Canonical source for ALL review types. Assumes Single-Spec Roadmap Ensure already completed by router (except dead-code/cross-check/wave which skip enrollment).
 
-Triggered by: `$ARGUMENTS = "review design|impl|dead-code {feature} [options]"`
+Triggered by: `$ARGUMENTS = "review design|impl {feature} [options]"` or `$ARGUMENTS = "review dead-code [options]"`
 
 ## Step 1: Parse Arguments
 
 Parse review type (`design`/`impl`/`dead-code`), feature name, and options (`--consensus N`, `--cross-check`, `--wave N`).
 
 If first argument after "review" is not one of `design`, `impl`, `dead-code`:
-- Error: "Usage: `/sdd-roadmap review design|impl|dead-code {feature}`"
+- Error: "Usage: `/sdd-roadmap review design|impl {feature}` or `/sdd-roadmap review dead-code`"
 
 **1-Spec Roadmap guard**: If review type is `--cross-check` or `--wave N` AND `roadmap.md` contains exactly 1 spec: inform user "Single-spec roadmap — cross-check/wave review has no additional value over single-spec review." and abort.
 

@@ -218,8 +218,8 @@ When a spec fails after exhausting retries:
 2. For each downstream spec: save phase to `blocked_info.blocked_at_phase`, set `phase=blocked`, `blocked_info.blocked_by={failed_spec}`, `blocked_info.reason=upstream_failure`
 3. Report cascading impact to user
 4. Present options:
-   - **fix**: Verify upstream `implementation-complete` → unblock downstream (restore phases, clear blocked_info) → resume pipeline
-   - **skip**: Exclude upstream. Warn downstream per-spec: "depends on skipped {upstream}". User confirms each: proceed / keep blocked / remove dependency
+   - **fix**: Verify upstream `implementation-complete` → unblock downstream (restore phases, clear blocked_info, reset `retry_count=0` and `spec_update_count=0` for unblocked specs) → resume pipeline
+   - **skip**: Exclude upstream. Reset counters (`retry_count=0`, `spec_update_count=0`) for affected downstream specs. Warn downstream per-spec: "depends on skipped {upstream}". User confirms each: proceed / keep blocked / remove dependency
    - **abort**: Stop pipeline, leave all specs as-is
 
 ## Step 7: Wave Quality Gate

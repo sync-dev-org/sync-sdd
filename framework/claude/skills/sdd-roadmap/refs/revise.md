@@ -221,6 +221,7 @@ For each tier (sequential):
        b. Cross-cutting brief path → Architect reads brief for shared context
        c. Conventions brief path + shared research path (from step 2)
        d. "Focus on spec-specific design changes. Shared background is in the brief."
+     - After each Architect completes: update spec.yaml per design.md Step 3
 
   4. Design Review:
      - Dispatch per spec (parallel) per refs/review.md

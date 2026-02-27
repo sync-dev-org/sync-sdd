@@ -2,7 +2,7 @@
 name: sdd-inspector-best-practices
 description: "SDD design review inspector (best-practices). Evaluates technology choices and industry standards. Invoked during design review phase."
 model: sonnet
-tools: Read, Glob, Grep, Write
+tools: Read, Glob, Grep, Write, WebSearch, WebFetch
 background: true
 ---
 
@@ -84,6 +84,8 @@ Autonomously decide research depth based on:
 - **Technology novelty**: Unfamiliar or cutting-edge tech needs verification
 - **Risk level**: Security-sensitive or performance-critical designs need thorough checks
 - **Steering gaps**: If steering docs lack relevant technology guidance, research more
+
+Use WebSearch to verify current best practices, check for deprecated APIs/patterns, and validate technology choices against industry standards. Use WebFetch to read official documentation when specific version or API details need verification.
 
 ## Investigation Approaches
 

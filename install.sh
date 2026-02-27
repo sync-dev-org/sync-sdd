@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.3.0
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.3.1
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -358,8 +358,10 @@ if version_lt "$INSTALLED_VERSION" "0.15.0"; then
     fi
     info "Migrated commands -> skills format (v0.15.0)"
 fi
-# v0.18.0: Agent definitions moved from .claude/agents/ to .claude/sdd/settings/agents/
-if version_lt "$INSTALLED_VERSION" "0.18.0"; then
+# v0.18.0→v0.20.0: Agent directory round-trip
+# v0.18.0 moved agents .claude/agents/ → .claude/sdd/settings/agents/
+# v0.20.0 moved them back. Skip v0.18.0 migration if target >= 0.20.0 (net effect: no-op)
+if version_lt "$INSTALLED_VERSION" "0.18.0" && version_lt "$NEW_VERSION" "0.20.0"; then
     for agent_file in .claude/agents/sdd-*.md; do
         [ -f "$agent_file" ] || continue
         rm -f "$agent_file"
@@ -370,7 +372,6 @@ if version_lt "$INSTALLED_VERSION" "0.18.0"; then
     info "Migrated agents/ -> sdd/settings/agents/ (v0.18.0)"
 fi
 # v0.20.0: Agent definitions moved from .claude/sdd/settings/agents/ to .claude/agents/
-# Also: Agent Teams env var no longer needed
 if version_lt "$INSTALLED_VERSION" "0.20.0"; then
     if [ -d ".claude/sdd/settings/agents" ]; then
         mkdir -p .claude/agents

@@ -1,7 +1,6 @@
 ---
 description: Generate session handover document
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint:
 ---
 
 # SDD Handover
