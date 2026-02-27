@@ -18,8 +18,22 @@
 - Modules/packages: {{MODULE_COUNT}}
 - External dependencies: {{DEP_COUNT}}
 
-### Boundary Quality
-{{BOUNDARY_ANALYSIS}}
+### Current Architecture Assessment
+{{CURRENT_ARCHITECTURE_EVALUATION}}
+
+## Ideal Architecture
+
+### Architecture Vision
+{{ARCHITECTURE_VISION}}
+
+### Module Structure
+{{MODULE_STRUCTURE}}
+
+### Key Interfaces
+{{KEY_INTERFACES}}
+
+### Technology Decisions
+{{TECHNOLOGY_DECISIONS}}
 
 ## Steering Changes
 
@@ -34,13 +48,13 @@
 
 ## Proposed Spec Decomposition
 
-| Spec | Description | Capabilities | Dependencies | Key Files |
-|------|-------------|-------------|-------------|-----------|
-| {{SPEC_NAME}} | {{DESCRIPTION}} | {{CAPABILITIES}} | {{DEPS}} | {{FILES}} |
+| Spec | Description | Requirements Covered | Dependencies |
+|------|-------------|---------------------|-------------|
+| {{SPEC_NAME}} | {{DESCRIPTION}} | {{REQUIREMENTS}} | {{DEPS}} |
 
-### Capability Coverage
-Total capabilities identified: {{COUNT}}
-All capabilities mapped: {{YES/NO}}
+### Requirements Coverage
+Total requirements identified: {{COUNT}}
+All requirements mapped: {{YES/NO}}
 
 ## Wave Structure
 
