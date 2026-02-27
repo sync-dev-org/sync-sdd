@@ -44,7 +44,7 @@ Execute past-wave spec modifications through the standard pipeline.
    This change affects {N} specs ({list}).
    Switch to cross-cutting mode for coordinated revision? [Yes / No, single-spec only]
    ```
-   - User accepts → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with revision intent and target spec pre-populated
+   - User accepts → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification)
    - User declines → continue single-spec flow below
 4. Present to user:
    ```
@@ -99,7 +99,7 @@ After revision pipeline completes (spec returns to `implementation-complete`):
 ### Step 7: Post-Revision
 
 1. Auto-draft `{{SDD_DIR}}/handover/session.md`
-2. If roadmap run was in progress: resume from current position
+2. If roadmap run was in progress (any non-revised spec has phase != `implementation-complete`): resume via `refs/run.md` dispatch loop from current spec.yaml state
 3. Suggest: `/sdd-status` to verify state
 
 ---

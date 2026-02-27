@@ -263,7 +263,7 @@ Rules:
 - Omit empty sections entirely
 - Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
 - SPEC_FEEDBACK: `phase` is `specifications` or `design`; `spec` is the feature name; `description` explains the spec defect
-- STEERING: `CODIFY` = code/design already follows this pattern (auto-apply); `PROPOSE` = new constraint affecting future work (requires user approval)
+- STEERING: `CODIFY` = observed pattern to formalize in steering (Lead applies directly); `PROPOSE` = new constraint affecting future work (requires user approval)
 
 Example:
 ```

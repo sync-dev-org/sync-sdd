@@ -22,7 +22,7 @@ If first argument after "review" is not one of `design`, `impl`, `dead-code`:
 ## Design Review
 
 Spawn via review execution flow (below):
-- 6 design Inspectors (sonnet): `sdd-inspector-{rulebase,testability,architecture,consistency,best-practices,holistic}`
+- 6 design Inspectors (sonnet): `sdd-inspector-rulebase`, `sdd-inspector-testability`, `sdd-inspector-architecture`, `sdd-inspector-consistency`, `sdd-inspector-best-practices`, `sdd-inspector-holistic`
 - Design Auditor (opus): `sdd-auditor-design`
 
 **Cross-check / wave-scoped mode**: Same Inspector set + Auditor. Each Inspector's context includes cross-check scope (all specs or wave-scoped) instead of single feature.
@@ -30,7 +30,7 @@ Spawn via review execution flow (below):
 ## Impl Review
 
 Spawn via review execution flow (below):
-- Standard impl Inspectors (6, sonnet): `sdd-inspector-{impl-rulebase,interface,test,quality,impl-consistency,impl-holistic}`
+- Standard impl Inspectors (6, sonnet): `sdd-inspector-impl-rulebase`, `sdd-inspector-interface`, `sdd-inspector-test`, `sdd-inspector-quality`, `sdd-inspector-impl-consistency`, `sdd-inspector-impl-holistic`
 - **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e` and `sdd-inspector-visual` (Lead manages dev server lifecycle — see Web Inspector Server Protocol below)
 - Impl Auditor (opus): `sdd-auditor-impl`
 
@@ -41,7 +41,7 @@ Spawn via review execution flow (below):
 ## Dead-Code Review
 
 Spawn via review execution flow (below):
-- 4 dead-code Inspectors (sonnet): `sdd-inspector-{dead-settings,dead-code,dead-specs,dead-tests}`
+- 4 dead-code Inspectors (sonnet): `sdd-inspector-dead-settings`, `sdd-inspector-dead-code`, `sdd-inspector-dead-specs`, `sdd-inspector-dead-tests`
 - Dead-code Auditor (opus): `sdd-auditor-dead-code`
 
 ## Web Inspector Server Protocol (Web Projects Only)
@@ -71,7 +71,7 @@ If server fails to start: dispatch web inspectors anyway (they will report the e
    - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/`
    - **Project-level** (cross-check): `{{SDD_DIR}}/project/reviews/cross-check/`
    - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
-2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode, B{seq} is determined once and shared across all N pipelines.
+2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode: Router determines B{seq} once and passes it to all N pipelines (this step uses the Router-provided value instead of computing its own).
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
 4. Spawn all Inspectors via `Task(subagent_type=..., run_in_background=true)`. Each context includes:

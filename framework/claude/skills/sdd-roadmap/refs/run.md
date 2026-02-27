@@ -168,14 +168,14 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 ### Phase Handlers
 
 #### Design completion
-Execute per `refs/design.md` (Steps 1-3). After Architect completes, update spec.yaml per design.md Step 3.
+Dispatch Architect per `refs/design.md` Step 3 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 3.
 
 #### Design Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6).
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 6 Blocking Protocol).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
@@ -244,7 +244,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
-   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, separate from per-spec aggregate cap → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
+   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, tracked in-memory by Lead — not persisted to spec.yaml, restarts at 0 on session resume; separate from per-spec aggregate cap → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`
