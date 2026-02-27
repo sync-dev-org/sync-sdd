@@ -60,6 +60,20 @@ All requirements mapped: {{YES/NO}}
 
 {{PARALLELISM_REPORT}}
 
+## Deletion Manifest
+
+Files to delete before implementation (clean slate for Builder):
+
+### DELETE
+| File | Reason |
+|------|--------|
+| {{FILE_PATH}} | {{REASON}} |
+
+### KEEP
+| File | Reason |
+|------|--------|
+| {{FILE_PATH}} | {{REASON}} |
+
 ## Key Design Decisions
 
 ### {{DECISION_1}}

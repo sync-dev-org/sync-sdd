@@ -63,7 +63,7 @@ Dispatch `sdd-analyst` for holistic codebase analysis and redesign proposal.
 
 ## Phase 5: User Review Checkpoint
 
-Skip if `-y` flag is present.
+Skip if `-y` flag is present. (Note: `-y` skips user review only. Lead still reads the analysis report in Phase 6c to create specs.)
 
 1. Read `{{SDD_DIR}}/project/reboot/analysis-report.md`
 2. Present to user:
@@ -159,8 +159,9 @@ For each wave (sequential):
        - Design complete: update spec.yaml (phase=design-generated, version_refs)
        - Design Review verdict: handle per §Verdict Handling
 
-    5. EXIT: If all specs in wave have design-generated + GO/CONDITIONAL verdict
+    5. EXIT: If all non-skipped specs in wave have design-generated + GO/CONDITIONAL verdict
        and active is empty → next wave (or Phase 8)
+       (Skipped specs are excluded from this condition — see §Verdict Handling)
 ```
 
 ### Architect Dispatch
@@ -230,9 +231,9 @@ Lead performs this directly (no SubAgent needed).
    |---------------|-------------|-------|
    ```
 
-## Phase 9: Final Report
+## Phase 9: Final Report & User Decision
 
-Lead generates the comprehensive final report.
+Lead generates the final report and presents it for user approval. **This is the gate that determines whether the reboot is kept or discarded.** The entire reboot runs on a branch specifically so the user can reject the result here.
 
 1. Read analysis report, all new spec design.md files, regression check (if exists), all design review verdicts
 2. Write `{{SDD_DIR}}/project/reboot/final-report.md`:
@@ -259,20 +260,43 @@ Lead generates the comprehensive final report.
    ## Regression Check
    {AT-RISK items if any, or "No regression check (Code-Only mode)"}
 
+   ## Deletion Manifest
+   {Summary: N files to delete, N files to keep}
+   {List of files to delete — from Analyst's analysis report}
+
    ## Design Quality
    {CONDITIONAL items that need attention}
 
    ## Next Steps
-   - Accept: merge this branch to main, then run `/sdd-roadmap run` to implement
-   - Reject: `git checkout main && git branch -D reboot/{branch_name}`
+   - Accept: delete old source files, commit on branch, then merge to main and run `/sdd-roadmap run` to implement
+   - Reject: discard branch, return to main
    - Iterate: continue editing designs on this branch
    ```
 
-3. Present report content to user
-4. **DO NOT merge. DO NOT checkout main. Skill terminates here.**
+3. **Present report content to user** — show the full report summary in conversation
+4. **Ask user via `AskUserQuestion`**:
+   - **Accept**: Proceed to Phase 10 (commit on branch)
+   - **Iterate**: Skill terminates. User continues editing on the branch. Re-run `/sdd-reboot` to resume.
+   - **Reject**: `git checkout main && git branch -D reboot/{branch_name}`. Record `USER_DECISION` in decisions.md. Skill terminates.
+5. Record `USER_DECISION` in decisions.md
 
 ## Phase 10: Post-Completion
 
-1. Stage and commit all changes on reboot branch: `reboot: {1-line summary of redesign}`
-2. Auto-draft `{{SDD_DIR}}/handover/session.md`
-3. Append `DIRECTION_CHANGE` to decisions.md: "Reboot complete: {spec_count} specs across {wave_count} waves on branch reboot/{branch_name}"
+**Only reached if user chose Accept in Phase 9.**
+
+1. **Deletion confirmation**: Show the Deletion Manifest summary (file count and list) and ask user via `AskUserQuestion`:
+   - **Delete**: Delete all files listed under DELETE, then proceed to step 2
+   - **Skip deletion**: Keep existing source files as-is, proceed to step 2 without deleting
+   - **Cancel**: Abort post-completion. Skill terminates (branch remains with designs, no commit). Record `USER_DECISION` in decisions.md.
+
+   If Delete chosen:
+   - Delete all files listed under DELETE in the analysis report. Log each deletion.
+   - If a file no longer exists (already deleted or moved), skip silently.
+   - Do NOT delete files listed under KEEP.
+   Record `USER_DECISION` in decisions.md with chosen option.
+
+2. Stage and commit all changes on reboot branch: `reboot: {1-line summary of redesign}`
+   - The commit includes: new specs/designs, steering changes, analysis artifacts, and old source file deletions (if Delete was chosen)
+3. Auto-draft `{{SDD_DIR}}/handover/session.md`
+4. Append `DIRECTION_CHANGE` to decisions.md: "Reboot complete: {spec_count} specs across {wave_count} waves on branch reboot/{branch_name}. Old source files: {deleted|kept}."
+5. **DO NOT merge to main. DO NOT checkout main.** Report to user: branch is ready for review. User decides when to merge.

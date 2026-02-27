@@ -38,8 +38,8 @@ Read and follow `refs/reboot.md` for the complete 10-phase execution:
 6. **Roadmap Regeneration**: Archive old specs → delete → create new specs + roadmap
 7. **Design Pipeline**: Architect + Design Review per wave (design-only, no impl)
 8. **Regression Check**: Compare old vs new capabilities (if old specs existed)
-9. **Final Report**: Present comprehensive report to user
-10. **Post-Completion**: Commit, session.md auto-draft, decisions.md
+9. **Final Report & User Decision**: Present report, user chooses Accept/Iterate/Reject
+10. **Post-Completion**: Commit on branch (only if accepted). Never auto-merges.
 
 ## Error Handling
 

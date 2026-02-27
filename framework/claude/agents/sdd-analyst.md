@@ -131,7 +131,17 @@ Wave 2: N specs [names] — parallelism notes
 Critical path: N waves
 ```
 
-### Step 6: Write Analysis Report
+### Step 6: Deletion Manifest
+
+List all current source files that should be deleted before implementation begins. This enables a clean slate — Builder writes everything from scratch with no leftover code.
+
+1. **Collect current source files**: All source/test files discovered in Step 2 (e.g., `*.py`, `*.ts`, `*.js`, `*.rs`, `*.go`, `*.java`, etc.)
+2. **Classify as DELETE or KEEP**:
+   - **DELETE**: All source code files and test files — these will be rebuilt from scratch by Builder
+   - **KEEP**: Project configuration (`pyproject.toml`, `package.json`, `Cargo.toml`, `Makefile`, etc.), documentation (`README.*`, `CHANGELOG.*`, `LICENSE`), dotfiles (`.gitignore`, `.env.example`), lock files (`uv.lock`, `package-lock.json`), and any non-implementation files
+3. **Include the manifest** in the analysis report (Step 7)
+
+### Step 7: Write Analysis Report
 
 Write the analysis report to the provided output path, following the template structure:
 
@@ -141,8 +151,9 @@ Write the analysis report to the provided output path, following the template st
 4. **Steering Changes / Generation**: What was changed or created, and why
 5. **Proposed Spec Decomposition**: Table of new specs with descriptions, requirements, dependencies
 6. **Wave Structure**: Wave assignments with parallelism report
-7. **Key Design Decisions**: Major choices and rationale (e.g., why specs were merged/split)
-8. **Risk Assessment**: Technical risks, areas needing attention, potential issues
+7. **Deletion Manifest**: Files to DELETE and files to KEEP, from Step 6
+8. **Key Design Decisions**: Major choices and rationale (e.g., why specs were merged/split)
+9. **Risk Assessment**: Technical risks, areas needing attention, potential issues
 
 ## Critical Constraints
 
@@ -164,6 +175,7 @@ New specs: {count}
 Waves: {count}
 Steering: {created|updated} ({file_list})
 Capabilities found: {count}
+Files to delete: {count}
 WRITTEN:{report_path}
 ```
 

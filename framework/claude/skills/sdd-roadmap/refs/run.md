@@ -35,7 +35,7 @@ Dispatch via `Task(subagent_type="sdd-conventions-scanner", run_in_background=tr
 - Steering: `{{SDD_DIR}}/project/steering/`
 - Buffer: `{{SDD_DIR}}/handover/buffer.md`
 - Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
-- Output: `.sdd/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `.sdd/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
+- Output: `{{SDD_DIR}}/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `{{SDD_DIR}}/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
 - Wave/feature: {identifier}
 
 Wait for `WRITTEN:{path}` response.
@@ -51,7 +51,7 @@ When 2+ Architects will be dispatched in parallel (Design Fan-Out), Lead generat
 1. Extract common technology stack decisions from steering
 2. Identify shared dependencies across wave specs (from spec.yaml descriptions + roadmap context)
 3. If previous waves completed: summarize relevant findings from their `research.md` files
-4. Write to `.sdd/project/specs/.wave-context/{wave-N}/shared-research.md` (free-form, no template — content varies by project context)
+4. Write to `{{SDD_DIR}}/project/specs/.wave-context/{wave-N}/shared-research.md` (free-form, no template — content varies by project context)
 
 Skip if only 1 Architect will be dispatched (1-spec roadmap or single spec in wave).
 

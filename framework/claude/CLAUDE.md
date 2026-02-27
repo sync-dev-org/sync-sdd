@@ -38,7 +38,7 @@ Review pipelines use **file-based communication**: Inspectors write CPF files to
 All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
 - **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into CPF output files.
 - **Builder**: write full report to `builder-report-{group}.md`, return only structured summary (status, counts, report path). See sdd-builder agent definition.
-- **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + counts + `WRITTEN:{path}`).
+- **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + counts + `Files to delete: {count}` + `WRITTEN:{path}`).
 - **Architect / TaskGenerator**: current report format is already concise — no file-based output required unless reports grow.
 
 ### State Management
