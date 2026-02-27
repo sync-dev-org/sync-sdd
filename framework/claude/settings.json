@@ -7,8 +7,10 @@
       "Skill(sdd-status)",
       "Skill(sdd-handover)",
 
+      "Skill(sdd-reboot)",
       "Skill(sdd-release)",
       "Skill(sdd-review-self)",
+      "Task(sdd-analyst)",
       "Task(sdd-architect)",
       "Task(sdd-auditor-dead-code)",
       "Task(sdd-auditor-design)",

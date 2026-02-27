@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-Your AI development team — 25 specialized SubAgents orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
+Your AI development team — 26 specialized SubAgents orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
 
 ## Why sync-sdd
 
@@ -12,7 +12,7 @@ Your AI development team — 25 specialized SubAgents orchestrated by a Lead, tu
 
 ### Key capabilities
 
-- **25 SubAgents, 3 tiers** — Architect designs, Builders implement with TDD, 6+ Inspectors review from different angles, Auditor synthesizes the verdict. Each agent has a focused specialty.
+- **26 SubAgents, 3 tiers** — Analyst redesigns from zero, Architect designs features, Builders implement with TDD, 6+ Inspectors review from different angles, Auditor synthesizes the verdict. Each agent has a focused specialty.
 - **Aggressive parallelism** — Specs within a wave execute at different phases simultaneously. Design Fan-Out dispatches multiple Architects in parallel. Design Lookahead starts the next wave's design before the current wave finishes. Island specs bypass wave boundaries entirely.
 - **Foundation-First scheduling** — Models, shared libraries, and error handling are automatically prioritized to Wave 1. Dependency-aware topological sorting minimizes wave count and maximizes parallel throughput.
 - **Self-correcting reviews** — NO-GO verdicts trigger automatic fix loops (up to 5 retries). SPEC-UPDATE-NEEDED cascades back through the full pipeline. Dead-code review catches orphaned artifacts. Consensus mode runs multiple independent review pipelines for high-confidence findings.
@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.4.0
+curl -LsSf <url>/install.sh | sh -s -- --version v1.5.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -50,8 +50,8 @@ your-project/
 ├── .claude/
 │   ├── CLAUDE.md                      # Framework instructions (auto-loaded)
 │   ├── settings.json                  # Default settings
-│   ├── skills/sdd-*/SKILL.md          # 6 skills
-│   └── agents/sdd-*.md               # 25 SubAgent definitions
+│   ├── skills/sdd-*/SKILL.md          # 7 skills
+│   └── agents/sdd-*.md               # 26 SubAgent definitions
 └── .sdd/
     └── settings/                      # Rules, templates, profiles
 ```
@@ -68,13 +68,13 @@ Your project files are never touched by `--update`:
 
 ```
 Tier 1: Command  ─── Lead ─────────────────────────── (Opus)
-Tier 2: Brain    ─── Architect / Auditor ────────────── (Opus)
+Tier 2: Brain    ─── Analyst / Architect / Auditor ─────── (Opus)
 Tier 3: Execute  ─── TaskGenerator / Builder / Inspector (Sonnet x N)
 ```
 
 **Lead** orchestrates everything — user interaction, phase gates, dispatch planning, SubAgent coordination, and state management.
 
-**Architect** generates technical designs with research and discovery. **Auditor** synthesizes multi-Inspector findings into GO / CONDITIONAL / NO-GO / SPEC-UPDATE-NEEDED verdicts.
+**Analyst** performs holistic project analysis for zero-based redesign. **Architect** generates technical designs with research and discovery. **Auditor** synthesizes multi-Inspector findings into GO / CONDITIONAL / NO-GO / SPEC-UPDATE-NEEDED verdicts.
 
 **TaskGenerator** decomposes designs into parallelizable tasks. **Builder** implements via TDD (RED-GREEN-REFACTOR). **Inspector** provides focused review perspectives — 6 for design, 6+2 for implementation (web projects), 4 for dead-code.
 

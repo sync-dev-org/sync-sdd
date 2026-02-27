@@ -12,13 +12,14 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ```
 Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
-Tier 2: Brain    ─── Architect / Auditor ────────────── (SubAgent, Opus)
+Tier 2: Brain    ─── Analyst / Architect / Auditor ─────── (SubAgent, Opus)
 Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScanner ─── (SubAgent ×N, Sonnet)
 ```
 
 | Tier | Role | Responsibility |
 |------|------|---------------|
 | T1 | **Lead** | User interaction, phase gate checks, dispatch planning, progress tracking, SubAgent orchestration, spec.yaml updates. |
+| T2 | **Analyst** | Holistic project analysis, zero-based redesign proposal, steering reform/generation. Produces analysis-report.md + updated steering. |
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
@@ -37,6 +38,7 @@ Review pipelines use **file-based communication**: Inspectors write CPF files to
 All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
 - **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into CPF output files.
 - **Builder**: write full report to `builder-report-{group}.md`, return only structured summary (status, counts, report path). See sdd-builder agent definition.
+- **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + counts + `WRITTEN:{path}`).
 - **Architect / TaskGenerator**: current report format is already concise — no file-based output required unless reports grow.
 
 ### State Management
@@ -110,7 +112,7 @@ See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 
 ### SubAgent Failure Handling
 
-File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt. This applies to all file-writing SubAgents (Inspectors → CPF files, Auditors → verdict.cpf, Builders → builder-report files, ConventionsScanner → conventions-brief).
+File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt. This applies to all file-writing SubAgents (Inspectors → CPF files, Auditors → verdict.cpf, Builders → builder-report files, ConventionsScanner → conventions-brief, Analyst → analysis-report).
 
 ## Project Context
 
@@ -141,12 +143,13 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 
 ## Workflow
 
-### Commands (5)
+### Commands (6)
 
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
@@ -323,7 +326,7 @@ Trunk-based development. main is always HEAD.
 - **Wave completion (multi-spec roadmap)**: After Wave Quality Gate passes, Lead commits directly
 - **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
-- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision)
+- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision) or `reboot: {summary}` (reboot redesign)
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):
