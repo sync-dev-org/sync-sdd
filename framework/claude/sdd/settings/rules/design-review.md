@@ -28,6 +28,8 @@
 **design.md Design Sections Check** (compare against template):
 - Has Overview (Purpose, Users, Impact)
 - Has Architecture section
+- Has System Flows section (if applicable)
+- Has Specifications Traceability section (if applicable)
 - Has Components and Interfaces section
 - Has Data Models section (if applicable)
 - Has Error Handling section

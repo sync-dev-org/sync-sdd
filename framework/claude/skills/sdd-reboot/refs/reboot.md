@@ -116,7 +116,9 @@ For each proposed spec from the report:
    - Dependencies (from Analyst's dependency graph)
    - Execution Flow (wave-by-wave description)
    - Parallelism Report (from Analyst's parallelism report)
-2. Update `{{SDD_DIR}}/project/steering/product.md` Spec Rationale section (Analyst may have already updated this — verify and supplement if needed)
+2. Update `{{SDD_DIR}}/project/steering/product.md` Spec Rationale section:
+   - If analysis report indicates Analyst already updated product.md: read and verify alignment with roadmap. Supplement only if roadmap context reveals additional rationale.
+   - If Analyst did not update product.md: create/update Spec Rationale from roadmap and analysis report.
 
 ## Phase 7: Design Pipeline (Design-Only Mode)
 
@@ -180,7 +182,7 @@ Same protocol as `refs/run.md` §Review Decomposition:
 ### Verdict Handling
 
 - **GO/CONDITIONAL** → Spec design complete. Proceed to next spec or next wave.
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user per `refs/run.md` Step 6 Blocking Protocol (fix/skip/abort). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (SPEC-UPDATE-NEEDED does not occur in design review, so only `retry_count` applies here). On exhaustion: escalate to user per `refs/run.md` Step 6 Blocking Protocol (fix/skip/abort). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
 - Process `STEERING:` entries from verdict.
 
 ### Shared Research
