@@ -13,7 +13,7 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 ```
 Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
 Tier 2: Brain    ─── Architect / Auditor ────────────── (SubAgent, Opus)
-Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAgent ×N, Sonnet)
+Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScanner ─── (SubAgent ×N, Sonnet)
 ```
 
 | Tier | Role | Responsibility |
@@ -24,6 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector ─── (SubAge
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
 | T3 | **Inspector** | Individual review perspectives. 6 design, 6 impl +2 web (impl only, web projects), 4 dead-code. Outputs CPF findings. |
+| T3 | **ConventionsScanner** | Codebase pattern scanning. Generates conventions brief (naming, error handling, schema, imports, testing). Pilot convention supplement. |
 
 ### Chain of Command
 
@@ -33,7 +34,10 @@ Lead reads the Task result and determines next actions.
 
 Review pipelines use **file-based communication**: Inspectors write CPF files to `reviews/active/` directory, Auditor reads them and writes `verdict.cpf`. After verdict is persisted, the directory is renamed to `reviews/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
 
-Review SubAgents (Inspector/Auditor) MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). After writing their output file, they return ONLY `WRITTEN:{path}` as their final text. All detailed analysis goes into the CPF output file.
+All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
+- **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into CPF output files.
+- **Builder**: write full report to `builder-report-{group}.md`, return only structured summary (status, counts, report path). See sdd-builder agent definition.
+- **Architect / TaskGenerator**: current report format is already concise — no file-based output required unless reports grow.
 
 ### State Management
 
@@ -93,7 +97,7 @@ Roadmap execution maximizes parallelism at multiple levels:
 - **Builder parallelism**: Within a spec, multiple Builders execute in parallel per TaskGenerator groupings.
 - **Inspector parallelism**: All Inspectors for a review dispatch in parallel; Auditor synthesizes after all complete.
 - **Cross-Cutting Parallelism**: Tier-based parallel revision for multi-spec changes. Impact analysis classifies specs (FULL/AUDIT/SKIP), triage eliminates unnecessary work, and execution tiers run in parallel within each tier. See sdd-roadmap `refs/revise.md` Part B.
-- **Wave Context**: Shared context artifacts (conventions brief, shared research) generated before Agent dispatch to ensure consistency across parallel Agents. Conventions brief captures observed codebase patterns (naming, error handling, schema, imports); shared research eliminates redundant Architect discovery. Pilot Stagger seeds conventions from the first Builder group's output. See sdd-roadmap `refs/run.md` Step 2.5 and `refs/impl.md` Pilot Stagger Protocol.
+- **Wave Context**: Shared context artifacts (conventions brief, shared research) generated before Agent dispatch to ensure consistency across parallel Agents. ConventionsScanner generates the conventions brief (codebase pattern scanning stays out of Lead's context); shared research eliminates redundant Architect discovery. Pilot Stagger seeds conventions via ConventionsScanner supplement mode. See sdd-roadmap `refs/run.md` Step 2.5 and `refs/impl.md` Pilot Stagger Protocol.
 
 See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 
@@ -106,7 +110,7 @@ See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 
 ### SubAgent Failure Handling
 
-File-based review protocol makes all SubAgent outputs idempotent (same `reviews/active/` directory, same file paths). If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt.
+File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt. This applies to all file-writing SubAgents (Inspectors → CPF files, Auditors → verdict.cpf, Builders → builder-report files, ConventionsScanner → conventions-brief).
 
 ## Project Context
 
@@ -227,6 +231,8 @@ session.md is written in two modes:
 5. Mark with `**Mode**: auto-draft`
 6. Overwrite session.md
 
+**Exception — `run` pipeline dispatch loop**: Auto-draft only at Wave QG post-gate, user escalation, and pipeline completion. Skip at individual phase completions (Design, Impl, Review per spec). spec.yaml is ground truth for pipeline state; intermediate session.md freshness is unnecessary.
+
 **Manual polish** (`/sdd-handover`):
 1. Archive current session.md to `sessions/{date}.md`
 2. Enrich via user interaction: Session Goal, Tone/Nuance, Steering Exceptions, Key Decisions refinement, Warnings, Resume Instructions
@@ -278,7 +284,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 ## Knowledge Auto-Accumulation
 
 - Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead collects tagged reports from SubAgent Task results and appends to `{{SDD_DIR}}/handover/buffer.md`
+- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/handover/buffer.md`
 - buffer.md persists across sessions via handover. No auto-flush to separate files.
 
 ## Pipeline Stop Protocol

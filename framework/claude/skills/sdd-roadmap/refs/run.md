@@ -28,22 +28,21 @@ Before dispatching any Architect or Builder, Lead generates shared context artif
 
 ### Conventions Brief
 
-Lead scans the existing codebase using Grep/Glob and generates a conventions brief capturing observed patterns:
+Dispatch `sdd-conventions-scanner` SubAgent (mode: Generate) to scan the codebase and generate the conventions brief. This keeps scan results out of Lead's context.
 
-1. **Scan targets** (skip if no existing source code):
-   - Naming: function/class/constant patterns from existing source files
-   - Error handling: exception patterns, error message formats
-   - Schema: model/entity patterns, FK naming
-   - Imports: ordering conventions
-   - Testing: file placement, assert style, fixture patterns
-2. **Merge steering context**: overlay `tech.md` Development Standards and `structure.md` Directory Patterns
-3. **Append buffer.md knowledge**: include `[PATTERN]`/`[INCIDENT]` entries from `{{SDD_DIR}}/handover/buffer.md` (if exists)
-4. **Write** to `.sdd/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `.sdd/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
-5. Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
+Dispatch via `Task(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
+- Mode: Generate
+- Steering: `{{SDD_DIR}}/project/steering/`
+- Buffer: `{{SDD_DIR}}/handover/buffer.md`
+- Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
+- Output: `.sdd/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `.sdd/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
+- Wave/feature: {identifier}
 
-**Greenfield projects**: If no source files exist, generate from steering only. Brief may contain only steering extracts and buffer knowledge. Pilot Stagger (impl.md) becomes the primary convention-seeding mechanism.
+Wait for `WRITTEN:{path}` response.
 
-**Steering precedence**: Conventions brief captures *observed practice*. If brief conflicts with steering, steering wins. State this in the brief header.
+**Greenfield projects**: Scanner generates from steering only if no source files exist. Pilot Stagger (impl.md) becomes the primary convention-seeding mechanism.
+
+**Steering precedence**: Conventions brief captures *observed practice*. If brief conflicts with steering, steering wins (stated in brief header by scanner).
 
 ### Shared Research (Architect-only, conditional)
 
@@ -167,6 +166,8 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 
 ### Phase Handlers
 
+**Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft session.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
+
 #### Design completion
 Dispatch Architect per `refs/design.md` Step 3 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 3.
 
@@ -179,11 +180,11 @@ Handle verdict:
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
-Process `STEERING:` entries from verdict. Auto-draft session.md.
+Process `STEERING:` entries from verdict.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-3). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
+Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
@@ -195,7 +196,7 @@ Handle verdict:
 - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate at 6.
 - In **gate mode**: pause for user approval
 
-Process `STEERING:` entries from verdict. Auto-draft session.md.
+Process `STEERING:` entries from verdict.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 ## Step 5: Auto/Gate Mode Handling

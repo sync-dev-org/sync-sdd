@@ -14,6 +14,7 @@
       "Task(sdd-auditor-design)",
       "Task(sdd-auditor-impl)",
       "Task(sdd-builder)",
+      "Task(sdd-conventions-scanner)",
       "Task(sdd-inspector-architecture)",
       "Task(sdd-inspector-best-practices)",
       "Task(sdd-inspector-consistency)",

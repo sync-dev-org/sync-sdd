@@ -34,13 +34,14 @@ Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 
 ## Step 3: Execute
 
-Read `tasks.yaml` execution plan → determine Builder grouping.
-Read tasks.yaml tasks section → extract detail bullets for Builder spawn prompts.
+Read `tasks.yaml` execution plan section only → determine Builder grouping (group IDs, file scope per group).
+Do NOT read the full tasks section — Builder reads its own tasks from tasks.yaml.
 
 Spawn Builder(s) via `Task(subagent_type="sdd-builder", run_in_background=true)` with prompt for each work package:
 - Feature: {feature}
-- Tasks: {task IDs + summaries + detail bullets}
-- File scope: {assigned files}
+- Group ID: {group identifier from execution plan}
+- Tasks YAML: `{{SDD_DIR}}/project/specs/{feature}/tasks.yaml`
+- File scope: {assigned files from execution plan}
 - Design ref: `{{SDD_DIR}}/project/specs/{feature}/design.md`
 - Research ref: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
 - Conventions brief: path to conventions-brief.md (if available)
@@ -58,31 +59,32 @@ When the execution plan has 2+ Builder groups, the first group acts as a **pilot
 
 2. **Pilot dispatch**: Dispatch pilot Builder group normally (with conventions brief). Wait for completion.
 
-3. **Convention supplement**: After pilot completes, Lead performs a lightweight scan of pilot's created files:
-   - Extract concrete naming patterns, error handling examples, schema style
-   - Append a `## Pilot Reference` section to the conventions brief with file:line references
-   - Example: `- Error pattern: see src/services/order.py:15-30`
+3. **Convention supplement**: Dispatch `sdd-conventions-scanner` SubAgent (mode: Supplement) with:
+   - Builder report path: the pilot's `builder-report-{group}.md` path (from WRITTEN:{path} in pilot's summary)
+   - Existing brief path: current conventions-brief.md path
+   - Output path: same as existing brief path (overwrite with supplement)
+   - Scanner reads pilot's created files from the report, scans them for concrete patterns, appends `## Pilot Reference` section
+   - Wait for `WRITTEN:{path}` response
 
 4. **Remaining dispatch**: Dispatch remaining Builder groups in parallel with the updated conventions brief path.
 
 **Skip conditions**: Single Builder group, or task re-execution mode (`{task-numbers}` provided).
 
-**Builder incremental processing**: As each Builder completes, immediately:
-- Read completion report (from Task result: files, test results, knowledge tags, SelfCheck, blockers)
+**Builder incremental processing**: As each Builder completes, process its minimal summary (Task result):
+- Parse summary: extract Tasks (IDs), Files (count), Tests (pass/total), SelfCheck (status), Tags (count), WRITTEN (report path)
 - Update tasks.yaml: mark completed tasks as `done`
-- Store knowledge tags in `{{SDD_DIR}}/handover/buffer.md`:
-    1. Scan completion report for lines starting with `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-    2. If tags found: read current buffer.md (or create from template), append new entries with source `(source: {feature} Builder, task {N})`, overwrite buffer.md
-    3. If no tags: skip
-- Process SelfCheck result:
+- If Tags > 0: Grep builder-report file for `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]` lines → append to `{{SDD_DIR}}/handover/buffer.md` with source `(source: {feature} Builder, group {G})`
+- Process SelfCheck:
   - `PASS` → normal processing
-  - `WARN({items})` → log items. Pass as attention points to Auditor when dispatching impl review
-  - `FAIL-RETRY-2({items})` → Lead judgment: continue (if items are minor) or re-dispatch Builder with fix context
-- If BUILDER_BLOCKED: classify cause (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
+  - `WARN({count})` → note count. Read SelfCheck section from builder-report when dispatching impl review (pass as attention points to Auditor)
+  - `FAIL-RETRY-2({count})` → Read SelfCheck section from builder-report for details. Lead judgment: continue (if items are minor) or re-dispatch Builder with fix context
+- If BUILDER_BLOCKED: classify cause from inline blocker summary (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
 
 When dependent tasks are unblocked: spawn next-wave Builders immediately.
 
-After ALL Builders complete, update spec.yaml:
+After ALL Builders complete:
+- Read Files section from each builder-report → aggregate file paths for spec.yaml
+- Update spec.yaml:
 - Set `phase` = `implementation-complete`
 - Update `implementation.files_created`: For TASK RE-EXECUTION mode, merge new files into existing list (union). For full execution, set to `[{aggregated files}]`
 - Set `version_refs.implementation` = current `version`
@@ -90,6 +92,8 @@ After ALL Builders complete, update spec.yaml:
 - Update `changelog`
 
 ## Step 4: Post-Completion
+
+**Skip when called from `run` dispatch loop** (run.md auto-draft policy applies instead).
 
 1. Auto-draft `{{SDD_DIR}}/handover/session.md`
 2. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`

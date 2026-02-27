@@ -210,7 +210,7 @@ For each tier (sequential):
      - Set phase = design-generated
 
   2. Wave Context Generation:
-     - Generate conventions brief per run.md Step 2.5 (scan codebase + steering + buffer.md)
+     - Dispatch `sdd-conventions-scanner` (mode: Generate) per run.md Step 2.5
      - Generate shared research if 2+ Architects in tier (include cross-cutting brief as additional context)
      - Store in specs/.cross-cutting/{id}/ alongside brief.md
 
@@ -240,7 +240,7 @@ For each tier (sequential):
 
   7. Tier Checkpoint:
      - All specs in tier must reach implementation-complete
-     - Auto-fix loop applies per spec (standard counter limits)
+     - Auto-fix loop applies per spec: handle NO-GO/SPEC-UPDATE-NEEDED per run.md Phase Handlers (counter increment, Architect/Builder re-dispatch, phase transitions)
      - On exhaustion: escalate to user, block tier progression
 ```
 

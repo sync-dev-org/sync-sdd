@@ -16,7 +16,8 @@ Execute implementation tasks following Kent Beck's TDD cycle, ensuring all code 
 
 You receive context from Lead including:
 - **Feature name**: the feature being implemented
-- **Task numbers**: specific tasks assigned to you (e.g., "1.1, 1.2, 1.3")
+- **Group ID**: your assigned Builder group (e.g., "wave1-a", "wave2-b")
+- **Tasks YAML path**: path to tasks.yaml (you read and self-select your group's tasks)
 - **File scope**: files you own (other Builders may work on other files in parallel)
 - **Design ref**: path to design.md for specification alignment
 - **Dependencies**: tasks that must complete before yours can start (if any)
@@ -26,7 +27,8 @@ You receive context from Lead including:
 ### Step 1: Load Context
 
 Read all necessary context:
-- `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `tasks.yaml`
+- `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`
+- **tasks.yaml**: Read the file at the provided path. Locate your assigned group in the `execution_plan` section, then read only the tasks assigned to your group. Ignore other groups' tasks.
 - **Entire `{{SDD_DIR}}/project/steering/` directory** — especially `tech.md` Common Commands for all Bash execution
 - **Conventions brief** (if path provided in prompt): observed codebase patterns for naming, error handling, schema design, imports, testing
 
@@ -109,19 +111,44 @@ Example:
 
 ## Completion Report
 
-Output your completion report as your final text (Lead reads this directly):
+Write your full report to a file, then output a minimal summary as your final text.
+
+### Step A: Write Full Report
+
+Write your detailed report to `{{SDD_DIR}}/project/specs/{feature}/builder-report-{group}.md`:
+
+```markdown
+# Builder Report: {feature} — {group}
+
+## Tasks
+{task IDs completed, with status}
+
+## Files
+{created/modified file paths, one per line}
+
+## Tests
+{pass count}/{total count}
+{test output summary}
+
+## SelfCheck
+{PASS | WARN({items with details}) | FAIL-RETRY-{N}({items with details})}
+
+## Knowledge
+{Tagged lines: [PATTERN], [INCIDENT], [REFERENCE] — or "None"}
+```
+
+### Step B: Output Minimal Summary
 
 **On success:**
 ```
 BUILDER_COMPLETE
 Feature: {feature}
-Tasks completed: {list}
-Files: {created/modified file paths}
-Tests: {pass count}/{total count}
-SelfCheck: {PASS | WARN({items}) | FAIL-RETRY-{N}({items})}
-Status: {all-tasks-complete | partial}
-
-{Knowledge tags if any}
+Tasks: {completed IDs}
+Files: {count}
+Tests: {pass}/{total}
+SelfCheck: {PASS | WARN({count}) | FAIL-RETRY-{N}({count})}
+Tags: {count}
+WRITTEN:{report_path}
 ```
 
 **On blocker (cannot proceed):**
@@ -133,4 +160,6 @@ Tasks affected: {list of blocked tasks}
 Attempted: {what was tried}
 ```
 
-**After outputting your report, terminate immediately.**
+Note: BLOCKED reports include the blocker summary inline (Lead needs it for immediate routing). No file write required for BLOCKED.
+
+**After outputting your summary, terminate immediately.**
