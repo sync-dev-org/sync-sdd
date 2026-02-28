@@ -51,6 +51,7 @@ Read and follow `refs/reboot.md` for the complete 10-phase execution:
 | Existing reboot branch | Ask: Resume / Delete & restart / Abort |
 | Analyst failure | Retry once. Second failure → delete branch, return to main, report error |
 | Design Review exhaustion | Escalate to user: fix / skip / abort |
+| User chooses Iterate (Phase 9) | Skill terminates. User edits on branch. Re-run `/sdd-reboot` to resume |
 | User aborts at Phase 5 | Return to main, delete branch, record in decisions.md |
 
 </instructions>

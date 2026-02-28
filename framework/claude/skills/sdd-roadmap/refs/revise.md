@@ -199,7 +199,7 @@ Build a tier-based execution plan from the FULL specs:
 
 ### Step 7: Tier Execution
 
-Execute each tier sequentially. Within a tier, specs run in parallel. Follows run.md Dispatch Loop pattern:
+Execute each tier sequentially. Within a tier, specs at the same phase run in parallel. Each phase completes for all specs before advancing to the next (NOT a concurrent dispatch loop — phases are strictly sequential):
 
 ```
 For each tier (sequential):
@@ -225,7 +225,7 @@ For each tier (sequential):
 
   4. Design Review:
      - Dispatch per spec (parallel) per refs/review.md
-     - Handle verdicts per CLAUDE.md counter limits
+     - Handle verdicts per CLAUDE.md counter limits and run.md Phase Handlers (on NO-GO: re-dispatch Architect, increment counter)
      - SPEC-UPDATE-NEEDED is not expected for design review. If received, escalate immediately
 
   5. Implementation:
@@ -236,7 +236,7 @@ For each tier (sequential):
 
   6. Impl Review:
      - Dispatch per spec (parallel) per refs/review.md
-     - Handle verdicts per CLAUDE.md counter limits
+     - Handle verdicts per CLAUDE.md counter limits and run.md Phase Handlers (on NO-GO: re-dispatch Builder; on SPEC-UPDATE-NEEDED: cascade per run.md)
 
   7. Tier Checkpoint:
      - All specs in tier must reach implementation-complete

@@ -272,7 +272,7 @@ Error tracking, logging, and health monitoring implementation.
 ## Testing Strategy
 
 ### Default sections (adapt names/sections to fit the domain)
-- Unit Tests: 3–5 items from core functions/modules (e.g., auth methods, subscription logic)
+- Unit Tests: 3–5 items from core functions/modules (e.g., auth methods, subscription logic). Use real internal collaborators; mock only external boundaries. Thin CRUD/passthrough may use integration tests instead
 - Integration Tests: 3–5 cross-component flows (e.g., webhook handling, notifications)
 - E2E/UI Tests (if applicable): 3–5 critical user paths (e.g., forms, dashboards)
 - Performance/Load (if applicable): 3–4 items (e.g., concurrency, high-volume ops)

@@ -73,7 +73,7 @@ When the execution plan has 2+ Builder groups, the first group acts as a **pilot
 **Builder incremental processing**: As each Builder completes, process its minimal summary (Task result):
 - Parse summary: extract Tasks (IDs), Files (count), Tests (pass/total), SelfCheck (status), Tags (count), WRITTEN (report path)
 - Update tasks.yaml: mark completed tasks as `done`
-- If Tags > 0: Grep builder-report file for `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]` lines → append to `{{SDD_DIR}}/handover/buffer.md` with source `(source: {feature} Builder, group {G})`
+- If Tags > 0 (and not BUILDER_BLOCKED): Grep builder-report file for `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]` lines → append to `{{SDD_DIR}}/handover/buffer.md` with source `(source: {feature} Builder, group {G})`
 - Process SelfCheck:
   - `PASS` → normal processing
   - `WARN({count})` → note count. Read SelfCheck section from builder-report when dispatching impl review (pass as attention points to Auditor)

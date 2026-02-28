@@ -109,7 +109,7 @@ When Auditor verdict contains a `STEERING:` section, process **after** handling 
 | Level | Action | Blocks pipeline |
 |-------|--------|----------------|
 | `CODIFY` | Update `steering/{target file}` directly + append to `decisions.md` (STEERING_UPDATE) | No |
-| `PROPOSE` | Present to user for approval | Yes |
+| `PROPOSE` | Present to user for approval | Yes (standalone: no pipeline, but still requires user approval before proceeding) |
 
 3. **PROPOSE handling**:
    - On approval → update `steering/{target file}` + append to `decisions.md` (STEERING_UPDATE)

@@ -176,7 +176,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 - `retry_count`: max 5 (NO-GO only). `spec_update_count`: max 2 (SPEC-UPDATE-NEEDED only). Aggregate cap: 6.
 - **Exception**: Dead-Code Review NO-GO: max 3 retries (dead-code findings are simpler scope; exhaustion → escalate).
 - CONDITIONAL = GO (proceed). Counters are NOT reset on intermediate GO/CONDITIONAL.
-- Counter reset triggers: wave completion, user escalation decision (including blocking protocol fix/skip), `/sdd-roadmap revise` start.
+- Counter reset triggers: wave completion, user escalation decision (including blocking protocol fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only; see `refs/run.md`).
 - Full auto-fix loop, wave quality gate, and blocking protocol details: see sdd-roadmap `refs/run.md`.
 
 ### decisions.md Recording

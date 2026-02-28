@@ -102,6 +102,9 @@ You will receive a prompt containing:
    - Do mocks verify correct call signatures? (not just "was called")
    - Are mock return values realistic?
    - Flag: "False positive risk" if mocks don't verify arguments
+   - Are internal collaborators (same-project classes/functions) unnecessarily mocked? Classical school: mock only at external boundaries (DB, network, filesystem, third-party API)
+   - Flag: "Over-mocking" (severity: M) if internal dependencies are mocked instead of using real instances
+   - Flag: "Refactor-fragile" (severity: M) if tests assert on internal method call order/count rather than observable outcomes
 
    **B. Assertion Quality**:
    - Do tests assert specific expected values?
@@ -111,7 +114,8 @@ You will receive a prompt containing:
 
    **C. Integration vs Unit Balance**:
    - Are there integration tests for cross-module interactions?
-   - Do unit tests properly isolate the unit under test?
+   - Do unit tests focus on observable behavior rather than implementation details?
+   - For thin passthrough/CRUD logic: is an integration test used instead of a redundant unit test?
    - Flag: "Missing integration tests" if only unit tests exist
 
    **D. Coverage Assessment**:
@@ -120,7 +124,14 @@ You will receive a prompt containing:
    - Check that critical paths have coverage
    - Report coverage percentage
 
-   **E. AC Marker Coverage**:
+   **E. Test Duplication and Bloat**:
+   - Do multiple tests verify the same observable behavior at different granularity levels?
+   - Are there redundant tests that would all fail from the same root cause?
+   - Do tests assert on implementation details (private methods, internal state) that would break on refactoring?
+   - Flag: "Duplicate coverage" (severity: L) if same behavior tested redundantly without added value
+   - Flag: "Impl-coupled test" (severity: M) if test asserts on non-public API or internal structure
+
+   **F. AC Marker Coverage**:
    - Grep for `AC: {feature}` markers in all test files
    - Cross-reference with design.md's Specifications acceptance criteria
    - For each AC:
@@ -199,7 +210,11 @@ ISSUES:
 C|test-failure|tests/test_auth.ts:42|test_login_invalid_token fails with TypeError
 H|missing-test-file|src/validators/config.ts|no corresponding test file
 H|false-positive-risk|tests/test_api.ts:mock_db|mock doesn't verify args
+M|over-mocking|tests/test_service.ts:30|internal UserValidator mocked instead of using real instance
+M|refactor-fragile|tests/test_handler.ts:55|asserts processQueue called 3 times (implementation detail)
+M|impl-coupled-test|tests/test_cache.ts:20|tests private _evict method directly
 M|weak-assertion|tests/test_cache.ts:15|only checks truthiness, not value
+L|duplicate-coverage|tests/test_auth.ts:80|login success tested identically in unit and integration
 L|strategy-gap|design.md:Testing|missing integration test category
 NOTES:
 Feature tests: 24 passed, 1 failed, 0 skipped

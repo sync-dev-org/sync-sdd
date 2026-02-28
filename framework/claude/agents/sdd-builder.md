@@ -38,14 +38,21 @@ For each assigned task, follow the TDD cycle:
 
 1. **RED - Write Failing Test**:
    - Write test for the next small piece of functionality
+   - **Test observable behavior** (inputs→outputs, state changes, side effects), NOT implementation internals
+     - Good: "returns error when email format is invalid"
+     - Bad: "calls validateEmail() internally"
+   - **One test per behavior**: do not test the same behavior at multiple granularity levels. If the same assertion would appear in both a unit test and an integration test, keep only the more valuable one
+   - **Classical school (Detroit) approach**: use real collaborators for internal dependencies. Mock ONLY at external boundaries (DB, network, filesystem, third-party API)
+     - Thin passthrough/CRUD logic: integration test is sufficient — skip isolated unit test
    - Test should fail (code doesn't exist yet)
-   - Use descriptive test names
+   - Use descriptive test names: "does X when Y" or "returns X given Y" format
    - **Add traceability marker**: Include `AC: {feature}.S{N}.AC{M}` in test docstring/comment
 
 2. **GREEN - Write Minimal Code**:
    - Implement simplest solution to make test pass
    - Focus only on making THIS test pass
    - Avoid over-engineering
+   - Do NOT add extra test cases "just in case" — each test must trace to a specific AC or edge case in design.md
 
 3. **REFACTOR - Clean Up**:
    - Improve code structure and readability

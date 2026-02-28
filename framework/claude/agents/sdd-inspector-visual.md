@@ -100,7 +100,7 @@ You will receive a prompt containing:
      2. `playwright-cli install`
      3. Verify: `playwright-cli --version`
      - If install succeeds: continue with execution
-     - If install fails: output `VERDICT:GO` with `NOTES: SKIPPED|playwright-cli unavailable`, write to file, terminate
+     - If install fails: output `VERDICT:GO` with `NOTES: SKIPPED|playwright-cli install failed`, write to file, terminate
 2. Verify the server URL is accessible (single retry with brief delay if needed)
 3. Determine pages to evaluate from design.md (all routes/pages mentioned)
 

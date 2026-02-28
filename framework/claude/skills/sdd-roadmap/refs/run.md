@@ -238,7 +238,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
      - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
-   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`, cascade: Architect → TaskGenerator → Builder → individual Impl Review → re-run cross-check
+   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`, cascade per spec: Architect → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **b. Dead Code Review**:
 1. Execute dead-code review per `refs/review.md` (Dead-Code Review section)
