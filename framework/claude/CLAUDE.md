@@ -327,6 +327,7 @@ Trunk-based development. main is always HEAD.
 - **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
 - Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision) or `reboot: {summary}` (reboot redesign)
+- All commits MUST end with `Co-Authored-By: sync-sdd <noreply@sync-sdd>`
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):
