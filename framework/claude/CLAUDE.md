@@ -277,6 +277,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
+5a. If inside tmux (`$TMUX` set): check for orphaned dev server panes (`tmux list-panes -a -F '#{pane_title}'`, filter `sdd-devserver-*`). Kill any found to prevent port conflicts from previous crashed sessions.
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
      - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
@@ -311,6 +312,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Use steering Common Commands**: When running project tools (test, lint, build, format, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
+- **tmux Integration**: Lead uses tmux for dev server lifecycle management when running inside a tmux session (`$TMUX` set). Dev server runs in a visible split pane (pane title: `sdd-devserver-{feature}`). When `$TMUX` is not set, falls back to `Bash(run_in_background=true)`. See `refs/review.md` Web Inspector Server Protocol.
 
 ## Git Workflow
 

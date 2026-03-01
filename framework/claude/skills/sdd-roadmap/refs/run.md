@@ -123,12 +123,12 @@ Within the dispatch loop, reviews are NOT atomic operations. They decompose into
 **Sub-phases**:
 
 1. **DISPATCH-INSPECTORS** (triggered from ADVANCE when spec is ready for review):
-   - Execute review.md steps 1-4 (scope dir, B{seq}, create active dir, web server start if applicable, spawn all Inspectors)
+   - Execute review.md steps 1-4 (scope dir, B{seq}, create active dir, web server start if applicable — uses tmux pane or background Bash per Web Inspector Server Protocol, spawn all Inspectors)
    - Add Inspector tasks to `active[spec]`, set `review_state[spec].phase = inspecting`
    - **Return to dispatch loop immediately** — do not wait for Inspectors
 
 2. **INSPECTORS-COMPLETE** (triggered from PROCESS when ALL Inspectors for a spec finish):
-   - Execute review.md steps 5, 5a (handle failures, stop web server if applicable)
+   - Execute review.md steps 5, 5a (handle failures, stop web server if applicable — kill tmux pane or PID per Web Inspector Server Protocol)
    - Spawn Auditor (review.md step 6), update `active[spec]` to Auditor task
    - Set `review_state[spec].phase = auditing`
 

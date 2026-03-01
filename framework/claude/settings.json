@@ -49,6 +49,7 @@
       "Bash(echo *)",
       "Bash(diff *)",
       "Bash(playwright-cli *)",
+      "Bash(tmux *)",
       "Bash(npm *)",
       "Bash(npx *)"
     ]

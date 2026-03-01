@@ -46,21 +46,38 @@ Spawn via review execution flow (below):
 
 ## Web Inspector Server Protocol (Web Projects Only)
 
-When impl review includes web inspectors (`sdd-inspector-e2e` and `sdd-inspector-visual`), Lead manages the dev server lifecycle:
+When impl review includes web inspectors (`sdd-inspector-e2e` and `sdd-inspector-visual`), Lead manages the dev server lifecycle.
+
+### tmux Mode (preferred)
+
+Applies when `$TMUX` environment variable is set (running inside a tmux session).
 
 1. **Server Start** (before Inspector dispatch):
-   - Read dev server command from `steering/tech.md` Common Commands
+   - Read dev server command from `steering/tech.md` Common Commands (the `Dev:` entry)
    - If no dev server command found: skip server start, dispatch web inspectors without server URL (they will report "Server URL not accessible" and terminate gracefully)
-   - Start dev server via Bash (background process)
-   - Wait for server ready (retry URL access with brief delays)
-   - Record server URL (e.g., `http://localhost:3000`)
+   - Check for existing pane: `tmux list-panes -a -F '#{pane_title}'` — if `sdd-devserver-{feature}` exists, reuse it (server already running from retry)
+   - Spec Stagger port handling: if other `sdd-devserver-*` panes exist, apply port offset (`--port {base+N}` or framework-equivalent flag). If the dev framework does not support port override, skip offsetting (parallel reviews will serialize at this step)
+   - Create pane and capture its ID: `tmux split-window -d -l 30% -P -F '#{pane_id}' 'printf "\\033]2;sdd-devserver-{feature}\\033\\\\" && {dev_command} [--port {port}]'` — the `-P -F '#{pane_id}'` flag prints the new pane's unique ID (e.g., `%3`). Store this ID for later use. **Never use index-based targeting** (`-t 1`) — it may kill the wrong pane (including Claude Code itself).
+   - Wait for ready: poll `tmux capture-pane -t '{pane_id}' -p` for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
+   - Record server URL (e.g., `http://localhost:{port}`)
 
 2. **Inspector Dispatch**: Include server URL in spawn context for `sdd-inspector-e2e` and `sdd-inspector-visual`. Both inspectors use the already-running server — they do NOT start or stop it.
 
 3. **Server Stop** (after all Inspectors complete, before Auditor dispatch):
-   - Kill the background dev server process
+   - `tmux kill-pane -t '{pane_id}'` using the ID captured at creation time
 
-If server fails to start: dispatch web inspectors anyway (they will report the error in their CPF output and terminate gracefully).
+### Fallback Mode (no tmux)
+
+Applies when `$TMUX` is not set (running outside tmux).
+
+1. **Server Start**: Start dev server via `Bash(run_in_background=true)`. Wait for server ready (retry URL access with brief delays). Record server URL.
+2. **Inspector Dispatch**: Same as tmux mode.
+3. **Server Stop**: Kill the background dev server process by PID.
+
+### Common Rules (both modes)
+
+- If server fails to start: dispatch web inspectors anyway (they will report the error in their CPF output and terminate gracefully)
+- Read dev server command from `steering/tech.md` Common Commands — do not hardcode commands
 
 ## Review Execution Flow
 

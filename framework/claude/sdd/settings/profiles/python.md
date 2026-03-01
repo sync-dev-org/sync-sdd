@@ -14,6 +14,10 @@ Type hints required for all public interfaces. Type checker is project-specific 
 ### Code Quality
 Ruff for linting and formatting. PEP 8 compliance.
 
+### Data Modeling
+Prefer pydantic over dataclasses. pydantic is the default choice for data classes.
+For SQL/ORM, prefer SQLModel (pydantic-compatible).
+
 ### Testing
 pytest with coverage requirements.
 
