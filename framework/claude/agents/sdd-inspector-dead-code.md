@@ -64,7 +64,7 @@ Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
 Example:
 ```
 VERDICT:CONDITIONAL
-SCOPE:cross-check
+SCOPE:dead-code
 ISSUES:
 H|dead-code|src/utils.py:parse_legacy()|no call sites found, 45 lines
 M|dead-code|src/main.py:import os|os never used in this module

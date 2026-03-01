@@ -81,20 +81,27 @@ For each alternative:
    - Tech stack evaluation: are current choices still the best fit?
    - Modern alternatives for problematic areas
 
-3. **Comparison Table** (mandatory):
+3. **Dependency Strategy**:
+   - Package structure: monolithic, optional extras/features, workspace/monorepo
+   - Required vs optional dependencies and their grouping rationale
+   - Install complexity for end users (e.g., `pip install pkg` vs `pip install pkg[openai,local]`)
+
+4. **Comparison Table** (mandatory):
 
    | Aspect | Alternative A: {name} | Alternative B: {name} | [Alternative C: {name}] |
    |--------|----------------------|----------------------|------------------------|
    | API shape | ... | ... | ... |
    | Module structure | ... | ... | ... |
+   | Dependency strategy | ... | ... | ... |
+   | Install complexity | ... | ... | ... |
    | Extensibility | ... | ... | ... |
    | Complexity | ... | ... | ... |
    | Migration effort | ... | ... | ... |
    | Best suited for | ... | ... | ... |
 
-4. **Recommendation**: State which alternative you recommend and why. But the user makes the final decision — include ALL alternatives in the analysis report.
+5. **Recommendation**: State which alternative you recommend and why. But the user makes the final decision — include ALL alternatives in the analysis report.
 
-5. **Design Principles** (apply to all alternatives):
+6. **Design Principles** (apply to all alternatives):
    - Optimize for the most common use cases
    - Separate what changes frequently from what is stable
    - Make the easy things easy and the hard things possible
@@ -132,7 +139,7 @@ Decompose the recommended architecture (Step 3) into implementable specs:
 7. **Steering Alignment**: Respect the (updated) steering Vision and Anti-Goals.
 
 For each proposed spec:
-- **Name** (kebab-case)
+- **Name** (kebab-case noun/noun-phrase — do NOT use common verbs like `add`, `fix`, `update`, `create`, `delete`, `run`, `build`, `test`)
 - **Description** (2-3 sentences explaining scope and purpose — what to BUILD)
 - **Requirements covered** (from Step 2)
 - **Dependencies** on other proposed specs

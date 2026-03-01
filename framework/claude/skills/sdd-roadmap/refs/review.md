@@ -17,7 +17,7 @@ If first argument after "review" is not one of `design`, `impl`, `dead-code`:
 
 **Design Review**: Verify `design.md` exists. BLOCK if `spec.yaml.phase` is `blocked`.
 **Implementation Review**: Verify `design.md` and `tasks.yaml` exist. Verify `phase` is `implementation-complete`. BLOCK if `blocked`.
-**Dead Code Review**: No phase gate (operates on entire codebase).
+**Dead Code Review**: No phase gate (operates on entire codebase). Roadmap must exist (Router blocks if absent — see SKILL.md).
 
 ## Design Review
 
@@ -141,7 +141,7 @@ If an Inspector CPF file contains `VERDICT:ERROR` (Inspector could not execute):
 All verdict files follow the same pattern: `{scope-dir}/verdicts.md`
 
 - **Single-spec review**: `{{SDD_DIR}}/project/specs/{feature}/reviews/verdicts.md`
-- **Dead-code review**: `{{SDD_DIR}}/project/reviews/dead-code/verdicts.md`
+- **Dead-code review** (standalone): `{{SDD_DIR}}/project/reviews/dead-code/verdicts.md` (Wave QG context uses `reviews/wave/verdicts.md` with header `[W{wave}-DC-B{seq}]`; see run.md Step 7b)
 - **Cross-check review**: `{{SDD_DIR}}/project/reviews/cross-check/verdicts.md`
 - **Wave-scoped review**: `{{SDD_DIR}}/project/reviews/wave/verdicts.md`
 - **Cross-cutting review**: `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/verdicts.md`

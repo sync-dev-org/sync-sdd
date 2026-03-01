@@ -38,7 +38,7 @@ Review pipelines use **file-based communication**: Inspectors write CPF files to
 All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
 - **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into CPF output files.
 - **Builder**: write full report to `builder-report-{group}.md`, return only structured summary (status, counts, report path). See sdd-builder agent definition.
-- **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + counts + `Files to delete: {count}` + `WRITTEN:{path}`).
+- **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + `New specs:` + `Waves:` + `Steering:` + `Requirements identified:` + `Files to delete:` + `WRITTEN:{path}`).
 - **Architect / TaskGenerator**: current report format is already concise — no file-based output required unless reports grow.
 
 ### State Management
@@ -309,7 +309,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 ## Execution Conventions
 
 - **No comment preamble in Bash commands**: The `command` argument to Bash must begin with the executable. Do not prepend `#` comment lines. Use the Bash tool's `description` parameter for human-readable context.
-- **Use steering Common Commands**: When running project tools (test, lint, build, format, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
+- **Use steering Common Commands**: When running project tools (install, test, build, e2e, lint, format, dev, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
 - **tmux Integration**: Lead uses tmux for dev server lifecycle management when running inside a tmux session (`$TMUX` set). Dev server runs in a visible split pane (pane title: `sdd-devserver-{feature}`). When `$TMUX` is not set, falls back to `Bash(run_in_background=true)`. See sdd-roadmap `refs/review.md` Web Inspector Server Protocol.

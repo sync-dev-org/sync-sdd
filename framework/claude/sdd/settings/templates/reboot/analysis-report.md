@@ -31,6 +31,9 @@ Abstract requirements at user-story / capability level. No class names, method n
 #### API Shape
 {{API_SHAPE_A}}
 
+#### Dependency Strategy
+{{DEPENDENCY_STRATEGY_A}}
+
 ### Alternative B: {{NAME_B}}
 
 #### Architecture Vision
@@ -42,12 +45,17 @@ Abstract requirements at user-story / capability level. No class names, method n
 #### API Shape
 {{API_SHAPE_B}}
 
+#### Dependency Strategy
+{{DEPENDENCY_STRATEGY_B}}
+
 ### Comparison Table
 
 | Aspect | {{NAME_A}} | {{NAME_B}} |
 |--------|-----------|-----------|
 | API shape | {{...}} | {{...}} |
 | Module structure | {{...}} | {{...}} |
+| Dependency strategy | {{...}} | {{...}} |
+| Install complexity | {{...}} | {{...}} |
 | Extensibility | {{...}} | {{...}} |
 | Complexity | {{...}} | {{...}} |
 | Migration effort | {{...}} | {{...}} |

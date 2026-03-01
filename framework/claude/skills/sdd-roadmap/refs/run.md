@@ -149,7 +149,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
 | **Design Review** | Phase is `design-generated`. No GO/CONDITIONAL verdict in `verdicts.md` latest design batch (verdict absent or last is NO-GO). |
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
-| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
+| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. E2E gate passed (if E2E command defined in `steering/tech.md`; see impl.md Step 3.5). No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
 
@@ -162,7 +162,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
    - If yes: dispatch Architect (same as Design Fan-Out)
 2. Lookahead eligibility is **dynamically computed** from spec.yaml phase + dependency state — no persistent tracking needed. On resume, re-evaluate: any Wave N+1 spec at `initialized` whose Wave N dependencies are `design-generated` is eligible.
 3. Lookahead specs proceed through Design and Design Review only — they do NOT start Implementation until Wave N QG passes
-4. **Staleness guard**: If a Wave N spec's design changes (NO-GO → Architect re-dispatch), check if any lookahead spec depends on it. If yes: reset the lookahead spec's `phase` to `initialized` and clear `version_refs.design`. This is persistent (survives session resume) and causes the dispatch loop to re-evaluate lookahead eligibility naturally — once the Wave N dependency's new design is ready, the spec becomes eligible for Lookahead again via step 1.
+4. **Staleness guard**: If a Wave N spec's design changes (NO-GO → Architect re-dispatch), check if any lookahead spec depends on it. If yes: reset the lookahead spec's `phase` to `initialized`, clear `version_refs.design`, and set `orchestration.last_phase_action` to `null`. This is persistent (survives session resume) and causes the dispatch loop to re-evaluate lookahead eligibility naturally — once the Wave N dependency's new design is ready, the spec becomes eligible for Lookahead again via step 1.
 
 ### Phase Handlers
 
@@ -184,7 +184,7 @@ Process `STEERING:` entries from verdict.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
+Execute per `refs/impl.md` (Steps 1-3.5, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3, then execute E2E Gate per impl.md Step 3.5.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.

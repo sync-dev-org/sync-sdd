@@ -25,6 +25,10 @@
 ### Testing
 [e.g., test framework, coverage requirements]
 
+### External Dependencies
+[External APIs, services, and credentials required for E2E/integration testing]
+[e.g., OPENAI_API_KEY for OpenAI TTS, GOOGLE_API_KEY for Gemini]
+
 ## Development Environment
 
 ### Required Tools
@@ -32,9 +36,11 @@
 
 ### Common Commands
 ```bash
+# Install: [command]
 # Dev: [command]
 # Build: [command]
 # Test: [command]
+# E2E: [command or empty if no automated E2E]
 ```
 
 ## Key Technical Decisions

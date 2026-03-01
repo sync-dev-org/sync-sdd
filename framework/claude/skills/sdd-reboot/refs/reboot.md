@@ -177,10 +177,12 @@ Same protocol as `refs/run.md` §Review Decomposition:
 ### Verdict Handling
 
 - **GO/CONDITIONAL** → Spec design complete. Proceed to next spec or next wave.
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (SPEC-UPDATE-NEEDED does not occur in design review, so only `retry_count` applies here). On exhaustion: escalate to user per `refs/run.md` Step 6 Blocking Protocol (fix/skip/abort). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (SPEC-UPDATE-NEEDED does not occur in design review, so only `retry_count` applies here). On exhaustion: escalate to user per `refs/run.md` Step 6 Blocking Protocol (fix/skip/abort). **Reboot-specific**: only fix/skip/abort actions apply; `phase=blocked` and downstream blocking are N/A (reboot has no impl phase). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
 - Process `STEERING:` entries from verdict.
 
 ### Shared Research
+
+**Note**: ConventionsScanner is NOT dispatched during reboot (see Phase 3). Lead generates shared research directly.
 
 If 2+ Architects dispatch in parallel (Design Fan-Out):
 1. Extract common technology decisions from steering

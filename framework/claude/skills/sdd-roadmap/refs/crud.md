@@ -8,7 +8,7 @@ Interactive operations reference. Lead handles directly.
 
 1. Load steering, rules, templates, existing specs
 2. Verify product understanding with user
-3. Propose spec candidates from steering analysis
+3. Propose spec candidates from steering analysis. **Naming rule**: spec names use kebab-case nouns/noun-phrases (e.g., `engine-openai`, `audio-components`). Do NOT use common verbs (`add`, `fix`, `update`, `create`, `delete`, `run`, `build`, `test`) as spec names — these conflict with the `revise` subcommand's mode detection.
 4. Organize into implementation waves — **Parallel-Optimized Wave Scheduling**:
    a. Build dependency graph from spec candidates
    b. **Foundation-First**: Identify foundation specs and place in Wave 1:

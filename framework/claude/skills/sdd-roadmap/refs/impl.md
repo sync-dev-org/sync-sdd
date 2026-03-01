@@ -32,6 +32,16 @@ Spawn TaskGenerator via `Agent(subagent_type="sdd-taskgenerator", run_in_backgro
 
 Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 
+## Step 2.5: Environment Setup
+
+Before dispatching any Builder, ensure all dependencies are installed in the shared environment:
+
+1. Read `steering/tech.md` Common Commands for install command (`# Install:` line)
+2. Execute the install command (e.g., `uv sync --all-extras`, `npm install`) via Bash
+3. This is a one-time step per impl execution — not per-Builder
+
+**Rationale**: All Builders share the same environment (venv, node_modules, etc.). Builders are prohibited from running dependency management commands to prevent parallel installation conflicts.
+
 ## Step 3: Execute
 
 Read `tasks.yaml` execution plan section only → determine Builder grouping (group IDs, file scope per group).
@@ -90,6 +100,18 @@ After ALL Builders complete:
 - Set `version_refs.implementation` = current `version`
 - Set `orchestration.last_phase_action` = `"implementation-complete"`
 - Update `changelog`
+
+## Step 3.5: E2E Gate
+
+After all Builders complete and spec.yaml is updated to `implementation-complete`:
+
+1. Read `steering/tech.md` Common Commands for E2E command (`# E2E:` line)
+2. If E2E command exists (non-empty):
+   - Execute the E2E command via Bash
+   - On success: proceed to Step 4
+   - On failure: dispatch targeted Builder fix (same group that owns the failing file scope, with design ref + E2E failure output as context). Max 3 E2E fix attempts (in-memory counter, not persisted — resets on session resume). On exhaustion: escalate to user
+   - After each E2E fix: merge any new files into `implementation.files_created` in spec.yaml
+3. If no E2E command defined: skip (proceed to Step 4)
 
 ## Step 4: Post-Completion
 

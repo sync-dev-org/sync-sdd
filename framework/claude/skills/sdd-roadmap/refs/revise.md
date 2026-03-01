@@ -74,7 +74,7 @@ Standard pipeline with revision context. References phase execution refs for det
    After completion: verify design.md, update spec.yaml (increment `version`, phase=design-generated, last_phase_action=null).
 2. **Design Review**: Execute per `refs/review.md` (Design Review section).
    Handle verdict per CLAUDE.md counter limits.
-3. **Implementation**: Execute per `refs/impl.md`.
+3. **Implementation**: Execute per `refs/impl.md` (Steps 1-3.5, including E2E Gate).
    After ALL Builders complete: update spec.yaml (phase=implementation-complete, files_created).
 4. **Impl Review**: Execute per `refs/review.md` (Impl Review section).
    Handle verdict per CLAUDE.md counter limits.
@@ -176,6 +176,10 @@ For each AUDIT-classified spec, perform lightweight verification:
    - **Change needed**: Interface or behavior is affected → promote to FULL
 3. Present triage results to user for confirmation
 
+### Step 5.5: Auto-Demotion Check
+
+After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (Architect dispatch) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.md: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
+
 ### Step 6: Execution Tier Planning
 
 Build a tier-based execution plan from the FULL specs:
@@ -232,7 +236,7 @@ For each tier (sequential):
      - Update conventions brief with design-derived conventions (run.md Step 2.5 Post-Design)
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
      - TaskGenerator → Builder per refs/impl.md (includes conventions brief path, Pilot Stagger Protocol)
-     - After ALL Builders complete per spec: update spec.yaml
+     - After ALL Builders complete per spec: update spec.yaml, execute E2E Gate per impl.md Step 3.5
 
   6. Impl Review:
      - Dispatch per spec (parallel) per refs/review.md
