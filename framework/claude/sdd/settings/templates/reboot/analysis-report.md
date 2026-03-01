@@ -4,36 +4,58 @@
 
 {{EXECUTIVE_SUMMARY}}
 
-## Codebase Assessment
+## Requirements
 
-### Strengths
-{{STRENGTHS}}
+Abstract requirements at user-story / capability level. No class names, method names, or module names.
 
-### Weaknesses
-{{WEAKNESSES}}
+### Functional Requirements
+{{FUNCTIONAL_REQUIREMENTS}}
 
-### Metrics
-- Source files: {{FILE_COUNT}}
-- Languages: {{LANGUAGES}}
-- Modules/packages: {{MODULE_COUNT}}
+### Non-Functional Requirements
+{{NON_FUNCTIONAL_REQUIREMENTS}}
+
+### Constraints
 - External dependencies: {{DEP_COUNT}}
+{{CONSTRAINTS}}
 
-### Current Architecture Assessment
-{{CURRENT_ARCHITECTURE_EVALUATION}}
+## Architecture Alternatives
 
-## Ideal Architecture
+### Alternative A: {{NAME_A}}
 
-### Architecture Vision
-{{ARCHITECTURE_VISION}}
+#### Architecture Vision
+{{ARCHITECTURE_VISION_A}}
 
-### Module Structure
-{{MODULE_STRUCTURE}}
+#### Module Structure
+{{MODULE_STRUCTURE_A}}
 
-### Key Interfaces
-{{KEY_INTERFACES}}
+#### API Shape
+{{API_SHAPE_A}}
 
-### Technology Decisions
-{{TECHNOLOGY_DECISIONS}}
+### Alternative B: {{NAME_B}}
+
+#### Architecture Vision
+{{ARCHITECTURE_VISION_B}}
+
+#### Module Structure
+{{MODULE_STRUCTURE_B}}
+
+#### API Shape
+{{API_SHAPE_B}}
+
+### Comparison Table
+
+| Aspect | {{NAME_A}} | {{NAME_B}} |
+|--------|-----------|-----------|
+| API shape | {{...}} | {{...}} |
+| Module structure | {{...}} | {{...}} |
+| Extensibility | {{...}} | {{...}} |
+| Complexity | {{...}} | {{...}} |
+| Migration effort | {{...}} | {{...}} |
+| Best suited for | {{...}} | {{...}} |
+
+### Recommendation
+
+{{RECOMMENDATION_AND_RATIONALE}}
 
 ## Steering Changes
 

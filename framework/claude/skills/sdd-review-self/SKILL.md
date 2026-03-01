@@ -1,6 +1,6 @@
 ---
 description: Self-review for SDD framework development (framework-internal use only)
-allowed-tools: Task, Bash, Read, Glob, Grep
+allowed-tools: Agent, Bash, Read, Glob, Grep
 ---
 
 # SDD Framework Self-Review

@@ -1,6 +1,6 @@
 ---
 description: Unified spec lifecycle (design, implement, review, roadmap management)
-allowed-tools: Task, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
+allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: design <feature> | impl <feature> [tasks] | review design|impl <feature> [flags] | review dead-code [flags] | run [--gate] [--consensus N] | revise [feature] [instructions] | create [-y] | update | delete | -y
 ---
 

@@ -25,6 +25,7 @@ Each profile is a markdown file with the following sections:
 ### Development Standards
 - **Type Safety**: Type checking approach and tools
 - **Code Quality**: Linter and formatter
+- **Data Modeling**: Preferred data class / ORM libraries (optional, language-specific)
 - **Testing**: Test framework and conventions
 
 ### Structure Conventions

@@ -1,6 +1,6 @@
 ---
 description: Reboot project design from zero (analysis, steering reform, new roadmap + specs on feature branch)
-allowed-tools: Task, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
+allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
 argument-hint: [name] [-y]
 ---
 
@@ -32,9 +32,9 @@ Read and follow `refs/reboot.md` for the complete 10-phase execution:
 
 1. **Pre-Flight**: Clean tree, main branch, codebase check, input state detection
 2. **Branch Setup**: Create `reboot/{branch_name}`
-3. **Conventions Brief**: Dispatch ConventionsScanner
-4. **Deep Analysis**: Dispatch Analyst (zero-based, no old specs)
-5. **User Review**: Present proposal (skip if `-y`)
+3. **Setup**: Create output directory (ConventionsScanner is NOT dispatched — zero-based redesign)
+4. **Deep Analysis**: Dispatch Analyst (zero-based, no old specs, no conventions brief)
+5. **User Review**: Select architecture alternative, approve/modify/abort (skip if `-y`)
 6. **Roadmap Regeneration**: Archive old specs → delete → create new specs + roadmap
 7. **Design Pipeline**: Architect + Design Review per wave (design-only, no impl)
 8. **Regression Check**: Compare old vs new capabilities (if old specs existed)

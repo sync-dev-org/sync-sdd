@@ -32,19 +32,11 @@ Detailed execution reference. Lead handles all phases directly.
 2. Create and checkout: `git checkout -b reboot/{branch_name}`
 3. Append `DIRECTION_CHANGE` to decisions.md: "Reboot started: zero-based redesign on branch reboot/{branch_name} (input state: {state})"
 
-## Phase 3: Conventions Brief
-
-Dispatch `sdd-conventions-scanner` to scan the codebase for existing patterns.
+## Phase 3: Setup
 
 1. Create output directory: `mkdir -p {{SDD_DIR}}/project/reboot/`
-2. Dispatch via `Agent(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
-   - Mode: Generate
-   - Steering: `{{SDD_DIR}}/project/steering/` (if exists)
-   - Buffer: `{{SDD_DIR}}/handover/buffer.md` (if exists)
-   - Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
-   - Output: `{{SDD_DIR}}/project/reboot/conventions-brief.md`
-   - Identifier: `reboot`
-3. Wait for `WRITTEN:{path}` via `TaskOutput`
+
+**ConventionsScanner is NOT dispatched during reboot.** Scanning existing code patterns would bias the zero-based redesign toward the current architecture. Coding conventions for the new design are derived from steering and language profiles instead.
 
 ## Phase 4: Deep Analysis
 
@@ -52,7 +44,6 @@ Dispatch `sdd-analyst` for holistic codebase analysis and redesign proposal.
 
 1. Dispatch via `Agent(subagent_type="sdd-analyst", run_in_background=true)` with prompt:
    - Steering path: `{{SDD_DIR}}/project/steering/` (note if absent)
-   - Conventions brief path: `{{SDD_DIR}}/project/reboot/conventions-brief.md`
    - User instructions: from `$ARGUMENTS` (excluding name and `-y` flag), or empty
    - Output path: `{{SDD_DIR}}/project/reboot/analysis-report.md`
    - Template path: `{{SDD_DIR}}/settings/templates/reboot/analysis-report.md`
@@ -68,14 +59,18 @@ Skip if `-y` flag is present. (Note: `-y` skips user review only. Lead still rea
 1. Read `{{SDD_DIR}}/project/reboot/analysis-report.md`
 2. Present to user:
    - Executive summary
-   - Steering changes/generation summary
-   - Proposed spec count and wave count
+   - **Architecture alternatives with comparison table** (from Analyst Step 3)
+   - Analyst's recommendation and rationale
+   - Proposed spec count and wave count (based on recommended alternative)
    - Risk assessment highlights
-3. Ask user via `AskUserQuestion`:
+3. Ask user to **select an architecture alternative** via `AskUserQuestion`:
+   - Options: each alternative by name + Analyst's recommendation marker
+   - If user selects a non-recommended alternative: re-dispatch Analyst with `selected_alternative={name}` to regenerate steering and spec decomposition for that alternative. Max 1 re-dispatch.
+4. Ask user via `AskUserQuestion`:
    - **Approve**: Proceed to Phase 6
    - **Modify**: Collect user feedback. Re-dispatch Analyst with additional instructions appended to original prompt + user feedback. Max 2 modification rounds. After 2 rounds, present final version — user must Approve or Abort.
    - **Abort**: `git checkout main && git branch -D reboot/{branch_name}`. Record `USER_DECISION` in decisions.md. Stop.
-4. Record `USER_DECISION` in decisions.md
+5. Record `USER_DECISION` in decisions.md (include selected architecture alternative)
 
 ## Phase 6: Roadmap Regeneration
 
@@ -169,7 +164,7 @@ For each wave (sequential):
 ### Architect Dispatch
 
 When dispatching Architects, include extra context for the reboot:
-- Standard context: feature name, mode=new, steering path, conventions brief path
+- Standard context: feature name, mode=new, steering path
 - **Additional**: analysis-report.md path — Architect reads this for the redesign vision and proposed scope
 
 ### Review Decomposition
