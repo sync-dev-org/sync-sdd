@@ -240,8 +240,8 @@ For each tier (sequential):
 
   7. Tier Checkpoint:
      - All specs in tier must reach implementation-complete
-     - Auto-fix loop applies per spec: handle NO-GO/SPEC-UPDATE-NEEDED per run.md Phase Handlers (counter increment, Architect/Builder re-dispatch, phase transitions)
-     - On exhaustion: escalate to user, block tier progression
+     - Auto-fix loop applies per spec: handle NO-GO/SPEC-UPDATE-NEEDED per run.md Phase Handlers (counter increment, Architect/Builder re-dispatch, phase transitions). Counter limits: retry_count max 5, spec_update_count max 2, aggregate cap 6 (per CLAUDE.md)
+     - On exhaustion: escalate to user per run.md Step 6 blocking protocol (user chooses fix/skip/abort). Skip removes spec from tier; abort halts entire revision.
 ```
 
 ### Step 8: Cross-Cutting Consistency Review

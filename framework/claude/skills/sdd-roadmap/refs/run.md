@@ -30,7 +30,7 @@ Before dispatching any Architect or Builder, Lead generates shared context artif
 
 Dispatch `sdd-conventions-scanner` SubAgent (mode: Generate) to scan the codebase and generate the conventions brief. This keeps scan results out of Lead's context.
 
-Dispatch via `Task(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
+Dispatch via `Agent(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
 - Mode: Generate
 - Steering: `{{SDD_DIR}}/project/steering/`
 - Buffer: `{{SDD_DIR}}/handover/buffer.md`
@@ -105,7 +105,7 @@ For each wave (sequential):
 
     2. LOOKAHEAD: Check next-wave Design eligibility (see Design Lookahead below)
 
-    3. WAIT: Poll all active tasks (Architects, Builders, individual Inspectors, Auditors) via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
+    3. WAIT: Poll all active agents (Architects, Builders, individual Inspectors, Auditors) via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
 
     4. PROCESS: Handle completion
        - Review sub-phase (Inspector/Auditor): advance per §Review Decomposition
@@ -151,7 +151,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
 
-**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Task(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
+**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
 
 ### Design Lookahead
 
@@ -162,7 +162,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
    - If yes: dispatch Architect (same as Design Fan-Out)
 2. Lookahead eligibility is **dynamically computed** from spec.yaml phase + dependency state — no persistent tracking needed. On resume, re-evaluate: any Wave N+1 spec at `initialized` whose Wave N dependencies are `design-generated` is eligible.
 3. Lookahead specs proceed through Design and Design Review only — they do NOT start Implementation until Wave N QG passes
-4. **Staleness guard**: If a Wave N spec's design changes (NO-GO → Architect re-dispatch), check if any lookahead spec depends on it. If yes: invalidate lookahead design, mark for re-design after Wave N QG
+4. **Staleness guard**: If a Wave N spec's design changes (NO-GO → Architect re-dispatch), check if any lookahead spec depends on it. If yes: reset the lookahead spec's `phase` to `initialized` and clear `version_refs.design`. This is persistent (survives session resume) and causes the dispatch loop to re-evaluate lookahead eligibility naturally — once the Wave N dependency's new design is ready, the spec becomes eligible for Lookahead again via step 1.
 
 ### Phase Handlers
 

@@ -120,16 +120,19 @@ When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
    - Key by `{category}|{location}`, count frequency
    - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)
 6. Consensus verdict: no findings above threshold → GO; any C/H findings ≥ threshold → NO-GO; only M/L findings ≥ threshold → CONDITIONAL
-7. Archive: rename `reviews/active-{p}/` → `reviews/B{seq}/pipeline-{p}/`
-8. Proceed to verdict handling with consensus verdict
+7. Proceed to verdict handling with consensus verdict (archive is handled by review.md Step 9)
 
-N=1 (default): use `specs/{feature}/reviews/active/` (no `-{p}` suffix). Archive to `reviews/B{seq}/`.
+N=1 (default): use `specs/{feature}/reviews/active/` (no `-{p}` suffix). Archive handled by review.md Step 9.
 
 ### Verdict Persistence Format
 
 a. Read existing file (or create with `# Verdicts: {feature}` header)
 b. Determine B{seq} (increment max existing, or start at 1)
-c. Append batch entry: `## [B{seq}] {review-type} | {timestamp} | v{version} | runs:{N} | threshold:{K}/{N}`
+c. Append batch entry header:
+   - Per-feature/standalone: `## [B{seq}] {review-type} | {timestamp} | v{version} | runs:{N} | threshold:{K}/{N}`
+   - Wave QG cross-check: `## [W{wave}-B{seq}] ...` (see run.md Step 7a)
+   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] ...` (see run.md Step 7b)
+   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 8)
 d. Append Raw section (Auditor CPF verdicts verbatim)
 e. Append Consensus section (findings with freq ≥ threshold) and Noise section
 f. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)

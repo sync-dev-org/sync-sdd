@@ -75,14 +75,47 @@ Detect project ecosystem by checking for configuration files. Use the **first ma
 
 ## Step 3: Documentation Update
 
-Update documentation files that reference the version:
+### Step 3.1: Version References
 
 1. **README.md** — search for old version references and update to new version
 2. **CHANGELOG.md** — if exists, add release entry (or remind user to update)
-3. **SDD Framework repo only**: verify command/agent counts in `framework/claude/CLAUDE.md`:
-   - Count `framework/claude/skills/sdd-*/SKILL.md` files → verify `### Commands (N)` matches
-   - Count `framework/claude/agents/sdd-*.md` files → verify agent count in README.md matches
-   - If counts changed, update the numbers and tables
+
+### Step 3.2: Content Review
+
+#### 3.2a: Change-Based Content Review (all ecosystems)
+
+Analyze changes since the last release to determine if README content needs updating:
+
+1. Get the previous release tag (`git describe --tags --abbrev=0 HEAD~1` or equivalent)
+2. Analyze changes: `git log --stat {last_tag}..HEAD` — identify what was changed
+3. Read README.md and evaluate each content section against the changes (focus on README — CHANGELOG is handled in Step 3.1):
+   - Do the changes introduce new features, capabilities, or commands not mentioned in README?
+   - Do the changes remove or rename features still described in README?
+   - Do the changes modify numeric values (counts, limits, thresholds) that README references?
+   - Do the changes alter architecture, workflow, or diagrams described in README?
+4. Present findings to the user:
+   - List sections that need updating, with the specific reason and proposed change
+   - List sections confirmed as current (brief)
+5. Apply updates after user approval
+
+#### 3.2b: Source-of-Truth Sync (SDD Framework repo only)
+
+Cross-reference `framework/claude/CLAUDE.md` (source of truth) against `README.md` for content consistency:
+
+1. **Role descriptions**: CLAUDE.md Role Architecture table → README Architecture section
+2. **Inspector capabilities**: CLAUDE.md T3 Inspector row (perspective counts) → README Key capabilities
+3. **Command names & descriptions**: CLAUDE.md Commands table → README Commands table
+4. **Phase names**: CLAUDE.md Phase-Driven Workflow → README Workflow section
+5. **Auto-fix counter values**: CLAUDE.md Auto-Fix Counter Limits → README Workflow section
+
+If any content diverges, update README to match CLAUDE.md.
+
+### Step 3.3: Count Verification (SDD Framework repo only)
+
+Verify command/agent counts in `framework/claude/CLAUDE.md`:
+- Count `framework/claude/skills/sdd-*/SKILL.md` files → verify `### Commands (N)` matches
+- Count `framework/claude/agents/sdd-*.md` files → verify agent count in README.md matches
+- If counts changed, update the numbers and tables
 
 ## Step 4: Metadata Update
 

@@ -174,7 +174,7 @@ ANALYST_COMPLETE
 New specs: {count}
 Waves: {count}
 Steering: {created|updated} ({file_list})
-Capabilities found: {count}
+Requirements identified: {count}
 Files to delete: {count}
 WRITTEN:{report_path}
 ```

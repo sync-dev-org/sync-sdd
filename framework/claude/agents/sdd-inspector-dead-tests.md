@@ -46,7 +46,7 @@ Write findings to the review output path specified in your spawn context (e.g., 
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check
+SCOPE:dead-code
 ISSUES:
 {sev}|orphaned-test|{location}|{description}
 NOTES:

@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.6.1
+curl -LsSf <url>/install.sh | sh -s -- --version v1.7.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -145,6 +145,7 @@ steering → design → review → implement → review
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |

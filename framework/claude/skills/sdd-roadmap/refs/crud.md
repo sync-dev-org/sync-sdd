@@ -76,6 +76,6 @@ For each difference:
 
 ## Delete Mode
 
-1. Require explicit "RESET" confirmation
-2. Delete roadmap.md, all spec directories, and project-level reviews directory (`{{SDD_DIR}}/project/reviews/`)
+1. Require explicit "RESET" confirmation. If not confirmed: abort, no changes.
+2. Delete roadmap.md, all spec directories (including `specs/.cross-cutting/`), and project-level reviews directory (`{{SDD_DIR}}/project/reviews/`)
 3. Optionally reinitialize via Create mode

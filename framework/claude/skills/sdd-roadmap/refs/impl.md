@@ -23,7 +23,7 @@ Read `tasks.yaml` status and `spec.yaml.orchestration.last_phase_action`:
 - **COMPLETED WITHOUT TASK SPEC**: `phase` == `implementation-complete` AND no task-numbers → Ask user: "A) Specify task numbers to re-run, B) Re-design first (`/sdd-roadmap design {feature}`), C) Abort"
 
 **TaskGenerator dispatch** (REGENERATE mode):
-Spawn TaskGenerator via `Task(subagent_type="sdd-taskgenerator", run_in_background=true)` with prompt:
+Spawn TaskGenerator via `Agent(subagent_type="sdd-taskgenerator", run_in_background=true)` with prompt:
 - Feature: {feature}
 - Design: `{{SDD_DIR}}/project/specs/{feature}/design.md`
 - Research: `{{SDD_DIR}}/project/specs/{feature}/research.md` (if exists)
@@ -37,7 +37,7 @@ Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 Read `tasks.yaml` execution plan section only → determine Builder grouping (group IDs, file scope per group).
 Do NOT read the full tasks section — Builder reads its own tasks from tasks.yaml.
 
-Spawn Builder(s) via `Task(subagent_type="sdd-builder", run_in_background=true)` with prompt for each work package:
+Spawn Builder(s) via `Agent(subagent_type="sdd-builder", run_in_background=true)` with prompt for each work package:
 - Feature: {feature}
 - Group ID: {group identifier from execution plan}
 - Tasks YAML: `{{SDD_DIR}}/project/specs/{feature}/tasks.yaml`

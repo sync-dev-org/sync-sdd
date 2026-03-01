@@ -74,13 +74,13 @@ If server fails to start: dispatch web inspectors anyway (they will report the e
 2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode: Router determines B{seq} once and passes it to all N pipelines (this step uses the Router-provided value instead of computing its own).
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
-4. Spawn all Inspectors via `Task(subagent_type=..., run_in_background=true)`. Each context includes:
+4. Spawn all Inspectors via `Agent(subagent_type=..., run_in_background=true)`. Each context includes:
    - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
    - **Web inspectors**: also include server URL
-5. Wait for all Inspector Tasks to complete (poll via `TaskOutput`). Handle failed Inspectors: retry, skip, or proceed with available results.
+5. Wait for all Inspector agents to complete (poll via `TaskOutput`). Handle failed Inspectors: retry, skip, or proceed with available results.
 5a. **Web projects (impl review only)**: Stop dev server per Web Inspector Server Protocol above.
-6. Spawn Auditor via `Task(subagent_type=..., run_in_background=true)`. Context includes:
+6. Spawn Auditor via `Agent(subagent_type=..., run_in_background=true)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
    - Verdict output path: `{scope-dir}/active/verdict.cpf`
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`

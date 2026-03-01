@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
-> **Architecture**: SubAgent mode via `Task` tool with `subagent_type` parameter.
+> **Architecture**: SubAgent mode via `Agent` tool with `subagent_type` parameter.
 > Lead dispatches work to SubAgents defined in `.claude/agents/`. SubAgents auto-execute and return results.
 > SubAgent definitions use YAML frontmatter for model, tools, and description.
 
@@ -29,7 +29,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 
 ### Chain of Command
 
-Lead dispatches T2/T3 SubAgents using `Task` tool with `subagent_type` parameter (e.g., `Task(subagent_type="sdd-architect", prompt="...")`). SubAgents are defined in `.claude/agents/` with YAML frontmatter specifying model, tools, and description.
+Lead dispatches T2/T3 SubAgents using `Agent` tool with `subagent_type` parameter (e.g., `Agent(subagent_type="sdd-architect", prompt="...")`). SubAgents are defined in `.claude/agents/` with YAML frontmatter specifying model, tools, and description.
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 
@@ -81,7 +81,7 @@ Before dispatching any SubAgent, Lead MUST verify:
 
 ### SubAgent Lifecycle
 
-Lead dispatches SubAgents via `Task` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. Lead uses `TaskOutput` to collect results when needed.
+Lead dispatches SubAgents via `Agent` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. Lead uses `TaskOutput` to collect results when needed.
 
 **Builder parallel coordination**: As each Builder completes, immediately update tasks.yaml (mark `done`), collect files, store knowledge tags. Final spec.yaml update only after ALL Builders complete.
 
@@ -273,7 +273,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
    - Absent → first session: skip to step 6
    - Present → resume session: proceed
 2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
-2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked)
+2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked). Also check `{{SDD_DIR}}/project/reviews/*/verdicts.md` for project-level review state (dead-code, cross-check, wave).
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically

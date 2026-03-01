@@ -37,7 +37,7 @@ Detailed execution reference. Lead handles all phases directly.
 Dispatch `sdd-conventions-scanner` to scan the codebase for existing patterns.
 
 1. Create output directory: `mkdir -p {{SDD_DIR}}/project/reboot/`
-2. Dispatch via `Task(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
+2. Dispatch via `Agent(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
    - Mode: Generate
    - Steering: `{{SDD_DIR}}/project/steering/` (if exists)
    - Buffer: `{{SDD_DIR}}/handover/buffer.md` (if exists)
@@ -50,7 +50,7 @@ Dispatch `sdd-conventions-scanner` to scan the codebase for existing patterns.
 
 Dispatch `sdd-analyst` for holistic codebase analysis and redesign proposal.
 
-1. Dispatch via `Task(subagent_type="sdd-analyst", run_in_background=true)` with prompt:
+1. Dispatch via `Agent(subagent_type="sdd-analyst", run_in_background=true)` with prompt:
    - Steering path: `{{SDD_DIR}}/project/steering/` (note if absent)
    - Conventions brief path: `{{SDD_DIR}}/project/reboot/conventions-brief.md`
    - User instructions: from `$ARGUMENTS` (excluding name and `-y` flag), or empty
@@ -58,7 +58,7 @@ Dispatch `sdd-analyst` for holistic codebase analysis and redesign proposal.
    - Template path: `{{SDD_DIR}}/settings/templates/reboot/analysis-report.md`
    - Input state: `{full-reboot|code-only|partial}`
    - **DO NOT pass specs path** — Analyst must not read existing specs
-2. Wait for `ANALYST_COMPLETE` via `TaskOutput`
+2. Wait for `ANALYST_COMPLETE` via `TaskOutput`. Extract structured fields (New specs, Waves, Steering, Requirements identified, Files to delete, report path) for progress tracking. Files to delete count is informational at this phase — actual deletion processing occurs in Phase 9-10.
 3. Verify: `analysis-report.md` exists at output path. If missing, retry once with same prompt. On second failure: `git checkout main && git branch -D reboot/{branch_name}`, report error to user, stop.
 
 ## Phase 5: User Review Checkpoint
@@ -154,7 +154,7 @@ For each wave (sequential):
     2. LOOKAHEAD: Check next-wave Design eligibility
        (same as run.md: if all deps reached design-generated, dispatch Architect)
 
-    3. WAIT: Poll active tasks via TaskOutput
+    3. WAIT: Poll active agents via TaskOutput
 
     4. PROCESS: Handle completion
        - Inspector/Auditor: advance per Review Decomposition

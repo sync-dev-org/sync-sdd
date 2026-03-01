@@ -54,9 +54,9 @@ If not found or older than 7 days: `$CACHED_OK` = empty.
 
 Create `$SCOPE_DIR/active/` directory. Launch 4 agents in parallel.
 
-Each agent: `Task(subagent_type="general-purpose", model="sonnet", run_in_background=true)`
+Each agent: `Agent(subagent_type="general-purpose", model="sonnet", run_in_background=true)`
 
-Output instruction for all agents: "Write your full report to `{$SCOPE_DIR}/active/agent-{N}-{name}.md` AND return it as your Task result."
+Output instruction for all agents: "Write your full report to `{$SCOPE_DIR}/active/agent-{N}-{name}.md` AND return it as your Agent result."
 
 Required output format:
 ```
@@ -165,7 +165,7 @@ Report in Japanese.
 You are a Claude Code platform compliance reviewer for the SDD framework.
 
 ## Task
-Verify that SDD framework agents, skills, and Task tool usage comply with Claude Code platform specifications.
+Verify that SDD framework agents, skills, and Agent tool usage comply with Claude Code platform specifications.
 
 ## Scope (read these files)
 - framework/claude/agents/sdd-*.md (all agent definitions)
@@ -176,15 +176,15 @@ Verify that SDD framework agents, skills, and Task tool usage comply with Claude
 ## Review Criteria
 1. Agent YAML frontmatter: valid model (sonnet/opus/haiku), valid tools list, description present
 2. Skills frontmatter: description, allowed-tools, argument-hint format
-3. Task tool dispatch patterns: subagent_type matches existing agent definitions
-4. settings.json permissions: Skill() and Task() entries match actual files
+3. Agent tool dispatch patterns: subagent_type matches existing agent definitions
+4. settings.json permissions: Skill() and Agent() entries match actual files
 5. Tool availability: agents do not reference tools they cannot access
 
 ## Official Documentation
 Use WebSearch to verify Claude Code official specs for:
 - Agent definition format (.claude/agents/*.md YAML frontmatter)
 - Skills format (.claude/skills/*/SKILL.md)
-- Task tool parameters (subagent_type, model, run_in_background)
+- Agent tool parameters (subagent_type, model, run_in_background)
 - settings.json permission format
 
 ## Cached Verifications (skip WebSearch for these — already verified recently)
