@@ -1,7 +1,7 @@
 ---
 description: Create a versioned release (branch, tag, push)
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
-argument-hint: <patch|minor|major|vX.Y.Z> <summary>
+argument-hint: [patch|minor|major|vX.Y.Z] [summary]
 ---
 
 # SDD Release
@@ -17,10 +17,28 @@ Trunk-based development: commit on main first, then create a release branch as a
 ## Input
 
 Arguments: `$ARGUMENTS`
-- **$0**: version — bump type (`patch`, `minor`, `major`) or explicit semver (e.g., `v1.2.3`). Required.
-- **$1+**: summary — one-line release description. Required.
+- **$0**: version — bump type (`patch`, `minor`, `major`) or explicit semver (e.g., `v1.2.3`). Optional.
+- **$1+**: summary — one-line release description. Optional.
 
-If arguments are missing, ask the user.
+If both are missing, run **Auto-Detection** (see below). If only summary is missing, ask the user.
+
+### Auto-Detection (no arguments or version unspecified)
+
+When version bump type is not provided:
+
+1. Determine current version (ecosystem-specific, see Step 2)
+2. Analyze changes since the last release tag:
+   - `git log --oneline {last_tag}..HEAD` — list of commits
+   - `git diff --stat {last_tag}..HEAD` — scope of changes
+3. Classify the bump type based on change analysis:
+   - **major**: Breaking changes — removed/renamed public APIs, incompatible interface changes, major architectural restructuring
+   - **minor**: New features — new commands, new capabilities, new config options, new library/module additions, significant behavior enhancements
+   - **patch**: Bug fixes, documentation updates, refactoring without behavior change, dependency updates, minor improvements
+4. Generate a one-line summary from the commit history
+5. Present the recommendation to the user for confirmation:
+   - Proposed version: `vX.Y.Z` (bump type + reasoning)
+   - Proposed summary
+   - User can accept, change bump type, or change summary
 
 ## Step 1: Pre-Flight Checks
 
@@ -263,7 +281,7 @@ If any verification check produced a warning:
 - **Dirty working tree**: "Uncommitted changes detected. Commit or stash before releasing."
 - **Version not incrementing**: "New version ({new}) must be greater than current ({current})"
 - **No ecosystem detected**: Falls through to "Other" — asks user for version source
-- **Missing arguments**: Ask user for version bump type and summary
+- **Missing arguments**: Run Auto-Detection to suggest version bump type and summary
 - **Git tag mismatch**: "Warning: git tag mismatch — expected v{version}, got {actual}" — manual verification recommended; release is not rolled back
 - **hatch-vcs runtime mismatch**: "Warning: runtime version mismatch — expected {version}, got {actual}" — manually reinstall the package to refresh metadata
 - **uv.lock absent (hatch-vcs)**: "Warning: uv.lock not found — skipping runtime verification" — git tag check only; no runtime check performed

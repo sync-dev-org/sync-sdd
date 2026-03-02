@@ -143,7 +143,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 
 ## Workflow
 
-### Commands (6)
+### Commands (7)
 
 | Command | Description |
 |---------|-------------|
@@ -153,6 +153,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
+| `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
 
 ### Phase-Driven Workflow
 - Phases: `initialized` → `design-generated` → `implementation-complete` (also: `blocked`)

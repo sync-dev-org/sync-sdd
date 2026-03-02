@@ -46,11 +46,21 @@ Execute full steering creation:
    - Architecture approach
    - Development standards (pre-filled from profile)
 5. Generate steering files from templates in `{{SDD_DIR}}/settings/templates/steering/`
-6. **Apply profile suggestions**: If a profile was selected, inform user of recommended Bash permissions for `settings.json` (from profile's Suggested Permissions section)
-7. **Initialize User Intent** in `product.md`:
+6. **Pitfalls transfer**: If the selected profile has a `## Known Pitfalls` section, scan the project's dependencies (`pyproject.toml`, `package.json`, or equivalent) and transfer only the pitfall entries whose library/topic matches the project's actual dependencies into `tech.md ## Pitfalls`. Omit pitfall groups for libraries/topics not used by the project.
+7. **Apply profile suggestions**: If a profile was selected, inform user of recommended Bash permissions for `settings.json` (from profile's Suggested Permissions section)
+8. **Initialize User Intent** in `product.md`:
    - Record user's Vision from dialogue
    - Set initial Success Criteria and Anti-Goals
-8. Present summary (include which profile was applied, if any)
+9. Present summary (include which profile was applied, if any)
+10. **Publish pipeline offer** (Python profile only):
+    If the selected profile is `python`, ask the user if they plan to publish this package to PyPI. If yes, run the following pre-flight checks before invoking `/sdd-publish-setup`:
+
+    a. **Git remote**: `git remote get-url origin` — if no remote, inform user and skip (publish setup requires a GitHub remote)
+    b. **Existing CI/CD**: Check if `.github/workflows/publish.yml` (or any `*.yml` with `pypi` or `publish` in the filename/content) already exists. If found, inform user and skip ("Publish workflow already exists")
+    c. **PyPI name availability**: Read `[project] name` from `pyproject.toml`. Run `curl -s -o /dev/null -w '%{http_code}' https://pypi.org/pypi/{name}/json` — if HTTP 200, the name is already taken (warn user: "Package name '{name}' already exists on PyPI. You may need to choose a different name or verify you own it"). If HTTP 404, the name is available (good). If no `pyproject.toml` or no name field, skip this check
+    d. If all checks pass (or user acknowledges warnings), invoke `/sdd-publish-setup` via Skill tool
+
+    If the user declines PyPI publish, skip entirely.
 
 ### If Steering Exists → Update/Reset Mode
 

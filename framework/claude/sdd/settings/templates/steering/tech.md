@@ -43,6 +43,10 @@
 # E2E: [command or empty if no automated E2E]
 ```
 
+## Pitfalls
+
+[Transferred from language profile — only items relevant to this project's dependencies]
+
 ## Key Technical Decisions
 
 [Important architectural choices and rationale]
