@@ -83,12 +83,12 @@ install.sh
 
 ### Prompt File Construction
 
-プロンプトを **shared + per-agent** に分離し、**5 ファイルを並列 Write** する。
+**shared + per-agent テンプレート方式**。per-agent プロンプトは事前テンプレートから生成し、Lead のトークン生成コストを削減する。
 
 **shared prompt** (`$SCOPE_DIR/active/shared-prompt.txt`):
-全 Agent 共通の内容を 1 ファイルにまとめる:
+Lead が Write で生成する唯一のファイル。全 Agent 共通の内容:
 - `$FILE_LIST` (Target Files)
-- CPF format specification (フォーマット説明のみ、Agent 固有の出力パスは per-agent 側)
+- CPF format specification
 - Deny Patterns
 
 ```
@@ -110,30 +110,26 @@ Report findings in Japanese.
 {$DENY_PATTERNS を改行区切りで列挙}
 ```
 
-**per-agent prompt** (`$SCOPE_DIR/active/agent-{N}-prompt.txt`):
-Agent 固有のタスク説明 + 出力指示のみ:
-- Review criteria (Agent 1-4 のセクションに記載)
-- CPF output path + completion signal
+**per-agent prompts** (`$SCOPE_DIR/active/agent-{N}-{name}.md`):
+テンプレートからコピー + `sed` でプレースホルダを置換して生成する。
 
 ```
-## Output Instructions
-1. Write CPF to: ${SCOPE_DIR}/active/agent-{N}-{name}.cpf
-   SCOPE:agent-{N}-{name}
-   Example:
-     SCOPE:agent-{N}-{name}
-     ISSUES:
-     M|category|file.md:42|description
-
-2. After writing, print to stdout:
-   EXT_REVIEW_COMPLETE
-   AGENT:{N}
-   ISSUES: <number of issues found>
-   WRITTEN:${SCOPE_DIR}/active/agent-{N}-{name}.cpf
+$TPL = {{SDD_DIR}}/settings/templates/review-self-ext
 ```
 
-**書き出し**: shared-prompt.txt (1) + agent-{1..4}-prompt.txt (4) = **5 ファイルを 1 メッセージで並列 Write**。
+1. 全テンプレートを active/ にコピー:
+   `cp $TPL/agent-*.md $SCOPE_DIR/active/`
 
-**エンジン起動時**: `cat shared-prompt.txt agent-{N}-prompt.txt | {engine_cmd}` で結合して stdin に渡す。
+2. 全ファイルの `${SCOPE_DIR}` を実パスに一括置換:
+   `sed -i '' 's|${SCOPE_DIR}|{実際の $SCOPE_DIR}|g' $SCOPE_DIR/active/agent-*.md`
+
+3. Agent 2 (agent-2-changes.md) の `${FOCUS_TARGETS}` を置換:
+   `sed -i '' 's|${FOCUS_TARGETS}|{$FOCUS_TARGETS の内容}|g' $SCOPE_DIR/active/agent-2-changes.md`
+
+4. Agent 4 (agent-4-compliance.md) の `${CACHED_OK}` を置換:
+   `sed -i '' 's|${CACHED_OK}|{$CACHED_OK の内容}|g' $SCOPE_DIR/active/agent-4-compliance.md`
+
+**エンジン起動時**: `cat shared-prompt.txt agent-{N}-{name}.md | $ENGINE_CMD` で結合して stdin に渡す。
 
 ## Step 3: Build Compliance Cache
 
@@ -216,141 +212,16 @@ tmux send-keys -t {slot_pane_id} 'cat {shared} {agent-N} | {$ENGINE_CMD}; tmux w
 **Fallback mode** (`$TMUX` 未設定):
 4 つの `Bash(run_in_background=true)` で並行実行。CPF はファイル書き出しで取得。
 
----
+### Agent Prompts (Templates)
 
-### Agent 1: Flow Integrity
+Agent 1-4 のプロンプト内容はテンプレートファイルに定義。変更はテンプレートを編集すること:
 
-```
-You are an SDD framework flow integrity reviewer.
-
-## Task
-Verify that sdd-roadmap Router → refs dispatch flow works correctly across all modes.
-Read ALL files listed in the shared prompt.
-
-## Review Criteria
-1. Router dispatch completeness: all subcommands route to correct refs
-2. Phase gate consistency: phases required by each ref match CLAUDE.md definitions
-3. Auto-fix loop: NO-GO/SPEC-UPDATE-NEEDED handling consistent between refs and CLAUDE.md
-4. Wave quality gate: wave-level quality gate flow is complete
-5. Consensus mode: no contradictions in multi-pipeline parallel execution
-6. Verdict persistence: format is consistent across all review types
-7. Edge cases: empty roadmap, 1-spec, blocked spec, retry limit exhaustion
-8. Read clarity: when Router reads refs is explicitly specified
-9. Revise modes: Single-Spec and Cross-Cutting modes in refs/revise.md route correctly from SKILL.md Detect Mode, with proper escalation paths between modes
-```
-
----
-
-### Agent 2: Change-Focused Review
-
-```
-You are an SDD framework change reviewer. Your job is to verify that recent changes have not introduced regressions.
-
-## Task
-Run git commands to understand recent changes, then verify integrity.
-
-## Steps
-1. Run: git log --oneline -10 -- framework/ install.sh
-2. Run: git diff HEAD -- framework/ install.sh (uncommitted)
-3. Run: git diff HEAD~5..HEAD -- framework/ install.sh (recent committed changes)
-4. Read changed files and their direct dependents from the target file list in the shared prompt
-
-## Review Criteria
-- Dangling references: "see X" but X does not contain the referenced content
-- Split losses: content removed from one file but not added to the new location
-- Protocol completeness: changed protocols still have complete processing rules
-- Template integrity: changed templates still match their references
-
-## Focus Targets (from Lead)
-${FOCUS_TARGETS}
-
-Prioritize the focus targets. Only read files relevant to the changes — do not read unchanged, unrelated files.
-```
-
----
-
-### Agent 3: Consistency & Dead Ends
-
-```
-You are an SDD framework consistency reviewer.
-
-## Task
-Detect contradictions, terminology inconsistencies, unreachable paths, and undefined references across framework definition files.
-Read ALL files listed in the shared prompt.
-
-## Review Criteria
-1. Value consistency: phase names, SubAgent names, verdict values, severity codes unified across files
-2. Path consistency: file paths, directory names, template variable expansions match across all files
-3. Protocol consistency: same protocol is not described differently in multiple files
-4. Numeric consistency: retry limits, agent counts, pipeline limits do not contradict
-5. Unreachable paths (dead ends): missing phase transitions or error handling gaps
-6. Circular references: no cycles in file reference relationships
-7. Undefined references: no references to non-existent files, agent names, or phase names
-
-Note: general-purpose is referenced in dispatch patterns but has no corresponding file in framework/claude/agents/ — this is intentional. Do not flag it as an undefined reference.
-
-Include a cross-reference matrix.
-```
-
----
-
-### Agent 4: Platform Compliance
-
-```
-You are a Claude Code platform compliance reviewer for the SDD framework.
-
-## Task
-Verify that SDD framework agents, skills, and Agent tool usage comply with Claude Code platform specifications.
-
-## Scope (read these files)
-- framework/claude/agents/sdd-*.md (all agent definitions)
-- framework/claude/skills/sdd-*/SKILL.md (all skill definitions)
-- framework/claude/settings.json
-- framework/claude/CLAUDE.md (SubAgent dispatch sections only)
-
-## Review Criteria
-1. Agent YAML frontmatter: valid model (sonnet/opus/haiku), valid tools list, description present
-2. Skills frontmatter: description, allowed-tools, argument-hint format
-3. Agent tool dispatch patterns: subagent_type matches existing agent definitions (note: general-purpose is a Claude Code built-in — no Agent() entry or file needed)
-4. settings.json permissions: Skill() and Agent() entries match actual files (built-in agents like general-purpose are excluded from this check)
-5. Tool availability: agents do not reference tools they cannot access
-
-## Official Documentation
-Use web search to verify Claude Code official specs for:
-- Agent definition format (.claude/agents/*.md YAML frontmatter)
-- Skills format (.claude/skills/*/SKILL.md)
-- Agent tool parameters (subagent_type, model, run_in_background)
-- settings.json permission format
-
-## Compliance Reporting Rules
-Use this tri-state system for each compliance item:
-- **OK**: verified present in official docs. Cite the source URL.
-- **NG**: verified absent AND explicitly contradicted by official docs. You MUST cite the specific documentation URL that contradicts it.
-- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as: `UNCERTAIN|category|location|description`. Lead will make final determination.
-
-CRITICAL: "Not found in web search" ≠ "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
-
-## Cached Verifications (skip web search for these — already verified recently)
-${CACHED_OK}
-
-For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
-For non-cached items: perform full web search verification.
-
-Include a compliance status table with columns: Item | Status (OK/NG/UNCERTAIN) | Source URL.
-
-## CPF Output Format
-Your CPF MUST include both ISSUES and COMPLIANT sections:
-- ISSUES: findings (same format as other agents)
-- COMPLIANT: verified OK items for caching. Format: `item|OK|source-url`
-
-Example:
-  SCOPE:agent-4-compliance
-  COMPLIANT:
-  agent-frontmatter-model|OK|https://docs.example.com/agents
-  settings-permission-format|OK|https://docs.example.com/settings
-  ISSUES:
-  M|category|file.md:42|description
-```
+| Agent | Template | Placeholders |
+|-------|----------|-------------|
+| 1 (Flow Integrity) | `$TPL/agent-1-flow.md` | `${SCOPE_DIR}` |
+| 2 (Change-Focused) | `$TPL/agent-2-changes.md` | `${SCOPE_DIR}`, `${FOCUS_TARGETS}` |
+| 3 (Consistency) | `$TPL/agent-3-consistency.md` | `${SCOPE_DIR}` |
+| 4 (Compliance) | `$TPL/agent-4-compliance.md` | `${SCOPE_DIR}`, `${CACHED_OK}` |
 
 ---
 
