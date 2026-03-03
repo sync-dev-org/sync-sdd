@@ -55,10 +55,10 @@ Applies when `$TMUX` environment variable is set (running inside a tmux session)
 1. **Server Start** (before Inspector dispatch):
    - Read dev server command from `steering/tech.md` Common Commands (the `Dev:` entry)
    - If no dev server command found: skip server start, dispatch web inspectors without server URL (they will report "Server URL not accessible" and terminate gracefully)
-   - Check for existing pane: `tmux list-panes -a -F '#{pane_title}'` — if `sdd-devserver-{feature}` exists, reuse it (server already running from retry)
+   - Check for existing pane: run `tmux list-panes -a -F '#{pane_title}'` via Bash, use Grep on output for `sdd-devserver-{feature}` — if match found, reuse it (server already running from retry)
    - Spec Stagger port handling: if other `sdd-devserver-*` panes exist, apply port offset (`--port {base+N}` or framework-equivalent flag). If the dev framework does not support port override, skip offsetting (parallel reviews will serialize at this step)
    - Create pane and capture its ID: `tmux split-window -d -l 30% -P -F '#{pane_id}' 'printf "\\033]2;sdd-devserver-{feature}\\033\\\\" && {dev_command} [--port {port}]'` — the `-P -F '#{pane_id}'` flag prints the new pane's unique ID (e.g., `%3`). Store this ID for later use. **Never use index-based targeting** (`-t 1`) — it may kill the wrong pane (including Claude Code itself).
-   - Wait for ready: poll `tmux capture-pane -t '{pane_id}' -p` for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
+   - Wait for ready: run `tmux capture-pane -t '{pane_id}' -p` via Bash, use Grep on output for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
    - Record server URL (e.g., `http://localhost:{port}`)
 
 2. **Inspector Dispatch**: Include server URL in spawn context for `sdd-inspector-web-e2e` and `sdd-inspector-web-visual`. Both inspectors use the already-running server — they do NOT start or stop it.

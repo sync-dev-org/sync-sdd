@@ -93,6 +93,7 @@ After all assigned tasks are executed:
 - This prevents conflicts with parallel Builders
 
 ## Critical Constraints
+- **Built-in tool preference**: Use Read/Write/Edit/Glob/Grep for file operations — do NOT use Bash equivalents (cat, echo, sed, awk, head, tail, find, grep). Bash is for test execution, project commands, and external CLI tools only.
 - **TDD Mandatory**: Tests MUST be written before implementation code
 - **Task Scope**: Implement only what the specific task requires
 - **Test Coverage**: All new code must have tests

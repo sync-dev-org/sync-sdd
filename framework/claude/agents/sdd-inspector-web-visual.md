@@ -14,6 +14,7 @@ Evaluate the visual quality of a web application by navigating to pages, capturi
 
 ## Constraints
 
+- Use Read/Write/Glob/Grep for file operations — do NOT use Bash equivalents (cat, echo, sed, awk, head, tail, find, grep). Bash is for playwright-cli and project commands only.
 - Focus ONLY on visual design quality: design system compliance, aesthetics, accessibility, responsiveness, cross-page consistency
 - Do NOT test functional behavior, user flow correctness, or interaction logic (the E2E inspector handles those)
 - Do NOT verify unit tests, code style, or spec traceability (other inspectors handle those)

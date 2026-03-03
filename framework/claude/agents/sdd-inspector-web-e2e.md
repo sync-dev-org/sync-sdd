@@ -14,6 +14,7 @@ Verify that web application user flows work end-to-end in a real browser. Test n
 
 ## Constraints
 
+- Use Read/Write/Glob/Grep for file operations — do NOT use Bash equivalents (cat, echo, sed, awk, head, tail, find, grep). Bash is for playwright-cli and project commands only.
 - Focus ONLY on functional correctness: do flows work? do transitions land on the right pages? are elements visible and interactive?
 - Do NOT evaluate visual design quality, aesthetics, or design system compliance (the Visual inspector handles those)
 - Do NOT verify unit tests, code style, or spec traceability (other inspectors handle those)

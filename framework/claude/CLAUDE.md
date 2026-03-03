@@ -278,7 +278,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5a. If inside tmux (`$TMUX` set): check for orphaned dev server panes — `tmux list-panes -a -F '#{pane_title} #{pane_id}'`, filter lines containing `sdd-devserver-*`, extract pane IDs, kill each with `tmux kill-pane -t {pane_id}`. Prevents port conflicts from previous crashed sessions.
+5a. If inside tmux (`$TMUX` set): check for orphaned dev server panes — run `tmux list-panes -a -F '#{pane_title} #{pane_id}'` via Bash, use Grep to find lines containing `sdd-devserver-`, extract pane IDs from matches, kill each with `tmux kill-pane -t {pane_id}`. Prevents port conflicts from previous crashed sessions.
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
      - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
@@ -309,6 +309,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 
 ## Execution Conventions
 
+- **Built-in tool preference**: Use Read (not cat/head/tail), Write (not echo), Edit (not sed/awk), Glob (not find/ls), Grep (not grep/rg) for file operations. Bash is for system commands, project tool execution (test, build, dev server), and external CLI tools (git, tmux, playwright-cli, npm) only. Do not use Bash to read, write, or search files when a built-in tool is available.
 - **No comment preamble in Bash commands**: The `command` argument to Bash must begin with the executable. Do not prepend `#` comment lines. Use the Bash tool's `description` parameter for human-readable context.
 - **Use steering Common Commands**: When running project tools (install, test, build, e2e, lint, format, dev, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
