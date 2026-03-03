@@ -44,7 +44,7 @@ For each assigned task, follow the TDD cycle:
    - **One test per behavior**: do not test the same behavior at multiple granularity levels. If the same assertion would appear in both a unit test and an integration test, keep only the more valuable one
    - **Classical school (Detroit) approach**: use real collaborators for internal dependencies. Mock ONLY at external boundaries (DB, network, filesystem, third-party API)
      - Thin passthrough/CRUD logic: integration test is sufficient — skip isolated unit test
-     - **Optional dependencies**: install the real package and mock at its external boundary (e.g., HTTP client), not at the module level. Never use `sys.modules` hacks. If the optional package is too heavy for CI, use `pytest.importorskip()` to skip tests
+     - **Optional dependencies**: mock at the external boundary (e.g., HTTP client), not at the module level. All packages are pre-installed by Lead. If an import fails, report BUILDER_BLOCKED (do NOT work around with `sys.modules`). If a package is too heavy for CI, use `pytest.importorskip()` to skip tests
    - Test should fail (code doesn't exist yet)
    - Use descriptive test names: "does X when Y" or "returns X given Y" format
    - **Add traceability marker**: Include `AC: {feature}.S{N}.AC{M}` in test docstring/comment
@@ -100,7 +100,8 @@ After all assigned tasks are executed:
 - **Design Alignment**: Implementation must follow design.md specifications
 - **Convention Alignment**: When a conventions brief is provided, follow its patterns for naming, error handling, schema design, and imports. Steering overrides the brief on conflict.
 - **File Scope**: Stay within your assigned file scope
-- **No dependency management**: Do NOT run dependency installation or modification commands (`uv sync`, `uv add`, `pip install`, `npm install`, `poetry add`, etc.). All dependencies are pre-installed by Lead before Builder dispatch. If a dependency is missing, report as BUILDER_BLOCKED with cause "missing dependency: {name}".
+- **No dependency management**: Do NOT run dependency installation commands or edit dependency manifests (`pyproject.toml`, `package.json`, `Cargo.toml`, etc.). Do NOT run `uv sync`, `uv add`, `pip install`, `npm install`, `poetry add`, etc. All dependencies are pre-installed by Lead before Builder dispatch. If a dependency is missing, report as BUILDER_BLOCKED with cause "missing dependency: {name}".
+- **No sys.modules manipulation**: Do NOT use `sys.modules`, `sys.modules.setdefault`, `sys.modules[...] = ...`, or `unittest.mock.patch.dict(sys.modules, ...)`. This includes test code. If an import fails because a package is not installed, report BUILDER_BLOCKED with cause "missing dependency: {name}". Lead scans all output files for `sys.modules` usage after completion — violations trigger automatic re-dispatch.
 - **No workspace-wide git operations**: Do NOT use `git stash`, `git checkout .`, `git restore .`, `git reset`, or `git clean`. These affect files outside your file scope (spec.yaml, design.md, etc. that Lead manages). If you need to undo your own changes, use file-level `git checkout -- <your-file>` only within your assigned scope.
 
 ## Knowledge Reporting

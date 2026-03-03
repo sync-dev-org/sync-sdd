@@ -55,6 +55,16 @@ When 2+ Architects will be dispatched in parallel (Design Fan-Out), Lead generat
 
 Skip if only 1 Architect will be dispatched (1-spec roadmap or single spec in wave).
 
+### Dependency Sync (Pre-Design)
+
+Before dispatching Architects (Design Fan-Out), ensure project dependencies are in sync:
+
+1. Read `steering/tech.md` and `pyproject.toml` (or package.json, Cargo.toml)
+2. For each spec in this wave: if spec name/description implies new external SDKs, add to dependency manifest (extras + dev group) and install
+3. Run install command from `steering/tech.md` Common Commands (`# Install:` line)
+4. Determine SDK source paths for Architect prompts (e.g., `uv run python -c "import {pkg}; print({pkg}.__file__)"`)
+5. This ensures SDKs are available for Architect to read from site-packages during design (see design-discovery-full.md Step 3)
+
 ### Conventions Brief Update (Post-Design)
 
 After all Architects in a wave complete Design, Lead may update the conventions brief with design-derived conventions (e.g., shared interface patterns, agreed data model styles from design.md files) before Implementation begins. This is a lightweight supplement, not a full regeneration.

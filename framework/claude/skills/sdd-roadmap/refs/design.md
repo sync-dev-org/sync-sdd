@@ -19,6 +19,21 @@ Triggered by: `$ARGUMENTS = "design {feature-or-description}"`
 - If `spec.yaml.phase` is not one of `initialized`, `design-generated`, `implementation-complete`, `blocked`: BLOCK with "Unknown phase '{phase}' in {feature}/spec.yaml. Manual intervention required."
 - Otherwise: no phase restriction
 
+## Step 2.5: Dependency Sync
+
+If spec involves external SDK/libraries (identifiable from spec name, description, user instructions, or existing design.md):
+
+1. Identify package names from context
+2. If not yet in pyproject.toml (or package.json): add to dependency manifest
+   - Python: add to extras group + dev dependency group
+   - Node: add to dependencies/devDependencies
+3. Run install command from `steering/tech.md` Common Commands (`# Install:` line)
+4. Verify importability via Bash (e.g., `uv run python -c "import {pkg}"`)
+5. Determine SDK source paths: `uv run python -c "import {pkg}; print({pkg}.__file__)"`
+6. Include in Architect prompt (Step 3): "Installed SDK source paths: {paths}. Read source for actual API signatures before designing. See design-discovery-full.md Step 3."
+
+If SDK cannot be identified pre-design (abstract spec): skip. Note in Architect prompt: "No pre-installed SDKs for this spec. API signatures from WebSearch should be marked as unverified in research.md."
+
 ## Step 3: Execute
 
 Spawn Architect via `Agent(subagent_type="sdd-architect", run_in_background=true)` with prompt:

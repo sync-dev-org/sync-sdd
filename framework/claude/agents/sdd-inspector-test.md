@@ -131,7 +131,12 @@ You will receive a prompt containing:
    - Flag: "Duplicate coverage" (severity: L) if same behavior tested redundantly without added value
    - Flag: "Impl-coupled test" (severity: M) if test asserts on non-public API or internal structure
 
-   **F. AC Marker Coverage**:
+   **F. Module-Level Mock Integrity**:
+   - Grep test files for `sys.modules` patterns: `sys.modules.setdefault`, `sys.modules[`, `patch.dict(sys.modules`, `patch.dict("sys.modules`
+   - If found: Flag "sys.modules-hack" (severity: C) — "Module-level mocking via sys.modules masks missing dependencies and creates false-positive test results. Tests pass but code may fail at runtime."
+   - If the mocked module is an external SDK listed in design.md: Flag "SDK-mock-bypass" (severity: C) — "External SDK mocked at module level via sys.modules — prevents real API contract verification."
+
+   **G. AC Marker Coverage**:
    - Grep for `AC: {feature}` markers in all test files
    - Cross-reference with design.md's Specifications acceptance criteria
    - For each AC:

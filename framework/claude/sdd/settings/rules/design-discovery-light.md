@@ -58,13 +58,18 @@ Select and document the chosen approach with rationale.
 
 ### 4. Dependency & Technology Check
 
+> If Lead provides SDK source paths, read actual function signatures
+> via Read/Glob before using WebSearch. Source is authoritative for
+> API contracts. Mark source-verified findings in research.md.
+
 **Verify Compatibility**:
 - Version compatibility of new dependencies
-- API contracts haven't changed
+- API contracts haven't changed (verify from installed source if available)
 - No breaking changes in pipeline
 
 **For New Libraries Only**:
-- WebSearch for official documentation
+- If installed: Read source code for signatures, types, behaviors
+- If not installed: WebSearch for official documentation (note as unverified)
 - Basic usage patterns and known compatibility issues
 - Licensing compatibility
 - Record findings in `research.md`

@@ -36,7 +36,7 @@
 
 ### Common Commands
 ```bash
-# Install: [command]
+# Install: [command that installs ALL dependencies including extras/optional for dev]
 # Dev: [command]
 # Build: [command]
 # Test: [command]

@@ -20,31 +20,51 @@ Conduct comprehensive research and analysis to ensure the technical design is ba
 - Document integration points and dependencies
 - Determine approach: extend vs refactor vs wrap
 
-### 3. Technology Research
-**Investigate Best Practices and Solutions**:
+### 3. External Dependencies Source Inspection
+**For Each External SDK/Library** (if Lead provided installed SDK source paths):
+- Read installed SDK source code via Read/Glob to extract ground truth:
+  - Function signatures and parameter types
+  - Class hierarchies and inheritance
+  - Type annotations and return types
+  - Async/sync behavior (coroutine vs generator vs sync)
+- Record verified signatures in `research.md`:
+  `"Verified from installed {package} v{version} source"`
+- If SDK is NOT installed (no source paths provided):
+  note as `"unverifiable — from WebSearch"` and proceed to Step 5
+
+### 4. Design Draft
+**Form Initial Architecture** based on source understanding + existing code:
+- Identify integration patterns and error handling approaches
+- Map data flow between components and external dependencies
+- Draft component boundaries and interfaces
+- This draft will be validated and enriched in Step 5
+
+### 5. Technology Research + Validation (WebSearch/WebFetch)
+**Validate design draft against community knowledge**:
 - **Use WebSearch** to find:
+  - Recommended usage patterns for the external SDKs/libraries
+  - Known pitfalls, common mistakes, and solutions
   - Latest architectural patterns for similar problems
   - Industry best practices for the technology stack
-  - Recent updates or changes in relevant technologies
-  - Common pitfalls and solutions
+  - Recent updates, breaking changes, or migration guides
 
 - **Use WebFetch** to analyze:
   - Official documentation for frameworks/libraries
   - API references and usage examples
-  - Migration guides and breaking changes
   - Performance benchmarks and comparisons
 
-### 4. External Dependencies Investigation
-**For Each External Service/Library**:
-- Search for official documentation and GitHub repositories
-- Verify API signatures and authentication methods
-- Check version compatibility with existing stack
-- Investigate rate limits and usage constraints
-- Find community resources and known issues
-- Document security considerations
-- Note any gaps requiring implementation investigation
+- **Assess design draft**: confirmed / better alternative found / novel approach
+- **Gather non-source information**: rate limits, authentication methods,
+  operational constraints, future breaking changes, licensing
 
-### 5. Architecture Pattern & Boundary Analysis
+### 6. Design Refinement
+**Incorporate web findings into design**:
+- Update design draft with best practices discovered in Step 5
+- Resolve any conflicts between source inspection and web findings
+  (see Source vs WebSearch Priority below)
+- Document decisions and rejected alternatives in `research.md`
+
+### 7. Architecture Pattern & Boundary Analysis
 **Evaluate Architectural Options**:
 - Compare relevant patterns (MVC, Clean, Hexagonal, Event-driven)
 - Assess fit with existing architecture and steering principles
@@ -53,7 +73,7 @@ Conduct comprehensive research and analysis to ensure the technical design is ba
 - Evaluate maintainability and team expertise
 - Document preferred pattern and rejected alternatives in `research.md`
 
-### 6. Risk Assessment
+### 8. Risk Assessment
 **Identify Technical Risks**:
 - Performance bottlenecks and scaling limits
 - Security vulnerabilities and attack vectors
@@ -63,9 +83,15 @@ Conduct comprehensive research and analysis to ensure the technical design is ba
 
 ## Research Guidelines
 
+### Source vs WebSearch Priority
+- **API contracts** (signatures, types, async behavior): installed SDK source is authoritative
+- **Usage patterns** (best practices, recommended approaches): WebSearch is authoritative
+- **Operational constraints** (rate limits, auth, quotas): WebSearch is authoritative
+- If conflict: document both in research.md. Source wins for contracts, web wins for practice.
+
 ### When to Search
 **Always search for**:
-- External API documentation and updates
+- Recommended usage patterns and best practices for external SDKs
 - Security best practices for authentication/authorization
 - Performance optimization techniques for identified bottlenecks
 - Latest versions and migration paths for dependencies

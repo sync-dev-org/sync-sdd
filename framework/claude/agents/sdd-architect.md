@@ -62,6 +62,13 @@ Version consistency check (skip if `version_refs` not present):
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
+   **SDK Source Inspection** (when Lead provides installed SDK source paths in prompt):
+   - Read actual function signatures, class definitions, and type annotations from the installed package via Read/Glob
+   - This is the ground truth for API contracts — prefer over WebSearch
+   - After source inspection, use WebSearch to validate design choices and find best practices (see design-discovery-full.md Steps 5-6)
+   - Record in research.md: `"Verified from installed {package} v{version} source"` for source-derived info, `"From WebSearch (community practice)"` for web-derived info
+   - If no SDK path provided: use WebSearch as before, note as `"unverified"` in research.md
+
 3. **Retain Discovery Findings for Step 3**:
    - External API contracts and constraints
    - Technology decisions with rationale

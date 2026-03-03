@@ -32,15 +32,20 @@ Spawn TaskGenerator via `Agent(subagent_type="sdd-taskgenerator", run_in_backgro
 
 Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 
-## Step 2.5: Environment Setup
+## Step 2.5: Dependency Sync
 
-Before dispatching any Builder, ensure all dependencies are installed in the shared environment:
+Before dispatching any Builder, ensure all dependencies (including those introduced by design.md) are declared and installed:
 
-1. Read `steering/tech.md` Common Commands for install command (`# Install:` line)
-2. Execute the install command (e.g., `uv sync --all-extras`, `npm install`) via Bash
-3. This is a one-time step per impl execution — not per-Builder
+1. Read `design.md` Dependencies / External entries for required packages
+2. For each external dependency not yet in pyproject.toml (or package.json):
+   - Add to appropriate extras group AND dev dependency group
+   - This ensures the install command installs everything
+3. Execute install command from `steering/tech.md` Common Commands (`# Install:` line) via Bash
+4. Import verification: for each external dependency from design.md, verify importability via Bash (e.g., `uv run python -c "import {pkg}"`)
+   - On failure: report "Missing dependency: {pkg}" → BLOCK Builder dispatch
+5. One-time per impl execution — not per-Builder
 
-**Rationale**: All Builders share the same environment (venv, node_modules, etc.). Builders are prohibited from running dependency management commands to prevent parallel installation conflicts.
+**Rationale**: design.md specifies which packages are needed. Lead ensures they are declared in the dependency manifest AND installed before Builder starts. Builders do NOT edit dependency manifests (pyproject.toml, package.json, etc.) and are prohibited from running dependency management commands to prevent parallel installation conflicts.
 
 ## Step 3: Execute
 
@@ -88,6 +93,7 @@ When the execution plan has 2+ Builder groups, the first group acts as a **pilot
   - `PASS` → normal processing
   - `WARN({count})` → note count. Read SelfCheck section from builder-report when dispatching impl review (pass as attention points to Auditor)
   - `FAIL-RETRY-2({count})` → Read SelfCheck section from builder-report for details. Lead judgment: continue (if items are minor) or re-dispatch Builder with fix context
+- **sys.modules violation scan**: Grep all files in Builder's Files section for pattern `sys\.modules`. If found: re-dispatch Builder with instruction: "Remove sys.modules usage in {file}. If import fails because package is not installed, report BUILDER_BLOCKED instead." Max 1 re-dispatch per Builder group for sys.modules violation. If persists: escalate to user.
 - If BUILDER_BLOCKED: classify cause from inline blocker summary (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
 
 When dependent tasks are unblocked: spawn next-wave Builders immediately.
@@ -111,7 +117,10 @@ After all Builders complete and spec.yaml is updated to `implementation-complete
    - On success: proceed to Step 4
    - On failure: dispatch targeted Builder fix (same group that owns the failing file scope, with design ref + E2E failure output as context). Max 3 E2E fix attempts (in-memory counter, not persisted — resets on session resume). On exhaustion: escalate to user
    - After each E2E fix: merge any new files into `implementation.files_created` in spec.yaml
-3. If no E2E command defined: skip (proceed to Step 4)
+3. If no E2E command defined:
+   a. Glob for potential E2E scripts: `scripts/*demo*`, `scripts/*e2e*`, `tests/e2e/**`, `tests/integration/**`, `e2e/**`
+   b. If found: report "E2E Gate: No `# E2E:` in steering/tech.md. Found potential E2E scripts: {list}. Consider adding E2E command to steering." Proceed to Step 4.
+   c. If not found: report "E2E Gate: SKIPPED (no E2E command configured)" Proceed to Step 4.
 
 ## Step 4: Post-Completion
 
