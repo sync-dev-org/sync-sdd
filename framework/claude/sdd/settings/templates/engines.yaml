@@ -11,16 +11,13 @@
 # Command construction logic lives in consumer SKILL.md files.
 engines:
   codex:
-    result_mode: file
     install_check: "npx -y @openai/codex --version"
 
   claude:
-    result_mode: stdout
     install_check: "claude --version"
 
   gemini:
-    result_mode: stdout
-    install_check: "gemini --version"
+    install_check: "npx -y @google/gemini-cli --version"
 
 # --- Safety: MUST NEVER execute ---
 # Injected into every agent prompt as a prohibition list.

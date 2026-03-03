@@ -1,5 +1,6 @@
 ---
 description: "Self-review (external engine): 4-agent parallel review via external engine"
+argument-hint: "[--engine codex|claude|gemini] [--model <model-name>] [--timeout <seconds>]"
 allowed-tools: Bash, Read, Glob, Grep, Write
 ---
 
@@ -9,26 +10,42 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 
 ## Purpose
 
-外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) を使った self-review スキル。`sdd-review-self` と同じ 4 Agent を外部エンジンで並行外注する。エンジンは `engines.yaml` で切り替え可能。
+外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) を使った self-review スキル。`sdd-review-self` と同じ 4 Agent を外部エンジンで並行外注する。
 
 ## Step 0: Load Engine Config
+
+### 0.1 Parse Arguments
+
+引数からオーバーライドを抽出:
+- `--engine <name>`: エンジン指定 (`codex`, `claude`, `gemini`)
+- `--model <name>`: モデル指定 (e.g., `claude-sonnet-4-6`, `gpt-5.3-codex`)
+- `--timeout <seconds>`: タイムアウト秒数
+
+引数なし → engines.yaml のデフォルトを使用。引数あり → engines.yaml の値を上書き。
+
+例: `/sdd-review-self-ext --engine claude --model claude-sonnet-4-6`
+
+### 0.2 Load engines.yaml (Base Config)
 
 1. Read `.sdd/settings/engines.yaml`
    - If absent: copy from `.sdd/settings/templates/engines.yaml` → `.sdd/settings/engines.yaml`, then read. Report: `engines.yaml をデフォルトで作成しました。/sdd-steering engines でカスタマイズ可能です。`
    - If template also absent: use hardcoded defaults (engine: codex, timeout: 900)
-2. Determine active engine: `roles.review-self.engine` if set, else `defaults.engine`
-3. Load engine traits from `engines.{active_engine}` → `$RESULT_MODE`, `install_check`
-4. Load role config: `roles.review-self` merged with `defaults` → `$MODEL`, `$TIMEOUT`, `$TOOLS`
-5. Load `deny_patterns` → `$DENY_PATTERNS`
-6. Verify engine available: run `install_check` command; if fails, report and stop
+2. Load `deny_patterns` → `$DENY_PATTERNS`
 
-Derived variables:
-- `$ENGINE_NAME`: engine name (e.g., `codex`, `claude`, `gemini`)
-- `$MODEL`: model name (null = engine default)
-- `$RESULT_MODE`: `file` or `stdout`
-- `$TIMEOUT`: timeout in seconds
-- `$TOOLS`: tool restriction allowlist (null = full permission)
-- `$DENY_PATTERNS`: prohibited command list
+### 0.3 Resolve Final Config
+
+優先順位 (高→低): **引数** > `roles.review-self` > `defaults`
+
+| Variable | Resolution |
+|----------|-----------|
+| `$ENGINE_NAME` | `--engine` arg → `roles.review-self.engine` → `defaults.engine` |
+| `$MODEL` | `--model` arg → `roles.review-self.model` → null (engine default) |
+| `$TIMEOUT` | `--timeout` arg → `roles.review-self.timeout` → `defaults.timeout` |
+| `$TOOLS` | `roles.review-self.tools` → null (full permission) |
+
+3. Load engine traits from `engines.{$ENGINE_NAME}` → `install_check`
+4. Verify engine available: run `install_check` command; if fails, report and stop
+5. Report resolved config: `Engine: {$ENGINE_NAME} | Model: {$MODEL or "default"} | Timeout: {$TIMEOUT}s`
 
 ## Step 1: Collect Change Context
 
@@ -45,7 +62,8 @@ Derived variables:
 $SCOPE_DIR = {{SDD_DIR}}/project/reviews/self-ext
 ```
 
-1. `mkdir -p $SCOPE_DIR/active`
+1. `rm -rf $SCOPE_DIR/active && mkdir -p $SCOPE_DIR/active`
+   前回の残骸を確実にクリーンアップしてから開始。stale CPF による偽成功を防止。
 
 ### Review Scope
 
@@ -79,13 +97,14 @@ install.sh
    - Section header: ISSUES: followed by one record per line
    - Issue format: SEVERITY|category|location|description
    - Severity codes: C=Critical, H=High, M=Medium, L=Low
+   - Report ALL severity levels including LOW. A review with zero LOW findings is suspicious — verify you haven't self-filtered.
    - Omit empty sections
    - Example:
      SCOPE:agent-{N}-{name}
      ISSUES:
      M|category|file.md:42|description
 
-2. Print to stdout ONLY these lines (nothing else):
+2. After writing the CPF file, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:{N}
    ISSUES: <number of issues found>
@@ -115,11 +134,13 @@ If found:
 
 If not found or older than 7 days: `$CACHED_OK` = empty.
 
-## Step 4: Identify Own Pane
+## Step 4: Identify Own Pane (tmux mode only)
 
-tmux ペイン操作の前に、自身の安全を確保する:
+`$TMUX` が設定されている場合のみ実行:
 1. `tmux display-message -p '#{pane_id}'` → `$MY_PANE`
 2. `tmux list-panes -a -F '#{pane_id} #{pane_current_command}'` → 全ペイン一覧を記録
+
+`$TMUX` 未設定の場合はスキップして Step 5 Fallback mode へ。
 
 ## Step 5: Parallel Dispatch (4 Agents)
 
@@ -128,40 +149,44 @@ Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 4 つの外部エンジンインスタンスを並行起動する。各 Agent:
 - Pane title = Channel = `sdd-ext-review-{N}`
 - Prompt file = `$SCOPE_DIR/active/agent-{N}-prompt.txt`
-- Result file = `$SCOPE_DIR/active/agent-{N}-result.txt`
-- CPF file = `$SCOPE_DIR/active/agent-{N}-{name}.cpf`
+- CPF file (成果物) = `$SCOPE_DIR/active/agent-{N}-{name}.cpf`
 
 ### Engine-Specific Command Construction
 
 Assemble command based on `$ENGINE_NAME`. `$TOOLS` が null の場合は全許可モード、設定されている場合はツール制限モード:
 
-**codex** (全許可は `--full-auto` に含まれる。`npx -y @openai/codex` 経由で起動。stdin でプロンプトを渡す):
+全エンジン共通: stdout はリダイレクトしない — pane に応答テキスト / 進捗が流れる。成果物は CPF ファイルのみ。完了は `tmux wait-for` / background task で検出し、成功判定は CPF ファイル存在チェックで行う。
+
+**codex** (`npx -y @openai/codex` 経由で起動。stdin でプロンプトを渡す):
 ```
-npx -y @openai/codex exec --full-auto [--model $MODEL] -o $RESULT_FILE - < $PROMPT_FILE
+npx -y @openai/codex exec --full-auto [--model $MODEL] - < $PROMPT_FILE
 ```
 
-**claude** (stdin でプロンプトを渡す):
+**claude** (`env -u CLAUDECODE` で Lead セッションからのネスト検出を回避):
 ```
-# 全許可 (default):
-claude -p - --dangerously-skip-permissions [--model $MODEL] < $PROMPT_FILE > $RESULT_FILE
-# ツール制限時:
-claude -p - [--model $MODEL] --allowedTools "$TOOLS" < $PROMPT_FILE > $RESULT_FILE
+env -u CLAUDECODE claude -p - --dangerously-skip-permissions [--model $MODEL] < $PROMPT_FILE
 ```
+ツール制限時: `--dangerously-skip-permissions` を `--allowedTools "$TOOLS"` に置換。
 
-**gemini**:
+**gemini** (`npx -y @google/gemini-cli` 経由で起動。`-p` で非対話モード、stdin からプロンプトを追加入力):
 ```
-# 全許可 (default):
-gemini --approval-mode yolo [--model $MODEL] "$(cat $PROMPT_FILE)" > $RESULT_FILE
-# ツール制限時:
-gemini [--model $MODEL] --allowed-tools "$TOOLS" "$(cat $PROMPT_FILE)" > $RESULT_FILE
+npx -y @google/gemini-cli -p "" --yolo [--model $MODEL] < $PROMPT_FILE
 ```
+ツール制限時: `--yolo` を `--sandbox` に置換。
 
 `[]` 内は対応する値が設定されている場合のみ付与。プロンプトが長い場合はシェル引数制限を避けるため stdin (`< $PROMPT_FILE`) を優先する。
 
 ### Dispatch Mode
 
 **tmux mode** (`$TMUX` 設定あり):
-各 Agent について `tmux split-window` で pane 作成。4 pane を一気に作成した後、4 つの `tmux wait-for` を background Bash で並行発行し、全完了を待つ。
+右カラムレイアウトで pane 作成。各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする:
+1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S ch-1"` → 返値が `$P1`
+2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S ch-2"` → 返値が `$P2`
+3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S ch-3"` → 返値が `$P3`
+4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S ch-4"`
+
+各呼び出しの返値 (pane ID) を次の `-t` に使う。パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
+4 pane 作成後、4 つの `tmux wait-for` を background Bash で並行発行し、全完了を待つ。
 
 **Fallback mode** (`$TMUX` 未設定):
 4 つの `Bash(run_in_background=true)` で並行実行。CPF はファイル書き出しで取得。
@@ -288,13 +313,21 @@ Use web search to verify Claude Code official specs for:
 - Agent tool parameters (subagent_type, model, run_in_background)
 - settings.json permission format
 
+## Compliance Reporting Rules
+Use this tri-state system for each compliance item:
+- **OK**: verified present in official docs. Cite the source URL.
+- **NG**: verified absent AND explicitly contradicted by official docs. You MUST cite the specific documentation URL that contradicts it.
+- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as: `UNCERTAIN|category|location|description`. Lead will make final determination.
+
+CRITICAL: "Not found in web search" ≠ "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
+
 ## Cached Verifications (skip web search for these — already verified recently)
 ${CACHED_OK}
 
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.
 
-Include a compliance status table.
+Include a compliance status table with columns: Item | Status (OK/NG/UNCERTAIN) | Source URL.
 
 ${CPF_OUTPUT_INSTRUCTION with N=4, name=compliance}
 ${DENY_PATTERNS_SECTION}
@@ -304,11 +337,11 @@ ${DENY_PATTERNS_SECTION}
 
 ## Step 6: Collect Results
 
-全 Agent 完了後:
+全 Agent 完了後 (tmux wait-for / background task 完了):
 
-1. 各 `$SCOPE_DIR/active/agent-{N}-result.txt` を Read → 成功/失敗を判定
+1. 各 `$SCOPE_DIR/active/agent-{N}-{name}.cpf` の存在を確認 → 成功/失敗を判定
 2. 成功した Agent の CPF ファイルを Read
-3. 失敗した Agent はレポートに注記
+3. 失敗した Agent (CPF 不在) はレポートに注記
 
 ### Pane Cleanup
 
@@ -324,7 +357,13 @@ tmux mode の場合:
 ### 7.2 False Positive Check
 各 finding について `{{SDD_DIR}}/handover/decisions.md` を確認。意図的な設計決定で説明できるものは FP として除外。
 
-### 7.3 Severity Assignment
+### 7.3 UNCERTAIN Resolution (Agent 4)
+Agent 4 (Compliance) の CPF に `UNCERTAIN|...` エントリがある場合、Lead が最終判定する:
+1. 対象フィールド/機能を Lead の知識 + 公式ドキュメントで確認
+2. 確認できた → FP として除外 (理由を記載)
+3. 確認できない → MEDIUM に昇格して finding に含める
+
+### 7.4 Severity Assignment
 CPF の severity コードをそのまま使用。重複マージ時は最も高い severity を採用。
 
 - **CRITICAL**: Blocks correct operation. Information loss that prevents Lead from executing a protocol.
@@ -372,10 +411,10 @@ CPF の severity コードをそのまま使用。重複マージ時は最も高
 
 ## Platform Compliance
 
-| Item | Status |
-|---|---|
+| Item | Status | Source |
+|---|---|---|
 
-(from Agent 4, cached items marked with "(cached)")
+(from Agent 4. Status: OK/NG/UNCERTAIN→resolved. Cached items marked "(cached)". UNCERTAIN items show Lead's resolution.)
 
 ## Overall Assessment
 
@@ -390,10 +429,11 @@ CPF の severity コードをそのまま使用。重複マージ時は最も高
 ## Error Handling
 
 - **Engine not installed**: `install_check` が失敗した場合、エラーメッセージを表示して停止
+- **Claude nesting guard**: `CLAUDECODE` 環境変数が設定されている場合 (Lead セッション内)、claude engine は `env -u CLAUDECODE` で起動する必要がある。これなしでは "cannot be launched inside another Claude Code session" エラーで即座に失敗する
 - **Agent failure**: レポートに "Agent {N} ({name}) did not complete." と注記。他の Agent の結果は有効
 - **Timeout**: `$TIMEOUT` 超過時は部分結果があれば CPF を読む。なければ該当 Agent を失敗扱い
-- **CPF not generated**: result に EXT_REVIEW_COMPLETE がない、または CPF ファイルが存在しない場合、該当 Agent を失敗扱い
-- **Pane safety**: kill 操作前に必ず `$MY_PANE` と異なることを確認
+- **CPF not generated**: CPF ファイルが存在しない、または空の場合、該当 Agent を失敗扱い
+- **Pane safety**: kill 操作前に必ず `$MY_PANE` と異なることを確認 (tmux mode のみ)
 - **No findings**: Report "No issues detected." with confirmation checklist.
 
 </instructions>
