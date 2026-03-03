@@ -1,5 +1,5 @@
 # Handover Buffer
-**Updated**: {timestamp}
+**Updated**: {ISO-8601}
 
 ## Knowledge Buffer
 - [PATTERN] {description} (source: {spec} {role}, task {N})

@@ -238,7 +238,7 @@ session.md is written in two modes:
 **Exception — `run` pipeline dispatch loop**: Auto-draft only at Wave QG post-gate, user escalation, and pipeline completion. Skip at individual phase completions (Design, Impl, Review per spec). spec.yaml is ground truth for pipeline state; intermediate session.md freshness is unnecessary.
 
 **Manual polish** (`/sdd-handover`):
-1. Archive current session.md to `sessions/{date}.md`
+1. Archive current session.md to `sessions/{YYYY-MM-DD-HHmm}.md`
 2. Enrich via user interaction: Session Goal, Tone/Nuance, Steering Exceptions, Key Decisions refinement, Warnings, Resume Instructions
 3. Write without Mode marker (indicates manual polish)
 
@@ -314,6 +314,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
 - **tmux Integration**: Lead uses tmux for dev server lifecycle management when running inside a tmux session (`$TMUX` set). Dev server runs in a visible split pane (pane title: `sdd-devserver-{feature}`). When `$TMUX` is not set, falls back to `Bash(run_in_background=true)`. See sdd-roadmap `refs/review.md` Web Inspector Server Protocol.
+- **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
 
 ## Git Workflow
 

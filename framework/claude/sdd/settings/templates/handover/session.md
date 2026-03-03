@@ -1,5 +1,5 @@
 # Session Handover
-**Generated**: {YYYY-MM-DD}
+**Generated**: {ISO-8601}
 **Branch**: {branch}
 **Session Goal**: {confirmed with user}
 

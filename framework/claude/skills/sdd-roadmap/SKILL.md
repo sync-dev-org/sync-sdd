@@ -129,7 +129,7 @@ N=1 (default): use `specs/{feature}/reviews/active/` (no `-{p}` suffix). Archive
 a. Read existing file (or create with `# Verdicts: {feature}` header)
 b. Determine B{seq} (increment max existing, or start at 1)
 c. Append batch entry header:
-   - Per-feature/standalone: `## [B{seq}] {review-type} | {timestamp} | v{version} | runs:{N} | threshold:{K}/{N}` (omit `runs:` and `threshold:` when not using `--consensus`)
+   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | runs:{N} | threshold:{K}/{N}` (omit `runs:` and `threshold:` when not using `--consensus`)
    - Wave QG cross-check: `## [W{wave}-B{seq}] ...` (see run.md Step 7a)
    - Wave QG dead-code: `## [W{wave}-DC-B{seq}] ...` (see run.md Step 7b)
    - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 8)

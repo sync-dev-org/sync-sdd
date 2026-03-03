@@ -56,8 +56,8 @@ Do NOT include a `**Mode**:` marker — absence of marker indicates manual polis
 ## Step 4: Write Files
 
 1. If `{{SDD_DIR}}/handover/session.md` exists:
-   - Copy it to `{{SDD_DIR}}/handover/sessions/{YYYY-MM-DD}.md` (archive)
-   - If same-day archive already exists, use `{YYYY-MM-DD}-2.md`, `-3.md`, etc.
+   - Copy it to `{{SDD_DIR}}/handover/sessions/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
+   - If same-timestamp archive already exists, append `-2`, `-3`, etc.
 2. Write new session.md to `{{SDD_DIR}}/handover/session.md`
 3. Append `SESSION_END` to `{{SDD_DIR}}/handover/decisions.md` (append-only, NEVER overwrite):
    ```

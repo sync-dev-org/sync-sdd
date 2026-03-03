@@ -233,7 +233,7 @@ No WebSearch/WebFetch by Lead. Agent 4 handles its own platform verification.
 2. Write consolidated report to `$SCOPE_DIR/active/report.md`
 3. Append batch entry to `$SCOPE_DIR/verdicts.md`:
    ```
-   ## [B{seq}] {date} | v{version} | agents:{completed}/{dispatched}
+   ## [B{seq}] {ISO-8601} | v{version} | agents:{completed}/{dispatched}
    C:{n} H:{n} M:{n} L:{n} | FP:{n} eliminated
    Files: {comma-separated list of files with confirmed findings}
    ```
@@ -243,7 +243,7 @@ No WebSearch/WebFetch by Lead. Agent 4 handles its own platform verification.
 
 ```markdown
 # SDD Framework Self-Review Report
-**Date**: {date} | **Agents**: 4 dispatched, {N} completed
+**Date**: {ISO-8601} | **Agents**: 4 dispatched, {N} completed
 
 ## False Positives Eliminated
 
