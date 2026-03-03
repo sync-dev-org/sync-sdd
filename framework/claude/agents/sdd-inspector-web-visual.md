@@ -1,6 +1,6 @@
 ---
-name: sdd-inspector-visual
-description: "SDD impl review inspector (visual). Design system compliance and aesthetic quality review for web projects. Invoked during impl review phase."
+name: sdd-inspector-web-visual
+description: "SDD impl review inspector (web visual). Design system compliance and aesthetic quality review for web projects. Invoked during impl review phase."
 model: sonnet
 tools: Read, Glob, Grep, Write, Bash
 background: true

@@ -153,6 +153,8 @@ Detect contradictions, terminology inconsistencies, unreachable paths, and undef
 6. Circular references: no cycles in file reference relationships
 7. Undefined references: no references to non-existent files, agent names, or phase names
 
+Note: `general-purpose` is a Claude Code built-in agent type — it does NOT require a settings.json Agent() entry or a file in .claude/agents/. Do not flag it as missing.
+
 Include a cross-reference matrix.
 Report in Japanese.
 ```
@@ -176,8 +178,8 @@ Verify that SDD framework agents, skills, and Agent tool usage comply with Claud
 ## Review Criteria
 1. Agent YAML frontmatter: valid model (sonnet/opus/haiku), valid tools list, description present
 2. Skills frontmatter: description, allowed-tools, argument-hint format
-3. Agent tool dispatch patterns: subagent_type matches existing agent definitions
-4. settings.json permissions: Skill() and Agent() entries match actual files
+3. Agent tool dispatch patterns: subagent_type matches existing agent definitions (note: `general-purpose` is a Claude Code built-in — no Agent() entry or file needed)
+4. settings.json permissions: Skill() and Agent() entries match actual files (built-in agents like `general-purpose` are excluded from this check)
 5. Tool availability: agents do not reference tools they cannot access
 
 ## Official Documentation

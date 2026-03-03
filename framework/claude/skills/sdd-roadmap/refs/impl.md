@@ -6,7 +6,7 @@ Triggered by: `$ARGUMENTS = "impl {feature} [task-numbers]"`
 
 ## Step 1: Phase Gate
 
-1. Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, verify `design.md` exists
+1. Read `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, verify `design.md` exists. If missing: BLOCK — "design.md not found. Run `/sdd-roadmap design {feature}` first."
 2. BLOCK if phase is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}."
 3. Phase check:
    - `design-generated`: proceed (standard flow)
@@ -106,21 +106,6 @@ After ALL Builders complete:
 - Set `version_refs.implementation` = current `version`
 - Set `orchestration.last_phase_action` = `"implementation-complete"`
 - Update `changelog`
-
-## Step 3.5: E2E Gate
-
-After all Builders complete and spec.yaml is updated to `implementation-complete`:
-
-1. Read `steering/tech.md` Common Commands for E2E command (`# E2E:` line)
-2. If E2E command exists (non-empty):
-   - Execute the E2E command via Bash
-   - On success: proceed to Step 4
-   - On failure: dispatch targeted Builder fix (same group that owns the failing file scope, with design ref + E2E failure output as context). Max 3 E2E fix attempts (in-memory counter, not persisted — resets on session resume). On exhaustion: escalate to user
-   - After each E2E fix: merge any new files into `implementation.files_created` in spec.yaml
-3. If no E2E command defined:
-   a. Glob for potential E2E scripts: `scripts/*demo*`, `scripts/*e2e*`, `tests/e2e/**`, `tests/integration/**`, `e2e/**`
-   b. If found: report "E2E Gate: No `# E2E:` in steering/tech.md. Found potential E2E scripts: {list}. Consider adding E2E command to steering." Proceed to Step 4.
-   c. If not found: report "E2E Gate: SKIPPED (no E2E command configured)" Proceed to Step 4.
 
 ## Step 4: Post-Completion
 

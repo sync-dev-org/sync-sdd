@@ -44,7 +44,7 @@ Execute past-wave spec modifications through the standard pipeline.
    This change affects {N} specs ({list}).
    Switch to cross-cutting mode for coordinated revision? [Yes / No, single-spec only]
    ```
-   - User accepts → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification)
+   - User accepts → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification). Skip Part B Step 1 (REVISION_INITIATED already recorded in Part A Step 2).
    - User declines → continue single-spec flow below
 4. Present to user:
    ```
@@ -74,7 +74,7 @@ Standard pipeline with revision context. References phase execution refs for det
    After completion: verify design.md, update spec.yaml (increment `version`, phase=design-generated, last_phase_action=null).
 2. **Design Review**: Execute per `refs/review.md` (Design Review section).
    Handle verdict per CLAUDE.md counter limits.
-3. **Implementation**: Execute per `refs/impl.md` (Steps 1-3.5, including E2E Gate).
+3. **Implementation**: Execute per `refs/impl.md` (Steps 1-3).
    After ALL Builders complete: update spec.yaml (phase=implementation-complete, files_created).
 4. **Impl Review**: Execute per `refs/review.md` (Impl Review section).
    Handle verdict per CLAUDE.md counter limits.
@@ -236,7 +236,7 @@ For each tier (sequential):
      - Update conventions brief with design-derived conventions (run.md Step 2.5 Post-Design)
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
      - TaskGenerator → Builder per refs/impl.md (includes conventions brief path, Pilot Stagger Protocol)
-     - After ALL Builders complete per spec: update spec.yaml, execute E2E Gate per impl.md Step 3.5
+     - After ALL Builders complete per spec: update spec.yaml
 
   6. Impl Review:
      - Dispatch per spec (parallel) per refs/review.md

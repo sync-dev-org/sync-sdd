@@ -31,7 +31,7 @@ Spawn via review execution flow (below):
 
 Spawn via review execution flow (below):
 - Standard impl Inspectors (6, sonnet): `sdd-inspector-impl-rulebase`, `sdd-inspector-interface`, `sdd-inspector-test`, `sdd-inspector-quality`, `sdd-inspector-impl-consistency`, `sdd-inspector-impl-holistic`
-- **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-e2e` and `sdd-inspector-visual` (Lead manages dev server lifecycle — see Web Inspector Server Protocol below)
+- **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-web-e2e` and `sdd-inspector-web-visual` (Lead manages dev server lifecycle — see Web Inspector Server Protocol below)
 - Impl Auditor (opus): `sdd-auditor-impl`
 
 **Cross-check / wave-scoped mode**: Same Inspector set + Auditor. Context includes:
@@ -46,7 +46,7 @@ Spawn via review execution flow (below):
 
 ## Web Inspector Server Protocol (Web Projects Only)
 
-When impl review includes web inspectors (`sdd-inspector-e2e` and `sdd-inspector-visual`), Lead manages the dev server lifecycle.
+When impl review includes web inspectors (`sdd-inspector-web-e2e` and `sdd-inspector-web-visual`), Lead manages the dev server lifecycle.
 
 ### tmux Mode (preferred)
 
@@ -61,7 +61,7 @@ Applies when `$TMUX` environment variable is set (running inside a tmux session)
    - Wait for ready: poll `tmux capture-pane -t '{pane_id}' -p` for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
    - Record server URL (e.g., `http://localhost:{port}`)
 
-2. **Inspector Dispatch**: Include server URL in spawn context for `sdd-inspector-e2e` and `sdd-inspector-visual`. Both inspectors use the already-running server — they do NOT start or stop it.
+2. **Inspector Dispatch**: Include server URL in spawn context for `sdd-inspector-web-e2e` and `sdd-inspector-web-visual`. Both inspectors use the already-running server — they do NOT start or stop it.
 
 3. **Server Stop** (after all Inspectors complete, before Auditor dispatch):
    - `tmux kill-pane -t '{pane_id}'` using the ID captured at creation time
@@ -85,7 +85,7 @@ Applies when `$TMUX` is not set (running outside tmux).
 
 1. Determine review scope directory:
    - **Per-feature** (design/impl): `{{SDD_DIR}}/project/specs/{feature}/reviews/`
-   - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/`
+   - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/` (standalone). When called from Wave QG (run.md Step 7b): use `{{SDD_DIR}}/project/reviews/wave/` instead.
    - **Project-level** (cross-check): `{{SDD_DIR}}/project/reviews/cross-check/`
    - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
 2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode: Router determines B{seq} once and passes it to all N pipelines (this step uses the Router-provided value instead of computing its own).

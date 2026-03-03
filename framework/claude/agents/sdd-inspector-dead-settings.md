@@ -55,7 +55,7 @@ Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
 Example:
 ```
 VERDICT:CONDITIONAL
-SCOPE:cross-check
+SCOPE:dead-code
 ISSUES:
 H|dead-config|config.py:CACHE_BACKEND|defined but never consumed, no passthrough to any consumer
 M|dead-config|.env:LEGACY_API_KEY|referenced only in commented-out code

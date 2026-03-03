@@ -157,9 +157,9 @@ A spec can advance to its next phase when ALL conditions are met:
 | Next Phase | Conditions |
 |-----------|------------|
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
-| **Design Review** | Phase is `design-generated`. No GO/CONDITIONAL verdict in `verdicts.md` latest design batch (verdict absent or last is NO-GO). |
+| **Design Review** | Phase is `design-generated`. Latest design batch verdict is absent or NO-GO (review not yet passed). |
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
-| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. E2E gate passed (if E2E command defined in `steering/tech.md`; see impl.md Step 3.5). No GO/CONDITIONAL verdict in `verdicts.md` latest impl batch (verdict absent or last is NO-GO). |
+| **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. Latest impl batch verdict is absent or NO-GO (review not yet passed). |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
 
@@ -194,7 +194,7 @@ Process `STEERING:` entries from verdict.
 For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-3.5, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3, then execute E2E Gate per impl.md Step 3.5.
+Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
