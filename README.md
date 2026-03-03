@@ -12,7 +12,7 @@ Your AI development team — 27 specialized SubAgents orchestrated by a Lead, tu
 
 ### Key capabilities
 
-- **26 SubAgents, 3 tiers** — Analyst redesigns from zero, Architect designs features, Builders implement with TDD, 6+ Inspectors review from different angles, Auditor synthesizes the verdict. Each agent has a focused specialty.
+- **27 SubAgents, 3 tiers** — Analyst redesigns from zero, Architect designs features, Builders implement with TDD, 6+ Inspectors review from different angles, Auditor synthesizes the verdict. Each agent has a focused specialty.
 - **Aggressive parallelism** — Specs within a wave execute at different phases simultaneously. Design Fan-Out dispatches multiple Architects in parallel. Design Lookahead starts the next wave's design before the current wave finishes. Island specs bypass wave boundaries entirely.
 - **Foundation-First scheduling** — Models, shared libraries, and error handling are automatically prioritized to Wave 1. Dependency-aware topological sorting minimizes wave count and maximizes parallel throughput.
 - **Self-correcting reviews** — NO-GO verdicts trigger automatic fix loops (up to 5 retries). SPEC-UPDATE-NEEDED cascades back through the full pipeline. Dead-code review catches orphaned artifacts. Consensus mode runs multiple independent review pipelines for high-confidence findings.
@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.14.1
+curl -LsSf <url>/install.sh | sh -s -- --version v1.15.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
