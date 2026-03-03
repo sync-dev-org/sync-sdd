@@ -68,7 +68,7 @@ External CLI runs in a pane with native progress display, result captured via fi
 ### Concurrency
 
 複数インスタンスが並行する場合、以下を一意にする:
-- **Pane title**: `sdd-{SID}-{purpose}-{identifier}` (e.g., `sdd-a3f7b2c1-ext-1`)
+- **Pane title**: `sdd-{SID}-{purpose}-{identifier}` (e.g., `sdd-5-ext-1`)
 - **Wait-for channel**: pane title と同じ値を使う
 - **Result file**: プロジェクト内のスコープディレクトリに置く。`/tmp` 等のプロジェクト外パスは使わない
 

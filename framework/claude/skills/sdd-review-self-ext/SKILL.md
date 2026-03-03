@@ -163,7 +163,7 @@ If not found or older than 7 days: `$CACHED_OK` = empty.
 Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integration.md`.
 
 4 つの外部エンジンインスタンスを並行起動する。各 Agent:
-- Pane title = Channel = `sdd-ext-{SID}-{N}` (`$SID` は Step 4 で生成したセッション固有 ID)
+- Pane title = Channel = `sdd-{SID}-ext-{N}` (`$SID` は Step 4 で生成したセッション固有 ID)
 - Prompt file = `$SCOPE_DIR/active/agent-{N}-prompt.txt`
 - CPF file (成果物) = `$SCOPE_DIR/active/agent-{N}-{name}.cpf`
 
@@ -198,10 +198,10 @@ cat $SHARED_PROMPT $AGENT_PROMPT | npx -y @google/gemini-cli -p "Review the proj
 
 **tmux mode** (`$TMUX` 設定あり):
 各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする:
-1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S sdd-ext-{SID}-1"` → `$P1`
-2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S sdd-ext-{SID}-2"` → `$P2`
-3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S sdd-ext-{SID}-3"` → `$P3`
-4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S sdd-ext-{SID}-4"`
+1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S sdd-{SID}-ext-1"` → `$P1`
+2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S sdd-{SID}-ext-2"` → `$P2`
+3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S sdd-{SID}-ext-3"` → `$P3`
+4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S sdd-{SID}-ext-4"`
 5. `tmux select-layout tiled` → Lead 含む全 5 pane を均等グリッド配置
 
 `tiled` は pane インデックス順に配置するため、Lead (`$MY_PANE`, 最小インデックス) が自動的に左上になる。
@@ -388,7 +388,17 @@ CPF の severity コードをそのまま使用。重複マージ時は最も高
    ```
 4. Archive: `$SCOPE_DIR/active/` → `$SCOPE_DIR/B{seq}/`
 
-### 8.2 Report to User
+### 8.2 Report to User + Action
+
+Findings を 2 カテゴリに分類して提示:
+
+**A) 自明な修正** (Auto-fix):
+命名不一致、typo、許可漏れ、example 誤り等、判断不要で正解が一意のもの。
+→ 一覧表示し、ユーザーの OK 一言で全件修正を実行。
+
+**B) ユーザー判断が必要** (Decision-required):
+pre-existing backlog の対処方針、設計レベルの変更、影響範囲が広い修正。
+→ 各 finding に **影響範囲**、**推奨**、**理由** を添えて提示。ユーザーが個別に判断。
 
 ```markdown
 # SDD Framework Self-Review Report (External Engine)
@@ -399,34 +409,23 @@ CPF の severity コードをそのまま使用。重複マージ時は最も高
 | Finding | Agent | Reason |
 |---|---|---|
 
-## CRITICAL ({N})
+## A) 自明な修正 ({N}件) — OK で全件修正します
 
-### C{N}: {title}
+| ID | Sev | Summary | Fix | Target |
+|---|---|---|---|---|
+
+## B) ユーザー判断が必要 ({N}件)
+
+### {ID}: {title}
 **Location**: {file}:{line}
 **Description**: {description}
-**Evidence**: {reference}
-
-## HIGH ({N})
-## MEDIUM ({N})
-## LOW ({N})
-
-(same format per finding, with detecting agent(s) noted)
+**Impact**: {影響範囲と深刻度}
+**Recommendation**: {推奨アクション} — {理由}
 
 ## Platform Compliance
 
 | Item | Status | Source |
 |---|---|---|
-
-(from Agent 4. Status: OK/NG/UNCERTAIN→resolved. Cached items marked "(cached)". UNCERTAIN items show Lead's resolution.)
-
-## Overall Assessment
-
-{summary, key risks, recommendation}
-
-## Recommended Fix Priority
-
-| Priority | ID | Summary | Target Files |
-|---|---|---|---|
 ```
 
 ## Error Handling

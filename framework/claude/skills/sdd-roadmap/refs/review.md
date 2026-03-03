@@ -58,7 +58,7 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 1. **Server Start** (before Inspector dispatch):
    - Read dev server command from `steering/tech.md` Common Commands (the `Dev:` entry)
    - If no dev server command found: skip server start, dispatch web inspectors without server URL (they will report "Server URL not accessible" and terminate gracefully)
-   - Pane title: `sdd-devserver-{feature}`
+   - Pane title: `sdd-{SID}-devserver-{feature}`
    - Ready pattern: `ready`, `localhost`, `listening on`
    - Port offset for Spec Stagger parallel reviews
    - Record server URL (e.g., `http://localhost:{port}`)

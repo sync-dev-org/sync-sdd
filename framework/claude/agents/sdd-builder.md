@@ -28,7 +28,7 @@ You receive context from Lead including:
 
 Read all necessary context:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`
-- **tasks.yaml**: Read the file at the provided path. Locate your assigned group in the `execution_plan` section, then read only the tasks assigned to your group. Ignore other groups' tasks.
+- **tasks.yaml**: Read the file at the provided path. Locate your assigned group in the `execution` section, then read only the tasks assigned to your group. Ignore other groups' tasks.
 - **Entire `{{SDD_DIR}}/project/steering/` directory** — especially `tech.md` Common Commands for all Bash execution
 - **Conventions brief** (if path provided in prompt): observed codebase patterns for naming, error handling, schema design, imports, testing
 
