@@ -55,7 +55,8 @@
       "Bash(playwright-cli *)",
       "Bash(tmux *)",
       "Bash(npm *)",
-      "Bash(npx *)"
+      "Bash(npx *)",
+      "Bash(bash install.sh *)"
     ]
   }
 }
