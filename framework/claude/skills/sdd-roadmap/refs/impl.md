@@ -34,7 +34,7 @@ Read TaskGenerator's completion report. Verify `tasks.yaml` exists.
 
 ## Step 2.5: Dependency Sync
 
-Before dispatching any Builder, ensure all dependencies (including those introduced by design.md) are declared and installed:
+Before dispatching any Builder, ensure all dependencies (including those introduced by design.md) are declared and installed. This step is idempotent — it also serves as a fallback when design-phase Dependency Sync (design.md Step 2.5) ran in a different session or was skipped:
 
 1. Read `design.md` Dependencies / External entries for required packages
 2. For each external dependency not yet in pyproject.toml (or package.json):

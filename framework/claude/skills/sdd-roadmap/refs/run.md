@@ -60,7 +60,7 @@ Skip if only 1 Architect will be dispatched (1-spec roadmap or single spec in wa
 Before dispatching Architects (Design Fan-Out), ensure project dependencies are in sync:
 
 1. Read `steering/tech.md` and `pyproject.toml` (or package.json, Cargo.toml)
-2. For each spec in this wave: if spec name/description implies new external SDKs, add to dependency manifest (extras + dev group) and install
+2. For each spec in this wave: if spec name/description, user instructions, or existing design.md implies new external SDKs, add to dependency manifest (extras + dev group) and install
 3. Run install command from `steering/tech.md` Common Commands (`# Install:` line)
 4. Determine SDK source paths for Architect prompts (e.g., `uv run python -c "import {pkg}; print({pkg}.__file__)"`)
 5. This ensures SDKs are available for Architect to read from site-packages during design (see design-discovery-full.md Step 3)
@@ -258,7 +258,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`.
    - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, tracked in-memory by Lead — not persisted to spec.yaml. Dead-code findings are wave-scoped and resolved within a single execution window; counter restarts at 0 on session resume. Separate from per-spec aggregate cap → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
-- **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`
+- **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`. Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only).
 - Commit: `Wave {N}: {summary}`
 - Auto-draft session.md
 

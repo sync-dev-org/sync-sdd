@@ -57,7 +57,7 @@ Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
 Example:
 ```
 VERDICT:CONDITIONAL
-SCOPE:cross-check
+SCOPE:dead-code
 ISSUES:
 H|spec-drift|specs/auth-flow/design.md|spec says OAuth2 but implementation uses session-based auth
 M|spec-drift|specs/user-profile/tasks.yaml|tasks 2.3-2.5 marked done but no corresponding code found

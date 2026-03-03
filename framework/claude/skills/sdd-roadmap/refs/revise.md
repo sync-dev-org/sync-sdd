@@ -178,7 +178,7 @@ For each AUDIT-classified spec, perform lightweight verification:
 
 ### Step 5.5: Auto-Demotion Check
 
-After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (Architect dispatch) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.md: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
+After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (state transition → pipeline execution) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.md: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
 
 ### Step 6: Execution Tier Planning
 

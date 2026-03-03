@@ -58,7 +58,7 @@ Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
 Example:
 ```
 VERDICT:CONDITIONAL
-SCOPE:cross-check
+SCOPE:dead-code
 ISSUES:
 H|orphaned-test|tests/test_legacy.py|entire test file tests removed LegacyAPI class
 M|orphaned-test|tests/conftest.py:mock_legacy_api|fixture defined but never used

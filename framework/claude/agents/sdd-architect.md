@@ -62,7 +62,7 @@ Version consistency check (skip if `version_refs` not present):
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
-   **SDK Source Inspection** (when Lead provides installed SDK source paths in prompt):
+   **SDK Source Inspection** (all Feature Types; applies when Lead provides installed SDK source paths in prompt):
    - Read actual function signatures, class definitions, and type annotations from the installed package via Read/Glob
    - This is the ground truth for API contracts — prefer over WebSearch
    - After source inspection, use WebSearch to validate design choices and find best practices (see design-discovery-full.md Steps 5-6)

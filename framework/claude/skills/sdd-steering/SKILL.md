@@ -1,6 +1,6 @@
 ---
 description: Set up project-wide context (create, update, delete, custom)
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, Skill
 argument-hint: [-y] [custom]
 ---
 
@@ -49,7 +49,7 @@ Execute full steering creation:
 5a. **Environment setup** (Python profile selected):
     If `pyproject.toml` exists: read and verify alignment with tech stack decisions (core deps, test tools, linters).
     If `pyproject.toml` does not exist: create it with project metadata from dialogue, core dependencies from tech stack decisions, dev dependency group (test tools + linters + formatters + ALL extras), and extras groups for optional packages (if discussed).
-    Run install command to create/update virtual environment.
+    Run install command from `# Install:` line to create/update virtual environment. If `# Install:` line is empty or not found in tech.md, skip and warn user: "No install command configured in tech.md."
     Principle: dev environment = all dependencies installed. Extras are for end-user selective installation; developers always have everything.
 6. **Pitfalls transfer**: If the selected profile has a `## Known Pitfalls` section, scan the project's dependencies (`pyproject.toml`, `package.json`, or equivalent) and transfer only the pitfall entries whose library/topic matches the project's actual dependencies into `tech.md ## Pitfalls`. Omit pitfall groups for libraries/topics not used by the project.
 7. **Apply profile suggestions**: If a profile was selected, inform user of recommended Bash permissions for `settings.json` (from profile's Suggested Permissions section)
