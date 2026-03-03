@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v1.15.0
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v2.0.0
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
