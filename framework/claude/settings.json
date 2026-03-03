@@ -11,6 +11,7 @@
       "Skill(sdd-reboot)",
       "Skill(sdd-release)",
       "Skill(sdd-review-self)",
+      "Skill(sdd-review-self-ext)",
       "Skill(sdd-publish-setup)",
       "Agent(sdd-analyst)",
       "Agent(sdd-architect)",

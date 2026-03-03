@@ -97,7 +97,7 @@ After mode detection and roadmap ensure, Read the reference file for the detecte
 
 - **Design** → Read `refs/design.md`
 - **Impl** → Read `refs/impl.md`
-- **Review** → Read `refs/review.md`
+- **Review** (design, impl, dead-code, --cross-check, --wave) → Read `refs/review.md`
 - **Run** → Read `refs/run.md`
 - **Revise** → Read `refs/revise.md`
 - **Create / Update / Delete** → Read `refs/crud.md`
@@ -113,9 +113,9 @@ Then follow the instructions in the loaded file.
 When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
 
 1. Determine review scope directory (see `refs/review.md` Step 1) and B{seq} from `{scope-dir}/verdicts.md` (increment max existing, or start at 1)
-2. For each pipeline `p` (1..N): create review directory `specs/{feature}/reviews/active-{p}/`
-3. Spawn N sets of Inspectors in parallel. Each Inspector set writes to its own `reviews/active-{p}/` directory
-4. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `reviews/active-{p}/` as input and `reviews/active-{p}/verdict.cpf` as output
+2. For each pipeline `p` (1..N): create review directory `{scope-dir}/active-{p}/`
+3. Spawn N sets of Inspectors in parallel. Each Inspector set writes to its own `{scope-dir}/active-{p}/` directory
+4. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `{scope-dir}/active-{p}/` as input and `{scope-dir}/active-{p}/verdict.cpf` as output
 5. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
    - Key by `{category}|{location}`, count frequency
    - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)

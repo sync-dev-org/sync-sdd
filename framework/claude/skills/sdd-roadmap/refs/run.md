@@ -84,7 +84,7 @@ Fast-track execution:
 - Runs in parallel with wave-bound specs
 - Does NOT participate in Wave QG cross-check
 
-If Impl-phase Layer 2 file ownership check discovers overlap between a fast-track spec and a wave-bound spec, demote the fast-track spec back to wave-bound and serialize.
+If Impl-phase Layer 2 file ownership check discovers overlap between a fast-track spec and a wave-bound spec, demote the fast-track spec back to wave-bound: place it in the same wave as the overlapping wave-bound spec and serialize their Builders.
 
 ### Wave Spec Scheduling
 

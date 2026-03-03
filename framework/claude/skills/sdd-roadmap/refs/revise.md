@@ -256,7 +256,8 @@ After all tiers complete, verify cross-spec consistency:
 2. Persist verdict to `specs/.cross-cutting/{id}/verdicts.md` (NOT `reviews/wave/verdicts.md` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
-   - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Max 5 retries (aggregate cap 6). On exhaustion: escalate to user
+   - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5 (NO-GO), spec_update_count max 2 (SPEC-UPDATE-NEEDED), aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user
+   - **SPEC-UPDATE-NEEDED** → update affected spec design, re-implement, re-run cross-check review (counts toward spec_update_count and aggregate cap)
 
 ### Step 9: Post-Completion
 

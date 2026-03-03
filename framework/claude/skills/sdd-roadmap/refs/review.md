@@ -2,7 +2,11 @@
 
 Phase execution reference. Canonical source for ALL review types. Assumes Single-Spec Roadmap Ensure already completed by router (except dead-code/cross-check/wave which skip enrollment).
 
-Triggered by: `$ARGUMENTS = "review design|impl {feature} [options]"` or `$ARGUMENTS = "review dead-code [options]"`
+Triggered by:
+- `$ARGUMENTS = "review design|impl {feature} [options]"` — single-spec review
+- `$ARGUMENTS = "review design|impl --cross-check [options]"` — cross-check across all specs (no feature name)
+- `$ARGUMENTS = "review design|impl --wave N [options]"` — wave-scoped review (no feature name)
+- `$ARGUMENTS = "review dead-code [options]"` — dead-code review
 
 ## Step 1: Parse Arguments
 
@@ -73,10 +77,11 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 > **Dispatch loop context**: Within `run.md` dispatch loop, this flow is decomposed into dispatch-loop events (see run.md §Review Decomposition). The sequential flow below applies to standalone review invocations.
 
 1. Determine review scope directory:
-   - **Per-feature** (design/impl): `{{SDD_DIR}}/project/specs/{feature}/reviews/`
+   - **Per-feature** (design/impl with feature name): `{{SDD_DIR}}/project/specs/{feature}/reviews/`
    - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/` (standalone). When called from Wave QG (run.md Step 7b): use `{{SDD_DIR}}/project/reviews/wave/` instead.
-   - **Project-level** (cross-check): `{{SDD_DIR}}/project/reviews/cross-check/`
-   - **Project-level** (wave): `{{SDD_DIR}}/project/reviews/wave/`
+   - **Project-level** (cross-check via `--cross-check`): `{{SDD_DIR}}/project/reviews/cross-check/`
+   - **Project-level** (wave-scoped via `--wave N`): `{{SDD_DIR}}/project/reviews/wave/`
+   - **Project-level** (cross-cutting from revise.md): `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/reviews/`
 2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode: Router determines B{seq} once and passes it to all N pipelines (this step uses the Router-provided value instead of computing its own).
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
@@ -137,9 +142,11 @@ All verdict files follow the same pattern: `{scope-dir}/verdicts.md`
 - **Cross-cutting review**: `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/verdicts.md`
 - **Self-review** (framework-internal): `{{SDD_DIR}}/project/reviews/self/verdicts.md`
 
-## Next Steps by Verdict
+## Next Steps by Verdict (standalone)
 
-- Design GO/CONDITIONAL → `/sdd-roadmap impl {feature}`
-- Impl GO/CONDITIONAL → Feature complete
-- NO-GO → Auto-fix or manual fix
-- SPEC-UPDATE-NEEDED → Auto-fix from spec level
+Standalone reviews report results only — no auto-fix. Auto-fix loops are executed within pipeline orchestration (run.md / revise.md).
+
+- Design GO/CONDITIONAL → suggest `/sdd-roadmap impl {feature}`
+- Impl GO/CONDITIONAL → feature complete
+- NO-GO → report findings to user (auto-fix only within pipeline)
+- SPEC-UPDATE-NEEDED → report to user (auto-fix only within pipeline)

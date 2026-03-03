@@ -42,7 +42,7 @@ Derived variables:
 ## Step 2: Prepare
 
 ```
-$SCOPE_DIR = .sdd/project/reviews/self-ext
+$SCOPE_DIR = {{SDD_DIR}}/project/reviews/self-ext
 ```
 
 1. `mkdir -p $SCOPE_DIR/active`
@@ -59,6 +59,7 @@ framework/claude/agents/sdd-*.md
 framework/claude/settings.json
 framework/claude/sdd/settings/rules/*.md
 framework/claude/sdd/settings/templates/**/*.md
+framework/claude/sdd/settings/templates/**/*.yaml
 install.sh
 ```
 
@@ -106,7 +107,7 @@ Read `$SCOPE_DIR/verdicts.md`.
 Find the most recent Agent 4 (Platform Compliance) result within the last 7 days.
 
 If found:
-1. Read the archived report (`$SCOPE_DIR/B{seq}/agent-4-compliance.cpf` or `.md`)
+1. Read the archived report (`$SCOPE_DIR/B{seq}/agent-4-compliance.cpf`)
 2. Extract `Confirmed OK` items → `$CACHED_OK` list
 3. For each cached item, check if the relevant file has been modified since that review date (use git log)
 4. Items with no file changes → remain in `$CACHED_OK`
@@ -134,17 +135,17 @@ Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 
 Assemble command based on `$ENGINE_NAME`. `$TOOLS` が null の場合は全許可モード、設定されている場合はツール制限モード:
 
-**codex** (全許可は `--full-auto` に含まれる):
+**codex** (全許可は `--full-auto` に含まれる。`npx -y @openai/codex` 経由で起動。stdin でプロンプトを渡す):
 ```
-codex exec --full-auto [--model $MODEL] "$(cat $PROMPT_FILE)" -o $RESULT_FILE
+npx -y @openai/codex exec --full-auto [--model $MODEL] -o $RESULT_FILE - < $PROMPT_FILE
 ```
 
-**claude**:
+**claude** (stdin でプロンプトを渡す):
 ```
 # 全許可 (default):
-claude -p "$(cat $PROMPT_FILE)" --dangerously-skip-permissions [--model $MODEL] > $RESULT_FILE
+claude -p - --dangerously-skip-permissions [--model $MODEL] < $PROMPT_FILE > $RESULT_FILE
 # ツール制限時:
-claude -p "$(cat $PROMPT_FILE)" [--model $MODEL] --allowedTools "$TOOLS" > $RESULT_FILE
+claude -p - [--model $MODEL] --allowedTools "$TOOLS" < $PROMPT_FILE > $RESULT_FILE
 ```
 
 **gemini**:
@@ -155,7 +156,7 @@ gemini --approval-mode yolo [--model $MODEL] "$(cat $PROMPT_FILE)" > $RESULT_FIL
 gemini [--model $MODEL] --allowed-tools "$TOOLS" "$(cat $PROMPT_FILE)" > $RESULT_FILE
 ```
 
-`[]` 内は対応する値が設定されている場合のみ付与。
+`[]` 内は対応する値が設定されている場合のみ付与。プロンプトが長い場合はシェル引数制限を避けるため stdin (`< $PROMPT_FILE`) を優先する。
 
 ### Dispatch Mode
 

@@ -267,7 +267,7 @@ Lead generates the final report and presents it for user approval. **This is the
    {CONDITIONAL items that need attention}
 
    ## Next Steps
-   - Accept: delete old source files, commit on branch, then merge to main and run `/sdd-roadmap run` to implement
+   - Accept: commit designs on branch, review the branch, then merge to main when ready and run `/sdd-roadmap run` to implement
    - Reject: discard branch, return to main
    - Iterate: continue editing designs on this branch
    ```

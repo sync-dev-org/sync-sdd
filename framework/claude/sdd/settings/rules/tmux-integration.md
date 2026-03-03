@@ -73,7 +73,7 @@ External CLI runs in a pane with native progress display, result captured via fi
      'printf "\\033]2;{pane_title}\\033\\\\" && {command} -o {result_file} {args}; tmux wait-for -S {channel}'
    ```
    Store pane ID.
-3. **Wait for completion**: `tmux wait-for {channel}` (blocking).
+3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: create all panes first (steps 1-2 for each), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel to wait for all channels concurrently.
 4. **Read result file**.
 5. **Cleanup**: Pane typically auto-closes on command exit. If still alive, Kill Pane by stored ID.
 

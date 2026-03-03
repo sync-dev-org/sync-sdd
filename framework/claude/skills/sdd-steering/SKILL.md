@@ -98,7 +98,7 @@ Execute full steering creation:
 
 Configure external engine settings for SubAgent outsourcing (Codex CLI, Claude Code headless, Gemini CLI).
 
-1. Read `.sdd/settings/engines.yaml` (if absent, copy from `.sdd/settings/templates/engines.yaml`)
+1. Read `{{SDD_DIR}}/settings/engines.yaml` (if absent, copy from `{{SDD_DIR}}/settings/templates/engines.yaml`)
 2. Display current configuration (default engine, any role overrides)
 3. AskUserQuestion: default engine selection (codex / claude / gemini)
 4. AskUserQuestion: role-specific customization?
@@ -108,7 +108,7 @@ Configure external engine settings for SubAgent outsourcing (Codex CLI, Claude C
      - Timeout override
      - Tool restriction (optional allowlist; null = full permission)
    - No → keep defaults
-5. Write updated `.sdd/settings/engines.yaml`
+5. Write updated `{{SDD_DIR}}/settings/engines.yaml`
 
 ## Step 3: Post-Completion
 

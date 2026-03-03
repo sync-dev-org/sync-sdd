@@ -1,7 +1,7 @@
 # External Engine Configuration
 # Template: .sdd/settings/templates/engines.yaml
-# Active: .sdd/settings/engines.yaml (copy & customize)
-# This file is NOT overwritten by install.sh --update.
+# Active copy: .sdd/settings/engines.yaml (copy & customize)
+# The active copy is NOT overwritten by install.sh --update. This template IS updated.
 #
 # Setup: /sdd-steering engines
 # Auto-created from template when consumer skills detect missing config.
