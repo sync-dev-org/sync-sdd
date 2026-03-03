@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-Your AI development team — 26 specialized SubAgents orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
+Your AI development team — 27 specialized SubAgents orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
 
 ## Why sync-sdd
 
@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v1.13.1
+curl -LsSf <url>/install.sh | sh -s -- --version v1.14.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -51,7 +51,7 @@ your-project/
 │   ├── CLAUDE.md                      # Framework instructions (auto-loaded)
 │   ├── settings.json                  # Default settings
 │   ├── skills/sdd-*/SKILL.md          # 8 skills
-│   └── agents/sdd-*.md               # 26 SubAgent definitions
+│   └── agents/sdd-*.md               # 27 SubAgent definitions
 └── .sdd/
     └── settings/                      # Rules, templates, profiles
 ```
