@@ -278,7 +278,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5a. If inside tmux (`$TMUX` set): check for orphaned dev server panes — run `tmux list-panes -a -F '#{pane_title} #{pane_id}'` via Bash, use Grep to find lines containing `sdd-devserver-`, extract pane IDs from matches, kill each with `tmux kill-pane -t {pane_id}`. Prevents port conflicts from previous crashed sessions.
+5a. If inside tmux (`$TMUX` set): run Orphan Cleanup per `{{SDD_DIR}}/settings/rules/tmux-integration.md`. Prevents port/state conflicts from previous crashed sessions.
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
      - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
@@ -314,7 +314,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Use steering Common Commands**: When running project tools (install, test, build, e2e, lint, format, dev, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
-- **tmux Integration**: Lead uses tmux for dev server lifecycle management when running inside a tmux session (`$TMUX` set). Dev server runs in a visible split pane (pane title: `sdd-devserver-{feature}`). When `$TMUX` is not set, falls back to `Bash(run_in_background=true)`. See sdd-roadmap `refs/review.md` Web Inspector Server Protocol.
+- **tmux Integration**: Lead uses tmux for pane-based orchestration when `$TMUX` is set. Patterns: Server Lifecycle (long-running server), One-Shot Command (external CLI with progress display). Falls back to `Bash(run_in_background=true)` when not in tmux. Full patterns: `{{SDD_DIR}}/settings/rules/tmux-integration.md`
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
 
 ## Git Workflow
