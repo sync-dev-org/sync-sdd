@@ -26,6 +26,7 @@
       "Agent(sdd-inspector-dead-settings)",
       "Agent(sdd-inspector-dead-specs)",
       "Agent(sdd-inspector-dead-tests)",
+      "Agent(sdd-inspector-e2e)",
       "Agent(sdd-inspector-web-e2e)",
       "Agent(sdd-inspector-holistic)",
       "Agent(sdd-inspector-impl-consistency)",

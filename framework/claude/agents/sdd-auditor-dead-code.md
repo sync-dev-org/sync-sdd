@@ -144,7 +144,7 @@ Write your verdict to the verdict output path specified in your spawn context in
 
 ```
 VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check
+SCOPE:dead-code
 VERIFIED:
 {agents}|{sev}|{category}|{location}|{description}
 REMOVED:

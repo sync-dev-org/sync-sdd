@@ -20,7 +20,6 @@ File ownership is **advisory**: it guides Builder task assignment and auto-fix r
    - **Partition**: re-assign file ownership. May require re-spawning TaskGenerator with file exclusion constraints
 4. Validate: no file claimed by two parallel specs
 5. Record final file ownership assignments for auto-fix routing
-6. buffer.md: Lead has exclusive write access
 
 ## Step 2.5: Wave Context Generation
 

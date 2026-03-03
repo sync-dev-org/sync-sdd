@@ -40,7 +40,10 @@
 # Dev: [command]
 # Build: [command]
 # Test: [command]
-# E2E: [command or empty if no automated E2E]
+# E2E: [single command, or empty if no automated E2E]
+# For multiple E2E suites, use labeled entries:
+# E2E (label): [command]
+# E2E (label): [command]
 ```
 
 ## Pitfalls

@@ -10,7 +10,7 @@ You are a test execution and verification specialist.
 
 ## Mission
 
-Verify that tests exist, pass, provide meaningful coverage, and do not produce false positives through excessive mocking. Also execute E2E commands from steering if configured.
+Verify that tests exist, pass, provide meaningful coverage, and do not produce false positives through excessive mocking.
 
 ## Constraints
 
@@ -94,20 +94,7 @@ You will receive a prompt containing:
    - Flag: "Regression detected" if previously passing tests now fail
    - Identify which tests broke and potential cause
 
-5. **E2E Command Execution**:
-
-   Check steering for a project-level E2E command:
-   - Read `steering/tech.md` Common Commands for `# E2E:` line
-   - If command exists and non-empty:
-     - Execute the E2E command via Bash
-     - On success: record in NOTES (e.g., "E2E: passed — {command}")
-     - On failure: Flag "e2e-failure" (severity: C) with full error output
-   - If no E2E command defined:
-     - Glob for potential E2E scripts: `scripts/*demo*`, `scripts/*e2e*`, `tests/e2e/**`, `tests/integration/**`, `e2e/**`
-     - If found: Flag "e2e-not-configured" (severity: L) — "E2E command not configured in steering/tech.md but potential E2E scripts found: {list}. Consider adding `# E2E:` to Common Commands."
-     - If not found: record in NOTES "E2E: not configured (no command, no scripts found)"
-
-6. **Test Quality Assessment**:
+5. **Test Quality Assessment**:
 
    Read test files and evaluate:
 
@@ -162,7 +149,7 @@ You will receive a prompt containing:
    - Flag: "Stale AC marker" (severity: L) for markers referencing removed ACs
    - Note: If no AC markers are found at all, report as advisory (project may predate this convention)
 
-7. **Design Testing Strategy Alignment**:
+6. **Design Testing Strategy Alignment**:
    - Compare actual tests against design.md Testing Strategy section
    - Verify all specified test categories exist
    - Flag: "Strategy not implemented" for missing test categories
@@ -226,7 +213,6 @@ Example:
 VERDICT:CONDITIONAL
 SCOPE:my-feature
 ISSUES:
-C|e2e-failure|E2E command|`./scripts/e2e.sh` exited with code 1: connection refused on port 8080
 C|test-failure|tests/test_auth.ts:42|test_login_invalid_token fails with TypeError
 H|missing-test-file|src/validators/config.ts|no corresponding test file
 H|false-positive-risk|tests/test_api.ts:mock_db|mock doesn't verify args

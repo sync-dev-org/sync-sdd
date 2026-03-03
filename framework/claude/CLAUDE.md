@@ -24,7 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
-| T3 | **Inspector** | Individual review perspectives. 6 design, 6 impl +2 web (impl only, web projects), 4 dead-code. Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. 6 design, 6 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code. Outputs CPF findings. |
 | T3 | **ConventionsScanner** | Codebase pattern scanning. Generates conventions brief (naming, error handling, schema, imports, testing). Pilot convention supplement. |
 
 ### Chain of Command
@@ -333,6 +333,7 @@ Trunk-based development. main is always HEAD.
 - Commit scope: all spec artifacts + implementation changes from the completed work
 - Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision) or `reboot: {summary}` (reboot redesign)
 - All commits MUST end with `Co-Authored-By: sync-sdd <noreply@sync-sdd>`
+- **README check**: At commit time (wave completion or pipeline completion), verify `README.md` is consistent with current state. Check feature descriptions, counts, architecture, and workflow sections against `steering/` and `CLAUDE.md`. Update if stale. This is in addition to the release-time content review.
 
 ### Release Flow
 After a logical milestone (roadmap completion, significant feature set):

@@ -275,6 +275,7 @@ Error tracking, logging, and health monitoring implementation.
 - Unit Tests: 3–5 items from core functions/modules (e.g., auth methods, subscription logic). Use real internal collaborators; mock only external boundaries. Thin CRUD/passthrough may use integration tests instead
 - Integration Tests: 3–5 cross-component flows (e.g., webhook handling, notifications)
 - E2E/UI Tests (if applicable): 3–5 critical user paths (e.g., forms, dashboards)
+  - E2E command: `[command]` (if this spec has a dedicated E2E beyond project-level steering)
 - Performance/Load (if applicable): 3–4 items (e.g., concurrency, high-volume ops)
 
 ## Optional Sections (include when relevant)

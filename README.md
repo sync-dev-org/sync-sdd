@@ -76,7 +76,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector (Sonnet x N)
 
 **Analyst** performs holistic project analysis for zero-based redesign. **Architect** generates technical designs with research and discovery. **Auditor** synthesizes multi-Inspector findings into GO / CONDITIONAL / NO-GO / SPEC-UPDATE-NEEDED verdicts.
 
-**TaskGenerator** decomposes designs into parallelizable tasks. **Builder** implements via TDD (RED-GREEN-REFACTOR). **Inspector** provides focused review perspectives — 6 for design, 6+2 for implementation (web projects), 4 for dead-code.
+**TaskGenerator** decomposes designs into parallelizable tasks. **Builder** implements via TDD (RED-GREEN-REFACTOR). **Inspector** provides focused review perspectives — 6 for design, 6+1+2 for implementation (E2E + web projects, conditional), 4 for dead-code.
 
 ## Parallel execution model
 

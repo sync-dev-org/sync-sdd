@@ -31,6 +31,7 @@ Spawn via review execution flow (below):
 
 Spawn via review execution flow (below):
 - Standard impl Inspectors (6, sonnet): `sdd-inspector-impl-rulebase`, `sdd-inspector-interface`, `sdd-inspector-test`, `sdd-inspector-quality`, `sdd-inspector-impl-consistency`, `sdd-inspector-impl-holistic`
+- **Projects with E2E commands** (steering/tech.md Common Commands contains `# E2E` with non-empty, non-placeholder command): also spawn `sdd-inspector-e2e`
 - **Web projects** (steering/tech.md contains web stack indicators: React, Next.js, Vue, Angular, Svelte, Express, Django+templates, Rails, FastAPI+frontend, etc.): also spawn `sdd-inspector-web-e2e` and `sdd-inspector-web-visual` (Lead manages dev server lifecycle — see Web Inspector Server Protocol below)
 - Impl Auditor (opus): `sdd-auditor-impl`
 
@@ -94,6 +95,7 @@ Applies when `$TMUX` is not set (running outside tmux).
 4. Spawn all Inspectors via `Agent(subagent_type=..., run_in_background=true)`. Each context includes:
    - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
+   - **E2E inspector**: no additional context needed (self-loads from steering and design.md)
    - **Web inspectors**: also include server URL
 5. Wait for all Inspector agents to complete (poll via `TaskOutput`). Handle failed Inspectors: retry, skip, or proceed with available results.
 5a. **Web projects (impl review only)**: Stop dev server per Web Inspector Server Protocol above.
