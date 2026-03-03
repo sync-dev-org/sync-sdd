@@ -1,7 +1,7 @@
 ---
 description: Set up project-wide context (create, update, delete, custom)
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion, Skill
-argument-hint: [-y] [custom]
+argument-hint: [-y] [custom] [engines]
 ---
 
 # SDD Steering (Unified)
@@ -18,6 +18,7 @@ Manage project steering documents. Lead handles directly (no SubAgent dispatch n
 
 ```
 $ARGUMENTS = "custom"      → Custom steering creation
+$ARGUMENTS = "engines"     → External engine configuration
 $ARGUMENTS = "-y"           → Auto-approve update mode
 $ARGUMENTS = ""             → Auto-detect (create if missing, update if exists)
 ```
@@ -56,8 +57,13 @@ Execute full steering creation:
 8. **Initialize User Intent** in `product.md`:
    - Record user's Vision from dialogue
    - Set initial Success Criteria and Anti-Goals
-9. Present summary (include which profile was applied, if any)
-10. **Publish pipeline offer** (Python profile only):
+9. **External engine setup** (optional):
+    If `.sdd/settings/engines.yaml` does not exist:
+    - Ask: "外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) を設定しますか？"
+    - Yes → execute Engines Mode (see below)
+    - No → copy template from `.sdd/settings/templates/engines.yaml` to `.sdd/settings/engines.yaml` (defaults)
+10. Present summary (include which profile was applied, if any)
+11. **Publish pipeline offer** (Python profile only):
     If the selected profile is `python`, ask the user if they plan to publish this package to PyPI. If yes, run the following pre-flight checks before invoking `/sdd-publish-setup`:
 
     a. **Git remote**: `git remote get-url origin` — if no remote, inform user and skip (publish setup requires a GitHub remote)
@@ -87,6 +93,22 @@ Execute full steering creation:
 3. Optional codebase analysis
 4. Topic-specific dialogue (template sections guide the conversation)
 5. Generate custom steering file: `{{SDD_DIR}}/project/steering/{topic}.md`
+
+### Engines Mode (`engines` argument)
+
+Configure external engine settings for SubAgent outsourcing (Codex CLI, Claude Code headless, Gemini CLI).
+
+1. Read `.sdd/settings/engines.yaml` (if absent, copy from `.sdd/settings/templates/engines.yaml`)
+2. Display current configuration (default engine, any role overrides)
+3. AskUserQuestion: default engine selection (codex / claude / gemini)
+4. AskUserQuestion: role-specific customization?
+   - Yes → for each role (review-self, architect, inspector, builder, auditor):
+     - Engine selection
+     - Model name (or null for engine default)
+     - Timeout override
+     - Tool restriction (optional allowlist; null = full permission)
+   - No → keep defaults
+5. Write updated `.sdd/settings/engines.yaml`
 
 ## Step 3: Post-Completion
 

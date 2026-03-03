@@ -6,7 +6,7 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 - Check `$TMUX` is set before using any pattern. If not set, use the documented Fallback.
 - All pane targeting uses **pane ID** (`%N` format) returned by `tmux split-window -P -F '#{pane_id}'`. **Never use index-based targeting** (`-t 1`) — it may kill the wrong pane (including Claude Code itself).
-- Pane title convention: `sdd-{purpose}-{identifier}` (e.g., `sdd-devserver-auth`, `sdd-codex-review`).
+- Pane title convention: `sdd-{purpose}-{identifier}` (e.g., `sdd-devserver-auth`, `sdd-ext-review`).
 
 ## Shared Operations
 
@@ -56,13 +56,13 @@ Kill Pane by stored ID.
 
 ## Pattern B: One-Shot Command
 
-External CLI runs in a pane with native progress display, result captured via file. Used for external tool execution (e.g., Codex CLI).
+External CLI runs in a pane with native progress display, result captured via file. Used for external tool execution (e.g., external engines).
 
 ### Concurrency
 
 複数インスタンスが並行する場合、以下を一意にする:
-- **Pane title**: `sdd-{purpose}-{identifier}` (e.g., `sdd-codex-consistency`, `sdd-codex-flow`)
-- **Wait-for channel**: pane title と同じ値を使う (e.g., `sdd-codex-consistency`)
+- **Pane title**: `sdd-{purpose}-{identifier}` (e.g., `sdd-ext-review-1`, `sdd-ext-review-2`)
+- **Wait-for channel**: pane title と同じ値を使う (e.g., `sdd-ext-review-1`)
 - **Result file**: プロジェクト内のスコープディレクトリに置く。`/tmp` 等のプロジェクト外パスは使わない
 
 ### Execute
@@ -90,4 +90,4 @@ On session resume (when `$TMUX` set):
 2. Extract pane IDs from matches.
 3. Kill each with Kill Pane.
 
-`sdd-` prefix で全パターン (devserver, codex, 将来追加分) を一括検出する。セッション再開時点で残存しているペインは前回のクラッシュ由来であり、安全に kill できる。
+`sdd-` prefix で全パターン (devserver, ext, 将来追加分) を一括検出する。セッション再開時点で残存しているペインは前回のクラッシュ由来であり、安全に kill できる。

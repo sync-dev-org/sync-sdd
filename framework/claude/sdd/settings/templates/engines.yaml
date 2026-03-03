@@ -1,0 +1,74 @@
+# External Engine Configuration
+# Template: .sdd/settings/templates/engines.yaml
+# Active: .sdd/settings/engines.yaml (copy & customize)
+# This file is NOT overwritten by install.sh --update.
+#
+# Setup: /sdd-steering engines
+# Auto-created from template when consumer skills detect missing config.
+
+# --- Tier 1: Engine Traits (platform characteristics) ---
+# Defines WHAT each engine is, not HOW to invoke it.
+# Command construction logic lives in consumer SKILL.md files.
+engines:
+  codex:
+    result_mode: file
+    install_check: "npx -y @openai/codex --version"
+
+  claude:
+    result_mode: stdout
+    install_check: "claude --version"
+
+  gemini:
+    result_mode: stdout
+    install_check: "gemini --version"
+
+# --- Safety: MUST NEVER execute ---
+# Injected into every agent prompt as a prohibition list.
+# Applies regardless of engine or approval mode.
+deny_patterns:
+  - "rm -rf /"
+  - "rm -rf ~"
+  - "rm -rf ."
+  - "rm -rf *"
+  - "git push --force"
+  - "git push -f"
+  - "git reset --hard"
+  - "shutdown"
+  - "reboot"
+  - "> /dev/"
+  - "mkfs"
+  - "dd if="
+  - ":(){:|:&};:"
+
+# --- Tier 2: Role Defaults + Overrides ---
+# Defines WHAT to use for each dispatch context.
+# Default: full permission mode (no tool restriction).
+# Use `tools` to RESTRICT (override full permission with allowlist) if needed.
+defaults:
+  engine: codex
+  timeout: 900
+
+# Role-specific overrides
+# Each role: engine, model, timeout, tools (optional allowlist override)
+roles: {}
+  # review-self:
+  #   engine: codex
+  #   model: gpt-5.3-codex
+  #   timeout: 900
+  # architect:
+  #   engine: claude
+  #   model: claude-sonnet-4-6
+  #   timeout: 1200
+  # inspector:
+  #   engine: codex
+  #   model: gpt-5.3-codex-spark
+  #   timeout: 600
+  #   tools: "Read,Glob,Grep,Bash(git *)"
+  # builder:
+  #   engine: codex
+  #   model: gpt-5.3-codex
+  #   timeout: 1200
+  # auditor:
+  #   engine: claude
+  #   model: claude-sonnet-4-6
+  #   timeout: 900
