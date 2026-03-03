@@ -11,7 +11,7 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 同一 tmux サーバー内で複数の sync-sdd セッション（別リポジトリ or 同一リポジトリ）が並行する場合にチャネル名・ペインタイトルの衝突を防止する。
 
-**生成**: Session Resume Step 5a で `$MY_PANE` から導出。`$SID` = `$MY_PANE` の `%` を除去した数値 (例: pane `%5` → SID `5`)。ファイル永続化は不要 — pane ID 自体が tmux サーバー内で一意。
+**生成**: Session Resume Step 5a で Lead pane ID から導出。`tmux display-message -p '#{pane_id}'` で pane ID を取得し、`%` を除去した数値を `$SID` とする (例: pane `%5` → SID `5`)。ファイル永続化は不要 — pane ID 自体が tmux サーバー内で一意。**注意**: pane ID 取得に `$()` コマンド置換を使わないこと（Claude Code セキュリティ検出でブロックされる）。`tmux display-message` を直接実行し、出力から読み取る。
 
 **Lead pane タイトル**: SID 生成直後に `tmux select-pane -T 'sdd-{SID}-lead'` を実行。他の Lead からの検出に使用。
 
@@ -47,7 +47,7 @@ tmux select-pane -t '{pane_id}' -T '{title}'
 
 ### Grid Structure
 
-4 象限ベース。Lead が top-left 象限を占有し、残りを agent スロットに割り当てる。カラム比 2:1:1 は Lead 数によらず共通。
+5 ゾーン構成 (3 列 6 行)。Lead が top-left 2 列 2 行を占有し、残り 4 ゾーンを agent スロットに割り当てる。カラム比 2:1:1 は Lead 数によらず共通。
 
 **1 Lead** (3 col × 6 row, 14 slots):
 ```

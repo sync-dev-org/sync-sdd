@@ -89,6 +89,8 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
 
     .sdd/settings/rules/         Development rules
     .sdd/settings/templates/     Spec/steering templates
+    .sdd/settings/profiles/      Language/framework profiles
+    .sdd/settings/scripts/       Utility scripts
     .sdd/.version                Installed framework version
 
 ${BOLD}USER FILES${RESET} (never touched by installer):
@@ -133,7 +135,8 @@ if [ "$UNINSTALL" = true ]; then
     rm -f .claude/agents/sdd-*.md
     rm -rf .sdd/settings/rules/ \
            .sdd/settings/templates/ \
-           .sdd/settings/profiles/
+           .sdd/settings/profiles/ \
+           .sdd/settings/scripts/
     rm -f .sdd/.version
     # Also clean old locations (pre-v1.2.0)
     rm -rf .claude/sdd/settings/rules/ \
@@ -513,6 +516,7 @@ fi
 install_dir "$SRC/framework/claude/sdd/settings/rules"     ".sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".sdd/settings/templates"
 install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".sdd/settings/profiles"
+install_dir "$SRC/framework/claude/sdd/settings/scripts"   ".sdd/settings/scripts"
 install_dir "$SRC/framework/claude/agents"     ".claude/agents"
 
 # Write version file
@@ -561,6 +565,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
+    remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*.sh"
     remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal
@@ -582,7 +587,7 @@ printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/skills/      $(find .claude/skills -name 'SKILL.md' -path '*/sdd-*/*' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .sdd/                Rules + templates"
+echo "  .sdd/                Rules, templates, profiles, scripts"
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     echo "  Version:             ${NEW_VERSION}"
 fi

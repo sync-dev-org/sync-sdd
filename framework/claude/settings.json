@@ -57,7 +57,8 @@
       "Bash(npm *)",
       "Bash(npx *)",
       "Bash(date *)",
-      "Bash(bash install.sh *)"
+      "Bash(bash install.sh *)",
+      "Bash(bash .sdd/settings/scripts/*)"
     ]
   }
 }

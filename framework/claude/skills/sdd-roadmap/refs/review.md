@@ -131,6 +131,8 @@ When Auditor verdict contains a `STEERING:` section, process **after** handling 
 
 If an Inspector CPF file contains `VERDICT:ERROR` (Inspector could not execute): treat as "Inspector unavailable" — no findings from that Inspector. Proceed with remaining Inspectors' results. Note in Auditor context that Inspector {name} was unavailable.
 
+**Exception**: If the ERROR CPF also contains C-level (Critical) findings, pass those findings AND the error context to the Auditor. Critical findings indicate the Inspector detected a fatal problem (e.g., missing spec files) before failing — these must not be silently discarded.
+
 ## Verdict Destination by Review Type
 
 All verdict files follow the same pattern: `{scope-dir}/verdicts.md`

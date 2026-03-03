@@ -5,9 +5,10 @@ Orchestration reference. Lead handles pipeline execution directly. References ph
 ## Step 1: Load State
 
 1. Read `roadmap.md` and all `spec.yaml` files
-2. Scan all `spec.yaml` files → rebuild pipeline state from phase/status fields
-3. Build dependency graph from `spec.yaml.roadmap` fields
-4. **DAG validation**: Topological sort the dependency graph. If a cycle is detected, BLOCK with: "Circular dependency detected: {cycle_path}. Fix spec.yaml.roadmap.dependencies before proceeding."
+2. **Empty roadmap guard**: If no `spec.yaml` files exist, BLOCK with: "No specs found in roadmap. Use `/sdd-roadmap create` to add specs."
+3. Scan all `spec.yaml` files → rebuild pipeline state from phase/status fields
+4. Build dependency graph from `spec.yaml.roadmap` fields
+5. **DAG validation**: Topological sort the dependency graph. If a cycle is detected, BLOCK with: "Circular dependency detected: {cycle_path}. Fix spec.yaml.roadmap.dependencies before proceeding."
 
 ## Step 2: Cross-Spec File Ownership Analysis
 
