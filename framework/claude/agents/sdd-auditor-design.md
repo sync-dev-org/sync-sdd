@@ -165,10 +165,8 @@ Example:
 
 Based on VERIFIED findings:
 ```
-IF any Critical issues remain after verification:
+IF any Critical OR High issues remain after verification:
     Verdict = NO-GO
-ELSE IF >3 High issues OR unresolved conflicts:
-    Verdict = CONDITIONAL
 ELSE IF only Medium/Low issues:
     Verdict = GO
 ```

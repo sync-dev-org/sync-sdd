@@ -14,7 +14,7 @@ Verify that tests exist, pass, provide meaningful coverage, and do not produce f
 
 ## Constraints
 
-- Use Read/Write/Edit/Glob/Grep for file operations — do NOT use Bash equivalents (cat, echo, sed, awk, head, tail, find, grep). Bash is for test execution and project commands only.
+- Use Read/Write/Glob/Grep for file operations — do NOT use Bash equivalents (cat, echo, sed, awk, head, tail, find, grep). Bash is for test execution and project commands only.
 - Focus ONLY on test existence, execution, and quality
 - Do NOT verify function signatures or interface contracts
 - Do NOT check spec traceability or task completion

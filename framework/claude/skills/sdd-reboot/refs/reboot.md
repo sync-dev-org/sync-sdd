@@ -117,7 +117,7 @@ For each proposed spec from the report:
 
 ## Phase 7: Design Pipeline (Design-Only Mode)
 
-Reuse the design dispatch loop from `refs/run.md` Step 4, but **skip all implementation phases**. Only Design and Design Review are executed.
+Reuse the design dispatch loop from sdd-roadmap's `refs/run.md` Step 4 (Lead reads that file for the dispatch protocol), but **skip all implementation phases**. Only Design and Design Review are executed.
 
 **Auto-draft policy**: Auto-draft session.md only at wave completion (all specs in wave design-reviewed) and pipeline completion. Skip at individual spec phase completions (same as run.md dispatch loop policy).
 
@@ -267,7 +267,7 @@ Lead generates the final report and presents it for user approval. **This is the
    {CONDITIONAL items that need attention}
 
    ## Next Steps
-   - Accept: commit designs on branch, review the branch, then merge to main when ready and run `/sdd-roadmap run` to implement
+   - Accept: commit designs on branch. You can review the branch diff, merge to main when satisfied, then run `/sdd-roadmap run` to implement
    - Reject: discard branch, return to main
    - Iterate: continue editing designs on this branch
    ```

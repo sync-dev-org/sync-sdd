@@ -170,7 +170,7 @@ env -u CLAUDECODE claude -p - --dangerously-skip-permissions [--model $MODEL] < 
 
 **gemini** (`npx -y @google/gemini-cli` 経由で起動。`-p` で非対話モード、stdin からプロンプトを追加入力):
 ```
-npx -y @google/gemini-cli -p "" --yolo [--model $MODEL] < $PROMPT_FILE
+npx -y @google/gemini-cli -p "Review the project files per the instructions below." --yolo [--model $MODEL] < $PROMPT_FILE
 ```
 ツール制限時: `--yolo` を `--sandbox` に置換。
 
@@ -180,10 +180,10 @@ npx -y @google/gemini-cli -p "" --yolo [--model $MODEL] < $PROMPT_FILE
 
 **tmux mode** (`$TMUX` 設定あり):
 右カラムレイアウトで pane 作成。各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする:
-1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S ch-1"` → 返値が `$P1`
-2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S ch-2"` → 返値が `$P2`
-3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S ch-3"` → 返値が `$P3`
-4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S ch-4"`
+1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S sdd-ext-1"` → 返値が `$P1`
+2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S sdd-ext-2"` → 返値が `$P2`
+3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S sdd-ext-3"` → 返値が `$P3`
+4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S sdd-ext-4"`
 
 各呼び出しの返値 (pane ID) を次の `-t` に使う。パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
 4 pane 作成後、4 つの `tmux wait-for` を background Bash で並行発行し、全完了を待つ。
@@ -346,8 +346,8 @@ ${DENY_PATTERNS_SECTION}
 ### Pane Cleanup
 
 tmux mode の場合:
-1. `tmux list-panes -a -F '#{pane_id} #{pane_current_command}'` で残存ペインを確認
-2. `$MY_PANE` と異なるペインで `sdd-ext-review-` タイトルのものがあれば kill
+1. Step 4 で記録した全ペイン一覧と現在のペイン一覧を比較し、新規に追加されたペインを特定
+2. `$MY_PANE` と異なる新規ペインで、まだ残存しているものがあれば `tmux kill-pane -t {pane_id}` で kill
 
 ## Step 7: Consolidation
 

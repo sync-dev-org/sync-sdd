@@ -33,6 +33,7 @@ $REVIEW_SCOPE:
 - framework/claude/settings.json
 - framework/claude/sdd/settings/rules/*.md
 - framework/claude/sdd/settings/templates/**/*.md
+- framework/claude/sdd/settings/templates/**/*.yaml
 - install.sh
 ```
 

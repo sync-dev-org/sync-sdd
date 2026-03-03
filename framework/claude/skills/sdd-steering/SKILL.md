@@ -58,10 +58,10 @@ Execute full steering creation:
    - Record user's Vision from dialogue
    - Set initial Success Criteria and Anti-Goals
 9. **External engine setup** (optional):
-    If `.sdd/settings/engines.yaml` does not exist:
+    If `{{SDD_DIR}}/settings/engines.yaml` does not exist:
     - Ask: "外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) を設定しますか？"
     - Yes → execute Engines Mode (see below)
-    - No → copy template from `.sdd/settings/templates/engines.yaml` to `.sdd/settings/engines.yaml` (defaults)
+    - No → copy template from `{{SDD_DIR}}/settings/templates/engines.yaml` to `{{SDD_DIR}}/settings/engines.yaml` (defaults)
 10. Present summary (include which profile was applied, if any)
 11. **Publish pipeline offer** (Python profile only):
     If the selected profile is `python`, ask the user if they plan to publish this package to PyPI. If yes, run the following pre-flight checks before invoking `/sdd-publish-setup`:

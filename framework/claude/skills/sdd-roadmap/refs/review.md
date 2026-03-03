@@ -13,9 +13,9 @@ Triggered by:
 Parse review type (`design`/`impl`/`dead-code`), feature name, and options (`--consensus N`, `--cross-check`, `--wave N`).
 
 If first argument after "review" is not one of `design`, `impl`, `dead-code`:
-- Error: "Usage: `/sdd-roadmap review design|impl {feature}` or `/sdd-roadmap review dead-code`"
+- Error: "Usage: `/sdd-roadmap review design|impl {feature} [--consensus N]` or `/sdd-roadmap review design|impl --cross-check` or `/sdd-roadmap review design|impl --wave N` or `/sdd-roadmap review dead-code`"
 
-**1-Spec Roadmap guard**: If review type is `--cross-check` or `--wave N` AND `roadmap.md` contains exactly 1 spec: inform user "Single-spec roadmap — cross-check/wave review has no additional value over single-spec review." and abort.
+**1-Spec Roadmap guard**: If option is `--cross-check` or `--wave N` AND `roadmap.md` contains exactly 1 spec: inform user "Single-spec roadmap — cross-check/wave review has no additional value over single-spec review." and abort.
 
 ## Step 2: Phase Gate
 
@@ -86,7 +86,7 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
 4. Spawn all Inspectors via `Agent(subagent_type=..., run_in_background=true)`. Each context includes:
-   - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
+   - Review output path: `{scope-dir}/active/{inspector-name}.cpf` (consensus: `{scope-dir}/active-{p}/{inspector-name}.cpf`)
    - Feature/scope context
    - **E2E inspector**: no additional context needed (self-loads from steering and design.md)
    - **Web inspectors**: also include server URL
@@ -94,7 +94,7 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 5a. **Web projects (impl review only)**: Stop dev server per Web Inspector Server Protocol above.
 6. Spawn Auditor via `Agent(subagent_type=..., run_in_background=true)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
-   - Verdict output path: `{scope-dir}/active/verdict.cpf`
+   - Verdict output path: `{scope-dir}/active/verdict.cpf` (consensus: `{scope-dir}/active-{p}/verdict.cpf`)
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`
    - Builder SelfCheck warnings (if any, from impl phase): items flagged as WARN during Builder self-validation — treat as attention points, not authoritative findings
 7. Read `{scope-dir}/active/verdict.cpf`

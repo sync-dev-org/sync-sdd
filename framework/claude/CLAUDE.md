@@ -108,7 +108,7 @@ See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
 - **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
-- **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution. Consensus mode (`--consensus N`) dispatches N pipelines in parallel.
+- **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution. Consensus mode (`--consensus N`) dispatches N review pipelines (Inspector sets + Auditor) in parallel for hallucination suppression.
 
 ### SubAgent Failure Handling
 
@@ -274,7 +274,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
    - Absent → first session: skip to step 6
    - Present → resume session: proceed
 2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
-2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked). Also check `{{SDD_DIR}}/project/reviews/*/verdicts.md` for project-level review state (dead-code, cross-check, wave).
+2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked). Also check `{{SDD_DIR}}/project/reviews/*/verdicts.md` for project-level review state (dead-code, cross-check, wave) and `{{SDD_DIR}}/project/specs/.cross-cutting/*/verdicts.md` for cross-cutting revision review state.
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
