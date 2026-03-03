@@ -278,7 +278,7 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5a. If inside tmux (`$TMUX` set): run Orphan Cleanup per `{{SDD_DIR}}/settings/rules/tmux-integration.md`. Prevents port/state conflicts from previous crashed sessions.
+5a. If inside tmux (`$TMUX` set): generate `$SID` from Lead pane ID + run Orphan Cleanup per `{{SDD_DIR}}/settings/rules/tmux-integration.md`. `$SID` ensures session-unique tmux naming; Orphan Cleanup detects and reports stale panes from crashed sessions (user confirmation required before kill).
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
      - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.

@@ -139,6 +139,7 @@ If not found or older than 7 days: `$CACHED_OK` = empty.
 `$TMUX` が設定されている場合のみ実行:
 1. `tmux display-message -p '#{pane_id}'` → `$MY_PANE`
 2. `tmux list-panes -a -F '#{pane_id} #{pane_current_command}'` → 全ペイン一覧を記録
+3. `$SID` = `$MY_PANE` の `%` を除去 (例: `%5` → `5`)。セッション固有 ID として tmux チャネル名に使用
 
 `$TMUX` 未設定の場合はスキップして Step 5 Fallback mode へ。
 
@@ -147,7 +148,7 @@ If not found or older than 7 days: `$CACHED_OK` = empty.
 Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integration.md`.
 
 4 つの外部エンジンインスタンスを並行起動する。各 Agent:
-- Pane title = Channel = `sdd-ext-review-{N}`
+- Pane title = Channel = `sdd-ext-{SID}-{N}` (`$SID` は Step 4 で生成したセッション固有 ID)
 - Prompt file = `$SCOPE_DIR/active/agent-{N}-prompt.txt`
 - CPF file (成果物) = `$SCOPE_DIR/active/agent-{N}-{name}.cpf`
 
@@ -179,12 +180,14 @@ npx -y @google/gemini-cli -p "Review the project files per the instructions belo
 ### Dispatch Mode
 
 **tmux mode** (`$TMUX` 設定あり):
-右カラムレイアウトで pane 作成。各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする:
-1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S sdd-ext-1"` → 返値が `$P1`
-2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S sdd-ext-2"` → 返値が `$P2`
-3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S sdd-ext-3"` → 返値が `$P3`
-4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S sdd-ext-4"`
+各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする:
+1. Agent 1: `tmux split-window -h -d -P -F '#{pane_id}' "{cmd1}; tmux wait-for -S sdd-ext-{SID}-1"` → `$P1`
+2. Agent 2: `tmux split-window -v -d -t $P1 -P -F '#{pane_id}' "{cmd2}; tmux wait-for -S sdd-ext-{SID}-2"` → `$P2`
+3. Agent 3: `tmux split-window -v -d -t $P2 -P -F '#{pane_id}' "{cmd3}; tmux wait-for -S sdd-ext-{SID}-3"` → `$P3`
+4. Agent 4: `tmux split-window -v -d -t $P3 -P -F '#{pane_id}' "{cmd4}; tmux wait-for -S sdd-ext-{SID}-4"`
+5. `tmux select-layout tiled` → Lead 含む全 5 pane を均等グリッド配置
 
+`tiled` は pane インデックス順に配置するため、Lead (`$MY_PANE`, 最小インデックス) が自動的に左上になる。
 各呼び出しの返値 (pane ID) を次の `-t` に使う。パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
 4 pane 作成後、4 つの `tmux wait-for` を background Bash で並行発行し、全完了を待つ。
 
@@ -347,7 +350,9 @@ ${DENY_PATTERNS_SECTION}
 
 tmux mode の場合:
 1. Step 4 で記録した全ペイン一覧と現在のペイン一覧を比較し、新規に追加されたペインを特定
-2. `$MY_PANE` と異なる新規ペインで、まだ残存しているものがあれば `tmux kill-pane -t {pane_id}` で kill
+2. **Lead 保護**: kill 対象は `$MY_PANE` と異なる新規ペインのみ。`$MY_PANE` は絶対に kill しない
+3. 該当ペインがあれば `tmux kill-pane -t {pane_id}` で kill
+4. `tmux select-layout` をリセット（Lead pane が元のフルサイズに戻る）
 
 ## Step 7: Consolidation
 

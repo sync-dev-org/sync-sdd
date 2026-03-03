@@ -6,7 +6,14 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 - Check `$TMUX` is set before using any pattern. If not set, use the documented Fallback.
 - All pane targeting uses **pane ID** (`%N` format) returned by `tmux split-window -P -F '#{pane_id}'`. **Never use index-based targeting** (`-t 1`) — it may kill the wrong pane (including Claude Code itself).
-- Pane title convention: `sdd-{purpose}-{identifier}` (e.g., `sdd-devserver-auth`, `sdd-ext-review`).
+
+### Session ID (`$SID`)
+
+同一 tmux サーバー内で複数の sync-sdd セッション（別リポジトリ or 同一リポジトリ）が並行する場合にチャネル名・ペインタイトルの衝突を防止する。
+
+**生成**: Session Resume Step 5a で `$MY_PANE` から導出。`$SID` = `$MY_PANE` の `%` を除去した数値 (例: pane `%5` → SID `5`)。ファイル永続化は不要 — pane ID 自体が tmux サーバー内で一意。
+
+**命名規則**: `sdd-{SID}-{purpose}-{identifier}` (例: `sdd-5-devserver-auth`, `sdd-5-ext-1`)
 
 ## Shared Operations
 
@@ -14,7 +21,7 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 ```
 tmux list-panes -a -F '#{pane_title} #{pane_id}'
 ```
-Use Grep on output to find target pane by title pattern.
+Use Grep on output to find target pane by title pattern (`sdd-{SID}-` prefix でスコープ).
 
 ### Create Pane with Title
 ```
@@ -40,8 +47,8 @@ Use Grep on output for pattern matching.
 Long-running server in a visible pane with readiness polling. Used for dev servers during web inspector reviews.
 
 ### Start
-1. **Check for existing pane**: List Panes, Grep for `sdd-{purpose}-{identifier}`. If found, reuse it (server already running from retry).
-2. **Port offset** (parallel instances): if other `sdd-{purpose}-*` panes exist, apply `--port {base+N}`. Skip if the server framework does not support port override.
+1. **Check for existing pane**: List Panes, Grep for `sdd-{SID}-{purpose}-{identifier}`. If found, reuse it (server already running from retry).
+2. **Port offset** (parallel instances): if other `sdd-{SID}-{purpose}-*` panes exist, apply `--port {base+N}`. Skip if the server framework does not support port override.
 3. **Create pane**: size 30%, with server command. Store pane ID.
 4. **Poll readiness**: Capture Pane Output, Grep for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
 5. **Record** server URL (e.g., `http://localhost:{port}`).
@@ -61,33 +68,34 @@ External CLI runs in a pane with native progress display, result captured via fi
 ### Concurrency
 
 複数インスタンスが並行する場合、以下を一意にする:
-- **Pane title**: `sdd-{purpose}-{identifier}` (e.g., `sdd-ext-review-1`, `sdd-ext-review-2`)
-- **Wait-for channel**: pane title と同じ値を使う (e.g., `sdd-ext-review-1`)
+- **Pane title**: `sdd-{SID}-{purpose}-{identifier}` (e.g., `sdd-a3f7b2c1-ext-1`)
+- **Wait-for channel**: pane title と同じ値を使う
 - **Result file**: プロジェクト内のスコープディレクトリに置く。`/tmp` 等のプロジェクト外パスは使わない
 
 ### Multi-Pane Layout
 
-複数 pane を並行起動する場合、右カラムレイアウトを使う:
-1. **1st pane**: `tmux split-window -h` (右に分割) → Lead の左カラムを維持
-2. **2nd+ pane**: `tmux split-window -v -t $PREV_PANE` (直前の pane を下方向に分割)
+複数 pane を並行起動する場合、tiled レイアウトを使う:
+1. 任意の分割順序で必要数の pane を作成
+2. 全 pane 作成後に `tmux select-layout tiled` → Lead 含む全 pane を均等グリッド配置
 
-これにより全 Agent pane が右カラムに縦積みされ、Lead の作業エリアを圧迫しない。
+`tiled` は pane インデックス順に配置するため、Lead (最小インデックス) が自動的に左上になる。
 
 ### Auto-Approval Pattern
 
 各 Bash 呼び出しを `tmux` で開始すること。settings.json の `Bash(tmux *)` にマッチし承認不要になる。変数代入 (`SD=... &&`) やコマンド置換 (`P1=$(tmux ...)`) をコマンド先頭に置くとパターン不一致で承認を求められる。パスはインラインで記述する。
 
 ### Execute
-1. **Prepare**: 一意な識別子を決め、pane title / channel / result file path を導出する。結果ファイルはスコープディレクトリ内に配置する。
-2. **Create pane**: Append `; tmux wait-for -S {channel}` to signal completion. Multi-Pane Layout に従い、1st は `-h`、2nd 以降は `-v -t $PREV_PANE` を使う。各呼び出しは `tmux` で開始する（Auto-Approval Pattern）。
+1. **Prepare**: `$SID` + 目的固有の識別子から pane title / channel / result file path を導出する。結果ファイルはスコープディレクトリ内に配置する。
+2. **Create pane**: Append `; tmux wait-for -S {channel}` to signal completion. 各呼び出しは `tmux` で開始する（Auto-Approval Pattern）。
    ```
-   tmux split-window -d {-h or -v -t $PREV} -P -F '#{pane_id}' \
+   tmux split-window -d {split-flags} -P -F '#{pane_id}' \
      '{command}; tmux wait-for -S {channel}'
    ```
    Bash 返値 = pane ID。次の呼び出しの `-t` に使う。
-3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: create all panes first (steps 1-2 for each), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel to wait for all channels concurrently.
-4. **Read result file**.
-5. **Cleanup**: Pane typically auto-closes on command exit. If still alive, Kill Pane by stored ID.
+3. **Layout**: 全 pane 作成後に `tmux select-layout tiled` (Multi-Pane Layout)。
+4. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: create all panes first (steps 1-3), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel to wait for all channels concurrently.
+5. **Read result file**.
+6. **Cleanup**: Pane typically auto-closes on command exit. If still alive, Kill Pane by stored ID.
 
 ### Fallback (no tmux)
 1. Run command via `Bash()` with appropriate timeout. 結果ファイルは同じスコープディレクトリ内に書き出す。
@@ -98,8 +106,9 @@ External CLI runs in a pane with native progress display, result captured via fi
 
 On session resume (when `$TMUX` set):
 
-1. List Panes, Grep for `sdd-`.
-2. Extract pane IDs from matches.
-3. Kill each with Kill Pane.
-
-`sdd-` prefix で全パターン (devserver, ext, 将来追加分) を一括検出する。セッション再開時点で残存しているペインは前回のクラッシュ由来であり、安全に kill できる。
+1. List Panes, Grep for `sdd-` prefix のタイトルを持つペインを列挙
+2. 各タイトルから SID (= Lead pane ID) を抽出 (`sdd-{SID}-...` の `{SID}` 部分)
+3. 抽出した SID ごとに `%{SID}` ペインが現存するか確認
+4. 存在しない → 前セッションの孤児ペイン。存在する → 別のアクティブセッション → skip
+5. 孤児ペインが見つかった場合、**ユーザーに確認**: 「{N} 個の孤児ペインが見つかりました (前セッション SID: {SID})。kill しますか？」
+6. ユーザーが承認 → Kill Pane。拒否 → skip
