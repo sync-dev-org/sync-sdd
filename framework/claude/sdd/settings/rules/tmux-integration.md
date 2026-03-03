@@ -47,50 +47,30 @@ tmux select-pane -t '{pane_id}' -T '{title}'
 
 ### Grid Structure
 
-5 ゾーン構成 (3 列 6 行)。Lead が top-left 2 列 2 行を占有し、残り 4 ゾーンを agent スロットに割り当てる。カラム比 2:1:1 は Lead 数によらず共通。
+4 象限ベース (2 列 × 2 行)。Lead が左上象限を占有し、残り 3 象限を田の字 (2×2) に細分化して agent スロットに割り当てる。
 
-**1 Lead** (3 col × 6 row, 14 slots):
 ```
-┌───────────────────────────────┬───────────────┐
-│                               │      S1       │
-│           Lead                ├───────────────┤
-│                               │      S2       │
-├───────────────┬───────────────┼───────────────┤
-│      S3       │      S4       │      S5       │
-├───────────────┼───────────────┼───────────────┤
-│      S6       │      S7       │      S8       │
-├───────────────┼───────────────┼───────────────┤
-│      S9       │     S10       │     S11       │
-├───────────────┼───────────────┼───────────────┤
-│     S12       │     S13       │     S14       │
-└───────────────┴───────────────┴───────────────┘
+┌─────────────────────┬──────────┬──────────┐
+│                     │    S1    │    S2    │
+│                     ├──────────┼──────────┤
+│        Lead         │    S3    │    S4    │
+│                     │          │          │
+├──────────┬──────────┼──────────┼──────────┤
+│    S5    │    S6    │    S9    │   S10    │
+│          │          │          │          │
+├──────────┼──────────┼──────────┼──────────┤
+│    S7    │    S8    │   S11    │   S12    │
+│          │          │          │          │
+└──────────┴──────────┴──────────┴──────────┘
 ```
 
-**2 Lead** (6 col × 6 row, 14 slots/Lead):
-```
-┌───────────────┬───────┬───────────────┬───────┐
-│               │  A-1  │               │  B-1  │
-│    Lead A     ├───────┤    Lead B     ├───────┤
-│               │  A-2  │               │  B-2  │
-├───────┬───────┼───────┼───────┬───────┼───────┤
-│  A-3  │  A-4  │  A-5  │  B-3  │  B-4  │  B-5  │
-├───────┼───────┼───────┼───────┼───────┼───────┤
-│  A-6  │  A-7  │  A-8  │  B-6  │  B-7  │  B-8  │
-├───────┼───────┼───────┼───────┼───────┼───────┤
-│  A-9  │ A-10  │ A-11  │  B-9  │ B-10  │ B-11  │
-├───────┼───────┼───────┼───────┼───────┼───────┤
-│ A-12  │ A-13  │ A-14  │ B-12  │ B-13  │ B-14  │
-└───────┴───────┴───────┴───────┴───────┴───────┘
-```
+| 項目 | 値 |
+|---|---|
+| Lead サイズ | 120w × 32h |
+| Slot サイズ | 60w × 16h |
+| Max slots | 12 |
 
-| | 1 Lead | 2 Lead |
-|---|---|---|
-| カラム | 3 (80w) | 6 (40w) |
-| Lead サイズ | 160w × top 1/3 | 80w × top 1/3 |
-| Max slots | 14 | 14/Lead |
-| Slot サイズ | 80w | 40w |
-
-**Max Lead: 2**。3 Lead 以上は MultiView なしで動作（全 agent が `run_in_background` フォールバック）。
+**Max Lead: 1**。2 Lead 以上は MultiView なしで動作（全 agent が `run_in_background` フォールバック）。
 
 ### Grid Creation
 
@@ -100,20 +80,17 @@ Session Resume Step 5a で `$SID` 生成・Lead pane タイトル設定後に実
 ```
 bash {{SDD_DIR}}/settings/scripts/multiview-grid.sh $SID $MY_PANE
 ```
-出力: `slot-{N}:{pane_id}` (N = 1-14)。Lead はこの出力を parse してスロット管理テーブルを構築する。
+出力: `slot-{N}:{pane_id}` (N = 1-12)。Lead はこの出力を parse してスロット管理テーブルを構築する。
 
 **スクリプトの処理手順** (参考):
-1. **Lead 検出**: List Panes → `sdd-*-lead` を Grep。自分以外の Lead が 2 以上 → grid 作成スキップ
-2. **Top/Bottom 分割**: Lead pane を `-v -p 67` で分割 → Lead(top 33%) | BOTTOM(67%)
-3. **Top-right スロット列**: Lead pane を `-h -p 33` で分割 → Lead(67%w) | RIGHT(33%w)
-4. **S1/S2**: RIGHT を `-v -p 50` で分割
-5. **Bottom 3 等分列**: BOTTOM を `-h -p 67` → LEFT | MID_RIGHT。MID_RIGHT を `-h -p 50` → MID | RIGHT_COL
-6. **各列 4 行**: 各 column を `-v -p 75`, `-v -p 67`, `-v -p 50` で順次分割
-7. **タイトル設定**: Lead pane → `sdd-{SID}-lead`、全スロット pane → `sdd-{SID}-slot-{N}` (N = 1-14)
+1. **4 象限分割**: Lead pane を `-v -p 50` (上下) → Lead | BOTTOM。Lead を `-h -p 50` (左右) → Lead | RIGHT
+2. **TR 象限 (S1-S4)**: RIGHT を `-v -p 50` → TR_TOP | TR_BOT。各行を `-h -p 50` で 2 分割
+3. **BL/BR 象限 (S5-S12)**: BOTTOM を `-v -p 50` → BL_TOP | BL_BOT。各行を `-h -p 50` で左右分割し BL/BR を形成。各セルをさらに `-h -p 50` で 2 分割
+4. **タイトル設定**: Lead pane → `sdd-{SID}-lead`、全スロット pane → `sdd-{SID}-slot-{N}` (N = 1-12)
 
 全スロットは idle shell 状態で待機。Grid Creation 完了後、Lead はスロット一覧 `{slot_number, pane_id, status: idle}` を保持する。
 
-**検証済み寸法** (240w × 65h terminal): Lead 160w × 21h, Slots 78-80w × 10h。
+**検証済み寸法** (240w × 65h terminal): Lead 120w × 32h, Slots 60w × 16h。
 
 ### Slot Management
 
@@ -123,7 +100,7 @@ bash {{SDD_DIR}}/settings/scripts/multiview-grid.sh $SID $MY_PANE
 | **Wait** | `tmux wait-for {channel}` (blocking) |
 | **Release** | 自動 — コマンド完了後 shell が idle に戻る |
 | **Reuse** | idle スロットを次の agent に割り当て |
-| **Overflow** | 14 slots 全て busy → `Bash(run_in_background=true)` にフォールバック |
+| **Overflow** | 12 slots 全て busy → `Bash(run_in_background=true)` にフォールバック |
 
 Lead はスロット状態を追跡: `{slot_number, pane_id, status: idle|busy, channel}`。
 
