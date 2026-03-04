@@ -278,7 +278,11 @@ On session start (new Claude Code session, conversation compact, or `/sdd-handov
 3. Read latest N entries from `decisions.md` → recent decision history
 4. Read `buffer.md` → pending knowledge tags
 5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5a. If inside tmux (`$TMUX` set): generate `$SID` from Lead pane ID + run Orphan Cleanup per `{{SDD_DIR}}/settings/rules/tmux-integration.md`. `$SID` ensures session-unique tmux naming; Orphan Cleanup detects and reports stale panes from crashed sessions (user confirmation required before kill).
+5a. If inside tmux (`$TMUX` set): tmux 初期化を実行 per `{{SDD_DIR}}/settings/rules/tmux-integration.md`:
+     1. **SID 生成**: `date +%H%M%S` を実行し出力を `$SID` とする（セッション固有の一意 ID）
+     2. **Lead タイトル設定**: `tmux select-pane -T 'sdd-{SID}-lead'`
+     3. **Orphan Cleanup**: 前セッションの残存ペインを検出・報告（ユーザー確認後に kill）
+     4. **Grid Creation**: `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE` でスロットグリッド作成。出力を parse してスロット管理テーブルを構築
 6. Append `SESSION_START` to `decisions.md`
 7. If roadmap pipeline was active (session.md indicates run/revise in progress):
      - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
