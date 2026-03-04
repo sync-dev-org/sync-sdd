@@ -162,11 +162,35 @@ External CLI runs in a MultiView スロットで実行。native progress display
    tmux send-keys -t {slot_pane_id} '{command}; tmux wait-for -S {channel}' Enter
    ```
 3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: assign all agents to slots first (step 2), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel.
-   - **tmux throttle**: 複数の `send-keys` や `wait-for` を連続発行する場合、各コマンドの間に `sleep 1` を挟む。tmux は短時間のコマンド連発で詰まることがある。
+   - **Staggered Parallel Dispatch**: 複数の `send-keys` や `wait-for` を発行する場合、sleep プレフィックスで 0.5 秒刻みにずらし、単一メッセージの並列 Bash 呼び出しで一括発行する（Lead のターン消費 1 回）:
+     ```
+     Bash: sleep 0.0; tmux send-keys -t {pane1} '...' Enter
+     Bash: sleep 0.5; tmux send-keys -t {pane2} '...' Enter
+     Bash: sleep 1.0; tmux send-keys -t {pane3} '...' Enter
+     ```
+     tmux は短時間のコマンド連発で詰まることがあるため、stagger が必要。逐次発行 (send-keys → sleep → send-keys) はターンを浪費するので使わない。
 4. **Read result file**.
 5. スロットは自動的に idle に戻る。
 
 Overflow (全スロット busy): `Bash(run_in_background=true)` で実行。結果ファイルは同じスコープディレクトリ内。
+
+### Template Variable Expansion in send-keys
+
+send-keys 内のコマンドは pane のシェルで実行されるため、Claude Code のセキュリティヒューリスティクス (`$()` / `${}` 禁止) は適用されない。テンプレートファイルのプレースホルダーを動的値で置換して外部エンジンに渡す場合、2つの方式がある:
+
+**方式 A: sed ワンライナー** — 値が単一行のとき最も効率的 (Lead の Read/Write ゼロ)
+```
+tmux send-keys -t {pane} 'sed "s|{{PLACEHOLDER}}|{value}|g" template.md | cat shared.md - | ENGINE_CMD; tmux wait-for -S {channel}' Enter
+```
+- BSD sed (macOS) の `s` コマンドは置換文字列に literal newline を入れられない。**値が単一行の場合のみ使用可**
+- 区切り文字は `|` を使用（値に `/` が含まれうるため）
+
+**方式 B: Prep Agent 展開** — 値が複数行、または複数テンプレートに同じ値を展開するとき
+1. Prep Agent がテンプレートを読み込み、プレースホルダーを展開して `active/` に書き出す
+2. Lead の dispatch は全 Agent 同一パターン: `cat shared active/agent-N.md | ENGINE_CMD`
+3. sed 分岐・改行判定ロジックが不要になり、dispatch が大幅に簡素化される
+
+sdd-review-self は方式 B を採用 (v2.1.2)。方式 A は値が常に単一行であることが保証できるケースで有用。
 
 ### Fallback (no tmux)
 1. Run command via `Bash()` with appropriate timeout. 結果ファイルは同じスコープディレクトリ内に書き出す。

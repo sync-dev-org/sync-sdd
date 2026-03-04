@@ -319,7 +319,11 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
 - **tmux Integration**: Lead uses tmux for pane-based orchestration when `$TMUX` is set. Patterns: Server Lifecycle (long-running server), One-Shot Command (external CLI with progress display). Falls back to `Bash(run_in_background=true)` when not in tmux. Full patterns: `{{SDD_DIR}}/settings/rules/tmux-integration.md`
-- **Avoid `$()` and `${}` in Bash commands**: `$()` コマンド置換・`${}` パラメータ置換は Claude Code のセキュリティ検出で承認プロンプトが出る（allow リストで override 不可）。コミットメッセージは `git commit -m "メッセージ"` で直接渡す。HEREDOC+cat パターン (`git commit -m "$(cat <<'EOF'...)"`) は使わない。`${VAR:-default}` は `echo "$VAR"` や `printenv VAR` で代替する。
+- **Bash セキュリティヒューリスティクス回避**: Claude Code のセキュリティ検出は settings.json allow リストより優先される。以下のパターンは承認プロンプトを誘発するため避ける:
+  - `$()` コマンド置換・`${}` パラメータ置換 → コミットメッセージは `git commit -m "メッセージ"` で直接渡す。`${VAR:-default}` は `echo "$VAR"` や `printenv VAR` で代替
+  - `--count` 等の一部フラグ名 → "quoted characters in flag names" 誤検出。`git rev-list --count` は避け、代替手段を使う
+  - `&&` によるコマンド連結 → 引用符とフラグの組み合わせが誤検出を悪化させる。独立したコマンドは並列 Bash 呼び出しで実行する
+  - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
 
 ## Git Workflow

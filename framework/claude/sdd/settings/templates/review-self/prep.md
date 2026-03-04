@@ -74,24 +74,30 @@ Report findings in Japanese.
 
 Store the result as CACHED_OK.
 
-## Step 6: Save Dynamic Values
+## Step 6: Build Agent Prompts
 
-Write the dynamic placeholder values to files so Lead can inject them during dispatch:
+Read each agent template from `.sdd/settings/templates/review-self/`, replace placeholders with the values collected earlier, and write the dispatch-ready prompts to `active/`:
 
-1. Write FOCUS_TARGETS (from Step 1) to `.sdd/project/reviews/self/active/focus-targets.md`
-2. Write CACHED_OK (from Step 5) to `.sdd/project/reviews/self/active/cached-ok.md`
+| Template | Output | Placeholders |
+|----------|--------|-------------|
+| `agent-1-flow.md` | `active/agent-1-flow.md` | (none) |
+| `agent-2-changes.md` | `active/agent-2-changes.md` | `{{FOCUS_TARGETS}}` → FOCUS_TARGETS (Step 1) |
+| `agent-3-consistency.md` | `active/agent-3-consistency.md` | (none) |
+| `agent-4-compliance.md` | `active/agent-4-compliance.md` | `{{CACHED_OK}}` → CACHED_OK (Step 5) |
 
-Note: Agent templates are NOT copied to active/. Lead reads templates directly from `.sdd/settings/templates/review-self/` and injects these values inline during dispatch.
+For templates with no placeholders, copy the content as-is.
 
 ## Step 7: Verify & Complete
 
 Verify all required files exist in `.sdd/project/reviews/self/active/`:
 - shared-prompt.md
-- focus-targets.md
-- cached-ok.md
+- agent-1-flow.md
+- agent-2-changes.md
+- agent-3-consistency.md
+- agent-4-compliance.md
 
 Print to stdout:
 ```
 EXT_PREP_COMPLETE
-FILES: shared-prompt.md, focus-targets.md, cached-ok.md
+FILES: shared-prompt.md, agent-1-flow.md, agent-2-changes.md, agent-3-consistency.md, agent-4-compliance.md
 ```

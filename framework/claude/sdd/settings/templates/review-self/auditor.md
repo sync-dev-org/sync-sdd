@@ -64,7 +64,7 @@ Use this format:
 
 ```markdown
 # SDD Framework Self-Review Report
-**Date**: {current date ISO-8601} | **Engine**: {{ENGINE_INFO}} | **Pipeline**: agent
+**Date**: {current date ISO-8601}
 **Agents**: 4 dispatched, {N completed} completed
 
 ## False Positives Eliminated
