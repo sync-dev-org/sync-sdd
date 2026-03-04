@@ -63,7 +63,7 @@ If a stage uses a different engine from base, verify that engine's `install_chec
 
 In lead pipeline, per-stage overrides are ignored — all stages use base `$ENGINE_CMD`.
 
-5. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.md`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
+5. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.md`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions. (Note: `$SCOPE_DIR` is defined in Steps 1-3 section below.)
 
 6. Report resolved config:
 ```
@@ -118,6 +118,7 @@ framework/claude/settings.json
 framework/claude/sdd/settings/rules/*.md
 framework/claude/sdd/settings/templates/**/*.md
 framework/claude/sdd/settings/templates/**/*.yaml
+framework/claude/sdd/settings/scripts/*.sh
 install.sh
 ```
 
@@ -161,6 +162,8 @@ Report findings in Japanese.
 
 3. Agent 2 (agent-2-changes.md) の `${FOCUS_TARGETS}` を置換:
    `sed -i '' 's|${FOCUS_TARGETS}|{$FOCUS_TARGETS の内容}|g' $SCOPE_DIR/active/agent-2-changes.md`
+
+   **Note**: `${FOCUS_TARGETS}` と `${CACHED_OK}` の値は sed-safe であること（改行、`&`、`|`、パイプ区切り文字を含まない）。
 
 4. Agent 4 (agent-4-compliance.md) の `${CACHED_OK}` を置換:
    `sed -i '' 's|${CACHED_OK}|{$CACHED_OK の内容}|g' $SCOPE_DIR/active/agent-4-compliance.md`
@@ -264,9 +267,11 @@ MultiView スロットに `send-keys` で agent コマンドを投入する (Hol
 tmux send-keys -t {slot_pane_id} 'cat {shared} {agent-N} | {$INSPECTOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-ext-{N}-B{seq}; tmux wait-for sdd-{SID}-close-B{seq}' Enter
 ```
 
+**tmux throttle**: 各 `send-keys` の間に `sleep 1` を挟む（tmux が短時間のコマンド連発で詰まるのを防止）。
+
 4 Agent 分の `send-keys` を発行後:
 1. send-keys ゾンビ確認: `pgrep -fl "tmux send-keys"` → 検出時はユーザーに報告し kill
-2. 4 つの `tmux wait-for sdd-{SID}-ext-{N}-B{seq}` を background Bash で並行発行し、全 Agent 完了を待つ。
+2. 4 つの `tmux wait-for sdd-{SID}-ext-{N}-B{seq}` を background Bash で並行発行し、全 Agent 完了を待つ。各 `wait-for` の間にも `sleep 1` を挟む。
 
 パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
 
@@ -353,8 +358,8 @@ CPF の severity コードをそのまま使用。重複マージ時は最も高
    ```
 4. 完了待ち: `tmux wait-for sdd-{SID}-ext-auditor-B{seq}` (background)
 5. 完了後の検証:
-   - `$SCOPE_DIR/active/report.md` の存在を確認
-   - 欠損 → Auditor 失敗。Lead Pipeline にフォールバックして Step 7 を inline 実行
+   - `$SCOPE_DIR/active/report.md` と `$SCOPE_DIR/active/verdict-data.txt` の存在を確認
+   - いずれか欠損 → Auditor 失敗。Lead Pipeline にフォールバックして Step 7 を inline 実行
 6. `report.md` を Read → Step 8 へ進む
 
 ## Step 8: Report Output + Verdict Persistence

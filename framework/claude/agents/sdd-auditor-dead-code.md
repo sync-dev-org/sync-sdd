@@ -128,7 +128,7 @@ Based on VERIFIED findings:
 ```
 IF any Critical issues remain after verification:
     Verdict = NO-GO
-ELSE IF >3 High issues OR significant spec drift:
+ELSE IF >=1 High issues OR significant spec drift:
     Verdict = CONDITIONAL
 ELSE IF only Medium/Low issues:
     Verdict = GO

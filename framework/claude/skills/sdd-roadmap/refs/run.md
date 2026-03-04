@@ -191,7 +191,6 @@ Handle verdict:
 - In **gate mode**: pause for user approval before advancing
 
 Process `STEERING:` entries from verdict.
-For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 #### Implementation completion
 Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
@@ -207,7 +206,6 @@ Handle verdict:
 - In **gate mode**: pause for user approval
 
 Process `STEERING:` entries from verdict.
-For `--consensus N`, apply Consensus Mode protocol (see Router).
 
 ## Step 5: Auto/Gate Mode Handling
 
@@ -237,7 +235,7 @@ When a spec fails after exhausting retries:
 
 **1-Spec Roadmap**: Skip this step (see Router §1-Spec Roadmap Optimizations). Proceed to Post-gate.
 
-Wave completion condition: all specs `implementation-complete` or `blocked`.
+Wave completion condition: all specs `implementation-complete` or `blocked`. `blocked` specs are excluded from cross-check and dead-code review scope (they are handled by Blocking Protocol, not Wave QG).
 
 **a. Impl Cross-Check Review** (wave-scoped):
 1. Execute impl review per `refs/review.md` (Impl Review, wave-scoped context: Waves 1..N, previously-resolved tracking)

@@ -207,7 +207,7 @@ Rules:
 
 Example:
 ```
-VERDICT:CONDITIONAL
+VERDICT:NO-GO
 SCOPE:my-feature
 VERIFIED:
 architecture+testability|C|interface-contract|AuthService→UserStore|missing error type

@@ -112,8 +112,8 @@ Lead はスロット状態を追跡: `{slot_number, pane_id, status: idle|busy, 
 ```
 {command}; tmux wait-for -S {channel}; tmux wait-for {close-channel}
 ```
-- `{channel}`: Agent 固有の完了シグナル (e.g., `sdd-{SID}-ext-1`)
-- `{close-channel}`: 全 Agent 共有の解放シグナル (e.g., `sdd-{SID}-close`)
+- `{channel}`: Agent 固有の完了シグナル (e.g., `sdd-{SID}-ext-1-B{seq}`)
+- `{close-channel}`: 全 Agent 共有の解放シグナル (e.g., `sdd-{SID}-close-B{seq}`)
 
 **Lead flow**:
 1. 全 Agent の完了シグナルを待つ
@@ -162,6 +162,7 @@ External CLI runs in a MultiView スロットで実行。native progress display
    tmux send-keys -t {slot_pane_id} '{command}; tmux wait-for -S {channel}' Enter
    ```
 3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: assign all agents to slots first (step 2), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel.
+   - **tmux throttle**: 複数の `send-keys` や `wait-for` を連続発行する場合、各コマンドの間に `sleep 1` を挟む。tmux は短時間のコマンド連発で詰まることがある。
 4. **Read result file**.
 5. スロットは自動的に idle に戻る。
 

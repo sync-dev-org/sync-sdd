@@ -10,7 +10,7 @@ Triggered by: `$ARGUMENTS = "design {feature-or-description}"`
 2. Determine mode:
    - If spec was **just auto-created** by Single-Spec Roadmap Ensure (phase = `initialized`, no `design.md`) → **New Spec mode**
    - If spec existed before with `design.md` → **Existing Spec mode** (edit/regenerate)
-   - If spec existed before without `design.md` (e.g., created by `create` with skeleton only) → **New Spec mode**
+   - If spec existed before without `design.md` (e.g., created by `create` — note: `create` always generates a skeleton `design.md`, but it may be empty/minimal) → **New Spec mode**
 
 ## Step 2: Phase Gate
 

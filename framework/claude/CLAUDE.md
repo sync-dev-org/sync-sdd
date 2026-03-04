@@ -108,7 +108,7 @@ See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
 - **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
-- **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution. Consensus mode (`--consensus N`) dispatches N review pipelines (Inspector sets + Auditor) in parallel for hallucination suppression.
+- **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution.
 
 ### SubAgent Failure Handling
 
@@ -132,7 +132,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 |----------|-------|---------|----------|
 | **Steering** | Project-specific | Project-wide rules, context, decisions | No |
 | **Specs** | Feature-specific | Design + architecture + tasks for a feature | No |
-| **Verdicts** | Feature/Wave-specific | Review verdicts, consensus findings, issue tracking | No |
+| **Verdicts** | Feature/Wave-specific | Review verdicts, issue tracking | No |
 
 - Project-specific decisions (tech stack, architecture) → Steering
 - Feature implementation details → Specs

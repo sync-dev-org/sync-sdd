@@ -1,7 +1,7 @@
 ---
 description: Unified spec lifecycle (design, implement, review, roadmap management)
 allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
-argument-hint: design <feature> | impl <feature> [tasks] | review design|impl <feature> [flags] | review dead-code [flags] | run [--gate] [--consensus N] | revise [feature] [instructions] | create [-y] | update | delete | -y
+argument-hint: design <feature> | impl <feature> [tasks] | review design|impl <feature> [flags] | review dead-code | run [--gate] | revise [feature] [instructions] | create [-y] | update | delete | -y
 ---
 
 # SDD Roadmap (Unified Entry Point)
@@ -19,9 +19,8 @@ Unified entry point for all spec lifecycle operations. Roadmap is always require
 $ARGUMENTS = "design {feature-or-description}"     → Design Subcommand
 $ARGUMENTS = "impl {feature} [task-numbers]"        → Impl Subcommand
 $ARGUMENTS = "review design {feature}"              → Review Subcommand
-$ARGUMENTS = "review impl {feature} [tasks]"        → Review Subcommand
+$ARGUMENTS = "review impl {feature}"                → Review Subcommand
 $ARGUMENTS = "review dead-code"                      → Review Subcommand
-$ARGUMENTS = "review {type} {feature} --consensus N" → Review Subcommand
 $ARGUMENTS = "review design --cross-check"          → Review Subcommand
 $ARGUMENTS = "review impl --cross-check"            → Review Subcommand
 $ARGUMENTS = "review design --wave N"               → Review Subcommand
@@ -30,7 +29,6 @@ $ARGUMENTS = "review impl --wave N"                 → Review Subcommand
 # Management subcommands
 $ARGUMENTS = "run"              → Run Mode
 $ARGUMENTS = "run --gate"       → Run Mode
-$ARGUMENTS = "run --consensus N" → Run Mode
 $ARGUMENTS = "revise {feature} [instructions]" → Revise Mode (Single-Spec) — first word matches a spec name in specs/
 $ARGUMENTS = "revise [instructions]"             → Revise Mode (Cross-Cutting) — first word does not match any spec name
 $ARGUMENTS = "create" or "create -y" → Create Mode
@@ -108,34 +106,17 @@ Then follow the instructions in the loaded file.
 
 ## Shared Protocols
 
-### Consensus Mode (`--consensus N`)
-
-When `--consensus N` is provided (default threshold: ⌈N×0.6⌉):
-
-1. Determine review scope directory (see `refs/review.md` Step 1) and B{seq} from `{scope-dir}/verdicts.md` (increment max existing, or start at 1)
-2. For each pipeline `p` (1..N): create review directory `{scope-dir}/active-{p}/`
-3. Spawn N sets of Inspectors in parallel. Each Inspector set writes to its own `{scope-dir}/active-{p}/` directory
-4. For each pipeline: after all Inspector Tasks complete, spawn Auditor with `{scope-dir}/active-{p}/` as input and `{scope-dir}/active-{p}/verdict.cpf` as output
-5. Read all N `verdict.cpf` files. Aggregate VERIFIED sections:
-   - Key by `{category}|{location}`, count frequency
-   - Confirmed (freq ≥ threshold) → Consensus. Noise (freq < threshold)
-6. Consensus verdict: no findings above threshold → GO; any C/H findings ≥ threshold → NO-GO; only M/L findings ≥ threshold → CONDITIONAL
-7. Proceed to verdict handling with consensus verdict (archive is handled by review.md Step 9)
-
-N=1 (default): use `specs/{feature}/reviews/active/` (no `-{p}` suffix). Archive handled by review.md Step 9.
-
 ### Verdict Persistence Format
 
 a. Read existing file (or create with `# Verdicts: {feature}` header)
 b. Determine B{seq} (increment max existing, or start at 1)
 c. Append batch entry header:
-   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | runs:{N} | threshold:{K}/{N}` (omit `runs:` and `threshold:` when not using `--consensus`)
+   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version}`
    - Wave QG cross-check: `## [W{wave}-B{seq}] ...` (see run.md Step 7a)
    - Wave QG dead-code: `## [W{wave}-DC-B{seq}] ...` (see run.md Step 7b)
    - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 8)
-d. Append Raw section (Auditor CPF verdicts verbatim)
-e. Append Consensus section (findings with freq ≥ threshold) and Noise section
-f. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
+d. Append Raw section (Auditor CPF verdict verbatim)
+e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
 g. For CONDITIONAL: extract M/L issues → append as Tracked section
 h. If previous batch exists with Tracked: compare → append `Resolved since B{prev}`
 

@@ -3,23 +3,23 @@
 Phase execution reference. Canonical source for ALL review types. Assumes Single-Spec Roadmap Ensure already completed by router (except dead-code/cross-check/wave which skip enrollment).
 
 Triggered by:
-- `$ARGUMENTS = "review design|impl {feature} [options]"` — single-spec review
-- `$ARGUMENTS = "review design|impl --cross-check [options]"` — cross-check across all specs (no feature name)
-- `$ARGUMENTS = "review design|impl --wave N [options]"` — wave-scoped review (no feature name)
-- `$ARGUMENTS = "review dead-code [options]"` — dead-code review
+- `$ARGUMENTS = "review design|impl {feature}"` — single-spec review
+- `$ARGUMENTS = "review design|impl --cross-check"` — cross-check across all specs (no feature name)
+- `$ARGUMENTS = "review design|impl --wave N"` — wave-scoped review (no feature name)
+- `$ARGUMENTS = "review dead-code"` — dead-code review
 
 ## Step 1: Parse Arguments
 
-Parse review type (`design`/`impl`/`dead-code`), feature name, and options (`--consensus N`, `--cross-check`, `--wave N`).
+Parse review type (`design`/`impl`/`dead-code`), feature name, and options (`--cross-check`, `--wave N`).
 
 If first argument after "review" is not one of `design`, `impl`, `dead-code`:
-- Error: "Usage: `/sdd-roadmap review design|impl {feature} [--consensus N]` or `/sdd-roadmap review design|impl --cross-check` or `/sdd-roadmap review design|impl --wave N` or `/sdd-roadmap review dead-code`"
+- Error: "Usage: `/sdd-roadmap review design|impl {feature}` or `/sdd-roadmap review design|impl --cross-check` or `/sdd-roadmap review design|impl --wave N` or `/sdd-roadmap review dead-code`"
 
 **1-Spec Roadmap guard**: If option is `--cross-check` or `--wave N` AND `roadmap.md` contains exactly 1 spec: inform user "Single-spec roadmap — cross-check/wave review has no additional value over single-spec review." and abort.
 
 ## Step 2: Phase Gate
 
-**Design Review**: Verify `design.md` exists. BLOCK if `spec.yaml.phase` is `blocked`.
+**Design Review**: Verify `design.md` exists. Verify `phase` is `design-generated` or `implementation-complete`. BLOCK if `spec.yaml.phase` is `blocked`.
 **Implementation Review**: Verify `design.md` and `tasks.yaml` exist. Verify `phase` is `implementation-complete`. BLOCK if `blocked`.
 **Dead Code Review**: No phase gate (operates on entire codebase). Roadmap must exist (Router blocks if absent — see SKILL.md).
 
@@ -81,12 +81,12 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
    - **Project-level** (dead-code): `{{SDD_DIR}}/project/reviews/dead-code/` (standalone). When called from Wave QG (run.md Step 7b): use `{{SDD_DIR}}/project/reviews/wave/` instead.
    - **Project-level** (cross-check via `--cross-check`): `{{SDD_DIR}}/project/reviews/cross-check/`
    - **Project-level** (wave-scoped via `--wave N`): `{{SDD_DIR}}/project/reviews/wave/`
-   - **Project-level** (cross-cutting from revise.md): `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/reviews/`
-2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1). For consensus mode: Router determines B{seq} once and passes it to all N pipelines (this step uses the Router-provided value instead of computing its own).
-3. Create review directory: `{scope-dir}/active/` (consensus: `{scope-dir}/active-{p}/` for each pipeline p=1..N)
+   - **Project-level** (cross-cutting from revise.md): `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/`
+2. Determine B{seq}: read `{scope-dir}/verdicts.md`, increment max existing batch number (or start at 1).
+3. Create review directory: `{scope-dir}/active/`
 3a. **Web projects (impl review only)**: Start dev server per Web Inspector Server Protocol above.
 4. Spawn all Inspectors via `Agent(subagent_type=..., run_in_background=true)`. Each context includes:
-   - Review output path: `{scope-dir}/active/{inspector-name}.cpf` (consensus: `{scope-dir}/active-{p}/{inspector-name}.cpf`)
+   - Review output path: `{scope-dir}/active/{inspector-name}.cpf`
    - Feature/scope context
    - **E2E inspector**: no additional context needed (self-loads from steering and design.md)
    - **Web inspectors**: also include server URL
@@ -94,14 +94,12 @@ Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 5a. **Web projects (impl review only)**: Stop dev server per Web Inspector Server Protocol above.
 6. Spawn Auditor via `Agent(subagent_type=..., run_in_background=true)`. Context includes:
    - Review directory path (Auditor reads all `.cpf` files)
-   - Verdict output path: `{scope-dir}/active/verdict.cpf` (consensus: `{scope-dir}/active-{p}/verdict.cpf`)
+   - Verdict output path: `{scope-dir}/active/verdict.cpf`
    - Steering Exceptions from `{{SDD_DIR}}/handover/session.md`
    - Builder SelfCheck warnings (if any, from impl phase): items flagged as WARN during Builder self-validation — treat as attention points, not authoritative findings
 7. Read `{scope-dir}/active/verdict.cpf`
 8. Persist verdict to `{scope-dir}/verdicts.md` (see Router → Verdict Persistence Format)
-9. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/` (consensus: `active-{p}/` → `B{seq}/pipeline-{p}/`)
-
-If `--consensus N`, apply Consensus Mode protocol (see Router).
+9. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/`
 
 ## Standalone Verdict Handling
 

@@ -571,6 +571,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     # Clean up empty directories left after stale file removal
     find .sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
     find .sdd/settings/profiles -depth -type d -empty -delete 2>/dev/null || true
+    find .sdd/settings/scripts -depth -type d -empty -delete 2>/dev/null || true
     find .claude/skills -depth -type d -empty -delete 2>/dev/null || true
 fi
 

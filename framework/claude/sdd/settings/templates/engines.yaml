@@ -47,21 +47,19 @@ defaults:
 
 # Role-specific overrides
 # Each role: engine, model, timeout, tools (optional allowlist override)
-roles: {}
-  # review-self:
-  #   engine: codex
-  #   model: gpt-5.3-codex
-  #   timeout: 900
-  #   pipeline: agent    # agent (default) | lead (inline consolidation)
-  #   stages:             # Per-stage overrides (agent pipeline only)
-  #     prep:             # Resolution: stages.{stage} → roles.review-self → defaults
-  #       model: gpt-5.3-codex-spark
-  #     inspectors:
-  #       engine: codex
-  #       model: gpt-5.3-codex
-  #     auditor:
-  #       engine: claude
-  #       model: claude-sonnet-4-6
+roles:
+  review-self:
+    engine: codex
+    timeout: 900
+    pipeline: agent
+    stages:
+      prep:
+        model: gpt-5.3-codex-spark
+      inspectors:
+        model: gpt-5.3-codex
+      auditor:
+        engine: claude
+        model: claude-sonnet-4-6
   # architect:
   #   engine: claude
   #   model: claude-sonnet-4-6

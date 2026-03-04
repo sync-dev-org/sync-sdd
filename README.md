@@ -135,7 +135,7 @@ steering → design → review → implement → review
 
 **Auto-fix loop**: NO-GO reviews trigger automatic fixes (max 5 retries, dead-code max 3). SPEC-UPDATE-NEEDED cascades through the full pipeline — Architect re-designs, TaskGenerator re-plans, Builder re-implements.
 
-**Multi-agent review**: 6+ Inspectors examine the work from different angles (architecture, consistency, testability, quality, best practices, holistic). An Auditor synthesizes findings into a single verdict. Consensus mode (`--consensus N`) runs N independent pipelines and filters noise through frequency thresholds.
+**Multi-agent review**: 6+ Inspectors examine the work from different angles (architecture, consistency, testability, quality, best practices, holistic). An Auditor synthesizes findings into a single verdict.
 
 **Knowledge accumulation**: Builders report patterns, incidents, and references via tagged completion reports. Lead collects them into a handover buffer that persists across sessions.
 

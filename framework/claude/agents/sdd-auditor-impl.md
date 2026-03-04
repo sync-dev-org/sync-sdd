@@ -219,9 +219,11 @@ Based on VERIFIED findings:
 ```
 IF any Critical issues remain after verification:
     Verdict = NO-GO
+ELSE IF test failures OR interface mismatches:
+    Verdict = NO-GO
 ELSE IF spec defect detected in Step 1 (specifications or design is the root cause, not implementation):
     Verdict = SPEC-UPDATE-NEEDED
-ELSE IF >3 High issues OR test failures OR interface mismatches:
+ELSE IF >3 High issues:
     Verdict = CONDITIONAL
 ELSE IF only Medium/Low issues AND tests pass:
     Verdict = GO

@@ -37,10 +37,10 @@ ${CACHED_OK}
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.
 
-Include a compliance status table with columns: Item | Status (OK/NG/UNCERTAIN) | Source URL.
+Include compliance items in the CPF COMPLIANCE_TABLE section (see example below). Do NOT output a separate Markdown table.
 
 ## CPF Output Format
-Your CPF MUST include both ISSUES and COMPLIANT sections:
+Your CPF MUST include both ISSUES and COMPLIANT sections (exception to CPF empty-section-skip rule — COMPLIANT is always emitted for caching purposes):
 - ISSUES: findings (same format as other agents)
 - COMPLIANT: verified OK items for caching. Format: `item|OK|source-url`
 

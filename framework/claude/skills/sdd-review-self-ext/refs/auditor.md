@@ -64,7 +64,8 @@ Use this format:
 
 ```markdown
 # SDD Framework Self-Review Report (External Engine)
-**Date**: {current date ISO-8601} | **Engine**: __ENGINE_INFO__ | **Agents**: 4 dispatched, {N completed} completed
+**Date**: {current date ISO-8601} | **Engine**: __ENGINE_INFO__ | **Pipeline**: agent
+**Agents**: 4 dispatched, {N completed} completed
 
 ## False Positives Eliminated
 
@@ -73,7 +74,7 @@ Use this format:
 
 ## A) 自明な修正 ({N}件) — OK で全件修正します
 
-| ID | Sev | Summary | Fix | Target |
+| ID | Sev | Location | Summary | Fix |
 |---|---|---|---|---|
 
 ## B) ユーザー判断が必要 ({N}件)

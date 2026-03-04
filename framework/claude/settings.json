@@ -61,6 +61,7 @@
       "Bash(pgrep *)",
       "Bash(grep *)",
       "Bash(lsof *)",
+      "Bash(sleep *)",
       "Bash(bash install.sh *)",
       "Bash(bash .sdd/settings/scripts/*)"
     ]
