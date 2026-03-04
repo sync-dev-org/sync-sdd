@@ -93,7 +93,7 @@ Use this format:
 
 ## Step 8: Write Verdict Data
 
-Write verdict summary to: `.sdd/project/reviews/self/active/verdict-data.txt`
+Write verdict summary to: `.sdd/project/reviews/self/active/verdict-data.md`
 
 Format (single line each):
 ```

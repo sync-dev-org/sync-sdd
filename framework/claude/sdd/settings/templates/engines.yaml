@@ -56,7 +56,6 @@ roles:
   review-self:
     engine: codex
     timeout: 900
-    pipeline: agent
     stages:
       prep:
         model: gpt-5.3-codex-spark

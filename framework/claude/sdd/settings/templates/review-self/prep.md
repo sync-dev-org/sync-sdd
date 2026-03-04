@@ -13,7 +13,7 @@ Your job is to construct prompt files that 4 review Inspector agents will consum
 1. Determine commit range: Run `git rev-list --count HEAD` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs:
-   Write the single word `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.txt` and stop immediately.
+   Write the single word `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.md` and stop immediately.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List
@@ -37,9 +37,9 @@ install.sh
 
 Read `.sdd/settings/engines.yaml` and extract the `deny_patterns` list.
 
-## Step 4: Write shared-prompt.txt
+## Step 4: Write shared-prompt.md
 
-Write `.sdd/project/reviews/self/active/shared-prompt.txt` with this exact structure:
+Write `.sdd/project/reviews/self/active/shared-prompt.md` with this exact structure:
 
 ```
 ## Target Files
@@ -78,20 +78,20 @@ Store the result as CACHED_OK.
 
 Write the dynamic placeholder values to files so Lead can inject them during dispatch:
 
-1. Write FOCUS_TARGETS (from Step 1) to `.sdd/project/reviews/self/active/focus-targets.txt`
-2. Write CACHED_OK (from Step 5) to `.sdd/project/reviews/self/active/cached-ok.txt`
+1. Write FOCUS_TARGETS (from Step 1) to `.sdd/project/reviews/self/active/focus-targets.md`
+2. Write CACHED_OK (from Step 5) to `.sdd/project/reviews/self/active/cached-ok.md`
 
 Note: Agent templates are NOT copied to active/. Lead reads templates directly from `.sdd/settings/templates/review-self/` and injects these values inline during dispatch.
 
 ## Step 7: Verify & Complete
 
 Verify all required files exist in `.sdd/project/reviews/self/active/`:
-- shared-prompt.txt
-- focus-targets.txt
-- cached-ok.txt
+- shared-prompt.md
+- focus-targets.md
+- cached-ok.md
 
 Print to stdout:
 ```
 EXT_PREP_COMPLETE
-FILES: shared-prompt.txt, focus-targets.txt, cached-ok.txt
+FILES: shared-prompt.md, focus-targets.md, cached-ok.md
 ```

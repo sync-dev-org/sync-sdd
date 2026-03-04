@@ -37,7 +37,7 @@ CRITICAL: "Not found in web search" does not mean "Non-compliant". Official docu
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.
 
-Include compliance items in the CPF COMPLIANCE_TABLE section (see example below). Do NOT output a separate Markdown table.
+Include compliance items in the CPF COMPLIANT section (see example below). Do NOT output a separate Markdown table.
 
 ## CPF Output Format
 Your CPF MUST include both ISSUES and COMPLIANT sections (exception to CPF empty-section-skip rule — COMPLIANT is always emitted for caching purposes):
