@@ -19,6 +19,11 @@ engines:
   gemini:
     install_check: "npx -y @google/gemini-cli --version"
 
+  subagents:
+    install_check: "true"
+    # Claude Code Agent tool (general-purpose) で dispatch。CLI 不要。
+    # 外部エンジン失敗時のフォールバック先としても機能。
+
 # --- Safety: MUST NEVER execute ---
 # Injected into every agent prompt as a prohibition list.
 # Applies regardless of engine or approval mode.
