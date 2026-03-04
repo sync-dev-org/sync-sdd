@@ -10,7 +10,7 @@ Your job is to construct prompt files that 4 review Inspector agents will consum
 
 ## Step 1: Collect Change Context
 
-1. Determine commit range: Run `git rev-list --count HEAD` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
+1. Determine commit range: Run `git log --oneline HEAD | wc -l` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs:
    Write the single word `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.md` and stop immediately.

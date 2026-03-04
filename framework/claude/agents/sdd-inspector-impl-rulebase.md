@@ -151,9 +151,9 @@ Keep your output concise. Write detailed findings to the output file. Return onl
 
 ## Error Handling
 
-- **Missing Spec**: Return CPF error:
+- **Missing Spec**: Return CPF with NO-GO verdict:
   ```
-  VERDICT:ERROR
+  VERDICT:NO-GO
   SCOPE:{feature}
   ISSUES:
   C|setup|spec.yaml|Spec '{feature}' not found

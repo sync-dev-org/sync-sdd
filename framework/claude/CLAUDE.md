@@ -269,7 +269,7 @@ Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
 
 ### Session Resume
 
-On session start (new Claude Code session, conversation compact, or `/sdd-handover` resume):
+On session start (new Claude Code session, conversation compact, `/clear`, or `/sdd-handover` resume):
 1. Detect: `{{SDD_DIR}}/handover/session.md` exists?
    - Absent → first session: skip to step 6
    - Present → resume session: proceed
@@ -307,8 +307,9 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 ## Behavioral Rules
 - **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
-- After a compact operation: If a roadmap pipeline (run/revise) was in progress, perform Session Resume steps 1-6 to reload context, then continue the pipeline from spec.yaml state (do NOT manually "recover" or patch spec.yaml — treat it as ground truth). If no pipeline was active, wait for the user's next instruction.
-- Do not continue or resume non-pipeline tasks after compact unless the user explicitly instructs you to do so.
+- **Session Resume on user resume request**: When `session.md` exists and the user gives a resume instruction (e.g., "再開"), **always** execute Session Resume steps 1-7 in full — regardless of whether the current session is post-compact, post-`/clear`, or a fresh CLI launch. All Resume steps (including Step 5a tmux initialization) are idempotent and safe to re-execute. Do NOT skip steps based on assumptions about prior execution state.
+- After a compact or `/clear` operation: If a roadmap pipeline (run/revise) was in progress, the above rule ensures full Resume. If no pipeline was active, await user instruction after Resume completes.
+- Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 
 ## Execution Conventions

@@ -67,9 +67,9 @@ When a lifecycle subcommand (design, impl, review) is detected:
      6. Proceed to subcommand execution
    - If spec not found AND subcommand is `impl`/`review` → BLOCK: "Spec '{feature}' not found. Use `/sdd-roadmap design \"description\"` to create."
    - If spec exists but `spec.yaml.roadmap` is null → BLOCK: "{feature} exists but is not enrolled in the roadmap. Use `/sdd-roadmap update` to sync."
-   - Exception: `review dead-code`, `review design --cross-check`, and `review impl --wave N` operate on the whole codebase/wave, not a single spec → skip enrollment check
+   - Exception: `review dead-code`, `review design|impl --cross-check`, and `review design|impl --wave N` operate on the whole codebase/wave, not a single spec → skip enrollment check
 3. **If no roadmap**:
-   - If subcommand is `review dead-code`, `review design --cross-check`, or `review impl --wave N` → BLOCK: "No roadmap found. Run `/sdd-roadmap create` first."
+   - If subcommand is `review dead-code`, `review design|impl --cross-check`, or `review design|impl --wave N` → BLOCK: "No roadmap found. Run `/sdd-roadmap create` first."
    - Otherwise, auto-create a 1-spec roadmap:
      a. For `design` with a new description: generate feature name (kebab-case), create spec directory, initialize spec.yaml from `{{SDD_DIR}}/settings/templates/specs/init.yaml`
      b. For `design` with existing spec name: verify spec directory exists (create if not)

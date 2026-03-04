@@ -53,6 +53,10 @@ Generate comprehensive session.md following the template at `{{SDD_DIR}}/setting
 
 Do NOT include a `**Mode**:` marker — absence of marker indicates manual polish.
 
+## Step 3.5: Timestamp
+
+Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Step 3-4: session.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting), and SESSION_END entry. Do NOT call `date` again.
+
 ## Step 4: Write Files
 
 1. If `{{SDD_DIR}}/handover/session.md` exists:
