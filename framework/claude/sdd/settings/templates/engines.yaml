@@ -9,6 +9,7 @@
 # --- Tier 1: Engine Traits (platform characteristics) ---
 # Defines WHAT each engine is, not HOW to invoke it.
 # Command construction logic lives in consumer SKILL.md files.
+# "subagents" is the built-in fallback — always available, no CLI needed.
 engines:
   codex:
     install_check: "npx -y @openai/codex --version"
@@ -21,8 +22,6 @@ engines:
 
   subagents:
     install_check: "true"
-    # Claude Code Agent tool (general-purpose) で dispatch。CLI 不要。
-    # 外部エンジン失敗時のフォールバック先としても機能。
 
 # --- Safety: MUST NEVER execute ---
 # Injected into every agent prompt as a prohibition list.
@@ -42,42 +41,32 @@ deny_patterns:
   - "dd if="
   - ":(){:|:&};:"
 
-# --- Tier 2: Role Defaults + Overrides ---
-# Defines WHAT to use for each dispatch context.
-# Default: full permission mode (no tool restriction).
-# Use `tools` to RESTRICT (override full permission with allowlist) if needed.
-defaults:
-  engine: codex
-  timeout: 900
-
-# Role-specific overrides
-# Each role: engine, model, timeout, tools (optional allowlist override)
+# --- Tier 2: Role Configuration ---
+# Each role defines per-stage engine/model explicitly.
+# Stages without engine → subagents fallback.
+# External engine failure → subagents fallback.
+# "timeout" is role-wide (shared across all stages).
+# "tools" restricts allowed tools (null = full permission).
 roles:
   review-self:
-    engine: codex
     timeout: 900
     stages:
       prep:
+        engine: codex
         model: gpt-5.3-codex-spark
       inspectors:
+        engine: codex
         model: gpt-5.3-codex
       auditor:
         engine: claude
         model: claude-sonnet-4-6
-  # architect:
-  #   engine: claude
-  #   model: claude-sonnet-4-6
+  # Future roles (sdd-review Phase 2):
+  # review:
   #   timeout: 1200
-  # inspector:
-  #   engine: codex
-  #   model: gpt-5.3-codex-spark
-  #   timeout: 600
-  #   tools: "Read,Glob,Grep,Bash(git *)"
-  # builder:
-  #   engine: codex
-  #   model: gpt-5.3-codex
-  #   timeout: 1200
-  # auditor:
-  #   engine: claude
-  #   model: claude-sonnet-4-6
-  #   timeout: 900
+  #   stages:
+  #     inspectors:
+  #       engine: codex
+  #       model: gpt-5.3-codex
+  #     auditor:
+  #       engine: claude
+  #       model: claude-sonnet-4-6
