@@ -150,7 +150,7 @@ steering → design → review → implement → review
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
-| `/sdd-review-self` | Self-review for framework development |
+| `/sdd-review-self` | Self-review via external engine (Codex/Claude/Gemini) |
 
 ## License
 

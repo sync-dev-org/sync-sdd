@@ -3,17 +3,17 @@ Your job is to construct prompt files that 4 review Inspector agents will consum
 
 ## Paths
 
-- Output directory: __SCOPE_DIR__/active/
-- Template directory: __TPL_DIR__/
-- Verdicts file: __SCOPE_DIR__/verdicts.md
-- Engines config: __SDD_DIR__/settings/engines.yaml
+- Output directory: {{SCOPE_DIR}}/active/
+- Template directory: {{TPL_DIR}}/
+- Verdicts file: {{SCOPE_DIR}}/verdicts.md
+- Engines config: {{SDD_DIR}}/settings/engines.yaml
 
 ## Step 1: Collect Change Context
 
 1. Determine commit range: Run `git rev-list --count HEAD` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs:
-   Write the single word `NO_CHANGES` to `__SCOPE_DIR__/active/prep-status.txt` and stop immediately.
+   Write the single word `NO_CHANGES` to `{{SCOPE_DIR}}/active/prep-status.txt` and stop immediately.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List
@@ -35,11 +35,11 @@ install.sh
 
 ## Step 3: Read Deny Patterns
 
-Read `__SDD_DIR__/settings/engines.yaml` and extract the `deny_patterns` list.
+Read `{{SDD_DIR}}/settings/engines.yaml` and extract the `deny_patterns` list.
 
 ## Step 4: Write shared-prompt.txt
 
-Write `__SCOPE_DIR__/active/shared-prompt.txt` with this exact structure:
+Write `{{SCOPE_DIR}}/active/shared-prompt.txt` with this exact structure:
 
 ```
 ## Target Files
@@ -62,10 +62,10 @@ Report findings in Japanese.
 
 ## Step 5: Build Compliance Cache
 
-1. Read `__SCOPE_DIR__/verdicts.md`
+1. Read `{{SCOPE_DIR}}/verdicts.md`
 2. Find the most recent Agent 4 (Platform Compliance) entry within the last 7 days
 3. If found:
-   a. Read the archived CPF: `__SCOPE_DIR__/B{seq}/agent-4-compliance.cpf`
+   a. Read the archived CPF: `{{SCOPE_DIR}}/B{seq}/agent-4-compliance.cpf`
    b. Extract items from the `COMPLIANT:` section
    c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes
    d. Items with no file changes since review → keep as cached. Format each as: `{item}: OK (cached from B{seq})`
@@ -77,20 +77,20 @@ Store the result as CACHED_OK.
 ## Step 6: Prepare Agent Templates
 
 1. Copy agent templates to output directory:
-   `cp __TPL_DIR__/agent-*.md __SCOPE_DIR__/active/`
+   `cp {{TPL_DIR}}/agent-*.md {{SCOPE_DIR}}/active/`
 
-2. In all copied files, replace the placeholder `${SCOPE_DIR}` with the actual path:
-   `sed -i '' 's|${SCOPE_DIR}|__SCOPE_DIR__|g' __SCOPE_DIR__/active/agent-*.md`
+2. In all copied files, replace the scope directory placeholder (`{{SCOPE` + `_DIR}}` — concatenate to form the placeholder) with the actual path: {{SCOPE_DIR}}
+   Use sed with `|` delimiter on all agent-*.md files in {{SCOPE_DIR}}/active/.
 
-3. In `agent-2-changes.md`, replace `${FOCUS_TARGETS}` with the FOCUS_TARGETS from Step 1.
+3. In `agent-2-changes.md`, replace the focus targets placeholder (`{{FOCUS` + `_TARGETS}}`) with the FOCUS_TARGETS from Step 1.
    Use sed or write the file directly — ensure multi-line content is handled correctly.
 
-4. In `agent-4-compliance.md`, replace `${CACHED_OK}` with the CACHED_OK from Step 5.
+4. In `agent-4-compliance.md`, replace the cached OK placeholder (`{{CACHED` + `_OK}}`) with the CACHED_OK from Step 5.
    Use sed or write the file directly — ensure multi-line content is handled correctly.
 
 ## Step 7: Verify & Complete
 
-Verify all required files exist in `__SCOPE_DIR__/active/`:
+Verify all required files exist in `{{SCOPE_DIR}}/active/`:
 - shared-prompt.txt
 - agent-1-flow.md
 - agent-2-changes.md

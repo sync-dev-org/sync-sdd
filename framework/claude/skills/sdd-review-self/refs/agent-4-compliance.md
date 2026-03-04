@@ -32,7 +32,7 @@ Use this tri-state system for each compliance item:
 CRITICAL: "Not found in web search" does not mean "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
 
 ## Cached Verifications (skip web search for these -- already verified recently)
-${CACHED_OK}
+{{CACHED_OK}}
 
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.
@@ -53,11 +53,11 @@ Example:
   M|category|file.md:42|description
 
 ## Output Instructions
-1. Write CPF to: ${SCOPE_DIR}/active/agent-4-compliance.cpf
+1. Write CPF to: {{SCOPE_DIR}}/active/agent-4-compliance.cpf
    SCOPE:agent-4-compliance
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:4
    ISSUES: <number of issues found>
-   WRITTEN:${SCOPE_DIR}/active/agent-4-compliance.cpf
+   WRITTEN:{{SCOPE_DIR}}/active/agent-4-compliance.cpf
