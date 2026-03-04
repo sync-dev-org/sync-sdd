@@ -16,7 +16,7 @@ Read ALL files listed in the shared prompt.
 9. Revise modes: Single-Spec and Cross-Cutting modes in refs/revise.md route correctly from SKILL.md Detect Mode, with proper escalation paths between modes
 
 ## Output Instructions
-1. Write CPF to: {{SCOPE_DIR}}/active/agent-1-flow.cpf
+1. Write CPF to: .sdd/project/reviews/self/active/agent-1-flow.cpf
    SCOPE:agent-1-flow
    Example:
      SCOPE:agent-1-flow
@@ -27,4 +27,4 @@ Read ALL files listed in the shared prompt.
    EXT_REVIEW_COMPLETE
    AGENT:1
    ISSUES: <number of issues found>
-   WRITTEN:{{SCOPE_DIR}}/active/agent-1-flow.cpf
+   WRITTEN:.sdd/project/reviews/self/active/agent-1-flow.cpf

@@ -53,11 +53,11 @@ Example:
   M|category|file.md:42|description
 
 ## Output Instructions
-1. Write CPF to: {{SCOPE_DIR}}/active/agent-4-compliance.cpf
+1. Write CPF to: .sdd/project/reviews/self/active/agent-4-compliance.cpf
    SCOPE:agent-4-compliance
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:4
    ISSUES: <number of issues found>
-   WRITTEN:{{SCOPE_DIR}}/active/agent-4-compliance.cpf
+   WRITTEN:.sdd/project/reviews/self/active/agent-4-compliance.cpf

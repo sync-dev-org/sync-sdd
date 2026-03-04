@@ -3,17 +3,17 @@ Your job is to construct prompt files that 4 review Inspector agents will consum
 
 ## Paths
 
-- Output directory: {{SCOPE_DIR}}/active/
-- Template directory: {{TPL_DIR}}/
-- Verdicts file: {{SCOPE_DIR}}/verdicts.md
-- Engines config: {{SDD_DIR}}/settings/engines.yaml
+- Output directory: .sdd/project/reviews/self/active/
+- Template directory: .sdd/settings/templates/review-self/
+- Verdicts file: .sdd/project/reviews/self/verdicts.md
+- Engines config: .sdd/settings/engines.yaml
 
 ## Step 1: Collect Change Context
 
 1. Determine commit range: Run `git rev-list --count HEAD` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs:
-   Write the single word `NO_CHANGES` to `{{SCOPE_DIR}}/active/prep-status.txt` and stop immediately.
+   Write the single word `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.txt` and stop immediately.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List
@@ -35,11 +35,11 @@ install.sh
 
 ## Step 3: Read Deny Patterns
 
-Read `{{SDD_DIR}}/settings/engines.yaml` and extract the `deny_patterns` list.
+Read `.sdd/settings/engines.yaml` and extract the `deny_patterns` list.
 
 ## Step 4: Write shared-prompt.txt
 
-Write `{{SCOPE_DIR}}/active/shared-prompt.txt` with this exact structure:
+Write `.sdd/project/reviews/self/active/shared-prompt.txt` with this exact structure:
 
 ```
 ## Target Files
@@ -62,10 +62,10 @@ Report findings in Japanese.
 
 ## Step 5: Build Compliance Cache
 
-1. Read `{{SCOPE_DIR}}/verdicts.md`
+1. Read `.sdd/project/reviews/self/verdicts.md`
 2. Find the most recent Agent 4 (Platform Compliance) entry within the last 7 days
 3. If found:
-   a. Read the archived CPF: `{{SCOPE_DIR}}/B{seq}/agent-4-compliance.cpf`
+   a. Read the archived CPF: `.sdd/project/reviews/self/B{seq}/agent-4-compliance.cpf`
    b. Extract items from the `COMPLIANT:` section
    c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes
    d. Items with no file changes since review → keep as cached. Format each as: `{item}: OK (cached from B{seq})`
@@ -74,31 +74,24 @@ Report findings in Japanese.
 
 Store the result as CACHED_OK.
 
-## Step 6: Prepare Agent Templates
+## Step 6: Save Dynamic Values
 
-1. Copy agent templates to output directory:
-   `cp {{TPL_DIR}}/agent-*.md {{SCOPE_DIR}}/active/`
+Write the dynamic placeholder values to files so Lead can inject them during dispatch:
 
-2. In all copied files, replace the scope directory placeholder (`{{SCOPE` + `_DIR}}` — concatenate to form the placeholder) with the actual path: {{SCOPE_DIR}}
-   Use sed with `|` delimiter on all agent-*.md files in {{SCOPE_DIR}}/active/.
+1. Write FOCUS_TARGETS (from Step 1) to `.sdd/project/reviews/self/active/focus-targets.txt`
+2. Write CACHED_OK (from Step 5) to `.sdd/project/reviews/self/active/cached-ok.txt`
 
-3. In `agent-2-changes.md`, replace the focus targets placeholder (`{{FOCUS` + `_TARGETS}}`) with the FOCUS_TARGETS from Step 1.
-   Use sed or write the file directly — ensure multi-line content is handled correctly.
-
-4. In `agent-4-compliance.md`, replace the cached OK placeholder (`{{CACHED` + `_OK}}`) with the CACHED_OK from Step 5.
-   Use sed or write the file directly — ensure multi-line content is handled correctly.
+Note: Agent templates are NOT copied to active/. Lead reads templates directly from `.sdd/settings/templates/review-self/` and injects these values inline during dispatch.
 
 ## Step 7: Verify & Complete
 
-Verify all required files exist in `{{SCOPE_DIR}}/active/`:
+Verify all required files exist in `.sdd/project/reviews/self/active/`:
 - shared-prompt.txt
-- agent-1-flow.md
-- agent-2-changes.md
-- agent-3-consistency.md
-- agent-4-compliance.md
+- focus-targets.txt
+- cached-ok.txt
 
 Print to stdout:
 ```
 EXT_PREP_COMPLETE
-FILES: shared-prompt.txt, agent-1-flow.md, agent-2-changes.md, agent-3-consistency.md, agent-4-compliance.md
+FILES: shared-prompt.txt, focus-targets.txt, cached-ok.txt
 ```

@@ -4,11 +4,11 @@ Your job is to consolidate findings from 4 Inspector CPF files into a unified re
 ## Input
 
 - CPF files (read all 4):
-  - `{{SCOPE_DIR}}/active/agent-1-flow.cpf`
-  - `{{SCOPE_DIR}}/active/agent-2-changes.cpf`
-  - `{{SCOPE_DIR}}/active/agent-3-consistency.cpf`
-  - `{{SCOPE_DIR}}/active/agent-4-compliance.cpf`
-- Decision history: `{{SDD_DIR}}/handover/decisions.md`
+  - `.sdd/project/reviews/self/active/agent-1-flow.cpf`
+  - `.sdd/project/reviews/self/active/agent-2-changes.cpf`
+  - `.sdd/project/reviews/self/active/agent-3-consistency.cpf`
+  - `.sdd/project/reviews/self/active/agent-4-compliance.cpf`
+- Decision history: `.sdd/handover/decisions.md`
 
 If a CPF file does not exist or is empty, note that agent as "did not complete" and proceed with available CPFs.
 
@@ -25,7 +25,7 @@ Compare all findings. If two or more findings have the same location AND describ
 
 ## Step 3: False Positive Check
 
-For each finding, search `{{SDD_DIR}}/handover/decisions.md` for matching entries:
+For each finding, search `.sdd/handover/decisions.md` for matching entries:
 - If the finding is explained by a `USER_DECISION` or `STEERING_EXCEPTION` entry → mark as **FP** with the decision ID and reason
 - If the finding matches a previously deferred backlog item → mark as **FP** with reason "pre-existing, deferred"
 
@@ -58,12 +58,12 @@ Split findings into two categories:
 
 ## Step 7: Write Report
 
-Write the consolidated report to: `{{SCOPE_DIR}}/active/report.md`
+Write the consolidated report to: `.sdd/project/reviews/self/active/report.md`
 
 Use this format:
 
 ```markdown
-# SDD Framework Self-Review Report (External Engine)
+# SDD Framework Self-Review Report
 **Date**: {current date ISO-8601} | **Engine**: {{ENGINE_INFO}} | **Pipeline**: agent
 **Agents**: 4 dispatched, {N completed} completed
 
@@ -93,7 +93,7 @@ Use this format:
 
 ## Step 8: Write Verdict Data
 
-Write verdict summary to: `{{SCOPE_DIR}}/active/verdict-data.txt`
+Write verdict summary to: `.sdd/project/reviews/self/active/verdict-data.txt`
 
 Format (single line each):
 ```
@@ -107,5 +107,5 @@ Print to stdout:
 ```
 EXT_AUDITOR_COMPLETE
 ISSUES: {total confirmed findings after FP elimination}
-WRITTEN:{{SCOPE_DIR}}/active/report.md
+WRITTEN:.sdd/project/reviews/self/active/report.md
 ```

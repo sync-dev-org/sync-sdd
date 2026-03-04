@@ -21,7 +21,7 @@ Run git commands to understand recent changes, then verify integrity.
 Prioritize the focus targets. Only read files relevant to the changes -- do not read unchanged, unrelated files.
 
 ## Output Instructions
-1. Write CPF to: {{SCOPE_DIR}}/active/agent-2-changes.cpf
+1. Write CPF to: .sdd/project/reviews/self/active/agent-2-changes.cpf
    SCOPE:agent-2-changes
    Example:
      SCOPE:agent-2-changes
@@ -32,4 +32,4 @@ Prioritize the focus targets. Only read files relevant to the changes -- do not 
    EXT_REVIEW_COMPLETE
    AGENT:2
    ISSUES: <number of issues found>
-   WRITTEN:{{SCOPE_DIR}}/active/agent-2-changes.cpf
+   WRITTEN:.sdd/project/reviews/self/active/agent-2-changes.cpf
