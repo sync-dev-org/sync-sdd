@@ -52,7 +52,16 @@ roles: {}
   #   engine: codex
   #   model: gpt-5.3-codex
   #   timeout: 900
-  #   pipeline: lead    # lead (default) | agent (prep+auditor delegated to engine)
+  #   pipeline: agent    # agent (default) | lead (inline consolidation)
+  #   stages:             # Per-stage overrides (agent pipeline only)
+  #     prep:             # Resolution: stages.{stage} → roles.review-self → defaults
+  #       model: gpt-5.3-codex-spark
+  #     inspectors:
+  #       engine: codex
+  #       model: gpt-5.3-codex
+  #     auditor:
+  #       engine: claude
+  #       model: claude-sonnet-4-6
   # architect:
   #   engine: claude
   #   model: claude-sonnet-4-6
