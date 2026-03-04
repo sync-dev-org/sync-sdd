@@ -52,6 +52,7 @@ roles: {}
   #   engine: codex
   #   model: gpt-5.3-codex
   #   timeout: 900
+  #   pipeline: lead    # lead (default) | agent (prep+auditor delegated to engine)
   # architect:
   #   engine: claude
   #   model: claude-sonnet-4-6
