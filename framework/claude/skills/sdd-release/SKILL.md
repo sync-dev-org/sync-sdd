@@ -1,6 +1,6 @@
 ---
 description: Create a versioned release (branch, tag, push)
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [patch|minor|major|vX.Y.Z] [summary]
 ---
 

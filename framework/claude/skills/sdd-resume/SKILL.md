@@ -1,6 +1,6 @@
 ---
 description: Session resume — invoke on "再開", "continue", "resume", or at every session start
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit, AskUserQuestion
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 ---
 
 # SDD Resume

@@ -1,6 +1,6 @@
 ---
 description: Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher)
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # SDD Publish Setup
