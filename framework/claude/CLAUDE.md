@@ -143,7 +143,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 
 ## Workflow
 
-### Commands (7)
+### Commands (8)
 
 | Command | Description |
 |---------|-------------|
@@ -151,6 +151,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
 | `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
+| `/sdd-resume` | Session resume (invoke on "再開", "continue", "resume", or at session start) |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
@@ -269,26 +270,7 @@ Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
 
 ### Session Resume
 
-On session start (new Claude Code session, conversation compact, `/clear`, or `/sdd-handover` resume):
-1. Detect: `{{SDD_DIR}}/handover/session.md` exists?
-   - Absent → first session: skip to step 6
-   - Present → resume session: proceed
-2. Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steering Exceptions
-2a. Read `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → active review state per spec (latest batch Tracked). Also check `{{SDD_DIR}}/project/reviews/*/verdicts.md` for project-level review state (dead-code, cross-check, wave) and `{{SDD_DIR}}/project/specs/.cross-cutting/*/verdicts.md` for cross-cutting revision review state.
-3. Read latest N entries from `decisions.md` → recent decision history
-4. Read `buffer.md` → pending knowledge tags
-5. If roadmap active: scan all `spec.yaml` files → build pipeline state dynamically
-5a. If inside tmux (`$TMUX` set): tmux 初期化を実行 per `{{SDD_DIR}}/settings/rules/tmux-integration.md`:
-     1. **SID 生成**: `date +%H%M%S` を実行し出力を `$SID` とする（セッション固有の一意 ID）
-     2. **Lead タイトル設定**: `tmux select-pane -T 'sdd-{SID}-lead'`
-     3. **Orphan Cleanup**: 前セッションの残存ペインを検出・報告（ユーザー確認後に kill）
-     4. **Grid Creation**: `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE` でスロットグリッド作成。出力を parse してスロット管理テーブルを構築
-6. Append `SESSION_START` to `decisions.md`
-7. If roadmap pipeline was active (session.md indicates run/revise in progress):
-     - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.
-     - Do NOT manually update spec.yaml to "recover" or "fix" perceived inconsistencies.
-     - If spec.yaml state vs actual artifacts seem inconsistent: report to user, do not auto-fix.
-   Otherwise: await user instruction.
+On session start (new Claude Code session, conversation compact, `/clear`, or resume request): use `/sdd-resume`.
 
 ## Knowledge Auto-Accumulation
 
@@ -307,8 +289,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 ## Behavioral Rules
 - **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
-- **Session Resume on user resume request**: When `session.md` exists and the user gives a resume instruction (e.g., "再開"), **always** execute Session Resume steps 1-7 in full — regardless of whether the current session is post-compact, post-`/clear`, or a fresh CLI launch. All Resume steps (including Step 5a tmux initialization) are idempotent and safe to re-execute. Do NOT skip steps based on assumptions about prior execution state.
-- After a compact or `/clear` operation: If a roadmap pipeline (run/revise) was in progress, the above rule ensures full Resume. If no pipeline was active, await user instruction after Resume completes.
+- **Session Resume**: On resume request (e.g., "再開", "continue", "resume"), compact, or `/clear` → use `/sdd-resume`. Do NOT attempt manual resume steps.
 - Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 
@@ -325,6 +306,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - `--count` 等の一部フラグ名 → "quoted characters in flag names" 誤検出。`git rev-list --count` は避け、代替手段を使う
   - `&&` によるコマンド連結 → 引用符とフラグの組み合わせが誤検出を悪化させる。独立したコマンドは並列 Bash 呼び出しで実行する
   - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
+  - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
 
 ## Git Workflow
