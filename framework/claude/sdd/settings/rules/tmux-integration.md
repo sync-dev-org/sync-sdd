@@ -161,7 +161,7 @@ External CLI runs in a MultiView スロットで実行。native progress display
    ```
    tmux send-keys -t {slot_pane_id} '{command}; tmux wait-for -S {channel}' Enter
    ```
-3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: assign all agents to slots first (step 2), then issue multiple `tmux wait-for` via `Bash(run_in_background=true)` in parallel.
+3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: assign all agents to slots first (step 2), then issue parallel `Bash(run_in_background=true)` for each `tmux wait-for`.
    - **Staggered Parallel Dispatch**: 複数の `send-keys` や `wait-for` を発行する場合、sleep プレフィックスで 0.5 秒刻みにずらし、単一メッセージの並列 Bash 呼び出しで一括発行する（Lead のターン消費 1 回）:
      ```
      Bash(run_in_background=true): sleep 0.0; tmux send-keys -t {pane1} '...' Enter
@@ -169,6 +169,7 @@ External CLI runs in a MultiView スロットで実行。native progress display
      Bash(run_in_background=true): sleep 1.0; tmux send-keys -t {pane3} '...' Enter
      ```
      tmux は短時間のコマンド連発で詰まることがあるため、stagger が必要。逐次発行 (send-keys → sleep → send-keys) はターンを浪費するので使わない。
+   - **Notification-based completion**: 各 `Bash(run_in_background=true)` の完了は task-notification で個別に検知する。TaskOutput は使わない（#14055 Race Condition 回避 + Lead 非ブロック）。
 4. **Read result file**.
 5. スロットは自動的に idle に戻る。
 
