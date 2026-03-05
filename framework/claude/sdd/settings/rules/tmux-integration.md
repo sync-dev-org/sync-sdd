@@ -4,7 +4,7 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 ## Prerequisites
 
-- Check `$TMUX` is set before using any pattern. If not set, use the documented Fallback.
+- Check `$TMUX` is set before using any pattern. If not set, use the documented background mode alternative.
 - All pane targeting uses **pane ID** (`%N` format). **Never use index-based targeting** (`-t 1`) — it may kill the wrong pane (including Claude Code itself).
 
 ### Session ID (`$SID`)
@@ -136,7 +136,7 @@ Long-running server in a MultiView スロットで実行。readiness polling 付
 1. `tmux send-keys -t {pane_id} C-c` でサーバー停止
 2. スロットタイトルを `sdd-{SID}-slot-{N}` に復元。スロットは idle に戻る
 
-### Fallback (no tmux)
+### Background Mode (no tmux)
 1. Start server via `Bash(run_in_background=true)`. Record PID.
 2. Poll URL for readiness (retry access with brief delays, max 30 seconds).
 3. Stop by killing PID.
@@ -192,7 +192,7 @@ tmux send-keys -t {pane} 'sed "s|{{PLACEHOLDER}}|{value}|g" template.md | cat sh
 
 sdd-review-self は方式 B を採用 (v2.1.2)。方式 A は値が常に単一行であることが保証できるケースで有用。
 
-### Fallback (no tmux)
+### Background Mode (no tmux)
 1. Run command via `Bash()` with appropriate timeout. 結果ファイルは同じスコープディレクトリ内に書き出す。
 2. Progress display is lost; result file is still produced.
 3. Stderr is not suppressed — let errors surface for debugging.

@@ -60,13 +60,10 @@ roles:
       auditor:
         engine: claude
         model: claude-sonnet-4-6
-  # Future roles (sdd-review Phase 2):
-  # review:
-  #   timeout: 1200
-  #   stages:
-  #     inspectors:
-  #       engine: codex
-  #       model: gpt-5.3-codex
-  #     auditor:
-  #       engine: claude
-  #       model: claude-sonnet-4-6
+  review:
+    timeout: 1200
+    stages:
+      inspectors:
+        engine: subagents
+      auditor:
+        engine: subagents

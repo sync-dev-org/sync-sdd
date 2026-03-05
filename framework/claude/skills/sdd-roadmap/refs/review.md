@@ -55,7 +55,7 @@ Spawn via review execution flow (below):
 
 When impl review includes web inspectors (`sdd-inspector-web-e2e` and `sdd-inspector-web-visual`), Lead manages the dev server lifecycle.
 
-Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integration.md` (tmux mode + fallback mode 両方を含む):
+Apply **Server Lifecycle pattern** from `{{SDD_DIR}}/settings/rules/tmux-integration.md` (tmux mode + background mode 両方を含む):
 
 1. **Server Start** (before Inspector dispatch):
    - Read dev server command from `steering/tech.md` Common Commands (the `Dev:` entry)

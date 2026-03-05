@@ -64,7 +64,8 @@
       "Bash(lsof *)",
       "Bash(sleep *)",
       "Bash(bash install.sh *)",
-      "Bash(bash .sdd/settings/scripts/*)"
+      "Bash(bash .sdd/settings/scripts/*)",
+      "Bash(printenv *)"
     ]
   }
 }
