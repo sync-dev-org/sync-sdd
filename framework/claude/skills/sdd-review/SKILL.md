@@ -153,6 +153,18 @@ cp .claude/agents/{inspector-name}.md {scope-dir}/active/
 
 Auditor も同様: `$AUDITOR_ENGINE != "subagents"` の場合、`cp .claude/agents/{auditor-name}.md {scope-dir}/active/`
 
+### 4.4 Auditor Preamble Generation
+
+テンプレート `{{SDD_DIR}}/settings/templates/review/auditor-preamble.md` を `{scope-dir}/active/preamble-{auditor-name}.md` にコピーし、プレースホルダーを sed で展開:
+
+```
+sed "s|{{REVIEW_TYPE}}|{value}|g; s|{{FEATURE}}|{value}|g; s|{{SCOPE}}|{value}|g; s|{{REVIEW_DIR}}|{scope-dir}/active/|g; s|{{VERDICT_PATH}}|{scope-dir}/active/verdict.cpf|g" {template} > {scope-dir}/active/preamble-{auditor-name}.md
+```
+
+`{{SELFCHECK_CONTEXT}}` の展開:
+- **impl review**: `sed -i '' "s|{{SELFCHECK_CONTEXT}}|Read .sdd/project/specs/{feature}/tasks.yaml for WARN-flagged items as attention points.|g" ...`
+- **design / dead-code review**: `sed -i '' "s|{{SELFCHECK_CONTEXT}}||g" ...`
+
 ## Step 5: Inspector Dispatch
 
 ### Step 5a: Web Server Lifecycle (impl review, web projects only)
@@ -253,15 +265,28 @@ SubAgent mode ではスキップ。tmux mode:
 分岐順序: SubAgent → tmux → background。
 
 **SubAgent mode** (`$AUDITOR_ENGINE == "subagents"`):
+
 ```
-Agent(subagent_type="sdd-auditor-{type}", run_in_background=true, prompt="{auditor context}")
+Agent(subagent_type="sdd-auditor-{type}", run_in_background=true, prompt="
+Review type: {REVIEW_TYPE}
+Feature: {FEATURE}
+Scope: {SCOPE}
+
+Review directory: {scope-dir}/active/
+Read all .cpf files from this directory.
+
+Verdict output: {scope-dir}/active/verdict.cpf
+Write your verdict to this path.
+
+Read .sdd/handover/session.md, apply Steering Exceptions as review exemptions.
+{selfcheck line}
+")
 ```
 
-Auditor context:
-- Review directory path: `{scope-dir}/active/` (Auditor が全 .cpf を Read)
-- Verdict output path: `{scope-dir}/active/verdict.cpf`
-- Steering Exceptions: "Read `.sdd/handover/session.md`, apply Steering Exceptions section."
-- Builder SelfCheck warnings (impl review): "Read `{spec-dir}/tasks.yaml` for WARN-flagged items."
+`{selfcheck line}` (impl review のみ):
+`Read .sdd/project/specs/{feature}/tasks.yaml for WARN-flagged items as attention points.`
+
+Auditor は self-loading — review directory パスと verdict output パスを渡せば、自分で .cpf を Read して統合する。
 
 **tmux mode** (`$AUDITOR_ENGINE != "subagents"` かつ `$TMUX` 設定あり):
 ```
@@ -270,7 +295,7 @@ tmux send-keys -t {slot_pane_id} 'cat {scope-dir}/active/preamble-{auditor-name}
 完了待ち: `Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-auditor-B{seq}` を実行。
 
 **background mode** (上記以外):
-`Bash(run_in_background=true)` で `cat {preamble} {agent-file} | {$AUDITOR_ENGINE_CMD}` を実行。
+`Bash(run_in_background=true)` で `cat {scope-dir}/active/preamble-{auditor-name}.md {scope-dir}/active/{auditor-name}.md | {$AUDITOR_ENGINE_CMD}` を実行。
 
 完了後: `{scope-dir}/active/verdict.cpf` の存在を確認。未出力 → SubAgent Fallback を試行。
 
