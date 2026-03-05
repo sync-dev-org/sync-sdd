@@ -64,6 +64,8 @@ roles:
     timeout: 1200
     stages:
       inspectors:
-        engine: subagents
+        engine: codex
+        model: gpt-5.3-codex
       auditor:
-        engine: subagents
+        engine: claude
+        model: claude-sonnet-4-6
