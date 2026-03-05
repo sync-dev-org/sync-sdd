@@ -23,7 +23,7 @@ Gather in parallel:
 
 ## Step 2: Collect Session Context (Interactive)
 
-Ask user:
+Use `AskUserQuestion` tool to ask user:
 1. "What was accomplished in this session?" (key deliverables)
 2. "What should be done next?" (immediate next action)
 3. "Any decisions or caveats to note?" (context for next session)

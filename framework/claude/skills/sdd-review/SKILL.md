@@ -118,7 +118,7 @@ Review scope directory を決定:
 
 B{seq} 決定: `{scope-dir}/verdicts.md` を Read し、最大 batch 番号を +1。なければ 1。
 
-`{scope-dir}/active/` を作成 (既存があれば削除してから再作成)。
+`{scope-dir}/active/` を作成 (既存があれば削除してから再作成): `rm -rf {scope-dir}/active; mkdir -p {scope-dir}/active`
 
 ## Step 4: Context Preamble Generation
 

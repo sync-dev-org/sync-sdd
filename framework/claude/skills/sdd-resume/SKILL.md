@@ -48,7 +48,7 @@ Check `$TMUX` environment variable. If set, execute all 4 sub-steps:
 
 1. **SID Generation**: Run `date +%H%M%S` and capture output as `$SID` (session-unique ID)
 2. **Lead Pane Title**: Run `tmux select-pane -T 'sdd-{SID}-lead'`
-3. **Orphan Cleanup**: Run `tmux list-panes -F '#{pane_id} #{pane_title}'` (current window only — do NOT use `-a` which spans all windows/sessions and would detect panes from other concurrent Claude Code sessions). Identify panes with `sdd-` prefix titles whose SID does not match current `$SID`. Report orphans to user and ask for confirmation before killing them.
+3. **Orphan Cleanup**: Run `tmux list-panes -F '#{pane_id} #{pane_title}'` (current window only — do NOT use `-a` which spans all windows/sessions and would detect panes from other concurrent Claude Code sessions). Identify panes with `sdd-` prefix titles whose SID does not match current `$SID`. Report orphans to user and use `AskUserQuestion` tool to confirm before killing them.
 4. **Grid Creation**: Get current pane ID with `printenv TMUX_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic). Run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output to build slot management table (`slot-{N}:{pane_id}` format).
 
 ## Step 6: Record SESSION_START
