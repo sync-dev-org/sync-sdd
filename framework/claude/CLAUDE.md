@@ -152,7 +152,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 | `/sdd-review` | Unified review pipeline (design, impl, dead-code) with multi-engine support |
 | `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
-| `/sdd-resume` | Session resume (invoke on "再開", "continue", "resume", or at session start) |
+| `/sdd-start` | Session start (invoke on "再開", "continue", "resume", or at session start) |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
@@ -269,9 +269,9 @@ Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
 | Direction change | decisions.md | Auto-append with Reason |
 | Session start | decisions.md | SESSION_START auto-append |
 
-### Session Resume
+### Session Start
 
-On session start (new Claude Code session, conversation compact, `/clear`, or resume request): use `/sdd-resume`.
+On session start (new Claude Code session, conversation compact, `/clear`, or resume request): use `/sdd-start`.
 
 ## Knowledge Auto-Accumulation
 
@@ -290,7 +290,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 ## Behavioral Rules
 - **Roadmap Required**: All spec lifecycle operations (design, impl, review) flow through `/sdd-roadmap`. If no roadmap exists, a 1-spec roadmap is auto-created. Always use `/sdd-roadmap {subcommand}`.
 - **Change Request Triage**: Before editing any file, check whether it appears in any spec's `implementation.files_created`. If it does, do NOT edit directly — route through the spec's revision workflow (see Artifact Ownership). This applies regardless of how the change was requested (bug report, feature request, quick fix, user instruction).
-- **Session Resume**: On resume request (e.g., "再開", "continue", "resume"), compact, or `/clear` → use `/sdd-resume`. Do NOT attempt manual resume steps.
+- **Session Start**: On session start, resume request (e.g., "再開", "continue", "resume"), compact, or `/clear` → use `/sdd-start`. Do NOT attempt manual resume steps.
 - Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 

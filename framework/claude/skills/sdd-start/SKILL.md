@@ -1,15 +1,15 @@
 ---
-description: Session resume — invoke on "再開", "continue", "resume", or at every session start
+description: Session start — invoke on "再開", "continue", "resume", or at every session start
 allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 ---
 
-# SDD Resume
+# SDD Start
 
 <instructions>
 
 ## Core Task
 
-Execute session resume protocol. All steps are idempotent and safe to re-execute. Do NOT skip any step.
+Execute session start protocol. All steps are idempotent and safe to re-execute. Do NOT skip any step.
 
 ## Step 1: Detect
 
@@ -44,12 +44,27 @@ If roadmap active: scan all `{{SDD_DIR}}/project/specs/*/spec.yaml` files → bu
 
 **MANDATORY when `$TMUX` is set. Do NOT skip.**
 
-Check `$TMUX` environment variable. If set, execute all 4 sub-steps:
+Check `$TMUX` environment variable. If set, execute all sub-steps:
 
 1. **SID Generation**: Run `date +%H%M%S` and capture output as `$SID` (session-unique ID)
-2. **Lead Pane Title**: Run `tmux select-pane -T 'sdd-{SID}-lead'`
-3. **Orphan Cleanup**: Run `tmux list-panes -F '#{pane_id} #{pane_title}'` (current window only — do NOT use `-a` which spans all windows/sessions and would detect panes from other concurrent Claude Code sessions). Identify panes with `sdd-` prefix titles whose SID does not match current `$SID`. Report orphans to user and use `AskUserQuestion` tool to confirm before killing them.
-4. **Grid Creation**: Get current pane ID with `printenv TMUX_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic). Run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output to build slot management table (`slot-{N}:{pane_id}` format).
+2. **Lead Pane Title**: Run `tmux select-pane -T 'sdd-{SID}-lead'` (best-effort — Claude Code overwrites this, but set it anyway for tmux UX)
+3. **Orphan Cleanup**: Get current pane ID with `printenv TMUX_PANE` → `$MY_PANE`. Read `{{SDD_DIR}}/state.yaml` if it exists. For each pane_id listed (lead + all slots), check if it still exists in tmux via `tmux list-panes -F '#{pane_id}'`. Exclude `$MY_PANE` (own Lead pane). Collect remaining live panes as orphan candidates. Report orphans to user and use `AskUserQuestion` tool to confirm before killing them. If state.yaml does not exist, fall back to title-based detection: `tmux list-panes -F '#{pane_id} #{pane_title}'` (current window only), identify panes with `sdd-` prefix titles whose SID does not match current `$SID`.
+4. **Grid Setup**: If state.yaml exists and ALL slot pane_ids are alive in tmux (after orphan cleanup) → reuse existing grid, skip grid.sh. Otherwise → run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output to build slot management table (`slot-{N}:{pane_id}` format).
+5. **state.yaml Generation**: Write `{{SDD_DIR}}/state.yaml` with session metadata and grid slot mappings:
+   ```yaml
+   sid: "{SID}"
+   created_at: "{ISO-8601 timestamp}"
+   lead:
+     pane_id: "{lead pane_id}"
+   grid:
+     slot-1:
+       pane_id: "{pane_id}"
+       status: idle
+     slot-2:
+       pane_id: "{pane_id}"
+       status: idle
+     # ... slot-3 through slot-12
+   ```
 
 ## Step 6: Record SESSION_START
 

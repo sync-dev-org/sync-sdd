@@ -148,7 +148,7 @@ steering → design → review → implement → review
 | `/sdd-review` | Unified review pipeline (design, impl, dead-code) with multi-engine support |
 | `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
-| `/sdd-resume` | Session resume (invoke on "再開", "continue", "resume", or at session start) |
+| `/sdd-start` | Session start (invoke on "再開", "continue", "resume", or at session start) |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
