@@ -143,12 +143,13 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 
 ## Workflow
 
-### Commands (8)
+### Commands (9)
 
 | Command | Description |
 |---------|-------------|
 | `/sdd-steering` | Set up project context (create/update/delete/custom) |
 | `/sdd-roadmap` | Unified spec lifecycle: design, impl, review, run, revise, create, update, delete |
+| `/sdd-review` | Unified review pipeline (design, impl, dead-code) with multi-engine support |
 | `/sdd-reboot` | Zero-based project redesign (analysis + design pipeline on feature branch) |
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-resume` | Session resume (invoke on "再開", "continue", "resume", or at session start) |

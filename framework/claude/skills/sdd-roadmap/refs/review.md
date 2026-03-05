@@ -2,6 +2,8 @@
 
 Phase execution reference. Canonical source for ALL review types. Assumes Single-Spec Roadmap Ensure already completed by router (except dead-code/cross-check/wave which skip enrollment).
 
+> **Migration note**: Review execution logic is being migrated to `/sdd-review` skill. This file remains the canonical reference until full integration (Phase 2, Session 5). The `/sdd-review` skill can be used standalone for the same functionality.
+
 Triggered by:
 - `$ARGUMENTS = "review design|impl {feature}"` — single-spec review
 - `$ARGUMENTS = "review design|impl --cross-check"` — cross-check across all specs (no feature name)

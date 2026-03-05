@@ -1,0 +1,15 @@
+# Review Context
+
+Review type: {{REVIEW_TYPE}}
+Feature: {{FEATURE}}
+Scope: {{SCOPE}}
+Output: {{OUTPUT_PATH}}
+SDD_DIR: .sdd
+
+{{PREVIOUSLY_RESOLVED}}
+
+{{SELFCHECK_WARNINGS}}
+
+{{WEB_SERVER_URL}}
+
+{{STEERING_EXCEPTIONS}}

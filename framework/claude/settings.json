@@ -13,6 +13,7 @@
       "Skill(sdd-review-self)",
       "Skill(sdd-resume)",
       "Skill(sdd-publish-setup)",
+      "Skill(sdd-review)",
       "Agent(sdd-analyst)",
       "Agent(sdd-architect)",
       "Agent(sdd-auditor-dead-code)",
