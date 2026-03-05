@@ -93,20 +93,20 @@ Detect project ecosystem by checking for configuration files. Use the **first ma
 
 ## Step 3: Documentation Update
 
-### Step 3.1: Version References
+### Step 3a: Version References
 
 1. **README.md** — search for old version references and update to new version
 2. **CHANGELOG.md** — if exists, add release entry (or remind user to update)
 
-### Step 3.2: Content Review
+### Step 3b: Content Review
 
-#### 3.2a: Change-Based Content Review (all ecosystems)
+#### 3b-i: Change-Based Content Review (all ecosystems)
 
 Analyze changes since the last release to determine if README content needs updating:
 
 1. Get the previous release tag (`git describe --tags --abbrev=0 HEAD~1` or equivalent)
 2. Analyze changes: `git log --stat {last_tag}..HEAD` — identify what was changed
-3. Read README.md and evaluate each content section against the changes (focus on README — CHANGELOG is handled in Step 3.1):
+3. Read README.md and evaluate each content section against the changes (focus on README — CHANGELOG is handled in Step 3a):
    - Do the changes introduce new features, capabilities, or commands not mentioned in README?
    - Do the changes remove or rename features still described in README?
    - Do the changes modify numeric values (counts, limits, thresholds) that README references?
@@ -116,7 +116,7 @@ Analyze changes since the last release to determine if README content needs upda
    - List sections confirmed as current (brief)
 5. Apply updates after user approval
 
-#### 3.2b: Source-of-Truth Sync (SDD Framework repo only)
+#### 3b-ii: Source-of-Truth Sync (SDD Framework repo only)
 
 Cross-reference `framework/claude/CLAUDE.md` (source of truth) against `README.md` for content consistency:
 
@@ -128,7 +128,7 @@ Cross-reference `framework/claude/CLAUDE.md` (source of truth) against `README.m
 
 If any content diverges, update README to match CLAUDE.md.
 
-### Step 3.3: Count Verification (SDD Framework repo only)
+### Step 3c: Count Verification (SDD Framework repo only)
 
 Verify command/agent counts in `framework/claude/CLAUDE.md`:
 - Count `framework/claude/skills/sdd-*/SKILL.md` files (exclude `sdd-review-self` — internal tool, not a user command) → verify `### Commands (N)` matches

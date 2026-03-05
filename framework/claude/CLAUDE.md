@@ -81,7 +81,7 @@ Before dispatching any SubAgent, Lead MUST verify:
 
 ### SubAgent Lifecycle
 
-Lead dispatches SubAgents via `Agent` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. Lead uses `TaskOutput` to collect results when needed.
+Lead dispatches SubAgents via `Agent` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. SubAgent completions are detected via `task-notification` (automatic notification when background agents finish).
 
 **Builder parallel coordination**: As each Builder completes, immediately update tasks.yaml (mark `done`), collect files, store knowledge tags. Final spec.yaml update only after ALL Builders complete.
 
@@ -99,9 +99,9 @@ Roadmap execution maximizes parallelism at multiple levels:
 - **Builder parallelism**: Within a spec, multiple Builders execute in parallel per TaskGenerator groupings.
 - **Inspector parallelism**: All Inspectors for a review dispatch in parallel; Auditor synthesizes after all complete.
 - **Cross-Cutting Parallelism**: Tier-based parallel revision for multi-spec changes. Impact analysis classifies specs (FULL/AUDIT/SKIP), triage eliminates unnecessary work, and execution tiers run in parallel within each tier. See sdd-roadmap `refs/revise.md` Part B.
-- **Wave Context**: Shared context artifacts (conventions brief, shared research) generated before Agent dispatch to ensure consistency across parallel Agents. ConventionsScanner generates the conventions brief (codebase pattern scanning stays out of Lead's context); shared research eliminates redundant Architect discovery. Pilot Stagger seeds conventions via ConventionsScanner supplement mode. See sdd-roadmap `refs/run.md` Step 2.5 and `refs/impl.md` Pilot Stagger Protocol.
+- **Wave Context**: Shared context artifacts (conventions brief, shared research) generated before Agent dispatch to ensure consistency across parallel Agents. ConventionsScanner generates the conventions brief (codebase pattern scanning stays out of Lead's context); shared research eliminates redundant Architect discovery. Pilot Stagger seeds conventions via ConventionsScanner supplement mode. See sdd-roadmap `refs/run.md` Step 3 and `refs/impl.md` Pilot Stagger Protocol.
 
-See sdd-roadmap `refs/run.md` Step 3-4 for dispatch loop details.
+See sdd-roadmap `refs/run.md` Step 4-5 for dispatch loop details.
 
 ### SubAgent Platform Constraints
 
@@ -210,7 +210,7 @@ Auditor references User Intent during every review for:
 
 ### Steering Feedback Loop
 
-Auditor verdicts may include `STEERING:` entries: `CODIFY` (Lead applies directly) or `PROPOSE` (Lead presents to user for approval). Process **after** handling the verdict but **before** advancing to the next phase. Full processing rules: see sdd-roadmap `refs/review.md`.
+Auditor verdicts may include `STEERING:` entries: `CODIFY` (Lead applies directly) or `PROPOSE` (Lead presents to user for approval). Process **after** handling the verdict but **before** advancing to the next phase. Full processing rules: see `/sdd-review` SKILL.md Step 9 (STEERING entries 処理).
 
 ## Handover (Session Persistence)
 

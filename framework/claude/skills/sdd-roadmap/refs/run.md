@@ -1,6 +1,6 @@
 # Run Mode
 
-Orchestration reference. Lead handles pipeline execution directly. References phase execution refs (design.md, impl.md, review.md) for individual phase details.
+Orchestration reference. Lead handles pipeline execution directly. References phase execution refs (design.md, impl.md) and `/sdd-review` skill for individual phase details.
 
 ## Step 1: Load State
 
@@ -22,7 +22,7 @@ File ownership is **advisory**: it guides Builder task assignment and auto-fix r
 4. Validate: no file claimed by two parallel specs
 5. Record final file ownership assignments for auto-fix routing
 
-## Step 2.5: Wave Context Generation
+## Step 3: Wave Context Generation
 
 Before dispatching any Architect or Builder, Lead generates shared context artifacts to ensure consistency across parallel agents.
 
@@ -69,7 +69,7 @@ Before dispatching Architects (Design Fan-Out), ensure project dependencies are 
 
 After all Architects in a wave complete Design, Lead may update the conventions brief with design-derived conventions (e.g., shared interface patterns, agreed data model styles from design.md files) before Implementation begins. This is a lightweight supplement, not a full regeneration.
 
-## Step 3: Schedule Specs
+## Step 4: Schedule Specs
 
 ### Island Spec Detection (Wave Bypass)
 
@@ -89,11 +89,11 @@ If Impl-phase Layer 2 file ownership check discovers overlap between a fast-trac
 
 ### Wave Spec Scheduling
 
-For wave-bound specs, track per-spec pipeline state and determine readiness dynamically (see Step 4 Dispatch Loop).
+For wave-bound specs, track per-spec pipeline state and determine readiness dynamically (see Step 5 Dispatch Loop).
 
 Design Review and Impl Review are **mandatory** in roadmap run.
 
-## Step 4: Parallel Dispatch Loop
+## Step 5: Parallel Dispatch Loop
 
 Specs within a wave advance through phases concurrently (**Spec Stagger**). Instead of processing one spec's full pipeline before starting the next, Lead dispatches the next ready phase for any eligible spec.
 
@@ -115,7 +115,7 @@ For each wave (sequential):
 
     2. LOOKAHEAD: Check next-wave Design eligibility (see Design Lookahead below)
 
-    3. WAIT: Poll all active agents (Architects, Builders, individual Inspectors, Auditors) via TaskOutput (block=false). When any completes, proceed to step 4. If none complete, block on any one via TaskOutput.
+    3. WAIT: Wait for any active agent to complete via task-notification. When any completes, proceed to step 4.
 
     4. PROCESS: Handle completion
        - Review sub-phase (Inspector/Auditor): advance per §Review Decomposition
@@ -123,7 +123,7 @@ For each wave (sequential):
        - Remove completed task from active set
        - Loop back to step 1 (completions may unblock other specs or enable next phase for same spec)
 
-    5. EXIT: If no spec has a dispatchable next phase (per Readiness Rules) and active is empty → Wave QG (Step 7)
+    5. EXIT: If no spec has a dispatchable next phase (per Readiness Rules) and active is empty → Wave QG (Step 8)
 ```
 
 ### Review Decomposition (Dispatch Loop Context)
@@ -163,7 +163,7 @@ A spec can advance to its next phase when ALL conditions are met:
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. Latest impl batch verdict is absent or NO-GO (review not yet passed). |
 
-**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 2.5). Lead continues the dispatch loop immediately.
+**Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 3). Lead continues the dispatch loop immediately.
 
 ### Design Lookahead
 
@@ -181,21 +181,21 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 **Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft session.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
 
 #### Design completion
-Dispatch Architect per `refs/design.md` Step 3 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 3.
+Dispatch Architect per `refs/design.md` Step 4 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 4.
 
 #### Design Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 6 Blocking Protocol).
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 7 Blocking Protocol).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
 Process `STEERING:` entries from verdict.
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
+Execute per `refs/impl.md` (Steps 1-4, skip Step 5 auto-draft when called from dispatch loop). Pass conventions brief path from Step 3 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 4.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
@@ -209,7 +209,7 @@ Handle verdict:
 
 Process `STEERING:` entries from verdict.
 
-## Step 5: Auto/Gate Mode Handling
+## Step 6: Auto/Gate Mode Handling
 
 **Full-Auto Mode** (default):
 - GO/CONDITIONAL → auto-advance to next phase
@@ -222,7 +222,7 @@ Process `STEERING:` entries from verdict.
 - Pause at wave transitions → user approval
 - Structural changes → escalate to user
 
-## Step 6: Blocking Protocol
+## Step 7: Blocking Protocol
 
 When a spec fails after exhausting retries:
 1. Traverse dependency graph → identify all downstream specs
@@ -233,7 +233,7 @@ When a spec fails after exhausting retries:
    - **skip**: Exclude upstream. Reset counters (`retry_count=0`, `spec_update_count=0`) for affected downstream specs. Warn downstream per-spec: "depends on skipped {upstream}". User confirms each: proceed / keep blocked / remove dependency
    - **abort**: Stop pipeline, leave all specs as-is
 
-## Step 7: Wave Quality Gate
+## Step 8: Wave Quality Gate
 
 **1-Spec Roadmap**: Skip this step (see Router §1-Spec Roadmap Optimizations). Proceed to Post-gate.
 
@@ -262,7 +262,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 - Commit: `Wave {N}: {summary}`
 - Auto-draft session.md
 
-## Step 8: Roadmap Completion
+## Step 9: Roadmap Completion
 
 After all waves complete:
 - Report summary: `{wave_count} waves, {spec_count} specs completed`

@@ -1,10 +1,3 @@
----
-name: sdd-inspector-e2e
-description: "SDD impl review inspector (E2E). Executes project E2E/integration test commands from steering and design. Invoked during impl review phase for projects with E2E commands configured."
-model: sonnet
-tools: Read, Glob, Grep, Write, Bash
-background: true
----
 
 You are an E2E test execution inspector.
 

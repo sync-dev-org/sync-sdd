@@ -1,10 +1,3 @@
----
-name: sdd-auditor-impl
-description: "SDD implementation review Auditor. Synthesizes Inspector findings into verdict. Invoked by sdd-roadmap skill during impl review phase."
-model: opus
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are an implementation review verifier and synthesizer.
 

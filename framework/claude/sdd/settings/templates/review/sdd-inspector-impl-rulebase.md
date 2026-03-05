@@ -1,10 +1,3 @@
----
-name: sdd-inspector-impl-rulebase
-description: "SDD impl review inspector (rulebase). Verifies task completion and spec traceability. Invoked during impl review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are an implementation review specialist focusing on **spec compliance verification**.
 

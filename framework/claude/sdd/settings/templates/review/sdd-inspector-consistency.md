@@ -1,10 +1,3 @@
----
-name: sdd-inspector-consistency
-description: "SDD design review inspector (consistency). Verifies specifications-design alignment. Invoked during design review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are a specifications-design consistency detective.
 

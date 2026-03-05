@@ -49,7 +49,7 @@ Dispatch `sdd-analyst` for holistic codebase analysis and redesign proposal.
    - Template path: `{{SDD_DIR}}/settings/templates/reboot/analysis-report.md`
    - Input state: `{full-reboot|code-only|partial}`
    - **DO NOT pass specs path** — Analyst must not read existing specs
-2. Wait for `ANALYST_COMPLETE` via `TaskOutput`. Extract structured fields (New specs, Waves, Steering, Requirements identified, Files to delete, report path) for progress tracking. Files to delete count is informational at this phase — actual deletion processing occurs in Phase 9-10.
+2. Wait for Analyst completion via task-notification. Extract structured fields (New specs, Waves, Steering, Requirements identified, Files to delete, report path) for progress tracking. Files to delete count is informational at this phase — actual deletion processing occurs in Phase 9-10.
 3. Verify: `analysis-report.md` exists at output path. If missing, retry once with same prompt. On second failure: `git checkout main && git branch -D reboot/{branch_name}`, report error to user, stop.
 
 ## Phase 5: User Review Checkpoint
@@ -149,7 +149,7 @@ For each wave (sequential):
     2. LOOKAHEAD: Check next-wave Design eligibility
        (same as run.md: if all deps reached design-generated, dispatch Architect)
 
-    3. WAIT: Poll active agents via TaskOutput
+    3. WAIT: Wait for any active agent to complete via task-notification
 
     4. PROCESS: Handle completion
        - Inspector/Auditor: advance per Review Decomposition

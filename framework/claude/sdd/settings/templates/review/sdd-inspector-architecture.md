@@ -1,10 +1,3 @@
----
-name: sdd-inspector-architecture
-description: "SDD design review inspector (architecture). Evaluates component boundaries and interface contracts. Invoked during design review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are an architecture quality detective.
 

@@ -1,10 +1,3 @@
----
-name: sdd-auditor-dead-code
-description: "SDD dead code review Auditor. Synthesizes dead code Inspector findings into verdict. Invoked by sdd-roadmap skill during dead code review phase."
-model: opus
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are a dead code review verifier and synthesizer.
 

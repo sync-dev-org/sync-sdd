@@ -176,11 +176,11 @@ For each AUDIT-classified spec, perform lightweight verification:
    - **Change needed**: Interface or behavior is affected → promote to FULL
 3. Present triage results to user for confirmation
 
-### Step 5.5: Auto-Demotion Check
+### Step 6: Auto-Demotion Check
 
 After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (state transition → pipeline execution) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.md: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
 
-### Step 6: Execution Tier Planning
+### Step 7: Execution Tier Planning
 
 Build a tier-based execution plan from the FULL specs:
 
@@ -201,7 +201,7 @@ Build a tier-based execution plan from the FULL specs:
    ```
 5. On user confirmation → proceed to execution
 
-### Step 7: Tier Execution
+### Step 8: Tier Execution
 
 Execute each tier sequentially. Within a tier, specs at the same phase run in parallel. Each phase completes for all specs before advancing to the next (NOT a concurrent dispatch loop — phases are strictly sequential):
 
@@ -214,7 +214,7 @@ For each tier (sequential):
      - Set phase = design-generated
 
   2. Wave Context Generation:
-     - Dispatch `sdd-conventions-scanner` (mode: Generate) per run.md Step 2.5
+     - Dispatch `sdd-conventions-scanner` (mode: Generate) per run.md Step 3
      - Generate shared research if 2+ Architects in tier (include cross-cutting brief as additional context)
      - Store in specs/.cross-cutting/{id}/ alongside brief.md
 
@@ -225,7 +225,7 @@ For each tier (sequential):
        b. Cross-cutting brief path → Architect reads brief for shared context
        c. Conventions brief path + shared research path (from step 2)
        d. "Focus on spec-specific design changes. Shared background is in the brief."
-     - After each Architect completes: update spec.yaml per design.md Step 3
+     - After each Architect completes: update spec.yaml per design.md Step 4
 
   4. Design Review:
      - Dispatch per spec (parallel) via `/sdd-review design {feature}`
@@ -233,7 +233,7 @@ For each tier (sequential):
      - SPEC-UPDATE-NEEDED is not expected for design review. If received, escalate immediately
 
   5. Implementation:
-     - Update conventions brief with design-derived conventions (run.md Step 2.5 Post-Design)
+     - Update conventions brief with design-derived conventions (run.md Step 3 Post-Design)
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
      - TaskGenerator → Builder per refs/impl.md (includes conventions brief path, Pilot Stagger Protocol)
      - After ALL Builders complete per spec: update spec.yaml
@@ -245,21 +245,21 @@ For each tier (sequential):
   7. Tier Checkpoint:
      - All specs in tier must reach implementation-complete
      - Auto-fix loop applies per spec: handle NO-GO/SPEC-UPDATE-NEEDED per run.md Phase Handlers (counter increment, Architect/Builder re-dispatch, phase transitions). Counter limits: retry_count max 5, spec_update_count max 2, aggregate cap 6 (per CLAUDE.md)
-     - On exhaustion: escalate to user per run.md Step 6 blocking protocol (user chooses fix/skip/abort). Skip removes spec from tier; abort halts entire revision.
+     - On exhaustion: escalate to user per run.md Step 7 blocking protocol (user chooses fix/skip/abort). Skip removes spec from tier; abort halts entire revision.
 ```
 
-### Step 8: Cross-Cutting Consistency Review
+### Step 9: Cross-Cutting Consistency Review
 
 After all tiers complete, verify cross-spec consistency:
 
-1. Execute wave-scoped cross-check impl review (same mechanism as run.md Step 7a) across ALL affected specs (all FULL specs from all tiers)
+1. Execute wave-scoped cross-check impl review (same mechanism as run.md Step 8a) across ALL affected specs (all FULL specs from all tiers)
 2. Persist verdict to `specs/.cross-cutting/{id}/verdicts.md` (NOT `reviews/wave/verdicts.md` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
    - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5 (NO-GO), spec_update_count max 2 (SPEC-UPDATE-NEEDED), aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user
    - **SPEC-UPDATE-NEEDED** → update affected spec design, re-implement, re-run cross-check review (counts toward spec_update_count and aggregate cap)
 
-### Step 9: Post-Completion
+### Step 10: Post-Completion
 
 1. Cross-cutting brief and verdicts are retained in `specs/.cross-cutting/{id}/` for reference
 2. Auto-draft `{{SDD_DIR}}/handover/session.md`

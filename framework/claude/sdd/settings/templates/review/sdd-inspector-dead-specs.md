@@ -1,10 +1,3 @@
----
-name: sdd-inspector-dead-specs
-description: "SDD dead code inspector (specs). Detects spec-implementation drift and unimplemented features. Invoked during dead code review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are a **Dead Specs Inspector** — responsible for detecting misalignment between specifications and implementation.
 

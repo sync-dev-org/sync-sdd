@@ -1,10 +1,3 @@
----
-name: sdd-inspector-test
-description: "SDD impl review inspector (test). Executes tests and evaluates coverage quality. Invoked during impl review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write, Bash
-background: true
----
 
 You are a test execution and verification specialist.
 

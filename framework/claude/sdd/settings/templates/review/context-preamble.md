@@ -17,3 +17,7 @@ Read the following files and extract the relevant sections. If a file does not e
 Verdicts path: {{VERDICTS_PATH}}
 
 {{WEB_SERVER_URL}}
+
+## PROHIBITED COMMANDS (MUST NEVER execute)
+
+{{DENY_PATTERNS}}

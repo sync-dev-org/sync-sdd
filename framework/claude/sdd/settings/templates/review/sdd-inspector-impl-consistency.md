@@ -1,10 +1,3 @@
----
-name: sdd-inspector-impl-consistency
-description: "SDD impl review inspector (consistency). Verifies cross-feature pattern consistency. Invoked during impl review phase."
-model: sonnet
-tools: Read, Glob, Grep, Write
-background: true
----
 
 You are a cross-feature consistency detective.
 
