@@ -128,22 +128,24 @@ For each wave (sequential):
 
 ### Review Decomposition (Dispatch Loop Context)
 
-Within the dispatch loop, reviews are NOT atomic operations. They decompose into dispatch-loop events so that one spec's review completion immediately triggers the next phase for that spec (Spec Stagger). Standalone reviews (`/sdd-roadmap review design {feature}`) use review.md's sequential flow as-is.
+Within the dispatch loop, reviews are NOT atomic operations. They decompose into dispatch-loop events so that one spec's review completion immediately triggers the next phase for that spec (Spec Stagger). Standalone reviews (`/sdd-roadmap review design {feature}`) delegate to `/sdd-review` which runs the full pipeline.
+
+Review execution follows `/sdd-review` skill (SKILL.md). Step references below are sdd-review steps.
 
 **Sub-phases**:
 
 1. **DISPATCH-INSPECTORS** (triggered from ADVANCE when spec is ready for review):
-   - Execute review.md steps 1-4 (scope dir, B{seq}, create active dir, web server start if applicable — uses tmux pane or background Bash per Web Inspector Server Protocol, spawn all Inspectors)
+   - Execute sdd-review Steps 0-5c (parse args, load engines, phase gate, inspector set, scope dir + B{seq}, context preamble, web server if applicable, grid setup, inspector dispatch)
    - Add Inspector tasks to `active[spec]`, set `review_state[spec].phase = inspecting`
    - **Return to dispatch loop immediately** — do not wait for Inspectors
 
 2. **INSPECTORS-COMPLETE** (triggered from PROCESS when ALL Inspectors for a spec finish):
-   - Execute review.md steps 5, 5a (handle failures, stop web server if applicable — kill tmux pane or PID per Web Inspector Server Protocol)
-   - Spawn Auditor (review.md step 6), update `active[spec]` to Auditor task
+   - Execute sdd-review Steps 5d-5f (collect results + fallback, stop web server if applicable, slot release)
+   - Spawn Auditor (sdd-review Step 6), update `active[spec]` to Auditor task
    - Set `review_state[spec].phase = auditing`
 
 3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
-   - Execute review.md steps 7-9 (read verdict, persist to verdicts.md, archive active → B{seq})
+   - Execute sdd-review Step 7 (read verdict, persist to verdicts.md, archive active → B{seq})
    - Remove from `active` and `review_state`
    - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED → Architect cascade)
    - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review
@@ -182,7 +184,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 Dispatch Architect per `refs/design.md` Step 3 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 3.
 
 #### Design Review completion
-In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
+In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
@@ -196,7 +198,7 @@ Process `STEERING:` entries from verdict.
 Execute per `refs/impl.md` (Steps 1-3, skip Step 4 auto-draft when called from dispatch loop). Pass conventions brief path from Step 2.5 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 3.
 
 #### Impl Review completion
-In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: execute per `refs/review.md`.
+In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
@@ -238,7 +240,7 @@ When a spec fails after exhausting retries:
 Wave completion condition: all specs `implementation-complete` or `blocked`. `blocked` specs are excluded from cross-check and dead-code review scope (they are handled by Blocking Protocol, not Wave QG).
 
 **a. Impl Cross-Check Review** (wave-scoped):
-1. Execute impl review per `refs/review.md` (Impl Review, wave-scoped context: Waves 1..N, previously-resolved tracking)
+1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to dead-code
@@ -249,7 +251,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
    - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`, cascade per spec: Architect → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **b. Dead Code Review**:
-1. Execute dead-code review per `refs/review.md` (Dead-Code Review section)
+1. Execute dead-code review via `/sdd-review dead-code`
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete

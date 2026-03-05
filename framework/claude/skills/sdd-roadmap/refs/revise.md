@@ -72,11 +72,11 @@ Standard pipeline with revision context. References phase execution refs for det
    - Feature: {feature}, Mode: existing
    - User-instructions: {REVISION_INSTRUCTIONS from Step 2}. Preserve unaffected design sections. Document changes in '## Revision Notes'.
    After completion: verify design.md, update spec.yaml (increment `version`, phase=design-generated, last_phase_action=null).
-2. **Design Review**: Execute per `refs/review.md` (Design Review section).
+2. **Design Review**: Execute via `/sdd-review design {feature}`.
    Handle verdict per CLAUDE.md counter limits.
 3. **Implementation**: Execute per `refs/impl.md` (Steps 1-3).
    After ALL Builders complete: update spec.yaml (phase=implementation-complete, files_created).
-4. **Impl Review**: Execute per `refs/review.md` (Impl Review section).
+4. **Impl Review**: Execute via `/sdd-review impl {feature}`.
    Handle verdict per CLAUDE.md counter limits.
 
 Auto-fix loop applies normally (retry_count, spec_update_count).
@@ -228,7 +228,7 @@ For each tier (sequential):
      - After each Architect completes: update spec.yaml per design.md Step 3
 
   4. Design Review:
-     - Dispatch per spec (parallel) per refs/review.md
+     - Dispatch per spec (parallel) via `/sdd-review design {feature}`
      - Handle verdicts per CLAUDE.md counter limits and run.md Phase Handlers (on NO-GO: re-dispatch Architect, increment counter)
      - SPEC-UPDATE-NEEDED is not expected for design review. If received, escalate immediately
 
@@ -239,7 +239,7 @@ For each tier (sequential):
      - After ALL Builders complete per spec: update spec.yaml
 
   6. Impl Review:
-     - Dispatch per spec (parallel) per refs/review.md
+     - Dispatch per spec (parallel) via `/sdd-review impl {feature}`
      - Handle verdicts per CLAUDE.md counter limits and run.md Phase Handlers (on NO-GO: re-dispatch Builder; on SPEC-UPDATE-NEEDED: cascade per run.md)
 
   7. Tier Checkpoint:
