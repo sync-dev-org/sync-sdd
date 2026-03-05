@@ -34,7 +34,7 @@ Read latest N entries from `{{SDD_DIR}}/handover/decisions.md` → recent decisi
 
 ## Step 4: Read Knowledge Buffer
 
-Read `{{SDD_DIR}}/handover/buffer.md` → pending knowledge tags (if exists).
+Check `{{SDD_DIR}}/handover/buffer.md` existence with Glob first (Read errors on missing files cascade and cancel parallel tool calls). Read only if found.
 
 ## Step 5: Reconstruct Pipeline State
 
@@ -49,7 +49,7 @@ Check `$TMUX` environment variable. If set, execute all 4 sub-steps:
 1. **SID Generation**: Run `date +%H%M%S` and capture output as `$SID` (session-unique ID)
 2. **Lead Pane Title**: Run `tmux select-pane -T 'sdd-{SID}-lead'`
 3. **Orphan Cleanup**: Run `tmux list-panes -a -F '#{pane_id} #{pane_title}'` to list all panes. Identify panes with `sdd-` prefix titles whose SID does not match current `$SID`. Report orphans to user and ask for confirmation before killing them.
-4. **Grid Creation**: Get current pane ID with `tmux display-message -p '#{pane_id}'`. Run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output to build slot management table (`slot-{N}:{pane_id}` format).
+4. **Grid Creation**: Get current pane ID with `printenv TMUX_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic). Run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output to build slot management table (`slot-{N}:{pane_id}` format).
 
 ## Step 6: Record SESSION_START
 

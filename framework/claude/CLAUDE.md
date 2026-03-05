@@ -307,6 +307,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - `&&` によるコマンド連結 → 引用符とフラグの組み合わせが誤検出を悪化させる。独立したコマンドは並列 Bash 呼び出しで実行する
   - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
   - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
+  - `#{}` tmux フォーマット文字列 (`'#{pane_id}'` 等) → `${}` パラメータ置換と誤検出される。`printenv TMUX_PANE` 等の代替手段を使う
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
 
 ## Git Workflow

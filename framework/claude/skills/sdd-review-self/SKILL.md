@@ -116,7 +116,7 @@ Prep Agent (外部エンジン) が失敗した場合:
 判定: `$PREP_ENGINE == "subagents" && $INSPECTOR_ENGINE == "subagents" && $AUDITOR_ENGINE == "subagents"`
 
 `$TMUX` が設定されている場合のみ実行:
-1. `tmux display-message -p '#{pane_id}'` → `$MY_PANE`
+1. `printenv TMUX_PANE` → `$MY_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic)
 2. SID 取得: Lead pane タイトルから抽出 (`tmux display-message -p '#{pane_title}'` → `sdd-{SID}-lead` → `$SID`)。Lead タイトルが `sdd-*-lead` パターンでない場合 → `date +%H%M%S` で生成し、`tmux select-pane -T 'sdd-{SID}-lead'` で設定。
 
 MultiView グリッド確認:
