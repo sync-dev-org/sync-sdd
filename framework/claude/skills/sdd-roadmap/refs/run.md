@@ -145,7 +145,7 @@ Within the dispatch loop, reviews are NOT atomic operations. They decompose into
 3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
    - Execute review.md steps 7-9 (read verdict, persist to verdicts.md, archive active → B{seq})
    - Remove from `active` and `review_state`
-   - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO)
+   - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED → Architect cascade)
    - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review
 
 **NO-GO flow**: Phase Handler dispatches Architect with fix instructions directly from PROCESS (not via ADVANCE). After Architect completes, ADVANCE re-evaluates readiness and dispatches new review (Readiness Rules: last verdict is NO-GO → DR eligible).

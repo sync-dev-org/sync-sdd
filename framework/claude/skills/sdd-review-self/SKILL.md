@@ -57,6 +57,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 
 3. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
    - `install_check` 失敗 → そのステージを **subagents にフォールバック**。Report: `{stage}: {engine} not available, falling back to subagents`
+   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → Report: `jq not available (required for claude engine streaming). Install: brew install jq / apt install jq` → subagents にフォールバック
 4. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (Step 5) with the resolved engine/model
 
 5. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.md`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions. (Note: `$SCOPE_DIR` is defined in Steps 1-3 section below.)
@@ -151,9 +152,11 @@ npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] -
 
 **claude** (`env -u CLAUDECODE` で Lead セッションからのネスト検出を回避):
 ```
-env -u CLAUDECODE claude -p - --dangerously-skip-permissions [--model ${STAGE}_MODEL]
+env -u CLAUDECODE claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
 ```
 ツール制限時: `--dangerously-skip-permissions` を `--allowedTools "$TOOLS"` に置換。
+`jq` が必要 (`brew install jq` / `apt install jq`)。
+進捗表示: ツール名・引数・テキスト応答・コスト/所要時間を pane にリアルタイム表示。
 
 **gemini**:
 ```

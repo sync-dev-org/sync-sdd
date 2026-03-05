@@ -41,7 +41,7 @@ $ARGUMENTS = ""                 → Auto-detect with user choice
 ## Step 2: Auto-Detect (if no explicit mode)
 
 1. Check if `{{SDD_DIR}}/project/specs/roadmap.md` exists
-2. If exists: Present options (Run / Update / Reset)
+2. If exists: Present options (Run / Update / Delete)
 3. If not: Start creation flow
 
 ---
