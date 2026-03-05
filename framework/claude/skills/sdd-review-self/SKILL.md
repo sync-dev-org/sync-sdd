@@ -117,8 +117,8 @@ Prep Agent (外部エンジン) が失敗した場合:
 
 `$TMUX` が設定されている場合のみ実行:
 1. `printenv TMUX_PANE` → `$MY_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic)
-2. SID + Grid 取得: `{{SDD_DIR}}/state.yaml` を Read し、`sid` と `grid` セクションから `$SID` と slot pane ID を取得。state.yaml が存在しない場合 → `date +%H%M%S` で SID 生成し、`bash {{SDD_DIR}}/settings/scripts/multiview-grid.sh $SID $MY_PANE` で Grid 作成、state.yaml を Write。
-3. Grid 検証: state.yaml の slot pane_id が tmux に全て存在するか確認。不一致があれば Grid を再作成し state.yaml を更新。
+2. SID + Grid 取得: `{{SDD_DIR}}/state.yaml` を Read し、`sid` と `grid` セクション (`window_id`, slot pane_ids) から `$SID` と slot pane ID を取得。state.yaml が存在しない場合 → tmux mode を諦め、全 agent を `Bash(run_in_background=true)` で実行 (background fallback)。
+3. Grid 検証: `bash {{SDD_DIR}}/settings/scripts/grid-check.sh {grid.window_id} {all_slot_pane_ids}` — stdout に生存 pane_id を出力、exit 0 = 全 slot 生存, exit 1 = 一部消滅。一部消滅の場合、**Grid を再作成しない** (busy slot で実行中のプロセスを破壊する危険があるため)。stdout の生存 pane_id と state.yaml の `status: idle` を突合し、使用可能な idle slot を特定。不足分は `Bash(run_in_background=true)` にフォールバック。
 
 `$TMUX` 未設定の場合はスキップして Step 5 background mode へ。
 

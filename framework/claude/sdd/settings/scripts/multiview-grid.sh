@@ -8,11 +8,13 @@ split() { tmux split-window "$@" -d -P -F '#{pane_id}'; }
 title() { tmux select-pane -t "$1" -T "$2"; }
 
 title "$LEAD" "sdd-${SID}-lead"
+WINDOW_ID=$(tmux display-message -t "$LEAD" -p '#{window_id}')
 
-EXISTING=$(tmux list-panes -a -F '#{pane_id} #{pane_title}' 2>/dev/null | grep "sdd-${SID}-slot-" || true)
+EXISTING=$(tmux list-panes -F '#{pane_id} #{pane_title}' 2>/dev/null | grep "sdd-${SID}-slot-" || true)
 COUNT=$(echo "$EXISTING" | grep -c "sdd-${SID}-slot-" || true)
 
 if [ "$COUNT" -eq 12 ]; then
+  echo "window_id:${WINDOW_ID}"
   for n in $(seq 1 12); do
     PANE_ID=$(echo "$EXISTING" | grep "sdd-${SID}-slot-${n}$" | awk '{print $1}')
     echo "slot-${n}:${PANE_ID}"
@@ -67,6 +69,7 @@ done
 
 trap - ERR
 
+echo "window_id:${WINDOW_ID}"
 for i in "${!SLOTS[@]}"; do
   echo "slot-$((i+1)):${SLOTS[$i]}"
 done
