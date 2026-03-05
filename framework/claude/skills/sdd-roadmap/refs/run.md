@@ -135,17 +135,17 @@ Review execution follows `/sdd-review` skill (SKILL.md). Step references below a
 **Sub-phases**:
 
 1. **DISPATCH-INSPECTORS** (triggered from ADVANCE when spec is ready for review):
-   - Execute sdd-review Steps 0-5c (parse args, load engines, phase gate, inspector set, scope dir + B{seq}, context preamble, web server if applicable, grid setup, inspector dispatch)
+   - Execute sdd-review Steps 1-6c (parse args, load engines, phase gate, inspector set, scope dir + B{seq}, context preamble, web server if applicable, grid setup, inspector dispatch)
    - Add Inspector tasks to `active[spec]`, set `review_state[spec].phase = inspecting`
    - **Return to dispatch loop immediately** — do not wait for Inspectors
 
 2. **INSPECTORS-COMPLETE** (triggered from PROCESS when ALL Inspectors for a spec finish):
-   - Execute sdd-review Steps 5d-5f (collect results + fallback, stop web server if applicable, slot release)
-   - Spawn Auditor (sdd-review Step 6), update `active[spec]` to Auditor task
+   - Execute sdd-review Steps 6d-6f (collect results + fallback, stop web server if applicable, slot release)
+   - Spawn Auditor (sdd-review Step 7), update `active[spec]` to Auditor task
    - Set `review_state[spec].phase = auditing`
 
 3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
-   - Execute sdd-review Step 7 (read verdict, persist to verdicts.md, archive active → B{seq})
+   - Execute sdd-review Step 8 (read verdict, persist to verdicts.md, archive active → B{seq})
    - Remove from `active` and `review_state`
    - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED → Architect cascade)
    - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review

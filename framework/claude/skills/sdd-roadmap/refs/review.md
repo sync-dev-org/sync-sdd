@@ -54,4 +54,4 @@ When Auditor verdict contains `STEERING:` entries, process after handling the ve
 
 ## Web Inspector Server Protocol
 
-See `/sdd-review` SKILL.md Step 5a for dev server lifecycle management.
+See `/sdd-review` SKILL.md Step 6a for dev server lifecycle management.
