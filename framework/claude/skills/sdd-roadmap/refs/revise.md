@@ -26,7 +26,8 @@ Execute past-wave spec modifications through the standard pipeline.
 1. Verify `roadmap.md` exists
 2. Verify `spec.yaml` exists and `phase` is `implementation-complete`
 3. Verify spec belongs to a completed wave (wave < current executing wave, or all waves complete)
-4. BLOCK if `phase` is `blocked`
+4. If phase is `blocked`: BLOCK with "{feature} is blocked by {blocked_info.blocked_by}"
+5. If phase is unrecognized: BLOCK with "Unknown phase ''{phase}''"
 
 ### Step 2: Collect Revision Intent
 
@@ -154,11 +155,15 @@ Determine if Wave/Spec structure changes are needed:
 4. Record any structural changes as `DIRECTION_CHANGE` in decisions.md
 5. If no structural changes needed → proceed to Step 4
 
+### Step 3.5: Cross-Cutting ID
+
+`$CC_ID` を生成。format: `{kebab-case-revision-name}` (e.g., `fractional-indexing`)。以降の全ステップでこの `CC_ID` を使用する。
+
 ### Step 4: Cross-Cutting Design Brief
 
 Create a shared context document to eliminate redundant work across Architects:
 
-1. Lead creates `specs/.cross-cutting/{id}/brief.md` where `{id}` is a kebab-case identifier for this revision (e.g., `fractional-indexing`)
+1. Lead creates `specs/.cross-cutting/{CC_ID}/brief.md`
 2. Brief contents:
    - **Background**: Why this change is needed
    - **Technical Details**: Specific technical change (e.g., "position: INTEGER → TEXT, using fractional indexing with base62 keys")
@@ -216,7 +221,7 @@ For each tier (sequential):
   2. Wave Context Generation:
      - Dispatch `sdd-conventions-scanner` (mode: Generate) per run.md Step 3
      - Generate shared research if 2+ Architects in tier (include cross-cutting brief as additional context)
-     - Store in specs/.cross-cutting/{id}/ alongside brief.md
+       - Store in specs/.cross-cutting/{CC_ID}/ alongside brief.md
 
   3. Design Fan-Out:
      - Dispatch Architects in parallel (run_in_background: true)
@@ -252,9 +257,8 @@ For each tier (sequential):
 
 After all tiers complete, verify cross-spec consistency:
 
-0. Generate Cross-Cutting ID: `$CC_ID = cc-$(date +%Y%m%d-%H%M%S)`. This ID scopes the cross-cutting scope directory and is passed to sdd-review as `--id {cc_id}`.
-1. Execute cross-cutting impl review via `/sdd-review impl --cross-cutting {spec1,spec2,...} --id {cc_id}` with all FULL specs from all tiers
-2. Persist verdict to `specs/.cross-cutting/{cc_id}/verdicts.yaml` (NOT `reviews/wave/verdicts.yaml` — cross-cutting uses its own scope directory)
+1. Execute cross-cutting impl review via `/sdd-review impl --cross-cutting {spec1,spec2,...} --id {CC_ID}` with all FULL specs from all tiers
+2. Persist verdict to `specs/.cross-cutting/{CC_ID}/verdicts.yaml` (NOT `reviews/wave-{N}/verdicts.yaml` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
    - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5 (NO-GO), spec_update_count max 2 (SPEC-UPDATE-NEEDED), aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user
@@ -262,7 +266,7 @@ After all tiers complete, verify cross-spec consistency:
 
 ### Step 10: Post-Completion
 
-1. Cross-cutting brief and verdicts are retained in `specs/.cross-cutting/{id}/` for reference
+1. Cross-cutting brief and verdicts are retained in `specs/.cross-cutting/{CC_ID}/` for reference
 2. Auto-draft `{{SDD_DIR}}/handover/session.md`
 3. Commit: `cross-cutting: {summary}`
 4. Suggest: `/sdd-status` to verify state

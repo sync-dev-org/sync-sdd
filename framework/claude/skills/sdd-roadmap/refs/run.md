@@ -273,14 +273,14 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 
 **a. Dead Code Review** (wave-scoped, runs BEFORE cross-check):
 1. Execute dead-code review via `/sdd-review dead-code --context wave`
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml` (header: `[W{wave}-DC-B{seq}]`)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to cross-check
    - **NO-GO** → **inline fix**: dispatch Builder(s) directly with fix instructions (Builder scope = all files from Inspector findings). No re-review loop — Builder fixes once, then proceed to cross-check (cross-check serves as safety net). Max 3 retries (tracked in-memory, not persisted; restarts at 0 on session resume). On retry exhaustion: escalate to user with choices: (a) manually fix remaining dead-code and continue, (b) skip dead-code review and proceed to cross-check, (c) abort pipeline. If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **b. Impl Cross-Check Review** (wave-scoped):
 1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml` (header: `[W{wave}-B{seq}]`)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (header: `[W{wave}-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:

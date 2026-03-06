@@ -1,6 +1,6 @@
 ---
 description: "Unified review pipeline for design, impl, and dead-code reviews"
-argument-hint: "design|impl <feature> [--cross-check] [--wave N] | dead-code [--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--timeout <seconds>]"
+argument-hint: "design|impl <feature> [--cross-check] [--wave N] [--cross-cutting <specs> --id <cc_id>] | dead-code [--context standalone|wave] [--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--timeout <seconds>]"
 allowed-tools: Agent, Bash, Glob, Grep, Read, Write
 ---
 
@@ -140,7 +140,7 @@ idle slot を選択し、`{{SDD_DIR}}/state.yaml` の該当 slot を `status: bu
 tmux send-keys -t {slot_pane_id} 'cat {$TPL}/briefer.md | {$BRIEFER_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-briefer-B{seq}' Enter
 ```
 ユーザーに報告: `Briefer dispatched to slot-{N} ({pane_id})`
-send-keys ゾンビ確認後、`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-briefer-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に戻し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+send-keys ゾンビ確認後、`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-briefer-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に戻し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
 
 **background mode** (上記以外):
 `Bash(run_in_background=true)` で `cat {$TPL}/briefer.md | {$BRIEFER_ENGINE_CMD}` を実行。task-notification で完了を検知。
@@ -159,9 +159,9 @@ Review scope directory を決定:
 |-------|-----------|
 | Per-feature (design/impl with feature) | `{{SDD_DIR}}/project/specs/{feature}/reviews/` |
 | Dead-code (`$CONTEXT=standalone`) | `{{SDD_DIR}}/project/reviews/dead-code/` |
-| Dead-code (`$CONTEXT=wave`) | `{{SDD_DIR}}/project/reviews/wave/` |
+| Dead-code (`$CONTEXT=wave`) | `{{SDD_DIR}}/project/reviews/wave-{N}/` |
 | Cross-check (`--cross-check`) | `{{SDD_DIR}}/project/reviews/cross-check/` |
-| Wave-scoped (`--wave N`) | `{{SDD_DIR}}/project/reviews/wave/` |
+| Wave-scoped (`--wave N`) | `{{SDD_DIR}}/project/reviews/wave-{N}/` |
 | Cross-cutting (`$CC_ID` from `--id`) | `{{SDD_DIR}}/project/specs/.cross-cutting/{CC_ID}/` |
 
 B{seq} 決定: `{scope-dir}/verdicts.yaml` を Read し、最大 batch 番号を +1。なければ 1。
@@ -314,7 +314,7 @@ Bash(run_in_background=true): cat {scope-dir}/active/brief-{name}.md .sdd/settin
 
 SubAgent mode ではスキップ。tmux mode:
 1. `tmux wait-for -S sdd-{SID}-close-B{seq}` → 全スロットのブロック解除。
-2. `{{SDD_DIR}}/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+2. `{{SDD_DIR}}/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
 
 ## Step 7: Auditor Dispatch
 
@@ -359,7 +359,7 @@ idle スロットを選択し、`{{SDD_DIR}}/state.yaml` の該当 slot を `sta
 tmux send-keys -t {slot_pane_id} 'cat {scope-dir}/active/brief-{auditor-name}.md .sdd/settings/templates/review/{auditor-name}.md | {$AUDITOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-auditor-B{seq}' Enter
 ```
 ユーザーに報告: `Auditor dispatched to slot-{N} ({pane_id})`
-`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-auditor-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-auditor-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
 
 **background mode** (上記以外):
 `Bash(run_in_background=true)` で `cat {scope-dir}/active/brief-{auditor-name}.md .sdd/settings/templates/review/{auditor-name}.md | {$AUDITOR_ENGINE_CMD}` を実行。task-notification で完了を検知。

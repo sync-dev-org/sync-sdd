@@ -117,7 +117,7 @@ For each proposed spec from the report:
 
 ## Phase 7: Design Pipeline (Design-Only Mode)
 
-Reuse the design dispatch loop from sdd-roadmap's `refs/run.md` Step 5 (Lead reads that file for the dispatch protocol), but **skip all implementation phases**. Only Design and Design Review are executed.
+Reuse the design dispatch loop from sdd-roadmap の `refs/run.md` (full path: `.claude/skills/sdd-roadmap/refs/run.md`) Step 5, but **skip all implementation phases**. Only Design and Design Review are executed.
 
 **Auto-draft policy**: Auto-draft session.md only at wave completion (all specs in wave design-reviewed) and pipeline completion. Skip at individual spec phase completions (same as run.md dispatch loop policy).
 
@@ -169,7 +169,7 @@ When dispatching Architects, include extra context for the reboot:
 
 ### Review Decomposition
 
-Same protocol as sdd-roadmap `refs/run.md` §Review Decomposition:
+Same protocol as sdd-roadmap の `refs/run.md` (full path: `.claude/skills/sdd-roadmap/refs/run.md`) §Review Decomposition:
 1. **DISPATCH-INSPECTORS**: Spawn design Inspectors in parallel (5 fixed: rulebase, testability, architecture, consistency, best-practices + 1-4 dynamic via Briefer)
 2. **INSPECTORS-COMPLETE**: Spawn Auditor (auditor template with REVIEW_TYPE=design)
 3. **AUDITOR-COMPLETE**: Read verdict, persist to verdicts.yaml, archive
@@ -177,7 +177,7 @@ Same protocol as sdd-roadmap `refs/run.md` §Review Decomposition:
 ### Verdict Handling
 
 - **GO/CONDITIONAL** → Spec design complete. Proceed to next spec or next wave.
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (SPEC-UPDATE-NEEDED does not occur in design review, so only `retry_count` applies here). On exhaustion: escalate to user per `refs/run.md` Step 7 Blocking Protocol (fix/skip/abort). **Reboot-specific**: only fix/skip/abort actions apply; `phase=blocked` and downstream blocking are N/A (reboot has no impl phase). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
+- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions from verdict. After fix: re-run Design Review. Max 5 retries (SPEC-UPDATE-NEEDED does not occur in design review, so only `retry_count` applies here). On exhaustion: escalate to user per sdd-roadmap の `refs/run.md` (full path: `.claude/skills/sdd-roadmap/refs/run.md`) Step 7 Blocking Protocol (fix/skip/abort). **Reboot-specific**: only fix/skip/abort actions apply; `phase=blocked` and downstream blocking are N/A (reboot has no impl phase). Skip → exclude spec from wave EXIT condition; remaining specs must still meet completion condition.
 - Process `STEERING:` entries from verdict.
 
 ### Shared Research

@@ -99,7 +99,7 @@ Prompt Construction は Briefer に委譲する。Lead は dispatch と成否確
    `Agent(subagent_type="general-purpose", description="Briefer for self-review", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/briefer.md and execute the instructions.")`
    task-notification で完了を検知。
    **tmux mode** (`$TMUX` 設定あり):
-   idle slot を選択し、`{{SDD_DIR}}/state.yaml` の該当 slot を `status: busy` + `agent: briefer`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/briefer | {$BRIEFER_MODEL}"`。完了後は `status: idle` に戻し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+   idle slot を選択し、`{{SDD_DIR}}/state.yaml` の該当 slot を `status: busy` + `agent: briefer`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/briefer | {$BRIEFER_MODEL}"`。完了後は `status: idle` に戻し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
    ```
    tmux send-keys -t {slot_pane_id} 'cat {$TPL}/briefer.md | {$BRIEFER_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-briefer-B{seq}' Enter
    ```
@@ -310,7 +310,7 @@ Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-d1-B{seq}
 SubAgent mode ではスキップ (Agent ツールが自動解放)。tmux mode の場合:
 1. `tmux wait-for -S sdd-{SID}-close-B{seq}` → 全 Agent スロットのブロック解除 (Hold-and-Release)
 2. command chain 完了後、スロットは idle に戻る（再利用可能）
-3. `{{SDD_DIR}}/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+3. `{{SDD_DIR}}/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
 
 ## Step 6: Consolidation (Auditor Agent)
 
@@ -328,7 +328,7 @@ Auditor Agent に統合を委譲する。Lead は dispatch と成否確認のみ
    tmux send-keys -t {slot_pane_id} 'cat {$TPL}/auditor.md | {$AUDITOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-auditor-B{seq}' Enter
    ```
    ユーザーに報告: `Auditor dispatched to slot-{N} ({pane_id})`
-   `Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-auditor-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "slot-{N} idle"`
+   `Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-auditor-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
    **background mode** (上記以外):
    `Bash(run_in_background=true)` で `cat $TPL/auditor.md | $AUDITOR_ENGINE_CMD` を実行。task-notification で完了を検知。
 2. 完了後の検証:

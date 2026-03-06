@@ -114,18 +114,7 @@ Then follow the instructions in the loaded file.
 
 ### Verdict Persistence Format
 
-a. Read existing file (or create with `# Verdicts: {feature}` header)
-b. Determine B{seq} (increment max existing, or start at 1)
-c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は `.sdd/.version` の値、engine 情報は engines.yaml の model 値を使用):
-   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-   - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N}`
-   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.yaml` (see revise.md Part B Step 9)
-   - conditional/dynamic が 0 の場合はその項を省略
-d. Append counts from verdict.yaml
-e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
-f. For CONDITIONAL: extract M/L issues → append as Tracked section
-g. If previous batch exists with Tracked: compare → append `Resolved since B{prev}`
+verdicts.yaml の永続化スキーマは `{{SDD_DIR}}/settings/rules/verdict-format.md` §4 Verdict Index に準拠する。
 
 ---
 

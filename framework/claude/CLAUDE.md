@@ -311,6 +311,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
   - `#{}` tmux フォーマット文字列 (`'#{pane_id}'` 等) → `${}` パラメータ置換と誤検出される。`printenv TMUX_PANE` 等の代替手段を使う
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.yaml batch headers, archive filenames, branch names.
+- **AskUserQuestion exclusion**: Skills の `allowed-tools` に `AskUserQuestion` を含めてはならない。自動承認パスに入ると UI が表示されず空回答で返るバグがある。Skills は main context で実行されるため `allowed-tools` になくても通常の承認フローで動作する。
 
 ## Git Workflow
 

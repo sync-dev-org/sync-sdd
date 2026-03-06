@@ -84,9 +84,9 @@ Report findings in Japanese.
 
 Store the result as CACHED_OK.
 
-## Step 6: Build Fixed Agent Prompts
+## Step 6: Build Fixed Inspector Prompts
 
-Read each agent template from `.sdd/settings/templates/review-self/`, replace placeholders with the values collected earlier, and write the dispatch-ready prompts to `active/`:
+Read each inspector template from `.sdd/settings/templates/review-self/`, replace placeholders with the values collected earlier, and write the dispatch-ready prompts to `active/`:
 
 | Template | Output | Placeholders |
 |----------|--------|-------------|

@@ -47,7 +47,7 @@ S12=$(split -h -p 50 -t "$BR_BOT"); CREATED+=("$S12")
 SLOTS=("$S1" "$S2" "$S3" "$S4" "$S5" "$S6" "$S7" "$S8" "$S9" "$S10" "$S11" "$S12")
 
 for i in "${!SLOTS[@]}"; do
-  title "${SLOTS[$i]}" "slot-$((i+1)) idle"
+  title "${SLOTS[$i]}" "sdd-${SID}-slot-$((i+1))"
 done
 
 trap - ERR

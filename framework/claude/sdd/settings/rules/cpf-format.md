@@ -1,6 +1,8 @@
 # Compact Pipe-Delimited Format (CPF)
 
-Token-efficient structured text format used for inter-agent communication.
+> **Legacy format** - retained for historical reference only. Current inter-agent communication uses YAML format defined in `verdict-format.md`.
+
+Token-efficient structured text format formerly used for inter-agent communication (superseded by YAML).
 
 ## Notation Rules
 
