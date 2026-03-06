@@ -97,9 +97,9 @@ roles:
       inspectors:
         start_level: L2
       auditor:
-        start_level: L3
+        start_level: L4
       builder:
-        start_level: L2
+        start_level: L4
   review:
     timeout: 1200
     stages:

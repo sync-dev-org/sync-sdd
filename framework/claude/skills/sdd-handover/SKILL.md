@@ -21,6 +21,15 @@ Gather in parallel:
 - Current `{{SDD_DIR}}/handover/session.md` (if exists — may be auto-draft or previous manual polish)
 - Recent entries from `{{SDD_DIR}}/handover/decisions.md` (if exists)
 
+## Step 1b: Uncommitted Changes Check
+
+If Step 1 detected uncommitted changes (untracked files or modifications):
+- Report the list of uncommitted files to the user
+- Use `AskUserQuestion` to ask: "未コミットの変更があります。コミットしてからハンドオーバーしますか？"
+  - Options: "コミットする (推奨)" / "コミットせずに続行"
+- If user chooses to commit: create a commit following the project's git workflow conventions, then proceed
+- If user chooses to skip: proceed without committing
+
 ## Step 2: Collect Session Context (Interactive)
 
 Use `AskUserQuestion` tool to ask user:
