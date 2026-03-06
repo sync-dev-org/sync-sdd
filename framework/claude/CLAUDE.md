@@ -29,7 +29,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 
 ### Chain of Command
 
-Lead dispatches T2/T3 SubAgents using `Agent` tool with `subagent_type` parameter (e.g., `Agent(subagent_type="sdd-architect", prompt="...")`). SubAgents are defined in `.claude/agents/` with YAML frontmatter specifying model, tools, and description.
+Lead dispatches T2/T3 SubAgents using `Agent` tool with `subagent_type` parameter (e.g., `Agent(subagent_type="sdd-architect", description="Design feature-x", prompt="...")`). SubAgents are defined in `.claude/agents/` with YAML frontmatter specifying model, tools, and description.
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 

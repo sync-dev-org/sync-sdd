@@ -12,6 +12,10 @@ Read all `.cpf` files from this directory.
 Verdict output: {{VERDICT_PATH}}
 Write your verdict to this path.
 
+## Unavailable Inspectors
+
+{{UNAVAILABLE_INSPECTORS}}
+
 ## Additional Context
 
 Read `.sdd/handover/session.md`, apply the `### Steering Exceptions` section as review exemptions.

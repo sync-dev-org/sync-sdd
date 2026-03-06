@@ -68,13 +68,13 @@ Execute past-wave spec modifications through the standard pipeline.
 
 Standard pipeline with revision context. References phase execution refs for details.
 
-1. **Design**: Execute per `refs/design.md` with revision context:
+1. **Design**: Execute per `design.md` with revision context:
    - Feature: {feature}, Mode: existing
    - User-instructions: {REVISION_INSTRUCTIONS from Step 2}. Preserve unaffected design sections. Document changes in '## Revision Notes'.
    After completion: verify design.md, update spec.yaml (increment `version`, phase=design-generated, last_phase_action=null).
 2. **Design Review**: Execute via `/sdd-review design {feature}`.
    Handle verdict per CLAUDE.md counter limits.
-3. **Implementation**: Execute per `refs/impl.md` (Steps 1-3).
+3. **Implementation**: Execute per `impl.md` (Steps 1-3).
    After ALL Builders complete: update spec.yaml (phase=implementation-complete, files_created).
 4. **Impl Review**: Execute via `/sdd-review impl {feature}`.
    Handle verdict per CLAUDE.md counter limits.
@@ -221,7 +221,7 @@ For each tier (sequential):
   3. Design Fan-Out:
      - Dispatch Architects in parallel (run_in_background: true)
      - Each Architect prompt includes:
-       a. refs/design.md revision context (Mode: existing, User-instructions: revision intent)
+       a. design.md revision context (Mode: existing, User-instructions: revision intent)
        b. Cross-cutting brief path → Architect reads brief for shared context
        c. Conventions brief path + shared research path (from step 2)
        d. "Focus on spec-specific design changes. Shared background is in the brief."
@@ -235,7 +235,7 @@ For each tier (sequential):
   5. Implementation:
      - Update conventions brief with design-derived conventions (run.md Step 3 Post-Design)
      - Cross-Spec File Ownership Analysis (run.md Step 2) across tier specs
-     - TaskGenerator → Builder per refs/impl.md (includes conventions brief path, Pilot Stagger Protocol)
+     - TaskGenerator → Builder per impl.md (includes conventions brief path, Pilot Stagger Protocol)
      - After ALL Builders complete per spec: update spec.yaml
 
   6. Impl Review:

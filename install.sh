@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v2.4.0
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v2.5.0
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -91,6 +91,7 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .sdd/settings/templates/     Spec/steering templates
     .sdd/settings/profiles/      Language/framework profiles
     .sdd/settings/scripts/       Utility scripts
+    .sdd/settings/engines.yaml   Engine configuration (overwritten on --update/--force)
     .sdd/.version                Installed framework version
 
 ${BOLD}USER FILES${RESET} (never touched by installer):

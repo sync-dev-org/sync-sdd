@@ -133,7 +133,7 @@ ISSUES:
 H|task-incomplete|Task 2.3|checkbox not marked, subtask 2.3.2 missing
 H|traceability-missing|Spec 3.AC2|no implementation evidence found for error recovery
 M|file-missing|src/validators/config.ts|expected by design but not created
-M|metadata-mismatch|spec.yaml|status says "implementing" but all tasks checked
+M|metadata-mismatch|spec.yaml|phase is design-generated but all tasks completed
 L|file-unexpected|src/utils/helpers.ts|not specified in design
 NOTES:
 Task completion: 8/10 (80%)

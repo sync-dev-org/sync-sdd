@@ -34,7 +34,7 @@ $ARGUMENTS = "revise [instructions]"             → Revise Mode (Cross-Cutting)
 $ARGUMENTS = "create" or "create -y" → Create Mode
 $ARGUMENTS = "update"           → Update Mode
 $ARGUMENTS = "delete"           → Delete Mode
-$ARGUMENTS = "-y"               → Auto-detect: run if roadmap exists, create if not
+$ARGUMENTS = "-y"               → Auto-detect: run if roadmap exists, create if not (skip Step 2 user choice)
 $ARGUMENTS = ""                 → Auto-detect with user choice
 ```
 
@@ -110,11 +110,12 @@ Then follow the instructions in the loaded file.
 
 a. Read existing file (or create with `# Verdicts: {feature}` header)
 b. Determine B{seq} (increment max existing, or start at 1)
-c. Append batch entry header:
-   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version}`
-   - Wave QG cross-check: `## [W{wave}-B{seq}] ...` (see run.md Step 7a)
-   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] ...` (see run.md Step 7b)
-   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 8)
+c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は VERSION ファイルの値、engine 情報は engines.yaml の model 値を使用):
+   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
+   - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
+   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N}`
+   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 9)
+   - conditional/dynamic が 0 の場合はその項を省略
 d. Append Raw section (Auditor CPF verdict verbatim)
 e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
 g. For CONDITIONAL: extract M/L issues → append as Tracked section

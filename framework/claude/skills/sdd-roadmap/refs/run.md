@@ -181,7 +181,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 **Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft session.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
 
 #### Design completion
-Dispatch Architect per `refs/design.md` Step 4 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 4.
+Dispatch Architect per `design.md` Step 4 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 4.
 
 #### Design Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
@@ -195,7 +195,7 @@ Handle verdict:
 Process `STEERING:` entries from verdict.
 
 #### Implementation completion
-Execute per `refs/impl.md` (Steps 1-4, skip Step 5 auto-draft when called from dispatch loop). Pass conventions brief path from Step 3 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 4.
+Execute per `impl.md` (Steps 1-4, skip Step 5 auto-draft when called from dispatch loop). Pass conventions brief path from Step 3 to impl.md (included in TaskGenerator and Builder dispatch prompts). Cross-Spec File Ownership (Layer 2): after TaskGenerator, detect file overlap between specs currently in Implementation → serialize or partition per Step 2. After ALL Builders complete, update spec.yaml per impl.md Step 4.
 
 #### Impl Review completion
 In dispatch loop: decomposed per §Review Decomposition (verdict handling below triggers at AUDITOR-COMPLETE). Standalone: delegate to `/sdd-review`.
@@ -239,6 +239,8 @@ When a spec fails after exhausting retries:
 
 Wave completion condition: all specs `implementation-complete` or `blocked`. `blocked` specs are excluded from cross-check and dead-code review scope (they are handled by Blocking Protocol, not Wave QG).
 
+**All specs blocked**: If no spec in the wave reached `implementation-complete` (all blocked), skip Cross-Check and Dead-Code reviews. Report blocked status to user and proceed directly to Post-gate.
+
 **a. Impl Cross-Check Review** (wave-scoped):
 1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-B{seq}]`)
@@ -248,7 +250,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
      - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
-   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`, cascade per spec: Architect → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
+   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **b. Dead Code Review**:
 1. Execute dead-code review via `/sdd-review dead-code`
