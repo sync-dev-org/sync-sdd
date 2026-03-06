@@ -24,7 +24,8 @@ issues:
     severity: "H"               # C/H/M/L
     category: "{category}"      # Inspector-specific (e.g., "test-coverage", "dead-export")
     location: "{file}:{line}"   # File path and line number (or descriptive location)
-    description: "{what}"       # What is wrong
+    summary: "{one-line summary}" # Brief description for indexing
+    detail: "{what}"             # Full description of the issue
     impact: "{why}"             # Why it matters
     recommendation: "{how}"     # How to fix
 notes: |                        # Optional — freeform observations
@@ -76,7 +77,8 @@ issues:                         # Merged, deduplicated, severity-reassessed find
     severity: "H"
     category: "{category}"
     location: "{file}:{line}"
-    description: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
 fp_eliminated:                  # Optional — FP items with rationale
@@ -122,7 +124,8 @@ issues:                         # Final confirmed issues (after Lead review)
     severity: "M"              # May be reclassified by Lead
     category: "{category}"
     location: "{file}:{line}"
-    description: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
     classification: "A"        # A (auto-fix) / B (decision-required)
@@ -150,7 +153,7 @@ steering:                       # Carried from Auditor, processed by Lead
 tracked:                        # Optional — for CONDITIONAL disposition
   - id: "A1"
     severity: "M"
-    description: "{summary}"
+    summary: "{one-line summary}"
 resolved:                       # Optional — items resolved from previous batch
   - id: "A3"
     from_batch: 2               # B{seq} where it was tracked
@@ -237,7 +240,7 @@ batches:
     tracked:                    # Optional — carried from verdict.yaml
       - id: "A1"
         severity: "M"
-        description: "{summary}"
+        summary: "{one-line summary}"
     resolved:                   # Optional — carried from verdict.yaml
       - id: "A3"
         from_batch: 1

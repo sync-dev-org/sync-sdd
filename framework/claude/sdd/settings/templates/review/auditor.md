@@ -292,7 +292,8 @@ issues:
     severity: "H"
     category: "{category}"
     location: "{file}:{line}"
-    description: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
 fp_eliminated:

@@ -49,7 +49,7 @@ Include compliance items in the YAML `compliance` section (see output format bel
        severity: "M"
        category: "{category}"
        location: "{file}:{line}"
-       description: "{what}"
+       summary: "{one-line summary}"       detail: "{what}"
        impact: "{why}"
        recommendation: "{how}"
    compliance:

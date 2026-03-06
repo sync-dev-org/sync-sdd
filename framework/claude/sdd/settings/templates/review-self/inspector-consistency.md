@@ -27,7 +27,7 @@ Include a cross-reference matrix.
        severity: "M"
        category: "{category}"
        location: "{file}:{line}"
-       description: "{what}"
+       summary: "{one-line summary}"       detail: "{what}"
        impact: "{why}"
        recommendation: "{how}"
    notes: |

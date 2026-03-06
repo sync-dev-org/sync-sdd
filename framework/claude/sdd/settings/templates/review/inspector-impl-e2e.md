@@ -82,7 +82,8 @@ issues:
     severity: "H"
     category: "{category}"
     location: "{file}:{line}"
-    description: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
 notes: |
@@ -103,7 +104,7 @@ issues:
     severity: "C"
     category: "e2e-failure"
     location: "scripts/qwen3tts_demo.py"
-    description: "Exit code 1: CUDA out of memory — torch.cuda.OutOfMemoryError"
+    detail: "Exit code 1: CUDA out of memory — torch.cuda.OutOfMemoryError"
     impact: "E2E pipeline completely fails"
     recommendation: "Add memory check or reduce batch size"
 notes: |
