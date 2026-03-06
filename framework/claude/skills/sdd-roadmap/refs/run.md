@@ -158,7 +158,7 @@ A spec can advance to its next phase when ALL conditions are met:
 
 | Next Phase | Conditions |
 |-----------|------------|
-| **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
+| **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. **Note**: Session resume always starts with `/sdd-start`, not `/sdd-roadmap run` directly. |
 | **Design Review** | Phase is `design-generated`. Latest design batch verdict is absent or NO-GO (review not yet passed). |
 | **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. Latest impl batch verdict is absent or NO-GO (review not yet passed). |

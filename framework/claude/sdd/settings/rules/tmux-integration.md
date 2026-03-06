@@ -84,7 +84,7 @@ tmux select-pane -t '{pane_id}' -T '{title}'
 
 **一括作成スクリプト**:
 ```
-bash {{SDD_DIR}}/settings/scripts/multiview-grid.sh $SID $MY_PANE
+bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE
 ```
 出力: 先頭行 `window_id:{id}` + 続く 12 行 `slot-{N}:{pane_id}` (N = 1-12)。Lead はこの出力を parse して window_id とスロット管理テーブルを構築する。
 

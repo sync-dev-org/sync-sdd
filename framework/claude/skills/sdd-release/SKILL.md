@@ -131,7 +131,7 @@ If any content diverges, update README to match CLAUDE.md.
 ### Step 3c: Count Verification (SDD Framework repo only)
 
 Verify command/agent counts in `framework/claude/CLAUDE.md`:
-- Count `framework/claude/skills/sdd-*/SKILL.md` files (exclude `sdd-review-self` — internal tool, not a user command) → verify `### Commands (N)` matches
+- Count `framework/claude/skills/sdd-*/SKILL.md` files → verify `### Commands (N)` matches
 - Count `framework/claude/agents/sdd-*.md` files → verify agent count in README.md matches
 - If counts changed, update the numbers and tables
 

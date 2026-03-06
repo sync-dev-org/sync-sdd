@@ -5,7 +5,7 @@ set -eu
 # Usage:
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh
 #   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --update
-#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v2.3.3
+#   curl -LsSf https://raw.githubusercontent.com/sync-dev-org/sync-sdd/main/install.sh | sh -s -- --version v2.4.0
 
 REPO="sync-dev-org/sync-sdd"
 DEFAULT_BRANCH="main"
@@ -519,6 +519,9 @@ install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".sdd/settings/profi
 install_dir "$SRC/framework/claude/sdd/settings/scripts"   ".sdd/settings/scripts"
 install_dir "$SRC/framework/claude/agents"     ".claude/agents"
 
+# engines.yaml: framework-managed default (overwritten on every install/update)
+cp "$SRC/framework/claude/sdd/settings/engines.yaml" ".sdd/settings/engines.yaml"
+
 # Write version file
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     mkdir -p .sdd
@@ -565,7 +568,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
-    remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*.sh"
+    remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*"
     remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal

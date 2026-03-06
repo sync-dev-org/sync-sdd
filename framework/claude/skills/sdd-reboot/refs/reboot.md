@@ -29,7 +29,7 @@ Detailed execution reference. Lead handles all phases directly.
 1. Determine branch name:
    - If `$ARGUMENTS` contains a name (not `-y`): `reboot/{name}`
    - Otherwise: `reboot/{YYYY-MM-DD}` (today's date)
-2. Create and checkout: `git checkout -b reboot/{branch_name}`
+2. Create and checkout: `git checkout -b {branch_name}`
 3. Append `DIRECTION_CHANGE` to decisions.md: "Reboot started: zero-based redesign on branch reboot/{branch_name} (input state: {state})"
 
 ## Phase 3: Setup
@@ -170,8 +170,8 @@ When dispatching Architects, include extra context for the reboot:
 ### Review Decomposition
 
 Same protocol as `refs/run.md` §Review Decomposition:
-1. **DISPATCH-INSPECTORS**: Spawn 6 design Inspectors in parallel (rulebase, testability, architecture, consistency, best-practices, holistic)
-2. **INSPECTORS-COMPLETE**: Spawn Auditor (sdd-auditor-design)
+1. **DISPATCH-INSPECTORS**: Spawn design Inspectors in parallel (5 fixed: rulebase, testability, architecture, consistency, best-practices + 1-4 dynamic via Prep)
+2. **INSPECTORS-COMPLETE**: Spawn Auditor (auditor template with REVIEW_TYPE=design)
 3. **AUDITOR-COMPLETE**: Read verdict, persist to verdicts.md, archive
 
 ### Verdict Handling

@@ -1,10 +1,7 @@
 # External Engine Configuration
-# Template: .sdd/settings/templates/engines.yaml
-# Active copy: .sdd/settings/engines.yaml (copy & customize)
-# The active copy is NOT overwritten by install.sh --update. This template IS updated.
-#
-# Setup: /sdd-steering engines
-# Auto-created from template when consumer skills detect missing config.
+# Framework default — overwritten by install.sh --update/--force.
+# To use a different engine or model, pass --prep-engine / --inspector-engine / --auditor-engine
+# arguments to /sdd-review or /sdd-review-self.
 
 # --- Tier 1: Engine Traits (platform characteristics) ---
 # Defines WHAT each engine is, not HOW to invoke it.
@@ -63,6 +60,9 @@ roles:
   review:
     timeout: 1200
     stages:
+      prep:
+        engine: codex
+        model: gpt-5.3-codex-spark
       inspectors:
         engine: codex
         model: gpt-5.3-codex

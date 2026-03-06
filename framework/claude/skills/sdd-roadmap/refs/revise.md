@@ -119,7 +119,7 @@ Coordinated revision across multiple specs for changes that span Wave/Spec bound
 
 Scan all specs to classify impact:
 
-1. Read all `spec.yaml` files (only `implementation-complete` phase is eligible for revision)
+1. Read all `spec.yaml` files (only `implementation-complete` phase is eligible for revision). `blocked` specs are excluded from revision but reported to user: "Spec {name} is blocked by {blocked_by} — excluded from cross-cutting scope but may be affected."
 2. For each eligible spec, read `design.md` + `implementation.files_created`
 3. Classify each spec based on change intent:
    - **FULL**: Design components directly affected by the change (needs design + impl pipeline)
@@ -252,7 +252,7 @@ For each tier (sequential):
 
 After all tiers complete, verify cross-spec consistency:
 
-1. Execute wave-scoped cross-check impl review (same mechanism as run.md Step 8a) across ALL affected specs (all FULL specs from all tiers)
+1. Execute cross-cutting impl review via `/sdd-review impl --cross-cutting {spec1,spec2,...}` with all FULL specs from all tiers
 2. Persist verdict to `specs/.cross-cutting/{id}/verdicts.md` (NOT `reviews/wave/verdicts.md` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion

@@ -24,7 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
-| T3 | **Inspector** | Individual review perspectives. 6 design, 6 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code. Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. sdd-review: 5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code, +1-4 dynamic (design/impl only). sdd-review-self: 3 fixed (flow/consistency/compliance) +1-4 dynamic. Outputs CPF findings. |
 | T3 | **ConventionsScanner** | Codebase pattern scanning. Generates conventions brief (naming, error handling, schema, imports, testing). Pilot convention supplement. |
 
 ### Chain of Command

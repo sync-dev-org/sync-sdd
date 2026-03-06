@@ -29,7 +29,7 @@ framework/claude/settings.json
 framework/claude/sdd/settings/rules/*.md
 framework/claude/sdd/settings/templates/**/*.md
 framework/claude/sdd/settings/templates/**/*.yaml
-framework/claude/sdd/settings/scripts/*.sh
+framework/claude/sdd/settings/scripts/*
 install.sh
 ```
 

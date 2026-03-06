@@ -23,11 +23,11 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 引数からオーバーライドを抽出:
 
 - `--prep-engine <name>` / `--prep-model <name>`: Prep Agent
-- `--inspector-engine <name>` / `--inspector-model <name>`: Inspector ×4
+- `--inspector-engine <name>` / `--inspector-model <name>`: Inspector ×3
 - `--auditor-engine <name>` / `--auditor-model <name>`: Auditor
 - `--timeout <seconds>`: タイムアウト秒数
 
-引数なし → engines.yaml の設定を使用。引数あり → engines.yaml の値を上書き。
+引数なし → engines.yaml のデフォルト設定を使用。引数あり → デフォルト値を上書き。
 
 例:
 - Auditor のみ変更: `/sdd-review-self --auditor-engine claude --auditor-model claude-sonnet-4-6`
@@ -36,8 +36,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 ### 1b Load engines.yaml
 
 1. Read `.sdd/settings/engines.yaml`
-   - If absent: copy from `.sdd/settings/templates/engines.yaml` → `.sdd/settings/engines.yaml`, then read. Report: `engines.yaml をデフォルトで作成しました。/sdd-steering engines でカスタマイズ可能です。`
-   - If template also absent: all stages fallback to `subagents`
+   - If absent: all stages fallback to `subagents`, `$DENY_PATTERNS` = empty
 2. Load `deny_patterns` → `$DENY_PATTERNS`
 
 ### 1c Resolve Final Config
@@ -89,9 +88,10 @@ Prompt Construction は Prep Agent に委譲する。Lead は dispatch と成否
 1. `rm -rf $SCOPE_DIR/active; mkdir -p $SCOPE_DIR/active`
 2. Prep Agent を dispatch:
    **SubAgent mode** (`$PREP_ENGINE == "subagents"`):
-   `Agent(subagent_type="general-purpose", model=$PREP_MODEL_MAPPED, run_in_background=true, prompt="Read .sdd/settings/templates/review-self/prep.md and execute the instructions.")`
+   `Agent(subagent_type="general-purpose", description="Prep for self-review", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/prep.md and execute the instructions.")`
    task-notification で完了を検知。
    **tmux mode** (`$TMUX` 設定あり):
+   idle slot を選択し、`{{SDD_DIR}}/state.yaml` の該当 slot を `status: busy` + `agent: prep`/`engine`/`channel` に更新。完了後は `status: idle` に戻す。
    ```
    tmux send-keys -t {slot_pane_id} 'cat {$TPL}/prep.md | {$PREP_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-prep-B{seq}' Enter
    ```
@@ -104,12 +104,13 @@ Prompt Construction は Prep Agent に委譲する。Lead は dispatch と成否
    - 固定 Inspector: `$SCOPE_DIR/active/shared-prompt.md` と `$SCOPE_DIR/active/agent-{1,2,3}-*.md` (3ファイル) の存在を確認
    - 動的 Inspector: `$SCOPE_DIR/active/dynamic-manifest.md` を Read し `DYNAMIC_COUNT:{N}` を取得。N >= 1 を確認。各 `$SCOPE_DIR/active/agent-dynamic-{N}-{slug}.md` の存在を確認
    - いずれか欠損 → Prep Agent 失敗。SubAgent フォールバック (下記) を試行
-4. `$DYNAMIC_COUNT` と動的 Inspector 名リスト (manifest から) を保持して Step 3 へ進む
+4. `$DYNAMIC_COUNT` と動的 Inspector 名リスト (manifest から) を保持
+5. **ユーザーに dispatch 一覧を報告**: fixed + dynamic 全 Inspector の名前と focus をテーブル形式で表示してから Step 3 へ進む
 
 ### Prep SubAgent Fallback
 
 Prep Agent (外部エンジン) が失敗した場合:
-1. `Agent(subagent_type="general-purpose", model="sonnet", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/prep.md and execute the instructions.")`
+1. `Agent(subagent_type="general-purpose", description="Prep fallback", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/prep.md and execute the instructions.")`
 2. task-notification で完了を検知 → 出力ファイル存在を再チェック
 3. それでも失敗 → "Prep failed. Cannot proceed." を報告して停止
 
