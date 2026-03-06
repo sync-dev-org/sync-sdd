@@ -1,6 +1,6 @@
 # External Engine Configuration
 # Framework default — overwritten by install.sh --update/--force.
-# To use a different engine or model, pass --prep-engine / --inspector-engine / --auditor-engine
+# To use a different engine or model, pass --briefer-engine / --inspector-engine / --auditor-engine
 # arguments to /sdd-review or /sdd-review-self.
 
 # --- Tier 1: Engine Traits (platform characteristics) ---
@@ -48,7 +48,7 @@ roles:
   review-self:
     timeout: 900
     stages:
-      prep:
+      briefer:
         engine: codex
         model: gpt-5.3-codex-spark
       inspectors:
@@ -60,7 +60,7 @@ roles:
   review:
     timeout: 1200
     stages:
-      prep:
+      briefer:
         engine: codex
         model: gpt-5.3-codex-spark
       inspectors:

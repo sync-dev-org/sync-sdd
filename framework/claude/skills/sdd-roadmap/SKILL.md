@@ -20,6 +20,7 @@ $ARGUMENTS = "design {feature-or-description}"     → Design Subcommand
 $ARGUMENTS = "impl {feature} [task-numbers]"        → Impl Subcommand
 $ARGUMENTS = "review design {feature}"              → Review Subcommand
 $ARGUMENTS = "review impl {feature}"                → Review Subcommand
+$ARGUMENTS = "review impl --cross-cutting {specs}"   → Review Subcommand
 $ARGUMENTS = "review dead-code"                      → Review Subcommand
 $ARGUMENTS = "review design --cross-check"          → Review Subcommand
 $ARGUMENTS = "review impl --cross-check"            → Review Subcommand
@@ -110,10 +111,10 @@ Then follow the instructions in the loaded file.
 
 a. Read existing file (or create with `# Verdicts: {feature}` header)
 b. Determine B{seq} (increment max existing, or start at 1)
-c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は VERSION ファイルの値、engine 情報は engines.yaml の model 値を使用):
-   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-   - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | prep:{model} insp:{model} aud:{model} | fixed:{N}`
+c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は `.sdd/.version` の値、engine 情報は engines.yaml の model 値を使用):
+   - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
+   - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
+   - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N}`
    - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 9)
    - conditional/dynamic が 0 の場合はその項を省略
 d. Append Raw section (Auditor CPF verdict verbatim)

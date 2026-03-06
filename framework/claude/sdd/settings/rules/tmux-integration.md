@@ -196,9 +196,9 @@ tmux send-keys -t {pane} 'sed "s|{{PLACEHOLDER}}|{value}|g" template.md | cat sh
 - BSD sed (macOS) の `s` コマンドは置換文字列に literal newline を入れられない。**値が単一行の場合のみ使用可**
 - 区切り文字は `|` を使用（値に `/` が含まれうるため）
 
-**方式 B: Prep Agent 展開** — 値が複数行、または複数テンプレートに同じ値を展開するとき
-1. Prep Agent がテンプレートを読み込み、プレースホルダーを展開して `active/` に書き出す
-2. Lead の dispatch は全 Agent 同一パターン: `cat shared active/agent-N.md | ENGINE_CMD`
+**方式 B: Briefer 展開** — 値が複数行、または複数テンプレートに同じ値を展開するとき
+1. Briefer がテンプレートを読み込み、プレースホルダーを展開して `active/` に書き出す
+2. Lead の dispatch は全 Inspector 同一パターン: `cat shared active/inspector-{name}.md | ENGINE_CMD`
 3. sed 分岐・改行判定ロジックが不要になり、dispatch が大幅に簡素化される
 
 sdd-review-self は方式 B を採用 (v2.1.2)。方式 A は値が常に単一行であることが保証できるケースで有用。

@@ -170,7 +170,7 @@ When dispatching Architects, include extra context for the reboot:
 ### Review Decomposition
 
 Same protocol as sdd-roadmap `refs/run.md` §Review Decomposition:
-1. **DISPATCH-INSPECTORS**: Spawn design Inspectors in parallel (5 fixed: rulebase, testability, architecture, consistency, best-practices + 1-4 dynamic via Prep)
+1. **DISPATCH-INSPECTORS**: Spawn design Inspectors in parallel (5 fixed: rulebase, testability, architecture, consistency, best-practices + 1-4 dynamic via Briefer)
 2. **INSPECTORS-COMPLETE**: Spawn Auditor (auditor template with REVIEW_TYPE=design)
 3. **AUDITOR-COMPLETE**: Read verdict, persist to verdicts.md, archive
 

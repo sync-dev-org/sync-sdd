@@ -1,5 +1,5 @@
-You are a preparation agent for the SDD Framework self-review pipeline.
-Your job is to construct prompt files that 3 fixed review Inspector agents + 1-4 dynamic Inspector agents will consume.
+You are a briefer for the SDD Framework self-review pipeline.
+Your job is to construct prompt files that 3 fixed Inspectors + 1-4 dynamic Inspectors will consume.
 
 ## Paths
 
@@ -13,7 +13,7 @@ Your job is to construct prompt files that 3 fixed review Inspector agents + 1-4
 1. Determine commit range: Run `git log --oneline HEAD | wc -l` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs (including when `framework/` does not exist):
-   Write `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.md` and stop immediately. This skill targets the sync-sdd framework repo only — if `framework/` is absent, this is not the right repo.
+   Write `NO_CHANGES` to `.sdd/project/reviews/self/active/briefer-status.md` and stop immediately. This skill targets the sync-sdd framework repo only — if `framework/` is absent, this is not the right repo.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List
@@ -63,9 +63,9 @@ Report findings in Japanese.
 ## Step 5: Build Compliance Cache
 
 1. Read `.sdd/project/reviews/self/verdicts.md`
-2. Find the most recent Agent 3 (Platform Compliance) entry within the last 7 days
+2. Find the most recent inspector-compliance (Platform Compliance) entry within the last 7 days
 3. If found:
-   a. Read the archived CPF: `.sdd/project/reviews/self/B{seq}/agent-3-compliance.cpf`
+   a. Read the archived CPF: `.sdd/project/reviews/self/B{seq}/inspector-compliance.cpf`
    b. Extract items from the `COMPLIANT:` section
    c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes
    d. Items with no file changes since review → keep as cached. Format each as: `{item}: OK (cached from B{seq})`
@@ -80,9 +80,9 @@ Read each agent template from `.sdd/settings/templates/review-self/`, replace pl
 
 | Template | Output | Placeholders |
 |----------|--------|-------------|
-| `agent-1-flow.md` | `active/agent-1-flow.md` | (none) |
-| `agent-2-consistency.md` | `active/agent-2-consistency.md` | (none) |
-| `agent-3-compliance.md` | `active/agent-3-compliance.md` | `{{CACHED_OK}}` → CACHED_OK (Step 5) |
+| `inspector-flow.md` | `active/inspector-flow.md` | (none) |
+| `inspector-consistency.md` | `active/inspector-consistency.md` | (none) |
+| `inspector-compliance.md` | `active/inspector-compliance.md` | `{{CACHED_OK}}` → CACHED_OK (Step 5) |
 
 For templates with no placeholders, copy the content as-is.
 
@@ -103,7 +103,7 @@ Consider these categories (select only those relevant to the actual changes):
 
 ### Prompt Generation
 
-For each risk axis, write a focused Inspector prompt to `active/agent-dynamic-{N}-{slug}.md` where N is 1-based and slug is a 2-3 word kebab-case identifier (e.g., `cross-ref-integrity`, `template-migration`).
+For each risk axis, write a focused Inspector prompt to `active/inspector-dynamic-{N}-{slug}.md` where N is 1-based and slug is a 2-3 word kebab-case identifier (e.g., `cross-ref-integrity`, `template-migration`).
 
 Each dynamic Inspector prompt MUST follow this structure:
 
@@ -123,22 +123,22 @@ You are a targeted change reviewer for the SDD Framework self-review.
 {List of specific file paths relevant to this risk axis}
 
 ## Output
-Write CPF to: .sdd/project/reviews/self/active/agent-dynamic-{N}-{slug}.cpf
-SCOPE:agent-dynamic-{N}-{slug}
+Write CPF to: .sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.cpf
+SCOPE:inspector-dynamic-{N}-{slug}
 
 Follow the CPF format from the shared prompt (shared-prompt.md).
 
 After writing CPF, print to stdout:
 EXT_REVIEW_COMPLETE
-AGENT:dynamic-{N}
+AGENT:inspector-dynamic-{N}
 ISSUES: <number of issues found>
-WRITTEN:.sdd/project/reviews/self/active/agent-dynamic-{N}-{slug}.cpf
+WRITTEN:.sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.cpf
 ```
 
 ### Constraints
 
 - Minimum 1, maximum 4 dynamic Inspectors
-- Do NOT duplicate fixed Inspector scope: flow integrity (agent-1), cross-file consistency (agent-2), platform compliance (agent-3) are already covered
+- Do NOT duplicate fixed Inspector scope: flow integrity (inspector-flow), cross-file consistency (inspector-consistency), platform compliance (inspector-compliance) are already covered
 - Each dynamic Inspector should have a narrow, well-defined focus — broad "check everything" prompts are not useful
 - Keep each prompt concise (under 200 words excluding the Output section)
 
@@ -149,8 +149,8 @@ WRITTEN:.sdd/project/reviews/self/active/agent-dynamic-{N}-{slug}.cpf
 Write `active/dynamic-manifest.md`:
 ```
 DYNAMIC_COUNT:{N}
-agent-dynamic-1-{slug}|{one-line description}
-agent-dynamic-2-{slug}|{one-line description}
+inspector-dynamic-1-{slug}|{one-line description}
+inspector-dynamic-2-{slug}|{one-line description}
 ...
 ```
 
@@ -158,15 +158,15 @@ agent-dynamic-2-{slug}|{one-line description}
 
 Verify all required files exist in `.sdd/project/reviews/self/active/`:
 - shared-prompt.md
-- agent-1-flow.md
-- agent-2-consistency.md
-- agent-3-compliance.md
+- inspector-flow.md
+- inspector-consistency.md
+- inspector-compliance.md
 - dynamic-manifest.md
-- agent-dynamic-{N}-{slug}.md (for each N in manifest)
+- inspector-dynamic-{N}-{slug}.md (for each N in manifest)
 
 Print to stdout:
 ```
-EXT_PREP_COMPLETE
-FILES: shared-prompt.md, agent-1-flow.md, agent-2-consistency.md, agent-3-compliance.md
-DYNAMIC: {N} (agent-dynamic-1-{slug}, ...)
+EXT_BRIEFER_COMPLETE
+FILES: shared-prompt.md, inspector-flow.md, inspector-consistency.md, inspector-compliance.md
+DYNAMIC: {N} (inspector-dynamic-1-{slug}, ...)
 ```

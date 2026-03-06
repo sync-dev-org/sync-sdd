@@ -18,15 +18,15 @@ Note: general-purpose is referenced in dispatch patterns but has no correspondin
 Include a cross-reference matrix.
 
 ## Output Instructions
-1. Write CPF to: .sdd/project/reviews/self/active/agent-2-consistency.cpf
-   SCOPE:agent-2-consistency
+1. Write CPF to: .sdd/project/reviews/self/active/inspector-consistency.cpf
+   SCOPE:inspector-consistency
    Example:
-     SCOPE:agent-2-consistency
+     SCOPE:inspector-consistency
      ISSUES:
      M|category|file.md:42|description
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
-   AGENT:2
+   AGENT:inspector-consistency
    ISSUES: <number of issues found>
-   WRITTEN:.sdd/project/reviews/self/active/agent-2-consistency.cpf
+   WRITTEN:.sdd/project/reviews/self/active/inspector-consistency.cpf

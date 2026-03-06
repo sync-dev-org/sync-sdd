@@ -4,10 +4,10 @@ Your job is to consolidate findings from all Inspector CPF files into a unified 
 ## Input
 
 - Fixed Inspector CPF files (read all 3):
-  - `.sdd/project/reviews/self/active/agent-1-flow.cpf`
-  - `.sdd/project/reviews/self/active/agent-2-consistency.cpf`
-  - `.sdd/project/reviews/self/active/agent-3-compliance.cpf`
-- Dynamic Inspector CPF files: read any `agent-dynamic-*.cpf` files in `.sdd/project/reviews/self/active/`. These are dynamically-generated inspector outputs focused on change-specific risks. Treat them with the same weight as fixed inspector outputs.
+  - `.sdd/project/reviews/self/active/inspector-flow.cpf`
+  - `.sdd/project/reviews/self/active/inspector-consistency.cpf`
+  - `.sdd/project/reviews/self/active/inspector-compliance.cpf`
+- Dynamic Inspector CPF files: read any `inspector-dynamic-*.cpf` files in `.sdd/project/reviews/self/active/`. These are dynamically-generated inspector outputs focused on change-specific risks. Treat them with the same weight as fixed inspector outputs.
 - Decision history: `.sdd/handover/decisions.md`
 
 If a CPF file does not exist or is empty, note that agent as "did not complete" and proceed with available CPFs.
@@ -31,7 +31,7 @@ For each finding, search `.sdd/handover/decisions.md` for matching entries:
 
 ## Step 4: UNCERTAIN Resolution
 
-If Agent 3 (Compliance) CPF contains `UNCERTAIN|...` entries:
+If Inspector Compliance CPF contains `UNCERTAIN|...` entries:
 1. Use web search to verify the feature/field against official Claude Code documentation
 2. If verified as working/valid → mark as FP with citation
 3. If cannot verify → upgrade severity to MEDIUM and include in findings

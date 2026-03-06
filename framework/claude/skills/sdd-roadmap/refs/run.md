@@ -135,7 +135,7 @@ Review execution follows `/sdd-review` skill (SKILL.md). Step references below a
 **Sub-phases**:
 
 1. **DISPATCH-INSPECTORS** (triggered from ADVANCE when spec is ready for review):
-   - Execute sdd-review Steps 1-6c (parse args, load engines, phase gate, inspector set, scope dir + B{seq}, context preamble, web server if applicable, grid setup, inspector dispatch)
+   - Execute sdd-review Steps 1-6c (parse args, load engines, phase gate, inspector set, scope dir + B{seq}, brief generation, web server if applicable, grid setup, inspector dispatch)
    - Add Inspector tasks to `active[spec]`, set `review_state[spec].phase = inspecting`
    - **Return to dispatch loop immediately** — do not wait for Inspectors
 
@@ -257,7 +257,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
-   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, tracked in-memory by Lead — not persisted to spec.yaml. Dead-code findings are wave-scoped and resolved within a single execution window; counter restarts at 0 on session resume. Separate from per-spec aggregate cap → escalate). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
+   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, tracked in-memory by Lead — not persisted to spec.yaml. Dead-code findings are wave-scoped and resolved within a single execution window; counter restarts at 0 on session resume. Separate from per-spec aggregate cap). On retry exhaustion (3 retries), escalate to user with choices: (a) manually fix remaining dead-code and continue, (b) skip dead-code review and proceed to wave completion, (c) abort pipeline. If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`. Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only).
