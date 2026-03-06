@@ -7,26 +7,9 @@ LEAD="${2:?Usage: multiview-grid.sh <SID> <LEAD_PANE_ID>}"
 split() { tmux split-window "$@" -d -P -F '#{pane_id}'; }
 title() { tmux select-pane -t "$1" -T "$2"; }
 
+# New grid creation only. Reuse decisions are made by sdd-start via state.yaml + grid-check.sh.
 title "$LEAD" "sdd-${SID}-lead"
 WINDOW_ID=$(tmux display-message -t "$LEAD" -p '#{window_id}')
-
-EXISTING=$(tmux list-panes -F '#{pane_id} #{pane_title}' 2>/dev/null | grep "sdd-${SID}-slot-" || true)
-COUNT=$(echo "$EXISTING" | grep -c "sdd-${SID}-slot-" || true)
-
-if [ "$COUNT" -eq 12 ]; then
-  echo "window_id:${WINDOW_ID}"
-  for n in $(seq 1 12); do
-    PANE_ID=$(echo "$EXISTING" | grep "sdd-${SID}-slot-${n}$" | awk '{print $1}')
-    echo "slot-${n}:${PANE_ID}"
-  done
-  exit 0
-fi
-
-if [ "$COUNT" -gt 0 ]; then
-  echo "$EXISTING" | awk '{print $1}' | while read -r pid; do
-    tmux kill-pane -t "$pid" 2>/dev/null || true
-  done
-fi
 
 CREATED=()
 cleanup() {

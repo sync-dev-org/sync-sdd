@@ -1,4 +1,7 @@
 #!/bin/bash
+# sdd-start exclusive — does NOT distinguish busy/idle slots.
+# All non-Lead panes from previous session are reported as orphans.
+# Do NOT call from other contexts without adding busy/idle filtering.
 set -euo pipefail
 
 MODE="${1:?Usage: orphan-detect.sh <primary|fallback> ...}"

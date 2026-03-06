@@ -12,6 +12,7 @@ Token-efficient structured text format used for inter-agent communication.
 | List identifiers | `+` separated | `rulebase+consistency` |
 | Empty sections | Omit header entirely | _(do not output)_ |
 | Severity codes | C/H/M/L | C=Critical, H=High, M=Medium, L=Low |
+| Compliance codes | OK/NG/UNCERTAIN | Compliance Inspector 専用。仕様準拠判定に使用 (D99)。Citation 必須 |
 | Category values | Inspector-specific | Not a global enum; each Inspector defines relevant categories (e.g., `security-concern`, `ambiguity`, `dead-export`) |
 
 ## Writing CPF

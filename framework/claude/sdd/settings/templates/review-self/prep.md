@@ -12,8 +12,8 @@ Your job is to construct prompt files that 3 fixed review Inspector agents + 1-4
 
 1. Determine commit range: Run `git log --oneline HEAD | wc -l` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
-3. If no committed changes AND no uncommitted diffs:
-   Write the single word `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.md` and stop immediately.
+3. If no committed changes AND no uncommitted diffs (including when `framework/` does not exist):
+   Write `NO_CHANGES` to `.sdd/project/reviews/self/active/prep-status.md` and stop immediately. This skill targets the sync-sdd framework repo only — if `framework/` is absent, this is not the right repo.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List

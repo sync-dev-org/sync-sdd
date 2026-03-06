@@ -10,6 +10,8 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 
 ## Purpose
 
+**sync-sdd フレームワーク開発リポ専用。** 通常リポでは実行不可（`framework/` ディレクトリが存在しないため NO_CHANGES で停止する）。
+
 外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) または SubAgent (Claude Code Agent tool) を使った self-review スキル。3 固定 Inspector + 1-4 動的 Inspector を並行実行し、Auditor が統合する。Lead は CPF を読まない — Auditor の report.md のみを監修する。
 
 動的 Inspector は Prep Agent が変更内容を分析し、固定 Inspector ではカバーしきれないリスク軸に対して焦点プロンプトを生成する。
@@ -121,7 +123,7 @@ Prep Agent (外部エンジン) が失敗した場合:
 `$TMUX` が設定されている場合のみ実行:
 1. `printenv TMUX_PANE` → `$MY_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic)
 2. SID + Grid 取得: `{{SDD_DIR}}/state.yaml` を Read し、`sid` と `grid` セクション (`window_id`, slot pane_ids) から `$SID` と slot pane ID を取得。state.yaml が存在しない場合 → tmux mode を諦め、全 agent を `Bash(run_in_background=true)` で実行 (background fallback)。
-3. Grid 検証: `bash {{SDD_DIR}}/settings/scripts/grid-check.sh {grid.window_id} {all_slot_pane_ids}` — stdout に生存 pane_id を出力、exit 0 = 全 slot 生存, exit 1 = 一部消滅。一部消滅の場合、**Grid を再作成しない** (busy slot で実行中のプロセスを破壊する危険があるため)。stdout の生存 pane_id と state.yaml の `status: idle` を突合し、使用可能な idle slot を特定。不足分は `Bash(run_in_background=true)` にフォールバック。
+3. Grid 検証: `bash {{SDD_DIR}}/settings/scripts/grid-check.sh {grid.window_id} {all_slot_pane_ids}` — stdout に生存 pane_id を出力、exit 0 = 全 slot 生存, exit 1 = 一部消滅。一部消滅の場合、**Grid を再作成しない** (busy slot で実行中のプロセスを破壊する危険があるため)。idle slot 確定手順: (1) grid-check.sh stdout から生存 pane_id セットを取得 (2) state.yaml の各 slot で `status: idle` のものを抽出 (3) 両者の交差 = 使用可能 idle slot。不足分は `Bash(run_in_background=true)` にフォールバック。
 
 `$TMUX` 未設定の場合はスキップして Step 4 background mode へ。
 
@@ -222,7 +224,7 @@ Bash(run_in_background=true): sleep 0.5; tmux send-keys -t {pane2} '...' Enter
 
 全 Agent 分の send-keys 完了後:
 1. send-keys ゾンビ確認: `pgrep -fl "tmux send-keys"` → 検出時はユーザーに報告し kill (exit code 1 = ゾンビなし、正常)
-2. 固定 + 動的の全チャネルの `tmux wait-for` を staggered parallel dispatch (0.5 秒刻み、`Bash(run_in_background=true)`) で並行発行:
+2. 固定 + 動的の全チャネルの `tmux wait-for` を `Bash(run_in_background=true)` で並行発行:
 ```
 Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-1-B{seq}
 Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-2-B{seq}

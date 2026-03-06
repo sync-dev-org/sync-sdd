@@ -158,7 +158,7 @@ External CLI runs in a MultiView スロットで実行。native progress display
 ### Naming
 
 複数インスタンスが並行する場合、以下を一意にする:
-- **Wait-for channel**: `sdd-{SID}-{purpose}-{identifier}` (e.g., `sdd-5-ext-1`)
+- **Wait-for channel**: `sdd-{SID}-{purpose}-{identifier}-B{seq}` (e.g., `sdd-5-ext-1-B3`)。`-B{seq}` サフィックスは必須 — 再実行時のチャネル衝突を防止する
 - **Result file**: プロジェクト内のスコープディレクトリに置く。`/tmp` 等のプロジェクト外パスは使わない
 
 ### Auto-Approval Pattern

@@ -41,6 +41,7 @@
       "Bash(grep *)",
       "Bash(lsof *)",
       "Bash(sleep *)",
+      "Bash(rm *)",
       "Bash(bash install.sh *)",
       "Bash(bash .sdd/settings/scripts/*)",
       "Bash(printenv *)"

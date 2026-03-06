@@ -18,8 +18,8 @@ Verify that SDD framework agents, skills, and Agent tool usage comply with Claud
 
 ## Official Documentation
 Use web search to verify Claude Code official specs for:
-- Agent definition format (.claude/agents/*.md YAML frontmatter)
-- Skills format (.claude/skills/*/SKILL.md)
+- Agent definition format (framework/claude/agents/*.md YAML frontmatter)
+- Skills format (framework/claude/skills/*/SKILL.md)
 - Agent tool parameters (subagent_type, model, run_in_background)
 - settings.json permission format
 

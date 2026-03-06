@@ -81,7 +81,7 @@ Before dispatching any SubAgent, Lead MUST verify:
 
 ### SubAgent Lifecycle
 
-Lead dispatches SubAgents via `Agent` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. SubAgent completions are detected via `task-notification` (automatic notification when background agents finish).
+Lead dispatches SubAgents via `Agent` tool with `run_in_background: true` **always**. No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited. This ensures Lead never blocks the user's terminal during pipeline execution. SubAgent completions are detected via `task-notification` (automatic notification when background agents finish). Task result is read **after** notification — never poll or use TaskOutput to wait for completion.
 
 **Builder parallel coordination**: As each Builder completes, immediately update tasks.yaml (mark `done`), collect files, store knowledge tags. Final spec.yaml update only after ALL Builders complete.
 
