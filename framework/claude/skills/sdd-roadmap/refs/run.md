@@ -250,10 +250,11 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
      - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
-   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
+     - After `ESCALATION_RESOLVED` (any option): reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)
+   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). After `ESCALATION_RESOLVED`: reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **b. Dead Code Review**:
-1. Execute dead-code review via `/sdd-review dead-code`
+1. Execute dead-code review via `/sdd-review dead-code --context wave`
 2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete

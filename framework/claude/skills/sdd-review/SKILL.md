@@ -21,12 +21,13 @@ SubAgent (Claude Code Agent tool) がデフォルト。外部エンジン (Codex
 ```
 $ARGUMENTS = "design {feature}"              → REVIEW_TYPE=design, FEATURE={feature}
 $ARGUMENTS = "impl {feature}"                → REVIEW_TYPE=impl, FEATURE={feature}
-$ARGUMENTS = "dead-code"                      → REVIEW_TYPE=dead-code, FEATURE=none
+$ARGUMENTS = "dead-code"                      → REVIEW_TYPE=dead-code, FEATURE=none, CONTEXT=standalone
+$ARGUMENTS = "dead-code --context wave"       → REVIEW_TYPE=dead-code, FEATURE=none, CONTEXT=wave
 $ARGUMENTS = "design --cross-check"          → REVIEW_TYPE=design, SCOPE=cross-check
 $ARGUMENTS = "impl --cross-check"            → REVIEW_TYPE=impl, SCOPE=cross-check
 $ARGUMENTS = "design --wave N"               → REVIEW_TYPE=design, SCOPE=wave-N
 $ARGUMENTS = "impl --wave N"                 → REVIEW_TYPE=impl, SCOPE=wave-N
-$ARGUMENTS = "impl --cross-cutting {spec1,spec2,...}" → REVIEW_TYPE=impl, SCOPE=cross-cutting, SPECS_IN_SCOPE={list}
+$ARGUMENTS = "impl --cross-cutting {spec1,spec2,...} --id {id}" → REVIEW_TYPE=impl, SCOPE=cross-cutting, SPECS_IN_SCOPE={list}, CC_ID={id}
 ```
 
 オプション:
@@ -155,11 +156,11 @@ Review scope directory を決定:
 | Scope | Directory |
 |-------|-----------|
 | Per-feature (design/impl with feature) | `{{SDD_DIR}}/project/specs/{feature}/reviews/` |
-| Dead-code (standalone) | `{{SDD_DIR}}/project/reviews/dead-code/` |
-| Dead-code (Wave QG context) | `{{SDD_DIR}}/project/reviews/wave/` |
+| Dead-code (`$CONTEXT=standalone`) | `{{SDD_DIR}}/project/reviews/dead-code/` |
+| Dead-code (`$CONTEXT=wave`) | `{{SDD_DIR}}/project/reviews/wave/` |
 | Cross-check (`--cross-check`) | `{{SDD_DIR}}/project/reviews/cross-check/` |
 | Wave-scoped (`--wave N`) | `{{SDD_DIR}}/project/reviews/wave/` |
-| Cross-cutting (from revise.md) | `{{SDD_DIR}}/project/specs/.cross-cutting/{id}/` |
+| Cross-cutting (`$CC_ID` from `--id`) | `{{SDD_DIR}}/project/specs/.cross-cutting/{CC_ID}/` |
 
 B{seq} 決定: `{scope-dir}/verdicts.md` を Read し、最大 batch 番号を +1。なければ 1。
 

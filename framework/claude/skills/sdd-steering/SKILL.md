@@ -18,7 +18,6 @@ Manage project steering documents. Lead handles directly (no SubAgent dispatch n
 
 ```
 $ARGUMENTS = "custom"      → Custom steering creation
-$ARGUMENTS = "engines"     → External engine configuration
 $ARGUMENTS = "-y"           → Auto-approve update mode
 $ARGUMENTS = ""             → Auto-detect (create if missing, update if exists)
 ```

@@ -32,6 +32,11 @@ $ARGUMENTS = "run"              → Run Mode
 $ARGUMENTS = "run --gate"       → Run Mode
 $ARGUMENTS = "revise {feature} [instructions]" → Revise Mode (Single-Spec) — first word matches a spec name in specs/
 $ARGUMENTS = "revise [instructions]"             → Revise Mode (Cross-Cutting) — first word does not match any spec name
+# revise Detect Mode: first word after "revise" is matched against spec directory names using
+# word-prefix matching (e.g., "auth" matches "auth-service"). Caveat: if instructions begin
+# with a word that prefix-matches a spec name, it will be misidentified as Single-Spec.
+# Use the full spec name, or start instructions with a non-matching word for unambiguous
+# Cross-Cutting invocation.
 $ARGUMENTS = "create" or "create -y" → Create Mode
 $ARGUMENTS = "update"           → Update Mode
 $ARGUMENTS = "delete"           → Delete Mode
@@ -119,8 +124,8 @@ c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp
    - conditional/dynamic が 0 の場合はその項を省略
 d. Append Raw section (Auditor CPF verdict verbatim)
 e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
-g. For CONDITIONAL: extract M/L issues → append as Tracked section
-h. If previous batch exists with Tracked: compare → append `Resolved since B{prev}`
+f. For CONDITIONAL: extract M/L issues → append as Tracked section
+g. If previous batch exists with Tracked: compare → append `Resolved since B{prev}`
 
 ---
 

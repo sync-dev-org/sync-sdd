@@ -2,7 +2,7 @@
 
 Spec-Driven Development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-Your AI development team — 5 SubAgents + 21 review templates orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
+Your AI development team — 5 agent profiles + 21 review templates orchestrated by a Lead, turning natural language into production code through spec-driven pipelines with multi-agent review.
 
 ## Why sync-sdd
 
