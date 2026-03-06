@@ -172,33 +172,48 @@ In cross-check mode, systematically verify consistency across ALL implemented fe
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-H|type-mismatch|src/api.ts→shared/db|sends string but receiver expects number for userId
-M|interface-inconsistency|shared.config|this feature uses get() but convention is getSettings()
-M|error-handling-inconsistency|ConfigError|this feature swallows but others propagate
-L|import-pattern|shared.logger|uses default import but convention is named import
-NOTES:
-Integration points: 5 shared modules, 3 consistent, 2 deviating
-No critical cross-feature type mismatches
+```yaml
+scope: "inspector-impl-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "type-mismatch"
+    location: "src/api.ts→shared/db"
+    description: "Sends string but receiver expects number for userId"
+    impact: "Runtime type error at integration boundary"
+    recommendation: "Convert userId to number before passing to db"
+  - id: "F2"
+    severity: "M"
+    category: "interface-inconsistency"
+    location: "shared.config"
+    description: "This feature uses get() but convention is getSettings()"
+    impact: "Inconsistent API usage across features"
+    recommendation: "Use getSettings() per project convention"
+notes: |
+  Integration points: 5 shared modules, 3 consistent, 2 deviating
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

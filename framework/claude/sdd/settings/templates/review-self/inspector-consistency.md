@@ -18,15 +18,29 @@ Note: general-purpose is referenced in dispatch patterns but has no correspondin
 Include a cross-reference matrix.
 
 ## Output Instructions
-1. Write CPF to: .sdd/project/reviews/self/active/inspector-consistency.cpf
-   SCOPE:inspector-consistency
-   Example:
-     SCOPE:inspector-consistency
-     ISSUES:
-     M|category|file.md:42|description
+1. Write YAML findings to: `.sdd/project/reviews/self/active/findings-inspector-consistency.yaml`
+
+   ```yaml
+   scope: "inspector-consistency"
+   issues:
+     - id: "F1"
+       severity: "M"
+       category: "{category}"
+       location: "{file}:{line}"
+       description: "{what}"
+       impact: "{why}"
+       recommendation: "{how}"
+   notes: |
+     Additional context
+   ```
+
+   Rules:
+   - `id`: Sequential (F1, F2, ...)
+   - `severity`: C/H/M/L
+   - `issues`: empty list `[]` if no findings
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:inspector-consistency
    ISSUES: <number of issues found>
-   WRITTEN:.sdd/project/reviews/self/active/inspector-consistency.cpf
+   WRITTEN:.sdd/project/reviews/self/active/findings-inspector-consistency.yaml

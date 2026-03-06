@@ -34,34 +34,34 @@ Your spawn context (Auditor Context brief) contains:
 - **Verdict output path** for writing your verdict
 - **Builder SelfCheck warnings** (impl only): attention points from Builder's self-validation
 
-Read all `.cpf` files from the review directory. Expected files vary by review type:
+Read all `findings-inspector-*.yaml` files from the review directory. Expected files vary by review type:
 
 **Design Review** (5 fixed + dynamic):
-  1. `design-rulebase.cpf` — SDD compliance
-  2. `design-testability.cpf` — Test implementer clarity
-  3. `design-architecture.cpf` — Design verifiability
-  4. `design-consistency.cpf` — Specifications↔design alignment
-  5. `design-best-practices.cpf` — Industry standards
-  + `dynamic-*.cpf` — Dynamic inspector outputs (1-4, change-focused)
+  1. `findings-inspector-design-rulebase.yaml` — SDD compliance
+  2. `findings-inspector-design-testability.yaml` — Test implementer clarity
+  3. `findings-inspector-design-architecture.yaml` — Design verifiability
+  4. `findings-inspector-design-consistency.yaml` — Specifications↔design alignment
+  5. `findings-inspector-design-best-practices.yaml` — Industry standards
+  + `findings-inspector-dynamic-*.yaml` — Dynamic inspector outputs (1-4, change-focused)
 
 **Implementation Review** (5 fixed + conditional + dynamic):
-  1. `impl-rulebase.cpf` — Task completion, traceability
-  2. `impl-interface.cpf` — Signature, call site verification
-  3. `impl-test.cpf` — Execution, coverage, quality
-  4. `impl-quality.cpf` — Error handling, naming, organization
-  5. `impl-consistency.cpf` — Cross-feature patterns
-  + `impl-e2e.cpf` — E2E command execution (conditional, may be absent)
-  + `impl-web-e2e.cpf` — Browser E2E testing (conditional, may be absent)
-  + `impl-web-visual.cpf` — Visual design review (conditional, may be absent)
-  + `dynamic-*.cpf` — Dynamic inspector outputs (1-4, change-focused)
+  1. `findings-inspector-impl-rulebase.yaml` — Task completion, traceability
+  2. `findings-inspector-impl-interface.yaml` — Signature, call site verification
+  3. `findings-inspector-impl-test.yaml` — Execution, coverage, quality
+  4. `findings-inspector-impl-quality.yaml` — Error handling, naming, organization
+  5. `findings-inspector-impl-consistency.yaml` — Cross-feature patterns
+  + `findings-inspector-impl-e2e.yaml` — E2E command execution (conditional, may be absent)
+  + `findings-inspector-impl-web-e2e.yaml` — Browser E2E testing (conditional, may be absent)
+  + `findings-inspector-impl-web-visual.yaml` — Visual design review (conditional, may be absent)
+  + `findings-inspector-dynamic-*.yaml` — Dynamic inspector outputs (1-4, change-focused)
 
 **Dead-Code Review** (4 fixed):
-  1. `dead-settings.cpf` — Dead config, broken passthrough
-  2. `dead-code.cpf` — Unused symbols, test-only code
-  3. `dead-specs.cpf` — Spec drift, unimplemented features
-  4. `dead-tests.cpf` — Orphaned fixtures, stale tests
+  1. `findings-inspector-dead-settings.yaml` — Dead config, broken passthrough
+  2. `findings-inspector-dead-code.yaml` — Unused symbols, test-only code
+  3. `findings-inspector-dead-specs.yaml` — Spec drift, unimplemented features
+  4. `findings-inspector-dead-tests.yaml` — Orphaned fixtures, stale tests
 
-If any expected file is missing, record in NOTES: `PARTIAL:{inspector-name}|file not found`. Parse all available Inspector outputs and proceed with verification.
+If any expected file is missing, record in notes: `PARTIAL:{inspector-name}|file not found`. Parse all available Inspector YAML outputs and proceed with verification.
 
 When mode is "wave-scoped-cross-check":
 - Findings should be evaluated within the wave scope only
@@ -271,38 +271,65 @@ You MAY override these formulas with justification.
 
 **CRITICAL: You MUST reach this section and output a verdict. If processing budget is running low, skip remaining verification steps and output your verdict with findings verified so far.**
 
-Write your verdict to the verdict output path specified in your spawn context in compact pipe-delimited format. Do NOT use markdown tables, headers, or human-readable prose.
+Write your verdict as YAML to the verdict output path specified in your spawn context (`verdict-auditor.yaml`).
 
+```yaml
+verdict: "CONDITIONAL"
+scope: "{feature}"
+review_type: "{design|impl|dead-code}"
+counts:
+  C: 0
+  H: 1
+  M: 3
+  L: 2
+  FP: 4
+files:
+  - "path/to/file1"
+  - "path/to/file2"
+issues:
+  - id: "A1"
+    source: "inspector-impl-test"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+fp_eliminated:
+  - source_id: "F3"
+    source: "inspector-impl-quality"
+    reason: "{why this is FP}"
+spec_feedback: |
+  What needs to change in the spec (SPEC-UPDATE-NEEDED only)
+steering:
+  - action: "CODIFY"
+    file: "steering/tech.md"
+    decision: "{what to add/change}"
+notes: |
+  Synthesis observations
 ```
-VERDICT:{GO|CONDITIONAL|NO-GO|SPEC-UPDATE-NEEDED}
-SCOPE:{feature} | cross-check | wave-scoped-cross-check | dead-code
-WAVE_SCOPE:{range} (wave-scoped mode only)
-SPECS_IN_SCOPE:{spec-a},{spec-b} (wave-scoped mode only)
-VERIFIED:
-{agents}|{sev}|{category}|{location}|{description}
-REMOVED:
-{agent}|{reason}|{original issue}
-RESOLVED:
-{agents}|{resolution}|{conflicting findings}
-SPEC_FEEDBACK: (only when VERDICT is SPEC-UPDATE-NEEDED)
-{phase}|{spec}|{description}
-STEERING:
-{CODIFY|PROPOSE}|{target file}|{decision text}
-NOTES:
-{synthesis observations}
-ROADMAP_ADVISORY: (wave-scoped mode only)
-{future wave considerations}
+
+### Wave-Scoped Fields (wave-scoped mode only)
+Add these fields when mode is wave-scoped-cross-check:
+```yaml
+wave_scope: "1..2"
+specs_in_scope:
+  - "spec-a"
+  - "spec-b"
+roadmap_advisory: |
+  Future wave considerations
 ```
 
 Rules:
-- Severity: C=Critical, H=High, M=Medium, L=Low
-- Agents: use `+` separator (e.g. `rulebase+consistency`)
-- Omit empty sections entirely
-- Omit WAVE_SCOPE, SPECS_IN_SCOPE, ROADMAP_ADVISORY in non-wave mode
-- SPEC_FEEDBACK: impl review only. `phase` is `specifications` or `design`
-- SPEC-UPDATE-NEEDED: impl review only
-- STEERING: `CODIFY` = observed pattern to formalize (Lead applies directly); `PROPOSE` = new constraint (requires user approval). Design and impl review only
-- Dead-code agent short names: `settings`, `code`, `specs`, `tests`
+- `verdict`: GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED
+- `id`: Auditor-assigned sequential (A1, A2, ...)
+- `source`: Inspector name(s), use `+` for merged (e.g., `inspector-impl-rulebase+inspector-impl-consistency`)
+- `issues`: only confirmed findings (FPs removed)
+- `fp_eliminated`: include all eliminated items with rationale
+- `spec_feedback`: impl review only, only when verdict is SPEC-UPDATE-NEEDED
+- `steering`: `CODIFY` (Lead applies directly) or `PROPOSE` (requires user approval). Design and impl review only. Omit entirely for dead-code review
+- Omit wave-scoped fields in non-wave mode
+- Omit empty optional sections entirely
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{verdict_file_path}` as your final text to preserve Lead's context budget.
 

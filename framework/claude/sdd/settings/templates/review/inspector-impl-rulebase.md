@@ -110,49 +110,56 @@ You will receive a prompt containing:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-rulebase"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-H|task-incomplete|Task 2.3|checkbox not marked, subtask 2.3.2 missing
-H|traceability-missing|Spec 3.AC2|no implementation evidence found for error recovery
-M|file-missing|src/validators/config.ts|expected by design but not created
-M|metadata-mismatch|spec.yaml|phase is design-generated but all tasks completed
-L|file-unexpected|src/utils/helpers.ts|not specified in design
-NOTES:
-Task completion: 8/10 (80%)
-Traceability: 14/18 AC (78%)
+```yaml
+scope: "inspector-impl-rulebase"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "task-incomplete"
+    location: "Task 2.3"
+    description: "Checkbox not marked, subtask 2.3.2 missing"
+    impact: "Implementation incomplete per task definition"
+    recommendation: "Complete subtask 2.3.2 and mark task done"
+  - id: "F2"
+    severity: "H"
+    category: "traceability-missing"
+    location: "Spec 3.AC2"
+    description: "No implementation evidence found for error recovery"
+    impact: "Acceptance criterion not met"
+    recommendation: "Implement error recovery handler"
+notes: |
+  Task completion: 8/10 (80%)
+  Traceability: 14/18 AC (78%)
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.
 
 ## Error Handling
 
-- **Missing Spec**: Return CPF with NO-GO verdict:
-  ```
-  VERDICT:NO-GO
-  SCOPE:{feature}
-  ISSUES:
-  C|setup|spec.yaml|Spec '{feature}' not found
-  NOTES:
-  Unable to proceed — spec not found
-  ```
+- **Missing Spec**: Write YAML with empty issues and a critical note, then terminate
 - **No tasks.yaml**: Return error, tasks.yaml must exist for impl review
 - **Missing design.md**: Warn, skip file structure verification
 - **No completed tasks**: Report "No completed tasks to review"

@@ -41,29 +41,48 @@ Be cautious with:
 
 ## Output Format
 
-Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings as YAML to the review output path specified in your spawn context (e.g., `reviews/dead-code/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:dead-code
-ISSUES:
-{sev}|dead-code|{location}|{description}
-NOTES:
-{observations}
+```yaml
+scope: "inspector-dead-code"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "dead-code"
+    location: "{file}:{symbol}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:dead-code
-ISSUES:
-H|dead-code|src/utils.py:parse_legacy()|no call sites found, 45 lines
-M|dead-code|src/main.py:import os|os never used in this module
-L|dead-code|src/helpers.py:deprecated_format()|marked deprecated, only called from tests
-NOTES:
-4 dead functions identified across 3 modules
+```yaml
+scope: "inspector-dead-code"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "dead-code"
+    location: "src/utils.py:parse_legacy()"
+    description: "No call sites found, 45 lines"
+    impact: "Dead code increases maintenance burden"
+    recommendation: "Remove function and associated tests"
+  - id: "F2"
+    severity: "M"
+    category: "dead-code"
+    location: "src/main.py:import os"
+    description: "os never used in this module"
+    impact: "Unused import"
+    recommendation: "Remove import"
+notes: |
+  4 dead functions identified across 3 modules
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

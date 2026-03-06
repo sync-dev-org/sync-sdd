@@ -130,33 +130,49 @@ Look for systemic architecture issues across specs:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-design-architecture"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-C|interface-contract|AuthService→UserStore|missing error return type for invalid token
-H|state-transition|SessionManager|undefined transition from expired→refreshing
-M|component-boundary|CacheManager|overlaps with DataStore responsibility
-L|dependency|Logger→Config|tight coupling, could use dependency injection
-NOTES:
-Data flow through main pipeline is well-defined
-Component isolation is generally good
+```yaml
+scope: "inspector-design-architecture"
+issues:
+  - id: "F1"
+    severity: "C"
+    category: "interface-contract"
+    location: "AuthService→UserStore"
+    description: "Missing error return type for invalid token"
+    impact: "Callers cannot handle authentication failures"
+    recommendation: "Define error return type in interface contract"
+  - id: "F2"
+    severity: "H"
+    category: "state-transition"
+    location: "SessionManager"
+    description: "Undefined transition from expired→refreshing"
+    impact: "Session state machine has unreachable path"
+    recommendation: "Add explicit transition or document as invalid"
+notes: |
+  Data flow through main pipeline is well-defined
+  Component isolation is generally good
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

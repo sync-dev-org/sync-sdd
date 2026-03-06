@@ -157,34 +157,49 @@ You will receive a prompt containing:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-quality"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:GO
-SCOPE:my-feature
-ISSUES:
-M|error-handling-drift|src/api.ts:55|swallowed exception in catch block, design says propagate
-M|dead-code|src/utils.ts:12|unused import 'lodash'
-L|naming-violation|src/handlers.ts:30|'processData' should be 'process_data' per steering
-L|logging-violation|src/auth.ts:42|user email logged at INFO level (sensitive data)
-NOTES:
-Error handling generally follows design patterns
-Code organization matches design.md module structure
-No pattern violations detected
+```yaml
+scope: "inspector-impl-quality"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "error-handling-drift"
+    location: "src/api.ts:55"
+    description: "Swallowed exception in catch block, design says propagate"
+    impact: "Silent failures in API layer"
+    recommendation: "Re-throw or handle per design.md error strategy"
+  - id: "F2"
+    severity: "L"
+    category: "naming-violation"
+    location: "src/handlers.ts:30"
+    description: "'processData' should be 'process_data' per steering"
+    impact: "Inconsistent naming convention"
+    recommendation: "Rename to snake_case per steering/tech.md"
+notes: |
+  Error handling generally follows design patterns
+  Code organization matches design.md module structure
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

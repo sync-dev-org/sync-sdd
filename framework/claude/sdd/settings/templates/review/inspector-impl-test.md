@@ -186,39 +186,50 @@ You will receive a prompt containing:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-test"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-C|test-failure|tests/test_auth.ts:42|test_login_invalid_token fails with TypeError
-H|missing-test-file|src/validators/config.ts|no corresponding test file
-H|false-positive-risk|tests/test_api.ts:mock_db|mock doesn't verify args
-M|over-mocking|tests/test_service.ts:30|internal UserValidator mocked instead of using real instance
-M|refactor-fragile|tests/test_handler.ts:55|asserts processQueue called 3 times (implementation detail)
-M|impl-coupled-test|tests/test_cache.ts:20|tests private _evict method directly
-M|weak-assertion|tests/test_cache.ts:15|only checks truthiness, not value
-L|duplicate-coverage|tests/test_auth.ts:80|login success tested identically in unit and integration
-L|strategy-gap|design.md:Testing|missing integration test category
-NOTES:
-Feature tests: 24 passed, 1 failed, 0 skipped
-Full suite: 156 passed, 1 failed (regression: none)
-Coverage: 72% line, 64% branch
+```yaml
+scope: "inspector-impl-test"
+issues:
+  - id: "F1"
+    severity: "C"
+    category: "test-failure"
+    location: "tests/test_auth.ts:42"
+    description: "test_login_invalid_token fails with TypeError"
+    impact: "Authentication flow untested"
+    recommendation: "Fix TypeError in mock setup"
+  - id: "F2"
+    severity: "H"
+    category: "missing-test-file"
+    location: "src/validators/config.ts"
+    description: "No corresponding test file"
+    impact: "Validation logic completely untested"
+    recommendation: "Create test_config.ts with unit tests"
+notes: |
+  Feature tests: 24 passed, 1 failed, 0 skipped
+  Full suite: 156 passed, 1 failed (regression: none)
+  Coverage: 72% line, 64% branch
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

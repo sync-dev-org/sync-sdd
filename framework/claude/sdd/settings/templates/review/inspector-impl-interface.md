@@ -170,33 +170,49 @@ You will receive a prompt containing:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-interface"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:NO-GO
-SCOPE:my-feature
-ISSUES:
-C|signature-mismatch|module.create_app|design: (config: Config) actual: (config: Config, debug: bool)
-C|call-site-error|src/main.ts:42|create_app() called with 0 args, needs 1
-H|dependency-wrong|validators|design says validate_config but actual exports validate_settings
-M|signature-mismatch|module.helper|extra optional param y:int=0 not in design
-NOTES:
-12/15 interfaces verified match exactly
-3 critical issues will cause runtime errors
+```yaml
+scope: "inspector-impl-interface"
+issues:
+  - id: "F1"
+    severity: "C"
+    category: "signature-mismatch"
+    location: "module.create_app"
+    description: "Design: (config: Config) actual: (config: Config, debug: bool)"
+    impact: "Callers using design signature will get runtime errors"
+    recommendation: "Remove debug param or update design"
+  - id: "F2"
+    severity: "C"
+    category: "call-site-error"
+    location: "src/main.ts:42"
+    description: "create_app() called with 0 args, needs 1"
+    impact: "Runtime crash at application startup"
+    recommendation: "Pass config argument at call site"
+notes: |
+  12/15 interfaces verified match exactly
+  3 critical issues will cause runtime errors
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

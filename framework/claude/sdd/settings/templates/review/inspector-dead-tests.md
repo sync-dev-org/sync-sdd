@@ -35,29 +35,48 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings as YAML to the review output path specified in your spawn context (e.g., `reviews/dead-code/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:dead-code
-ISSUES:
-{sev}|orphaned-test|{location}|{description}
-NOTES:
-{observations}
+```yaml
+scope: "inspector-dead-tests"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "orphaned-test"
+    location: "{file}:{symbol}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:dead-code
-ISSUES:
-H|orphaned-test|tests/test_legacy.py|entire test file tests removed LegacyAPI class
-M|orphaned-test|tests/conftest.py:mock_legacy_api|fixture defined but never used
-C|orphaned-test|tests/test_auth.py:test_login|mocks outdated signature, passes but tests nothing real
-NOTES:
-3 orphaned test artifacts found across test suite
+```yaml
+scope: "inspector-dead-tests"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "orphaned-test"
+    location: "tests/test_legacy.py"
+    description: "Entire test file tests removed LegacyAPI class"
+    impact: "Test passes but validates nothing"
+    recommendation: "Remove test file"
+  - id: "F2"
+    severity: "M"
+    category: "orphaned-test"
+    location: "tests/conftest.py:mock_legacy_api"
+    description: "Fixture defined but never used"
+    impact: "Dead fixture adds confusion"
+    recommendation: "Remove unused fixture"
+notes: |
+  3 orphaned test artifacts found across test suite
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

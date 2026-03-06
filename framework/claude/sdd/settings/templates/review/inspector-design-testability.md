@@ -131,32 +131,48 @@ Look for systemic testability issues across specs:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-design-testability"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-C|untestable|design.md:ErrorHandler|cannot determine expected behavior for network timeout
-H|ambiguous-language|design.md:Validation|"appropriately validate" not quantified
-M|missing-spec|design.md:Cache|TTL value not specified, test cannot verify expiry
-L|mockability|design.md:ExternalAPI|dependency interface not fully defined
-NOTES:
-State transitions in AuthFlow are well-defined and testable
+```yaml
+scope: "inspector-design-testability"
+issues:
+  - id: "F1"
+    severity: "C"
+    category: "untestable"
+    location: "design.md:ErrorHandler"
+    description: "Cannot determine expected behavior for network timeout"
+    impact: "No test can verify error recovery path"
+    recommendation: "Define specific timeout behavior and fallback"
+  - id: "F2"
+    severity: "H"
+    category: "ambiguous-language"
+    location: "design.md:Validation"
+    description: "'appropriately validate' not quantified"
+    impact: "Test assertions cannot be deterministic"
+    recommendation: "Specify validation rules explicitly"
+notes: |
+  State transitions in AuthFlow are well-defined and testable
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

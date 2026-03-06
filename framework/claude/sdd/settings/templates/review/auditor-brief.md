@@ -7,7 +7,7 @@ Scope: {{SCOPE}}
 ## Input
 
 Review directory: {{REVIEW_DIR}}
-Read all `.cpf` files from this directory.
+Read all `findings-inspector-*.yaml` files from this directory.
 
 Verdict output: {{VERDICT_PATH}}
 Write your verdict to this path.

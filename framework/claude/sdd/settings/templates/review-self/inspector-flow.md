@@ -15,15 +15,29 @@ Read ALL files listed in the shared prompt.
 8. Revise modes: Single-Spec and Cross-Cutting modes in refs/revise.md route correctly from SKILL.md Detect Mode, with proper escalation paths between modes
 
 ## Output Instructions
-1. Write CPF to: .sdd/project/reviews/self/active/inspector-flow.cpf
-   SCOPE:inspector-flow
-   Example:
-     SCOPE:inspector-flow
-     ISSUES:
-     M|category|file.md:42|description
+1. Write YAML findings to: `.sdd/project/reviews/self/active/findings-inspector-flow.yaml`
+
+   ```yaml
+   scope: "inspector-flow"
+   issues:
+     - id: "F1"
+       severity: "M"
+       category: "{category}"
+       location: "{file}:{line}"
+       description: "{what}"
+       impact: "{why}"
+       recommendation: "{how}"
+   notes: |
+     Additional context
+   ```
+
+   Rules:
+   - `id`: Sequential (F1, F2, ...)
+   - `severity`: C/H/M/L
+   - `issues`: empty list `[]` if no findings
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:inspector-flow
    ISSUES: <number of issues found>
-   WRITTEN:.sdd/project/reviews/self/active/inspector-flow.cpf
+   WRITTEN:.sdd/project/reviews/self/active/findings-inspector-flow.yaml

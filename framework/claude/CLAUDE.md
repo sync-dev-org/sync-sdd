@@ -24,7 +24,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
 | T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
-| T3 | **Inspector** | Individual review perspectives. sdd-review: 5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code, +1-4 dynamic (design/impl only). sdd-review-self: 3 fixed (flow/consistency/compliance) +1-4 dynamic. Outputs CPF findings. |
+| T3 | **Inspector** | Individual review perspectives. sdd-review: 5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code, +1-4 dynamic (design/impl only). sdd-review-self: 3 fixed (flow/consistency/compliance) +1-4 dynamic. Outputs YAML findings. |
 | T3 | **ConventionsScanner** | Codebase pattern scanning. Generates conventions brief (naming, error handling, schema, imports, testing). Pilot convention supplement. |
 
 ### Chain of Command
@@ -33,10 +33,10 @@ Lead dispatches T2/T3 SubAgents using `Agent` tool with `subagent_type` paramete
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 
-Review pipelines use **file-based communication**: Inspectors write CPF files to `reviews/active/` directory, Auditor reads them and writes `verdict.cpf`. After verdict is persisted, the directory is renamed to `reviews/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
+Review pipelines use **file-based communication**: Inspectors write `findings-inspector-{name}.yaml` files to `reviews/active/` directory, Auditor reads them and writes `verdict-auditor.yaml`. Lead supervises and writes `verdict.yaml`. After verdict is persisted, the directory is renamed to `reviews/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
 
 All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
-- **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into CPF output files.
+- **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into YAML output files.
 - **Builder**: write full report to `builder-report-{group}.md`, return only structured summary (status, counts, report path). See sdd-builder agent definition.
 - **Analyst**: write analysis report to `{{SDD_DIR}}/project/reboot/analysis-report.md`, return structured summary (`ANALYST_COMPLETE` + `New specs:` + `Waves:` + `Steering:` + `Requirements identified:` + `Files to delete:` + `WRITTEN:{path}`).
 - **Architect / TaskGenerator**: current report format is already concise — no file-based output required unless reports grow.
@@ -107,12 +107,12 @@ See sdd-roadmap `refs/run.md` Step 4-5 for dispatch loop details.
 
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
-- **Framework convention — file-based review**: Inspectors write `.cpf` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
+- **Framework convention — file-based review**: Inspectors write `findings-inspector-{name}.yaml` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
 - **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution.
 
 ### SubAgent Failure Handling
 
-File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt. This applies to all file-writing SubAgents (Inspectors → CPF files, Auditors → verdict.cpf, Builders → builder-report files, ConventionsScanner → conventions-brief, Analyst → analysis-report).
+File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fails or returns without producing its output file, Lead uses its own judgment to retry, skip, or derive results from available files. Retry dispatches the same Task prompt — the flow is identical to the initial attempt. This applies to all file-writing SubAgents (Inspectors → findings YAML files, Auditors → verdict-auditor.yaml, Builders → builder-report files, ConventionsScanner → conventions-brief, Analyst → analysis-report).
 
 ## Project Context
 
@@ -336,9 +336,9 @@ Use `/sdd-release <patch|minor|major> <summary>` to automate the release process
 Ecosystem auto-detection: Python (hatch-vcs / standard), TypeScript, Rust, SDD Framework, Other.
 main continues to advance; release branch is a snapshot, not merged back.
 
-## Compact Pipe-Delimited Format (CPF)
+## Review Output Format (YAML)
 
-Token-efficient structured text format for inter-agent communication. Full specification: `{{SDD_DIR}}/settings/rules/cpf-format.md`
+Unified YAML schema for all review pipeline outputs. Full specification: `{{SDD_DIR}}/settings/rules/verdict-format.md`
 
 ## Steering Configuration
 - Load entire `{{SDD_DIR}}/project/steering/` as project memory

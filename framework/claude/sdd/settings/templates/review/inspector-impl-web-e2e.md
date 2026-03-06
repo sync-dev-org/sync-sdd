@@ -65,7 +65,7 @@ playwright-cli close
 You will receive a prompt containing:
 - **Feature name** (for single spec review) or **"cross-check"** (for all specs)
 - **Server URL** (e.g., `http://localhost:3000`) — the dev server is already running
-- **Review output path** for writing your CPF findings
+- **Review output path** for writing your YAML findings
 
 **You are responsible for loading your own context.** Follow the Load Context section below.
 
@@ -141,35 +141,51 @@ Close browser: `playwright-cli close`
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-web-e2e"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "e2e-flow"
+    location: "{url-or-page}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Category: `e2e-flow`
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `category`: `e2e-flow`
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:user-dashboard
-ISSUES:
-C|e2e-flow|/dashboard|page returns 404 — route not implemented
-H|e2e-flow|/login→/dashboard|redirect fails after successful login, stays on login page
-M|e2e-flow|/settings|form submit button visible in DOM but obscured by overlapping element — not clickable
-L|e2e-flow|/profile|back button navigates to home instead of previous page
-NOTES:
-Flows tested: login, dashboard navigation, settings update, profile edit
-Pages verified: 6
-Navigation completeness: 5/6 routes accessible (1 missing: /admin)
+```yaml
+scope: "inspector-impl-web-e2e"
+issues:
+  - id: "F1"
+    severity: "C"
+    category: "e2e-flow"
+    location: "/dashboard"
+    description: "Page returns 404 — route not implemented"
+    impact: "Core page inaccessible"
+    recommendation: "Implement dashboard route handler"
+  - id: "F2"
+    severity: "H"
+    category: "e2e-flow"
+    location: "/login→/dashboard"
+    description: "Redirect fails after successful login, stays on login page"
+    impact: "User cannot reach dashboard after authentication"
+    recommendation: "Fix redirect logic in auth flow"
+notes: |
+  Flows tested: login, dashboard navigation, settings update, profile edit
+  Pages verified: 6
+  Navigation completeness: 5/6 routes accessible (1 missing: /admin)
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

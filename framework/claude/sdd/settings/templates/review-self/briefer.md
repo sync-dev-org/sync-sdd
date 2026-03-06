@@ -45,14 +45,24 @@ Write `.sdd/project/reviews/self/active/shared-prompt.md` with this exact struct
 ## Target Files
 {FILE_LIST — one file path per line}
 
-## CPF Format
-Write findings in CPF (Compact Pipe-Delimited Format):
-- Metadata lines: KEY:VALUE (no space around colon)
-- Section header: ISSUES: followed by one record per line
-- Issue format: SEVERITY|category|location|description
+## YAML Output Format
+Write findings in YAML format:
+```yaml
+scope: "{inspector-name}"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context
+```
 - Severity codes: C=Critical, H=High, M=Medium, L=Low
 - Report ALL severity levels including LOW. A review with zero LOW findings is suspicious — verify you haven't self-filtered.
-- Omit empty sections
+- `issues`: empty list `[]` if no findings
 
 Report findings in Japanese.
 
@@ -65,8 +75,8 @@ Report findings in Japanese.
 1. Read `.sdd/project/reviews/self/verdicts.md`
 2. Find the most recent inspector-compliance (Platform Compliance) entry within the last 7 days
 3. If found:
-   a. Read the archived CPF: `.sdd/project/reviews/self/B{seq}/inspector-compliance.cpf`
-   b. Extract items from the `COMPLIANT:` section
+   a. Read the archived findings: `.sdd/project/reviews/self/B{seq}/findings-inspector-compliance.yaml`
+   b. Extract items from the `compliance:` section
    c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes
    d. Items with no file changes since review → keep as cached. Format each as: `{item}: OK (cached from B{seq})`
    e. Items with file changes → remove from cache (will be re-verified)
@@ -123,16 +133,28 @@ You are a targeted change reviewer for the SDD Framework self-review.
 {List of specific file paths relevant to this risk axis}
 
 ## Output
-Write CPF to: .sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.cpf
-SCOPE:inspector-dynamic-{N}-{slug}
+Write YAML findings to: .sdd/project/reviews/self/active/findings-inspector-dynamic-{N}-{slug}.yaml
 
-Follow the CPF format from the shared prompt (shared-prompt.md).
+YAML format:
+```yaml
+scope: "inspector-dynamic-{N}-{slug}"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context
+```
 
-After writing CPF, print to stdout:
+After writing, print to stdout:
 EXT_REVIEW_COMPLETE
 AGENT:inspector-dynamic-{N}
 ISSUES: <number of issues found>
-WRITTEN:.sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.cpf
+WRITTEN:.sdd/project/reviews/self/active/findings-inspector-dynamic-{N}-{slug}.yaml
 ```
 
 ### Constraints

@@ -119,34 +119,49 @@ Use WebSearch to verify current best practices, check for deprecated APIs/patter
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-design-best-practices"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-H|security-concern|design.md:Auth|JWT stored in localStorage vulnerable to XSS
-M|anti-pattern|design.md:DataAccess|repository pattern misapplied as god-object
-M|deprecated-tech|design.md:Cache|using memcached API v1 (deprecated, use v2)
-L|best-practice-divergence|design.md:Logging|unstructured logs, industry prefers structured JSON
-NOTES:
-Steering proposal: add "JWT must use httpOnly cookies" to tech.md
-Technology choices are generally current and appropriate
-OWASP Top 10 considerations addressed except for XSS vector above
+```yaml
+scope: "inspector-design-best-practices"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "security-concern"
+    location: "design.md:Auth"
+    description: "JWT stored in localStorage vulnerable to XSS"
+    impact: "Token theft via cross-site scripting"
+    recommendation: "Use httpOnly cookies for JWT storage"
+  - id: "F2"
+    severity: "M"
+    category: "anti-pattern"
+    location: "design.md:DataAccess"
+    description: "Repository pattern misapplied as god-object"
+    impact: "Violates single responsibility, hard to test"
+    recommendation: "Split into domain-specific repositories"
+notes: |
+  Technology choices are generally current and appropriate
+  OWASP Top 10 considerations addressed except for XSS vector above
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

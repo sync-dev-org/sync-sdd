@@ -122,7 +122,7 @@ c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp
    - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N}`
    - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 9)
    - conditional/dynamic が 0 の場合はその項を省略
-d. Append Raw section (Auditor CPF verdict verbatim)
+d. Append counts from verdict.yaml
 e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
 f. For CONDITIONAL: extract M/L issues → append as Tracked section
 g. If previous batch exists with Tracked: compare → append `Resolved since B{prev}`

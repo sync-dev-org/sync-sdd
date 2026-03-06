@@ -37,27 +37,41 @@ CRITICAL: "Not found in web search" does not mean "Non-compliant". Official docu
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.
 
-Include compliance items in the CPF COMPLIANT section (see example below). Do NOT output a separate Markdown table.
-
-## CPF Output Format
-Your CPF MUST include both ISSUES and COMPLIANT sections (exception to CPF empty-section-skip rule — COMPLIANT is always emitted for caching purposes):
-- ISSUES: findings (same format as other agents)
-- COMPLIANT: verified OK items for caching. Format: `item|OK|source-url`
-
-Example:
-  SCOPE:inspector-compliance
-  COMPLIANT:
-  agent-frontmatter-model|OK|https://docs.example.com/agents
-  settings-permission-format|OK|https://docs.example.com/settings
-  ISSUES:
-  M|category|file.md:42|description
+Include compliance items in the YAML `compliance` section (see output format below). Do NOT output a separate Markdown table.
 
 ## Output Instructions
-1. Write CPF to: .sdd/project/reviews/self/active/inspector-compliance.cpf
-   SCOPE:inspector-compliance
+1. Write YAML findings to: `.sdd/project/reviews/self/active/findings-inspector-compliance.yaml`
+
+   ```yaml
+   scope: "inspector-compliance"
+   issues:
+     - id: "F1"
+       severity: "M"
+       category: "{category}"
+       location: "{file}:{line}"
+       description: "{what}"
+       impact: "{why}"
+       recommendation: "{how}"
+   compliance:
+     - target: "agent-frontmatter-model"
+       status: "OK"
+       citation: "https://docs.example.com/agents"
+     - target: "settings-permission-format"
+       status: "UNCERTAIN"
+       citation: ""
+   notes: |
+     Additional context
+   ```
+
+   Rules:
+   - `id`: Sequential (F1, F2, ...)
+   - `severity`: C/H/M/L
+   - `issues`: empty list `[]` if no findings
+   - `compliance`: ALWAYS emitted (for caching). Status: OK/NG/UNCERTAIN
+   - `UNCERTAIN` items are NOT reported as issues — Lead makes final determination
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE
    AGENT:inspector-compliance
    ISSUES: <number of issues found>
-   WRITTEN:.sdd/project/reviews/self/active/inspector-compliance.cpf
+   WRITTEN:.sdd/project/reviews/self/active/findings-inspector-compliance.yaml

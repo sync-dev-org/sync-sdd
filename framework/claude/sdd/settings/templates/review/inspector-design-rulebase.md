@@ -124,32 +124,48 @@ You will receive a prompt containing:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-design-rulebase"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-H|spec-quality|design.md:Spec 2.AC3|acceptance criterion is not testable - "responds quickly"
-M|template-drift|design.md|missing Testing Strategy section
-M|traceability-gap|Spec 3.AC2|no design component covers this criterion
-L|orphan-component|design.md:CacheManager|no spec traces to this
-NOTES:
-Overall SDD structure is sound with minor drift in design sections
+```yaml
+scope: "inspector-design-rulebase"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "spec-quality"
+    location: "design.md:Spec 2.AC3"
+    description: "Acceptance criterion is not testable - 'responds quickly'"
+    impact: "Cannot write deterministic test"
+    recommendation: "Quantify response time threshold"
+  - id: "F2"
+    severity: "M"
+    category: "template-drift"
+    location: "design.md"
+    description: "Missing Testing Strategy section"
+    impact: "Test approach undefined"
+    recommendation: "Add Testing Strategy per template"
+notes: |
+  Overall SDD structure is sound with minor drift in design sections
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

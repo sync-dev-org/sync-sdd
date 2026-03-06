@@ -12,7 +12,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 
 **sync-sdd フレームワーク開発リポ専用。** 通常リポでは実行不可（`framework/` ディレクトリが存在しないため NO_CHANGES で停止する）。
 
-外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) または SubAgent (Claude Code Agent tool) を使った self-review スキル。3 固定 Inspector + 1-4 動的 Inspector を並行実行し、Auditor が統合する。Lead は CPF を読まない — Auditor の report.md のみを監修する。承認された修正は Builder (外部 CLI / SubAgent) が実行し、Lead はコンテキスト保全と監修に専念する。
+外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) または SubAgent (Claude Code Agent tool) を使った self-review スキル。3 固定 Inspector + 1-4 動的 Inspector を並行実行し、Auditor が統合する。Lead は Inspector findings を読まない — Auditor の verdict-auditor.yaml のみを監修する。承認された修正は Builder (外部 CLI / SubAgent) が実行し、Lead はコンテキスト保全と監修に専念する。
 
 動的 Inspector は Briefer が変更内容を分析し、固定 Inspector ではカバーしきれないリスク軸に対して焦点プロンプトを生成する。
 
@@ -143,18 +143,18 @@ Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integra
 **固定 Inspector** (inspector-flow, inspector-consistency, inspector-compliance):
 - Channel = `sdd-{SID}-review-self-{N}-B{seq}` (`$SID` は Step 3 で取得したセッション固有 ID)
 - Prompt = `$SCOPE_DIR/active/shared-prompt.md` + `$SCOPE_DIR/active/inspector-{name}.md` (Briefer が展開済み)
-- CPF file (成果物) = `$SCOPE_DIR/active/inspector-{name}.cpf`
+- Findings file (成果物) = `$SCOPE_DIR/active/findings-inspector-{name}.yaml`
 
 **動的 Inspector** (inspector-dynamic-{N}-{slug}):
 - Channel = `sdd-{SID}-review-self-d{N}-B{seq}` (d prefix で固定と区別)
 - Prompt = `$SCOPE_DIR/active/shared-prompt.md` + `$SCOPE_DIR/active/inspector-dynamic-{N}-{slug}.md` (Briefer が生成)
-- CPF file (成果物) = `$SCOPE_DIR/active/inspector-dynamic-{N}-{slug}.cpf`
+- Findings file (成果物) = `$SCOPE_DIR/active/findings-inspector-dynamic-{N}-{slug}.yaml`
 
 ### Engine-Specific Command Construction
 
 Assemble command based on the resolved engine for each stage (`$BRIEFER_ENGINE`, `$INSPECTOR_ENGINE`, `$AUDITOR_ENGINE`). `$TOOLS` が null の場合は全許可モード、設定されている場合はツール制限モード:
 
-全エンジン共通: stdout はリダイレクトしない — pane に応答テキスト / 進捗が流れる。成果物は CPF ファイルのみ。完了は task-notification で検出し、成功判定は CPF ファイル存在チェックで行う。
+全エンジン共通: stdout はリダイレクトしない — pane に応答テキスト / 進捗が流れる。成果物は findings YAML ファイルのみ。完了は task-notification で検出し、成功判定は findings YAML ファイル存在チェックで行う。
 
 各ステージの engine に応じて `${STAGE}_ENGINE_CMD` を組み立てる (例: `$BRIEFER_ENGINE_CMD`, `$INSPECTOR_ENGINE_CMD`, `$AUDITOR_ENGINE_CMD`)。send-keys では Briefer が `active/` に書き出した展開済みファイルを使い、`cat {shared} {active/inspector-{name}.md} | ${STAGE}_ENGINE_CMD` の形でプロンプトを stdin に渡す。
 
@@ -203,7 +203,7 @@ Agent ツールで dispatch。`$TMUX` の有無に関わらずこのモードを
 
 全 Agent (3 固定 + N 動的) を一括 dispatch (単一メッセージで並列発行)。
 
-各 Agent の task-notification で完了を検知。CPF ファイル存在チェックは外部エンジンと同一。
+各 Agent の task-notification で完了を検知。findings YAML ファイル存在チェックは外部エンジンと同一。
 
 Hold-and-Release は不要 — Agent は完了時に自動的にリソースを解放する。
 
@@ -251,7 +251,7 @@ Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-d1-B{seq}
 パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
 
 **background mode** (上記以外):
-全 Inspector (固定 + 動的) の `cat {shared} {active/inspector-*.md} | {$INSPECTOR_ENGINE_CMD}` を `Bash(run_in_background=true)` で並行実行。各 task-notification で個別に完了を検知。CPF はファイル書き出しで取得。
+全 Inspector (固定 + 動的) の `cat {shared} {active/inspector-*.md} | {$INSPECTOR_ENGINE_CMD}` を `Bash(run_in_background=true)` で並行実行。各 task-notification で個別に完了を検知。findings YAML はファイル書き出しで取得。
 
 ### Inspector Prompts (Templates)
 
@@ -275,24 +275,24 @@ Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-d1-B{seq}
 
 全 Agent 完了後 (tmux wait-for / background task / SubAgent — いずれも task-notification で検知):
 
-1. 全 Inspector (固定 3 + 動的 N) の CPF ファイル存在とファイルサイズを確認 (`ls -la`) → 成功/失敗を判定
-   - 固定: `$SCOPE_DIR/active/inspector-{name}.cpf`
-   - 動的: `$SCOPE_DIR/active/inspector-dynamic-{N}-{slug}.cpf`
-2. **Lead は CPF の内容を Read しない**。存在 + サイズ確認のみ（Auditor が読む）
-3. 失敗した Agent (CPF 不在またはサイズ 0) → Inspector SubAgent フォールバック (下記) を試行。フォールバック後も CPF 不在の場合はレポートに注記
+1. 全 Inspector (固定 3 + 動的 N) の findings YAML ファイル存在とファイルサイズを確認 (`ls -la`) → 成功/失敗を判定
+   - 固定: `$SCOPE_DIR/active/findings-inspector-{name}.yaml`
+   - 動的: `$SCOPE_DIR/active/findings-inspector-dynamic-{N}-{slug}.yaml`
+2. **Lead は findings の内容を Read しない**。存在 + サイズ確認のみ（Auditor が読む）
+3. 失敗した Agent (findings YAML 不在またはサイズ 0) → Inspector SubAgent フォールバック (下記) を試行。フォールバック後も不在の場合はレポートに注記
 
 ### Inspector SubAgent Fallback (外部エンジン失敗時)
 
-`$INSPECTOR_ENGINE != "subagents"` かつ CPF 未生成の Inspector がある場合に発動。
+`$INSPECTOR_ENGINE != "subagents"` かつ findings YAML 未生成の Inspector がある場合に発動。
 
 1. 失敗した Inspector のみを対象にリストアップ
 2. 各失敗 Inspector について:
    - `Agent(subagent_type="general-purpose", description="{name} fallback", model="sonnet", run_in_background=true, prompt="Read .sdd/project/reviews/self/active/shared-prompt.md and .sdd/project/reviews/self/active/inspector-{name}.md, then execute the instructions.")`
 3. 全 fallback Agent の task-notification で完了を検知
-4. CPF ファイル存在+サイズを再チェック（内容は Read しない）
-5. それでも CPF 不在の場合はレポートに注記 (2 回失敗)
+4. findings YAML ファイル存在+サイズを再チェック（内容は Read しない）
+5. それでも不在の場合はレポートに注記 (2 回失敗)
 
-`$INSPECTOR_ENGINE == "subagents"` の場合はフォールバック先がないため、CPF 不在は即レポートに注記。
+`$INSPECTOR_ENGINE == "subagents"` の場合はフォールバック先がないため、findings YAML 不在は即レポートに注記。
 
 ### Health Check (tmux mode, subagents 以外)
 
@@ -328,17 +328,17 @@ Auditor Agent に統合を委譲する。Lead は dispatch と成否確認のみ
    **background mode** (上記以外):
    `Bash(run_in_background=true)` で `cat $TPL/auditor.md | $AUDITOR_ENGINE_CMD` を実行。task-notification で完了を検知。
 2. 完了後の検証:
-   - `$SCOPE_DIR/active/report.md` と `$SCOPE_DIR/active/verdict-data.md` の存在を確認
-   - いずれか欠損 → Auditor 失敗。Auditor SubAgent フォールバック (下記) を試行
-3. `report.md` を Read → Step 7 へ進む
+   - `$SCOPE_DIR/active/verdict-auditor.yaml` の存在を確認
+   - 欠損 → Auditor 失敗。Auditor SubAgent フォールバック (下記) を試行
+3. `verdict-auditor.yaml` を Read → Step 7 へ進む
 
 ### Auditor SubAgent Fallback (外部エンジン失敗時)
 
-`$AUDITOR_ENGINE != "subagents"` かつ report.md / verdict-data.md が未生成の場合に発動。
+`$AUDITOR_ENGINE != "subagents"` かつ verdict-auditor.yaml が未生成の場合に発動。
 
 1. `Agent(subagent_type="general-purpose", description="Auditor fallback", model="sonnet", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/auditor.md and execute the instructions.")`
 2. task-notification で完了を検知 → 出力ファイル存在を再チェック
-3. それでも失敗 → "Auditor failed. Manual review required." を報告し、CPF ファイルパスを列挙して停止
+3. それでも失敗 → "Auditor failed. Manual review required." を報告し、findings YAML ファイルパスを列挙して停止
 
 `$AUDITOR_ENGINE == "subagents"` の場合はフォールバック先がないため、失敗時は即上記メッセージで停止。
 
@@ -346,11 +346,12 @@ Auditor Agent に統合を委譲する。Lead は dispatch と成否確認のみ
 
 ### 7a Lead 監修
 
-Auditor の `report.md` を入力として以下を実行:
+Auditor の `verdict-auditor.yaml` を入力として以下を実行:
 
 1. **FP 判定**: `decisions.md` の全エントリと突合。意図的決定 (USER_DECISION, STEERING_EXCEPTION) で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
 2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.md の該当エントリを引用して確認
-3. **最終分類 (A/B)**: 分類基準に照らして検証し、必要に応じて修正
+3. **最終分類 (A/B)**: Auditor の classification を検証し、必要に応じて修正
+4. **verdict.yaml 作成**: Lead のオーバーライドを反映した最終 verdict を `$SCOPE_DIR/active/verdict.yaml` に書き出す (verdict-format.md の Lead Final Verdict スキーマに準拠)
 
 #### 分類基準
 
@@ -476,14 +477,12 @@ tmux send-keys -t {slot_pane_id} 'cat {展開済みプロンプトファイル} 
 ### 9a Persist Results
 
 1. B{seq} を決定: `$SCOPE_DIR/verdicts.md` の最大バッチ番号 + 1
-2. Auditor が生成した `verdict-data.md` から severity counts と files を読む
+2. `$SCOPE_DIR/active/verdict.yaml` から severity counts, files, disposition を読む
 3. `$SCOPE_DIR/verdicts.md` にバッチエントリを追記 (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は `.sdd/.version` の値、engine 情報は engines.yaml の model 値を使用):
    ```
    ## [B{seq}] self | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} builder:{model} | fixed:{N} dynamic:{N}
    C:{n} H:{n} M:{n} L:{n} | FP:{n} eliminated
    Files: {comma-separated list of files with confirmed findings}
-   ### Raw
-   {verdict-data.md の内容をそのまま貼付}
    ### Disposition
    {A items: FIXED/REJECTED, B items: FIXED/DEFERRED/REJECTED, FP: ELIMINATED}
    A{n} fixed: {1行サマリー}
@@ -512,13 +511,13 @@ tmux send-keys -t {slot_pane_id} 'cat {展開済みプロンプトファイル} 
 - **Engine not installed**: `install_check` が失敗した場合、そのステージを subagents にフォールバック。Report: `{stage}: {engine} not available, falling back to subagents`
 - **Claude nesting guard**: `CLAUDECODE` 環境変数が設定されている場合 (Lead セッション内)、claude engine は `env -u CLAUDECODE` で起動する必要がある。これなしでは "cannot be launched inside another Claude Code session" エラーで即座に失敗する
 - **Agent failure**: レポートに "Agent {N} ({name}) did not complete." と注記。他の Agent の結果は有効
-- **Timeout**: `$TIMEOUT` 超過時は部分結果があれば CPF 存在を確認。なければ該当 Agent を失敗扱い
-- **CPF not generated**: CPF ファイルが存在しない、または空の場合、SubAgent Fallback を試行 (外部エンジン時のみ)。Fallback 後も不在なら該当 Agent を失敗扱い
+- **Timeout**: `$TIMEOUT` 超過時は部分結果があれば findings YAML 存在を確認。なければ該当 Agent を失敗扱い
+- **Findings not generated**: findings YAML ファイルが存在しない、または空の場合、SubAgent Fallback を試行 (外部エンジン時のみ)。Fallback 後も不在なら該当 Agent を失敗扱い
 - **Slot safety**: MultiView スロットは kill しない。command chain 完了で自動 idle 復帰。Timeout 時はスロットの shell に `C-c` を send-keys で停止
 - **SubAgent engine**: `install_check` は常に成功 (`true`)。Agent ツールの dispatch 失敗はフォールバック先がないため即失敗扱い
 - **No findings**: Report "No issues detected." with confirmation checklist.
 - **Briefer failure**: 外部エンジン失敗 → SubAgent フォールバック。SubAgent も失敗 → 停止
-- **Auditor failure**: 外部エンジン失敗 → SubAgent フォールバック。SubAgent も失敗 → CPF パス列挙して停止
+- **Auditor failure**: 外部エンジン失敗 → SubAgent フォールバック。SubAgent も失敗 → findings YAML パス列挙して停止
 - **Builder failure**: 外部エンジン失敗 → SubAgent フォールバック。SubAgent も失敗 → 承認済みアイテムリストを提示して手動修正を依頼
 - **Builder partial**: 一部アイテムをスキップした場合、スキップ理由をユーザーに報告。ユーザーが手動修正するか defer するか判断
 

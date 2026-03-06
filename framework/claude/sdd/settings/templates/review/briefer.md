@@ -91,13 +91,22 @@ Scope: {SCOPE}
 {List of specific file paths relevant to this risk axis}
 
 ## Output
-Write CPF to: {output-dir}/inspector-dynamic-{N}-{slug}.cpf
-SCOPE:inspector-dynamic-{N}-{slug}
+Write YAML findings to: {output-dir}/findings-inspector-dynamic-{N}-{slug}.yaml
 
-CPF format:
-- Metadata lines: KEY:VALUE
-- Section header: ISSUES: followed by one record per line
-- Issue format: SEVERITY|category|location|description
+YAML format:
+```yaml
+scope: "inspector-dynamic-{N}-{slug}"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context
+```
 - Severity codes: C=Critical, H=High, M=Medium, L=Low
 - Report ALL severity levels including LOW
 

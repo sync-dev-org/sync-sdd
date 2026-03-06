@@ -206,8 +206,8 @@ Test implementation is **possible but risky**:
 - **SDD Drift**: Orphan component or spec
 - **SDD Drift**: Internal design details in Specifications section (premature design)
 
-### CPF Severity Mapping
-When outputting in CPF format, map as follows:
+### Severity Mapping
+When outputting findings, map as follows:
 - Critical (🔴) → `C` (blocker, unresolvable ambiguity) or `H` (SDD drift, missing info)
 - Warning (🟡) → `M` (minor drift, unclear edge case) or `L` (terminology, cosmetic)
 

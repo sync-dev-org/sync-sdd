@@ -138,34 +138,48 @@ Look for systemic consistency issues across specs:
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-design-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{category}"
+    location: "{file}:{line}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:my-feature
-ISSUES:
-H|coverage-gap|Spec 3.AC2|no design component handles error recovery
-H|internal-contradiction|design.md:Spec2 vs design.md:Components|sync vs async mismatch
-M|design-overreach|design.md:Analytics|no requirement traces to analytics component
-M|scope-violation|design.md:UserPrefs|belongs to user-profile spec not this one
-L|coverage-gap|Spec 5.AC3|partial coverage, missing edge case handling
-NOTES:
-Coverage is 85% (17/20 AC fully covered)
-2 overreach items are legitimate design decisions (caching, logging)
+```yaml
+scope: "inspector-design-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "coverage-gap"
+    location: "Spec 3.AC2"
+    description: "No design component handles error recovery"
+    impact: "AC has no implementation path"
+    recommendation: "Add error recovery to ErrorHandler component"
+  - id: "F2"
+    severity: "H"
+    category: "internal-contradiction"
+    location: "design.md:Spec2 vs design.md:Components"
+    description: "Sync vs async mismatch"
+    impact: "Implementation cannot satisfy both specifications"
+    recommendation: "Align Spec2 and Components on async pattern"
+notes: |
+  Coverage is 85% (17/20 AC fully covered)
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

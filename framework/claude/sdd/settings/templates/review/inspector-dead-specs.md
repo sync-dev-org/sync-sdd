@@ -34,29 +34,48 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings as YAML to the review output path specified in your spawn context (e.g., `reviews/dead-code/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:dead-code
-ISSUES:
-{sev}|spec-drift|{location}|{description}
-NOTES:
-{observations}
+```yaml
+scope: "inspector-dead-specs"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "spec-drift"
+    location: "{spec-path}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:dead-code
-ISSUES:
-H|spec-drift|specs/auth-flow/design.md|spec says OAuth2 but implementation uses session-based auth
-M|spec-drift|specs/user-profile/tasks.yaml|tasks 2.3-2.5 marked done but no corresponding code found
-L|spec-drift|specs/dashboard/design.md|spec references UserService but class was renamed to UserManager
-NOTES:
-3 spec-implementation misalignments found across auth, user-profile, and dashboard specs
+```yaml
+scope: "inspector-dead-specs"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "spec-drift"
+    location: "specs/auth-flow/design.md"
+    description: "Spec says OAuth2 but implementation uses session-based auth"
+    impact: "Spec no longer reflects reality"
+    recommendation: "Update spec or realign implementation"
+  - id: "F2"
+    severity: "M"
+    category: "spec-drift"
+    location: "specs/user-profile/tasks.yaml"
+    description: "Tasks 2.3-2.5 marked done but no corresponding code found"
+    impact: "False completion status"
+    recommendation: "Verify task status or remove stale tasks"
+notes: |
+  3 spec-implementation misalignments found across auth, user-profile, and dashboard specs
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

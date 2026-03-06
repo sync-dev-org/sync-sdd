@@ -32,29 +32,48 @@ Conduct **autonomous, multi-angle investigation**. Do NOT follow a mechanical ch
 
 ## Output Format
 
-Write findings to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`) using compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
+Write findings as YAML to the review output path specified in your spawn context (e.g., `reviews/dead-code/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:dead-code
-ISSUES:
-{sev}|dead-config|{location}|{description}
-NOTES:
-{observations}
+```yaml
+scope: "inspector-dead-settings"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "dead-config"
+    location: "{file}:{setting}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low. Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:dead-code
-ISSUES:
-H|dead-config|config.py:CACHE_BACKEND|defined but never consumed, no passthrough to any consumer
-M|dead-config|.env:LEGACY_API_KEY|referenced only in commented-out code
-L|dead-config|settings.py:DEBUG_VERBOSE|always overridden by environment variable
-NOTES:
-3 dead config fields detected across config pipeline
+```yaml
+scope: "inspector-dead-settings"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "dead-config"
+    location: "config.py:CACHE_BACKEND"
+    description: "Defined but never consumed, no passthrough to any consumer"
+    impact: "Dead configuration adds confusion"
+    recommendation: "Remove setting or wire to consumer"
+  - id: "F2"
+    severity: "M"
+    category: "dead-config"
+    location: ".env:LEGACY_API_KEY"
+    description: "Referenced only in commented-out code"
+    impact: "Potential security exposure of unused credential"
+    recommendation: "Remove from .env and rotate key"
+notes: |
+  3 dead config fields detected across config pipeline
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.

@@ -51,7 +51,7 @@ Take screenshots at both viewports for each page to enable responsive comparison
 You will receive a prompt containing:
 - **Feature name** (for single spec review) or **"cross-check"** (for all specs)
 - **Server URL** (e.g., `http://localhost:3000`) — the dev server is already running
-- **Review output path** for writing your CPF findings
+- **Review output path** for writing your YAML findings
 
 **You are responsible for loading your own context.** Follow the Load Context section below.
 
@@ -164,40 +164,51 @@ Close browser: `playwright-cli close`
 
 ## Output Format
 
-Return findings in compact pipe-delimited format. Do NOT use markdown tables, headers, or prose.
-Write this output to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/{your-inspector-name}.cpf`).
+Write findings as YAML to the review output path specified in your spawn context (e.g., `specs/{feature}/reviews/active/findings-{your-inspector-name}.yaml`).
 
-```
-VERDICT:{GO|CONDITIONAL|NO-GO}
-SCOPE:{feature} | cross-check | wave-1..{N}
-ISSUES:
-{sev}|{category}|{location}|{description}
-NOTES:
-{any advisory observations}
+```yaml
+scope: "inspector-impl-web-visual"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "{visual-system|visual-quality|visual-a11y}"
+    location: "{url-or-page}"
+    description: "{what}"
+    impact: "{why}"
+    recommendation: "{how}"
+notes: |
+  Additional context here
 ```
 
-Severity: C=Critical, H=High, M=Medium, L=Low
-Categories: `visual-system`, `visual-quality`, `visual-a11y`
-Omit empty sections entirely.
+Rules:
+- `id`: Sequential within file (F1, F2, ...)
+- `severity`: C=Critical, H=High, M=Medium, L=Low
+- `category`: `visual-system`, `visual-quality`, or `visual-a11y`
+- `issues`: empty list `[]` if no findings
+- Omit `notes` if nothing to add
 
 Example:
-```
-VERDICT:CONDITIONAL
-SCOPE:user-dashboard
-ISSUES:
-H|visual-system|/dashboard|heading uses 14px sans-serif, steering/ui.md specifies 18px Inter
-H|visual-a11y|/login|form label contrast ratio ~2.5:1 on light gray background, below WCAG AA 4.5:1
-M|visual-system|/dashboard|primary button color #3B82F6 does not match design system #2563EB
-M|visual-quality|/settings|form layout unbalanced — left column 70% width, right 30%, no visual anchor
-M|visual-a11y|/settings|submit button height ~30px, below 44px minimum touch target
-L|visual-quality|/login|excessive whitespace below form creates disconnected feel
-L|visual-quality|/dashboard→/settings|navigation active state inconsistent — underline on dashboard, bold on settings
-NOTES:
-Pages evaluated: /login, /dashboard, /settings, /profile (4 pages × 2 viewports = 8 screenshots)
-Design system (steering/ui.md): present, 2 deviations found
-Responsive: mobile layout stacks correctly, no horizontal overflow
-Cross-page consistency: header consistent, footer missing on /settings
-Overall impression: clean layout with minor spacing and contrast issues
+```yaml
+scope: "inspector-impl-web-visual"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "visual-system"
+    location: "/dashboard"
+    description: "Heading uses 14px sans-serif, steering/ui.md specifies 18px Inter"
+    impact: "Design system violation"
+    recommendation: "Update heading font to match design system"
+  - id: "F2"
+    severity: "H"
+    category: "visual-a11y"
+    location: "/login"
+    description: "Form label contrast ratio ~2.5:1, below WCAG AA 4.5:1"
+    impact: "Accessibility violation for low-vision users"
+    recommendation: "Darken label text to meet 4.5:1 minimum"
+notes: |
+  Pages evaluated: /login, /dashboard, /settings, /profile (4 pages x 2 viewports = 8 screenshots)
+  Design system (steering/ui.md): present, 2 deviations found
+  Overall impression: clean layout with minor spacing and contrast issues
 ```
 
 Keep your output concise. Write detailed findings to the output file. Return only `WRITTEN:{output_file_path}` as your final text to preserve Lead's context budget.
