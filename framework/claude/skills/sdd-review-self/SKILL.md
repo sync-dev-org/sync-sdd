@@ -1,6 +1,6 @@
 ---
 description: "Self-review for SDD framework development (framework-internal use only)"
-argument-hint: "[--briefer-engine <name>] [--briefer-model <name>] [--inspector-engine <name>] [--inspector-model <name>] [--auditor-engine <name>] [--auditor-model <name>] [--builder-engine <name>] [--builder-model <name>] [--timeout <seconds>]"
+argument-hint: "[--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--builder-engine <name>] [--builder-model <name>] [--builder-effort <level>] [--timeout <seconds>]"
 allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 ---
 
@@ -22,17 +22,18 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 
 引数からオーバーライドを抽出:
 
-- `--briefer-engine <name>` / `--briefer-model <name>`: Briefer
-- `--inspector-engine <name>` / `--inspector-model <name>`: Inspector ×3
-- `--auditor-engine <name>` / `--auditor-model <name>`: Auditor
-- `--builder-engine <name>` / `--builder-model <name>`: Builder (A items fix)
+- `--briefer-engine <name>` / `--briefer-model <name>` / `--briefer-effort <level>`: Briefer
+- `--inspector-engine <name>` / `--inspector-model <name>` / `--inspector-effort <level>`: Inspector ×3
+- `--auditor-engine <name>` / `--auditor-model <name>` / `--auditor-effort <level>`: Auditor
+- `--builder-engine <name>` / `--builder-model <name>` / `--builder-effort <level>`: Builder (A items fix)
 - `--timeout <seconds>`: タイムアウト秒数
 
-引数なし → engines.yaml のデフォルト設定を使用。引数あり → デフォルト値を上書き。
+引数なし → engines.yaml の level chain デフォルトを使用。引数あり → デフォルト値を上書き。
 
 例:
-- Auditor のみ変更: `/sdd-review-self --auditor-engine claude --auditor-model claude-sonnet-4-6`
+- Auditor のみ変更: `/sdd-review-self --auditor-engine claude --auditor-model claude-opus-4-6`
 - 全ステージ SubAgent: `/sdd-review-self --briefer-engine subagents --inspector-engine subagents --auditor-engine subagents`
+- Inspector の effort のみ変更: `/sdd-review-self --inspector-effort high`
 
 ### 1b Load engines.yaml
 
@@ -42,14 +43,18 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 
 ### 1c Resolve Final Config
 
-**Per-stage 解決** (各ステージ独立):
+**Level chain 解決** (各ステージ独立):
+
+1. 各ステージの `start_level` を `roles.review-self.stages.{stage}.start_level` から取得
+2. `levels.{start_level}` から `engine`, `model`, `effort` を取得 → ステージのデフォルト値
+3. Skill 引数でオーバーライド (引数 > level chain):
 
 | Stage Variable | Resolution (高→低) |
 |---------------|-----------|
-| `$BRIEFER_ENGINE` / `$BRIEFER_MODEL` | `--briefer-{engine,model}` → `stages.briefer.{engine,model}` → **subagents** / null |
-| `$INSPECTOR_ENGINE` / `$INSPECTOR_MODEL` | `--inspector-{engine,model}` → `stages.inspectors.{engine,model}` → **subagents** / null |
-| `$AUDITOR_ENGINE` / `$AUDITOR_MODEL` | `--auditor-{engine,model}` → `stages.auditor.{engine,model}` → **subagents** / null |
-| `$BUILDER_ENGINE` / `$BUILDER_MODEL` | `--builder-{engine,model}` → `stages.builder.{engine,model}` → **subagents** / null |
+| `$BRIEFER_ENGINE` / `$BRIEFER_MODEL` / `$BRIEFER_EFFORT` | `--briefer-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
+| `$INSPECTOR_ENGINE` / `$INSPECTOR_MODEL` / `$INSPECTOR_EFFORT` | `--inspector-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
+| `$AUDITOR_ENGINE` / `$AUDITOR_MODEL` / `$AUDITOR_EFFORT` | `--auditor-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
+| `$BUILDER_ENGINE` / `$BUILDER_MODEL` / `$BUILDER_EFFORT` | `--builder-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
 
 **共通設定**:
 
@@ -58,12 +63,10 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Agent
 | `$TIMEOUT` | `--timeout` → `roles.review-self.timeout` → 900 (hardcoded) |
 | `$TOOLS` | `roles.review-self.tools` → null (full permission) |
 
-末尾の **subagents** がフォールバック — engine 未指定時は常に subagents を使用。
-
-3. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
-   - `install_check` 失敗 → そのステージを **subagents にフォールバック**。Report: `{stage}: {engine} not available, falling back to subagents`
-   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → Report: `jq not available (required for claude engine streaming). Install: brew install jq / apt install jq` → subagents にフォールバック
-4. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (Step 4) with the resolved engine/model
+4. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
+   - `install_check` 失敗 → level chain で次の level へ自動エスカレート。最終的に L0 (subagents) にフォールバック。Report: `{stage}: {engine} not available, escalating to L{N}`
+   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → Report: `jq not available (required for claude engine streaming). Install: brew install jq / apt install jq` → 次 level へ
+5. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (Step 4) with the resolved engine/model/effort
 
 5. Set scope and template directories:
 
@@ -72,17 +75,17 @@ $SCOPE_DIR = .sdd/project/reviews/self
 $TPL = .sdd/settings/templates/review-self
 ```
 
-6. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.md`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
+6. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.yaml`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
 
 6. Report resolved config:
 ```
 Timeout: {$TIMEOUT}s
-  Briefer: {$BRIEFER_ENGINE} [{$BRIEFER_MODEL or "default"}]
-  Inspectors: {$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL or "default"}]
-  Auditor: {$AUDITOR_ENGINE} [{$AUDITOR_MODEL or "default"}]
-  Builder: {$BUILDER_ENGINE} [{$BUILDER_MODEL or "default"}]
+  Briefer: {$BRIEFER_ENGINE} [{$BRIEFER_MODEL}] effort:{$BRIEFER_EFFORT}
+  Inspectors: {$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL}] effort:{$INSPECTOR_EFFORT}
+  Auditor: {$AUDITOR_ENGINE} [{$AUDITOR_MODEL}] effort:{$AUDITOR_EFFORT}
+  Builder: {$BUILDER_ENGINE} [{$BUILDER_MODEL}] effort:{$BUILDER_EFFORT}
 ```
-全ステージが同一 engine/model の場合、1 行にまとめてもよい。
+全ステージが同一 engine/model/effort の場合、1 行にまとめてもよい。
 
 ## Step 2: Prompt Construction (Briefer)
 
@@ -158,22 +161,22 @@ Assemble command based on the resolved engine for each stage (`$BRIEFER_ENGINE`,
 
 各ステージの engine に応じて `${STAGE}_ENGINE_CMD` を組み立てる (例: `$BRIEFER_ENGINE_CMD`, `$INSPECTOR_ENGINE_CMD`, `$AUDITOR_ENGINE_CMD`)。send-keys では Briefer が `active/` に書き出した展開済みファイルを使い、`cat {shared} {active/inspector-{name}.md} | ${STAGE}_ENGINE_CMD` の形でプロンプトを stdin に渡す。
 
-以下 `${STAGE}_MODEL` はそのステージの resolved model。
+以下 `${STAGE}_MODEL` / `${STAGE}_EFFORT` はそのステージの resolved model / effort。
 
 **codex**:
 ```
-npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] -
+npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] [-c model_reasoning_effort='"${STAGE}_EFFORT"'] -
 ```
 
 **claude** (`env -u CLAUDECODE` で Lead セッションからのネスト検出を回避):
 ```
-env -u CLAUDECODE claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
+env -u CLAUDECODE CLAUDE_CODE_EFFORT_LEVEL=${STAGE}_EFFORT claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
 ```
 ツール制限時: `--dangerously-skip-permissions` を `--allowedTools "$TOOLS"` に置換。
 `jq` が必要 (`brew install jq` / `apt install jq`)。
 進捗表示: ツール名・引数・テキスト応答・コスト/所要時間を pane にリアルタイム表示。
 
-**gemini**:
+**gemini** (effort 非対応 — 設定ファイル書き換え必須のため除外):
 ```
 npx -y @google/gemini-cli -p "Review the project files per the instructions below." --yolo [--model ${STAGE}_MODEL]
 ```
@@ -187,6 +190,7 @@ Model mapping (engines.yaml の model 値 → Agent tool `model` パラメータ
 - `*spark*` or `*haiku*` を含む → `"haiku"`
 - `*opus*` を含む → `"opus"`
 - その他 → `"sonnet"` (デフォルト)
+Effort mapping (subagents): effort=`high` → プロンプト先頭に `ultrathink` を追加。effort=`medium` → 追加なし。
 
 ### Dispatch Mode
 
@@ -476,30 +480,37 @@ tmux send-keys -t {slot_pane_id} 'cat {展開済みプロンプトファイル} 
 
 ### 9a Persist Results
 
-1. B{seq} を決定: `$SCOPE_DIR/verdicts.md` の最大バッチ番号 + 1
+1. B{seq} を決定: `$SCOPE_DIR/verdicts.yaml` の最大 `seq` + 1。ファイル不在 → 1
 2. `$SCOPE_DIR/active/verdict.yaml` から severity counts, files, disposition を読む
-3. `$SCOPE_DIR/verdicts.md` にバッチエントリを追記 (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は `.sdd/.version` の値、engine 情報は engines.yaml の model 値を使用):
+3. `$SCOPE_DIR/verdicts.yaml` に batch エントリを append (verdict-format.md §4 Verdict Index スキーマ準拠):
+   ```yaml
+   - seq: {N}
+     type: "self"
+     scope: "framework"
+     date: "{ISO-8601}"              # date +%Y-%m-%dT%H:%M:%S%z
+     version: "{version}"            # .sdd/.version
+     engines:
+       briefer: "{model}"
+       inspectors: "{model}"
+       auditor: "{model}"
+       builder: "{model}"            # optional — omit if no Builder fixes
+     agents:
+       fixed: {N}
+       dynamic: {N}
+       total: {N}
+     counts:
+       C: {n}
+       H: {n}
+       M: {n}
+       L: {n}
+       FP: {n}
+     verdict: "{verdict}"
+     disposition: "{disposition}"
+     tracked: [...]                  # optional — deferred items
+     resolved: [...]                 # optional — resolved from prev batch
    ```
-   ## [B{seq}] self | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} builder:{model} | fixed:{N} dynamic:{N}
-   C:{n} H:{n} M:{n} L:{n} | FP:{n} eliminated
-   Files: {comma-separated list of files with confirmed findings}
-   ### Disposition
-   {A items: FIXED/REJECTED, B items: FIXED/DEFERRED/REJECTED, FP: ELIMINATED}
-   A{n} fixed: {1行サマリー}
-   B{n} deferred: {1行サマリー}
-   FP: {n} eliminated ({Auditor n} + {Lead supervisory n} + {User rejected n})
-   ### Builder
-   Engine: {$BUILDER_ENGINE} [{$BUILDER_MODEL}]
-   Fixed: {N}/{total} | Skipped: {N}
-   ### Tracked
-   {defer された items — 将来のバッチで再チェック対象}
-   B{n}: {severity} | {summary} | {file}
-   ### Resolved since B{prev}
-   {前バッチの Tracked から今回解決されたもの}
-   B{n}: resolved — {how}
-   ```
-   - Tracked/Resolved/Builder セクションは該当なしの場合省略
-   - 前バッチに Tracked がある場合: 今回の findings と突合し、解決されたものを Resolved に記載
+   - `tracked`/`resolved` は該当なしの場合省略
+   - 前バッチに `tracked` がある場合: 今回の findings と突合し、解決されたものを `resolved` に記載
 4. Archive: `$SCOPE_DIR/active/` → `$SCOPE_DIR/B{seq}/`
 
 ### 9b session.md Auto-Draft

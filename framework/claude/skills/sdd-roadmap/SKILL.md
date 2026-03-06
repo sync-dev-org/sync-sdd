@@ -120,7 +120,7 @@ c. Append batch entry header (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp
    - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
    - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
    - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N}`
-   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.md` (see revise.md Part B Step 9)
+   - Cross-cutting revision: persists to `specs/.cross-cutting/{id}/verdicts.yaml` (see revise.md Part B Step 9)
    - conditional/dynamic が 0 の場合はその項を省略
 d. Append counts from verdict.yaml
 e. Append Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)

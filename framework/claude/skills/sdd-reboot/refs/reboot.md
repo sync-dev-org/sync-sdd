@@ -126,7 +126,7 @@ Reuse the design dispatch loop from sdd-roadmap's `refs/run.md` Step 5 (Lead rea
 | Next Phase | Conditions |
 |-----------|------------|
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. |
-| **Design Review** | Phase is `design-generated`. No GO/CONDITIONAL verdict in `verdicts.md` latest design batch (verdict absent or last is NO-GO). |
+| **Design Review** | Phase is `design-generated`. No GO/CONDITIONAL verdict in `verdicts.yaml` latest design batch (verdict absent or last is NO-GO). |
 
 Implementation and Impl Review readiness rules are NOT evaluated.
 
@@ -172,7 +172,7 @@ When dispatching Architects, include extra context for the reboot:
 Same protocol as sdd-roadmap `refs/run.md` §Review Decomposition:
 1. **DISPATCH-INSPECTORS**: Spawn design Inspectors in parallel (5 fixed: rulebase, testability, architecture, consistency, best-practices + 1-4 dynamic via Briefer)
 2. **INSPECTORS-COMPLETE**: Spawn Auditor (auditor template with REVIEW_TYPE=design)
-3. **AUDITOR-COMPLETE**: Read verdict, persist to verdicts.md, archive
+3. **AUDITOR-COMPLETE**: Read verdict, persist to verdicts.yaml, archive
 
 ### Verdict Handling
 
@@ -191,7 +191,7 @@ If 2+ Architects dispatch in parallel (Design Fan-Out):
 
 ### Completion Condition
 
-All specs have `phase = design-generated` AND a GO/CONDITIONAL design review verdict in `verdicts.md`.
+All specs have `phase = design-generated` AND a GO/CONDITIONAL design review verdict in `verdicts.yaml`.
 
 ## Phase 8: Regression Check
 

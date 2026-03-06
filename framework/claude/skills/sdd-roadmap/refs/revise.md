@@ -254,7 +254,7 @@ After all tiers complete, verify cross-spec consistency:
 
 0. Generate Cross-Cutting ID: `$CC_ID = cc-$(date +%Y%m%d-%H%M%S)`. This ID scopes the cross-cutting scope directory and is passed to sdd-review as `--id {cc_id}`.
 1. Execute cross-cutting impl review via `/sdd-review impl --cross-cutting {spec1,spec2,...} --id {cc_id}` with all FULL specs from all tiers
-2. Persist verdict to `specs/.cross-cutting/{cc_id}/verdicts.md` (NOT `reviews/wave/verdicts.md` — cross-cutting uses its own scope directory)
+2. Persist verdict to `specs/.cross-cutting/{cc_id}/verdicts.yaml` (NOT `reviews/wave/verdicts.yaml` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
    - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5 (NO-GO), spec_update_count max 2 (SPEC-UPDATE-NEEDED), aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user

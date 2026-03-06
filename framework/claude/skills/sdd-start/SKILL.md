@@ -24,9 +24,9 @@ Read `{{SDD_DIR}}/handover/session.md` → Direction, Context, Warnings, Steerin
 ## Step 3: Read Review State
 
 Check for active review verdicts (read if found):
-- `{{SDD_DIR}}/project/specs/*/reviews/verdicts.md` → per-spec review state (latest batch)
-- `{{SDD_DIR}}/project/reviews/*/verdicts.md` → project-level review state (dead-code, cross-check, wave)
-- `{{SDD_DIR}}/project/specs/.cross-cutting/*/verdicts.md` → cross-cutting revision review state
+- `{{SDD_DIR}}/project/specs/*/reviews/verdicts.yaml` → per-spec review state (latest batch)
+- `{{SDD_DIR}}/project/reviews/*/verdicts.yaml` → project-level review state (dead-code, cross-check, wave)
+- `{{SDD_DIR}}/project/specs/.cross-cutting/*/verdicts.yaml` → cross-cutting revision review state
 
 ## Step 4: Read Decision History
 

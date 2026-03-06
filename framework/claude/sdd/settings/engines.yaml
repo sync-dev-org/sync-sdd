@@ -3,22 +3,26 @@
 # To use a different engine or model, pass --briefer-engine / --inspector-engine / --auditor-engine
 # arguments to /sdd-review or /sdd-review-self.
 
-# --- Tier 1: Engine Traits (platform characteristics) ---
+# --- Engine Traits (platform characteristics) ---
 # Defines WHAT each engine is, not HOW to invoke it.
 # Command construction logic lives in consumer SKILL.md files.
 # "subagents" is the built-in fallback — always available, no CLI needed.
 engines:
   codex:
     install_check: "npx -y @openai/codex --version"
+    effort_support: true    # via -c model_reasoning_effort='"<effort>"'
 
   claude:
     install_check: "claude --version"
+    effort_support: true    # via env CLAUDE_CODE_EFFORT_LEVEL=<effort>
 
   gemini:
     install_check: "npx -y @google/gemini-cli --version"
+    effort_support: false   # requires settings file rewrite; not supported
 
   subagents:
     install_check: "true"
+    effort_support: true    # via prompt keyword (ultrathink = high)
 
 # --- Safety: MUST NEVER execute ---
 # Injected into every agent prompt as a prohibition list.
@@ -38,37 +42,70 @@ deny_patterns:
   - "dd if="
   - ":(){:|:&};:"
 
-# --- Tier 2: Role Configuration ---
-# Each role defines per-stage engine/model explicitly.
-# Stages without engine → subagents fallback.
-# External engine failure → subagents fallback.
+# --- Level Chain (escalation order) ---
+# L1-L6: ascending capability/cost. L0: infrastructure fallback (subagents).
+# Escalation: infra failure (install_check) → next level, ultimate → L0.
+# NO-GO → same level retry → user escalate (no auto model escalation).
+# Sticky per session (state.yaml), reset on sdd-start.
+levels:
+  L0:
+    engine: subagents
+    model: claude-opus-4-6
+    effort: medium
+  L1:
+    engine: codex
+    model: gpt-5.3-codex-spark
+    effort: high
+  L2:
+    engine: codex
+    model: gpt-5.4
+    effort: medium
+  L3:
+    engine: codex
+    model: gpt-5.4
+    effort: high
+  L4:
+    engine: claude
+    model: claude-sonnet-4-6
+    effort: high
+  L5:
+    engine: claude
+    model: claude-opus-4-6
+    effort: medium
+  L6:
+    engine: claude
+    model: claude-opus-4-6
+    effort: high
+
+# --- Escalation Rules ---
+escalation:
+  infra_fallback: L0        # ultimate fallback when no external CLI available
+  no_go_policy: same_level  # NO-GO retries at current level, no auto-escalation
+  sticky: true              # escalated level persists within session
+  sticky_reset: sdd-start   # reset trigger
+
+# --- Role Configuration ---
+# Each stage specifies start_level (resolved from level chain above).
+# Skill arguments (--briefer-engine etc.) override start_level.
 # "timeout" is role-wide (shared across all stages).
-# "tools" restricts allowed tools (null = full permission).
 roles:
   review-self:
     timeout: 900
     stages:
       briefer:
-        engine: codex
-        model: gpt-5.3-codex-spark
+        start_level: L1
       inspectors:
-        engine: codex
-        model: gpt-5.3-codex
+        start_level: L2
       auditor:
-        engine: claude
-        model: claude-sonnet-4-6
+        start_level: L3
       builder:
-        engine: claude
-        model: claude-sonnet-4-6
+        start_level: L2
   review:
     timeout: 1200
     stages:
       briefer:
-        engine: codex
-        model: gpt-5.3-codex-spark
+        start_level: L1
       inspectors:
-        engine: codex
-        model: gpt-5.3-codex
+        start_level: L2
       auditor:
-        engine: claude
-        model: claude-sonnet-4-6
+        start_level: L3

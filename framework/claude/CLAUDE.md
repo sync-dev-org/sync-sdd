@@ -310,7 +310,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
   - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
   - `#{}` tmux フォーマット文字列 (`'#{pane_id}'` 等) → `${}` パラメータ置換と誤検出される。`printenv TMUX_PANE` 等の代替手段を使う
-- **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.md batch headers, archive filenames, branch names.
+- **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.yaml batch headers, archive filenames, branch names.
 
 ## Git Workflow
 
@@ -339,6 +339,26 @@ main continues to advance; release branch is a snapshot, not merged back.
 ## Review Output Format (YAML)
 
 Unified YAML schema for all review pipeline outputs. Full specification: `{{SDD_DIR}}/settings/rules/verdict-format.md`
+
+## Review Engine Level Chain
+
+Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stage (briefer, inspectors, auditor, builder) has a `start_level` resolved from a global level chain:
+
+| Level | Engine | Model | Effort |
+|-------|--------|-------|--------|
+| L1 | codex | gpt-5.3-codex-spark | high |
+| L2 | codex | gpt-5.4 | medium |
+| L3 | codex | gpt-5.4 | high |
+| L4 | claude | claude-sonnet-4-6 | high |
+| L5 | claude | claude-opus-4-6 | medium |
+| L6 | claude | claude-opus-4-6 | high |
+| L0 | subagents | claude-opus-4-6 | medium |
+
+- **Infrastructure escalation** (automatic): `install_check` failure → next level → ... → L0
+- **Quality escalation** (manual): NO-GO does NOT auto-escalate model. Same level retry → user escalate
+- **Sticky**: escalated level persists within session (`state.yaml`), reset on `sdd-start`
+- **Effort**: codex via `-c model_reasoning_effort`, claude via `CLAUDE_CODE_EFFORT_LEVEL` env, subagents via prompt keyword (`ultrathink`), gemini not supported
+- **Override**: Skill arguments (`--{stage}-engine`, `--{stage}-model`, `--{stage}-effort`) override level chain
 
 ## Steering Configuration
 - Load entire `{{SDD_DIR}}/project/steering/` as project memory

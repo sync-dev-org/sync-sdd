@@ -145,7 +145,7 @@ Review execution follows `/sdd-review` skill (SKILL.md). Step references below a
    - Set `review_state[spec].phase = auditing`
 
 3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
-   - Execute sdd-review Step 8 (read verdict, persist to verdicts.md, archive active → B{seq})
+   - Execute sdd-review Step 8 (read verdict, persist to verdicts.yaml, archive active → B{seq})
    - Remove from `active` and `review_state`
    - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED → Architect cascade)
    - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review
@@ -160,7 +160,7 @@ A spec can advance to its next phase when ALL conditions are met:
 |-----------|------------|
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. **Note**: Session resume always starts with `/sdd-start`, not `/sdd-roadmap run` directly. |
 | **Design Review** | Phase is `design-generated`. Latest design batch verdict is absent or NO-GO (review not yet passed). |
-| **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.md` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
+| **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.yaml` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. Latest impl batch verdict is absent or NO-GO (review not yet passed). |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 3). Lead continues the dispatch loop immediately.
@@ -222,6 +222,36 @@ Process `STEERING:` entries from verdict.
 - Pause at wave transitions → user approval
 - Structural changes → escalate to user
 
+## Level Chain Escalation
+
+Review engines are configured via `engines.yaml` level chain (L1-L6, L0=subagents fallback). Each review stage has a `start_level` that determines its default engine/model/effort.
+
+### Infrastructure Escalation (automatic)
+
+When `install_check` fails for a stage's engine:
+1. Advance to next level in chain (L1→L2→...→L6→L0)
+2. Re-run `install_check` for the new level's engine
+3. Repeat until a level passes or L0 (subagents) is reached
+4. Report: `{stage}: {engine} not available, escalating to L{N}`
+
+### Quality Escalation (manual only)
+
+NO-GO does NOT trigger automatic model/effort escalation (D188 #12):
+- NO-GO → same level retry → retry exhaustion → user escalate
+- User MAY choose to escalate level as part of escalation resolution
+
+### Sticky Escalation (D188 #11)
+
+- Once a stage escalates (infra or user-initiated), it stays at the escalated level for the rest of the session
+- Record in `{{SDD_DIR}}/state.yaml` under `escalation` key:
+  ```yaml
+  escalation:
+    briefer: L1        # current level (unchanged = start_level)
+    inspectors: L3     # escalated from L2
+    auditor: L3        # unchanged
+  ```
+- Reset trigger: `sdd-start` (new session) clears the `escalation` section from state.yaml
+
 ## Step 7: Blocking Protocol
 
 When a spec fails after exhausting retries:
@@ -241,24 +271,24 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 
 **All specs blocked**: If no spec in the wave reached `implementation-complete` (all blocked), skip Cross-Check and Dead-Code reviews. Report blocked status to user and proceed directly to Post-gate.
 
-**a. Impl Cross-Check Review** (wave-scoped):
-1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-B{seq}]`)
+**a. Dead Code Review** (wave-scoped, runs BEFORE cross-check):
+1. Execute dead-code review via `/sdd-review dead-code --context wave`
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml` (header: `[W{wave}-DC-B{seq}]`)
 3. Handle verdict:
-   - **GO/CONDITIONAL** → proceed to dead-code
+   - **GO/CONDITIONAL** → proceed to cross-check
+   - **NO-GO** → **inline fix**: dispatch Builder(s) directly with fix instructions (Builder scope = all files from Inspector findings). No re-review loop — Builder fixes once, then proceed to cross-check (cross-check serves as safety net). Max 3 retries (tracked in-memory, not persisted; restarts at 0 on session resume). On retry exhaustion: escalate to user with choices: (a) manually fix remaining dead-code and continue, (b) skip dead-code review and proceed to cross-check, (c) abort pipeline. If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
+
+**b. Impl Cross-Check Review** (wave-scoped):
+1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml` (header: `[W{wave}-B{seq}]`)
+3. Handle verdict:
+   - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:
-     - **Proceed**: Accept remaining issues, proceed to Dead Code Review. Record `ESCALATION_RESOLVED` in decisions.md
+     - **Proceed**: Accept remaining issues, proceed to wave completion. Record `ESCALATION_RESOLVED` in decisions.md
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
      - After `ESCALATION_RESOLVED` (any option): reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)
    - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). After `ESCALATION_RESOLVED`: reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
-
-**b. Dead Code Review**:
-1. Execute dead-code review via `/sdd-review dead-code --context wave`
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave/verdicts.md` (header: `[W{wave}-DC-B{seq}]`)
-3. Handle verdict:
-   - **GO/CONDITIONAL** → Wave complete
-   - **NO-GO** → identify responsible Builder(s), re-dispatch with fix instructions, re-review (max 3 retries, tracked in-memory by Lead — not persisted to spec.yaml. Dead-code findings are wave-scoped and resolved within a single execution window; counter restarts at 0 on session resume. Separate from per-spec aggregate cap). On retry exhaustion (3 retries), escalate to user with choices: (a) manually fix remaining dead-code and continue, (b) skip dead-code review and proceed to wave completion, (c) abort pipeline. If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`. Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only).

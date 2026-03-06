@@ -1,6 +1,6 @@
 ---
 description: "Unified review pipeline for design, impl, and dead-code reviews"
-argument-hint: "design|impl <feature> [--cross-check] [--wave N] | dead-code [--briefer-engine <name>] [--inspector-engine <name>] [--auditor-engine <name>]"
+argument-hint: "design|impl <feature> [--cross-check] [--wave N] | dead-code [--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--timeout <seconds>]"
 allowed-tools: Agent, Bash, Glob, Grep, Read, Write
 ---
 
@@ -31,9 +31,9 @@ $ARGUMENTS = "impl --cross-cutting {spec1,spec2,...} --id {id}" → REVIEW_TYPE=
 ```
 
 オプション:
-- `--briefer-engine <name>` / `--briefer-model <name>`: Briefer エンジン/モデル override
-- `--inspector-engine <name>` / `--inspector-model <name>`: Inspector エンジン/モデル override
-- `--auditor-engine <name>` / `--auditor-model <name>`: Auditor エンジン/モデル override
+- `--briefer-engine <name>` / `--briefer-model <name>` / `--briefer-effort <level>`: Briefer エンジン/モデル/effort override
+- `--inspector-engine <name>` / `--inspector-model <name>` / `--inspector-effort <level>`: Inspector エンジン/モデル/effort override
+- `--auditor-engine <name>` / `--auditor-model <name>` / `--auditor-effort <level>`: Auditor エンジン/モデル/effort override
 - `--timeout <seconds>`: タイムアウト
 
 引数エラー → "Usage: `/sdd-review design|impl {feature}` or `/sdd-review design|impl --cross-check` or `/sdd-review design|impl --wave N` or `/sdd-review impl --cross-cutting {specs}` or `/sdd-review dead-code`"
@@ -48,13 +48,17 @@ $ARGUMENTS = "impl --cross-cutting {spec1,spec2,...} --id {id}" → REVIEW_TYPE=
 
 ### 1c Resolve Final Config
 
-**Per-stage 解決** (各ステージ独立):
+**Level chain 解決** (各ステージ独立):
+
+1. 各ステージの `start_level` を `roles.review.stages.{stage}.start_level` から取得
+2. `levels.{start_level}` から `engine`, `model`, `effort` を取得 → ステージのデフォルト値
+3. Skill 引数でオーバーライド (引数 > level chain):
 
 | Stage Variable | Resolution (高→低) |
 |---------------|-----------|
-| `$BRIEFER_ENGINE` / `$BRIEFER_MODEL` | `--briefer-{engine,model}` → `stages.briefer.{engine,model}` → **subagents** / null |
-| `$INSPECTOR_ENGINE` / `$INSPECTOR_MODEL` | `--inspector-{engine,model}` → `stages.inspectors.{engine,model}` → **subagents** / null |
-| `$AUDITOR_ENGINE` / `$AUDITOR_MODEL` | `--auditor-{engine,model}` → `stages.auditor.{engine,model}` → **subagents** / null |
+| `$BRIEFER_ENGINE` / `$BRIEFER_MODEL` / `$BRIEFER_EFFORT` | `--briefer-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
+| `$INSPECTOR_ENGINE` / `$INSPECTOR_MODEL` / `$INSPECTOR_EFFORT` | `--inspector-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
+| `$AUDITOR_ENGINE` / `$AUDITOR_MODEL` / `$AUDITOR_EFFORT` | `--auditor-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
 
 **共通設定**:
 
@@ -63,19 +67,17 @@ $ARGUMENTS = "impl --cross-cutting {spec1,spec2,...} --id {id}" → REVIEW_TYPE=
 | `$TIMEOUT` | `--timeout` → `roles.review.timeout` → 1200 (hardcoded) |
 | `$TOOLS` | `roles.review.tools` → null (full permission) |
 
-末尾の **subagents** がフォールバック — engine 未指定時は常に subagents を使用。
+4. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
+   - `install_check` 失敗 → level chain で次の level へ自動エスカレート。最終的に L0 (subagents) にフォールバック。Report: `{stage}: {engine} not available, escalating to L{N}`
+   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → 次 level へ
+5. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (後述) with the resolved engine/model/effort
 
-3. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
-   - `install_check` 失敗 → そのステージを **subagents にフォールバック**。Report: `{stage}: {engine} not available, falling back to subagents`
-   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → subagents にフォールバック
-4. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (後述) with the resolved engine/model
-
-5. Report resolved config:
+6. Report resolved config:
 ```
 Timeout: {$TIMEOUT}s
-  Briefer: {$BRIEFER_ENGINE} [{$BRIEFER_MODEL or "default"}]
-  Inspectors: {$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL or "default"}]
-  Auditor: {$AUDITOR_ENGINE} [{$AUDITOR_MODEL or "default"}]
+  Briefer: {$BRIEFER_ENGINE} [{$BRIEFER_MODEL}] effort:{$BRIEFER_EFFORT}
+  Inspectors: {$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL}] effort:{$INSPECTOR_EFFORT}
+  Auditor: {$AUDITOR_ENGINE} [{$AUDITOR_MODEL}] effort:{$AUDITOR_EFFORT}
 ```
 
 ## Step 2: Phase Gate
@@ -162,7 +164,7 @@ Review scope directory を決定:
 | Wave-scoped (`--wave N`) | `{{SDD_DIR}}/project/reviews/wave/` |
 | Cross-cutting (`$CC_ID` from `--id`) | `{{SDD_DIR}}/project/specs/.cross-cutting/{CC_ID}/` |
 
-B{seq} 決定: `{scope-dir}/verdicts.md` を Read し、最大 batch 番号を +1。なければ 1。
+B{seq} 決定: `{scope-dir}/verdicts.yaml` を Read し、最大 batch 番号を +1。なければ 1。
 
 `{scope-dir}/active/` を作成 (既存があれば削除してから再作成): `rm -rf {scope-dir}/active; mkdir -p {scope-dir}/active`
 
@@ -173,7 +175,7 @@ B{seq} 決定: `{scope-dir}/verdicts.md` を Read し、最大 batch 番号を +
 テンプレート `{{SDD_DIR}}/settings/templates/review/inspector-brief.md` を `{scope-dir}/active/shared-brief.md` にコピーし、shared プレースホルダーを sed で展開:
 
 ```
-sed "s|{{REVIEW_TYPE}}|{value}|g; s|{{FEATURE}}|{value}|g; s|{{SCOPE}}|{value}|g; s|{{VERDICTS_PATH}}|{scope-dir}/verdicts.md|g" {template} > {scope-dir}/active/shared-brief.md
+sed "s|{{REVIEW_TYPE}}|{value}|g; s|{{FEATURE}}|{value}|g; s|{{SCOPE}}|{value}|g; s|{{VERDICTS_PATH}}|{scope-dir}/verdicts.yaml|g" {template} > {scope-dir}/active/shared-brief.md
 ```
 
 `{{DENY_PATTERNS}}` 展開: `$DENY_PATTERNS` (Step 1b でロード済み) を改行区切りでフォーマットし、shared-brief.md 内の `{{DENY_PATTERNS}}` を置換。SubAgent mode でも展開する (brief は外部エンジンのみで使用するが、テンプレートの一貫性のため)。
@@ -370,18 +372,20 @@ tmux send-keys -t {slot_pane_id} 'cat {scope-dir}/active/brief-{auditor-name}.md
 
 stdout はリダイレクトしない — pane に進捗が流れる。成果物は findings/verdict YAML ファイルのみ。
 
+以下 `${STAGE}_MODEL` / `${STAGE}_EFFORT` はそのステージの resolved model / effort。
+
 **codex**:
 ```
-npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] -
+npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] [-c model_reasoning_effort='"${STAGE}_EFFORT"'] -
 ```
 
 **claude** (`env -u CLAUDECODE` で Lead ネスト検出を回避):
 ```
-env -u CLAUDECODE claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
+env -u CLAUDECODE CLAUDE_CODE_EFFORT_LEVEL=${STAGE}_EFFORT claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
 ```
 ツール制限時: `--dangerously-skip-permissions` を `--allowedTools "$TOOLS"` に置換。
 
-**gemini**:
+**gemini** (effort 非対応 — 設定ファイル書き換え必須のため除外):
 ```
 npx -y @google/gemini-cli -p "Review the project files per the instructions below." --yolo [--model ${STAGE}_MODEL]
 ```
@@ -394,6 +398,7 @@ Model mapping (engines.yaml の model 値 → Agent tool `model` パラメータ
 - `*spark*` or `*haiku*` を含む → `"haiku"`
 - `*opus*` を含む → `"opus"`
 - その他 → `"sonnet"` (デフォルト)
+Effort mapping (subagents): effort=`high` → プロンプト先頭に `ultrathink` を追加。effort=`medium` → 追加なし。
 
 ## SubAgent Fallback (外部エンジン失敗時)
 
@@ -413,28 +418,115 @@ Model mapping (engines.yaml の model 値 → Agent tool `model` パラメータ
 1. `Agent(subagent_type="general-purpose", description="Auditor fallback", run_in_background=true, prompt="Read .sdd/settings/templates/review/{auditor-name}.md and execute. {auditor context}")` で再 dispatch。task-notification で完了を検知
 2. それでも失敗 → "Auditor failed. Manual review required." を報告し停止
 
-## Step 8: Verdict Read + Persist + Archive
+## Step 8: Lead Supervision + User Presentation
 
-1. Read `{scope-dir}/active/verdict-auditor.yaml`
-2. Lead が verdict-auditor.yaml を監修し、`{scope-dir}/active/verdict.yaml` を作成 (verdict-format.md の Lead Final Verdict スキーマに準拠)
-3. Verdict を `{scope-dir}/verdicts.md` に永続化:
-   a. 既存ファイル Read (なければ `# Verdicts: {feature}` ヘッダーで作成)
-   b. Batch entry header 追加 (`date +%Y-%m-%dT%H:%M:%S%z` で ISO-8601 timestamp 取得、`v{version}` は `.sdd/.version` の値、engine 情報は engines.yaml の model 値を使用):
-      - Per-feature/standalone: `## [B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-      - Wave QG cross-check: `## [W{wave}-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-      - Wave QG dead-code: `## [W{wave}-DC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N}`
-      - Cross-cutting: `## [CC-B{seq}] {review-type} | {ISO-8601} | v{version} | briefer:{model} insp:{model} aud:{model} | fixed:{N} conditional:{N} dynamic:{N}`
-      - conditional/dynamic が 0 の場合はその項を省略
-   c. Counts from verdict.yaml
-   d. Disposition (`GO-ACCEPTED`, `CONDITIONAL-TRACKED`, `NO-GO-FIXED`, `SPEC-UPDATE-CASCADED`, `ESCALATED`)
-   e. CONDITIONAL: M/L issues → Tracked section
-   f. 前 batch に Tracked → compare → `Resolved since B{prev}`
-3. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/`
+### 8a Lead 監修
 
-## Step 9: Standalone Verdict Handling
+Read `{scope-dir}/active/verdict-auditor.yaml` and apply Lead oversight:
+
+1. **FP 判定**: `decisions.md` の全エントリと突合。意図的決定 (USER_DECISION, STEERING_EXCEPTION) で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
+2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.md の該当エントリを引用して確認
+3. **最終分類 (A/B)**: Auditor の classification を検証し、必要に応じて修正
+
+#### 分類基準
+
+**A) 自明な修正** (Auto-fix):
+命名不一致、typo、許可漏れ、example 誤り等、判断不要で正解が一意のもの。
+
+**B) ユーザー判断が必要** (Decision-required):
+pre-existing backlog の対処方針、設計レベルの変更、影響範囲が広い修正。
+→ 各 finding のフィールドを **すべて埋めて** 提示。「どうしますか？」だけで聞かない。
+
+4. **verdict.yaml 作成**: Lead のオーバーライドを反映した最終 verdict を `{scope-dir}/active/verdict.yaml` に書き出す (verdict-format.md の Lead Final Verdict スキーマに準拠)
+
+### 8b ユーザー提示
+
+**提示テンプレートの全フィールドを省略せず出力すること**。要約テーブルへの圧縮は禁止。
+
+```markdown
+# Review Report: {REVIEW_TYPE} — {FEATURE or SCOPE}
+**Date**: {ISO-8601} | **Engines**: briefer:{$BRIEFER_ENGINE} [{$BRIEFER_MODEL}], insp:{$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL}], aud:{$AUDITOR_ENGINE} [{$AUDITOR_MODEL}]
+**Agents**: {dispatched} dispatched ({fixed} fixed + {conditional} conditional + {dynamic} dynamic), {completed} completed
+
+## False Positives Eliminated ({N}件)
+
+| # | Finding | Agent | Reason (decisions.md ref) |
+|---|---------|-------|---------------------------|
+| 1 | {概要} | {検出Agent} | {FP理由 — D{seq} 参照 or 実動作確認等} |
+
+## A) 自明な修正 ({N}件)
+
+| ID | Sev | Location | Summary | Fix |
+|----|-----|----------|---------|-----|
+| A1 | {H/M/L} | {file}:{line} | {何が問題か} | {具体的な修正内容} |
+
+## B) ユーザー判断が必要 ({N}件)
+
+### B1: {title}
+- **Severity**: {C/H/M/L}
+- **Location**: {file}:{line}
+- **Description**: {問題の詳細説明}
+- **Impact**: {影響範囲 — どこに波及するか、どの程度深刻か}
+- **Options**:
+  - (a) {選択肢1} — {トレードオフ}
+  - (b) {選択肢2} — {トレードオフ}
+- **Recommendation**: {推奨する選択肢} — {推奨理由}
+```
+
+### 8c ユーザー判断の受領
+
+ユーザーの回答を待つ:
+- **A items**: 全承認 / 個別に却下
+- **B items**: 各アイテムに対して approve / defer / reject
+
+却下 (reject) されたアイテムはユーザー確認済み FP として扱う。defer されたアイテムは tracked に追加。
+
+verdict.yaml の `user_decision` フィールドを更新。
+
+**Pipeline mode** (run.md / revise.md から呼ばれた場合): verdict.yaml を返す。Auto-fix は pipeline orchestration が処理。
+**Standalone mode**: Step 10 へ。
+
+## Step 9: Verdict Persist + Archive
+
+1. Verdict を `{scope-dir}/verdicts.yaml` に永続化 (verdict-format.md §4 Verdict Index スキーマ準拠):
+   a. 既存ファイル Read (なければ `batches: []` で作成)
+   b. `date +%Y-%m-%dT%H:%M:%S%z` で timestamp 取得、`.sdd/.version` から version 取得
+   c. 新規 batch エントリを `batches` リストに append:
+      ```yaml
+      - seq: {N}
+        type: "{review-type}"          # design/impl/dead-code/cross-check/cross-cutting
+        scope: "{feature or scope}"
+        wave: {N}                      # wave/cross-check only
+        date: "{ISO-8601}"
+        version: "{version}"
+        engines:
+          briefer: "{model}"
+          inspectors: "{model}"
+          auditor: "{model}"
+        agents:
+          fixed: {N}
+          conditional: {N}
+          dynamic: {N}
+          total: {N}
+        counts:
+          C: {n}
+          H: {n}
+          M: {n}
+          L: {n}
+          FP: {n}
+        verdict: "{verdict}"
+        disposition: "{disposition}"
+        tracked: [...]                 # optional
+        resolved: [...]                # optional
+      ```
+   d. `tracked`: verdict.yaml から M/L の deferred items を転記
+   e. `resolved`: 前 batch の tracked と突合し解決済み items を記載
+2. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/`
+
+## Step 10: Standalone Verdict Handling
 
 Standalone 呼び出し時 (run/revise pipeline 外):
-1. Formatted verdict report を user に表示
+1. Formatted verdict report を user に表示 (Step 8b で提示済み)
 2. **Auto-fix なし**: verdict 報告のみ。Auto-fix loop は pipeline orchestration (run.md / revise.md) のみ
 3. **STEERING entries 処理**:
    - `CODIFY|{file}|{decision}` → `steering/{file}` を直接更新 + decisions.md に STEERING_UPDATE append
@@ -449,7 +541,7 @@ Standalone 呼び出し時 (run/revise pipeline 外):
 
 ## Error Handling
 
-- **Engine not installed**: `install_check` 失敗 → subagents にフォールバック
+- **Engine not installed**: `install_check` 失敗 → level chain で次 level へ自動エスカレート、最終的に L0 (subagents) にフォールバック
 - **Claude nesting guard**: `env -u CLAUDECODE` で起動。なしでは "cannot be launched inside another Claude Code session" エラー
 - **Inspector failure**: findings YAML 不在 → SubAgent Fallback 試行。2 回失敗 → "Inspector {name} unavailable" として Auditor に通知
 - **Auditor failure**: verdict-auditor.yaml 不在 → SubAgent Fallback 試行。2 回失敗 → 停止

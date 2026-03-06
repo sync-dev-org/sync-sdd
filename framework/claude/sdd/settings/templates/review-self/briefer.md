@@ -5,7 +5,7 @@ Your job is to construct prompt files that 3 fixed Inspectors + 1-4 dynamic Insp
 
 - Output directory: .sdd/project/reviews/self/active/
 - Template directory: .sdd/settings/templates/review-self/
-- Verdicts file: .sdd/project/reviews/self/verdicts.md
+- Verdicts file: .sdd/project/reviews/self/verdicts.yaml
 - Engines config: .sdd/settings/engines.yaml
 
 ## Step 1: Collect Change Context
@@ -72,7 +72,7 @@ Report findings in Japanese.
 
 ## Step 5: Build Compliance Cache
 
-1. Read `.sdd/project/reviews/self/verdicts.md`
+1. Read `.sdd/project/reviews/self/verdicts.yaml`
 2. Find the most recent inspector-compliance (Platform Compliance) entry within the last 7 days
 3. If found:
    a. Read the archived findings: `.sdd/project/reviews/self/B{seq}/findings-inspector-compliance.yaml`
