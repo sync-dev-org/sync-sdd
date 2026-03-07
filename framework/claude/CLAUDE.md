@@ -397,6 +397,7 @@ Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stag
 | L0 | subagents | claude-opus-4-6 | medium |
 
 - **Infrastructure escalation** (automatic): `install_check` failure → next level → ... → L0
+- **Runtime escalation** (automatic): agent 成果物未生成時、failure log をキャプチャし障害タイプを判定。ENGINE_FAILURE (API 5xx, rate limit, connection error) → 同一エンジンをスキップし次のエンジンへ (codex→claude L4, claude→L0)。LEVEL_FAILURE (空出力, YAML 構文エラー) → 同一チェーン内で次レベルへ。詳細は各 Skill の Runtime Escalation Protocol 参照
 - **Quality escalation** (manual): NO-GO does NOT auto-escalate model. Same level retry → user escalate
 - **Sticky**: escalated level persists within session (`session/state.yaml`), reset on `sdd-start`
 - **Effort**: codex via `-c model_reasoning_effort`, claude via `CLAUDE_CODE_EFFORT_LEVEL` env, subagents via prompt keyword (`ultrathink`), gemini not supported

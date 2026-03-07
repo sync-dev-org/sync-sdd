@@ -147,10 +147,11 @@ send-keys ゾンビ確認後、`Bash(run_in_background=true)` で `tmux wait-for
 `Bash(run_in_background=true)` で `cat {$TPL}/briefer.md | {$BRIEFER_ENGINE_CMD}` を実行。task-notification で完了を検知。
 
 完了後:
-1. `{scope-dir}/active/dynamic-manifest.md` を Read
+1. `{scope-dir}/active/dynamic-manifest.md` の存在を確認
+   - 不在 → Briefer 失敗。**Failure Log Capture** (Runtime Escalation Protocol 参照) を実行し、エスカレーション dispatch。L0 も失敗 → "Briefer failed. Proceeding with fixed inspectors only." として動的 Inspector なしで続行
 2. Dynamic Inspector 名を Inspector リストに追加 (e.g., `dynamic-1-error-propagation`)
 3. **ユーザーに dispatch 一覧を報告**: fixed + dynamic 全 Inspector のリスト (名前 + focus) をテーブル形式で表示
-3. Step 5 以降で fixed + dynamic を統一的に dispatch
+4. Step 5 以降で fixed + dynamic を統一的に dispatch
 
 ## Step 4: Scope Directory + B{seq}
 
@@ -304,8 +305,8 @@ Bash(run_in_background=true): cat {scope-dir}/active/brief-{name}.md .sdd/settin
 全 Inspector 完了後 (全 task-notification 受信):
 
 1. 各 `{scope-dir}/active/findings-{inspector-name}.yaml` の存在とサイズを確認 (`ls -la`) — **Lead は findings の内容を Read しない**
-2. findings YAML 未出力 Inspector → SubAgent Fallback (後述) を試行
-3. Fallback 後も未出力の Inspector 名を `$UNAVAILABLE_INSPECTORS` リストに記録 (例: `"impl-test, impl-e2e"`)。全 Inspector 成功時は `"None"`
+2. findings YAML 未出力 Inspector → Runtime Escalation Protocol を適用 (L0 まで段階的にエスカレーション)
+3. 最終的に未出力の Inspector 名を `$UNAVAILABLE_INSPECTORS` リストに記録 (例: `"impl-test, impl-e2e"`)。全 Inspector 成功時は `"None"`
 
 ### 6e Web Server Stop (impl review, web projects only)
 
@@ -365,7 +366,7 @@ tmux send-keys -t {slot_pane_id} 'cat {scope-dir}/active/brief-{auditor-name}.md
 **background mode** (上記以外):
 `Bash(run_in_background=true)` で `cat {scope-dir}/active/brief-{auditor-name}.md .sdd/settings/templates/review/{auditor-name}.md | {$AUDITOR_ENGINE_CMD}` を実行。task-notification で完了を検知。
 
-完了後: `{scope-dir}/active/verdict-auditor.yaml` の存在を確認。未出力 → SubAgent Fallback を試行。
+完了後: `{scope-dir}/active/verdict-auditor.yaml` の存在を確認。未出力 → Runtime Escalation Protocol を適用。
 
 ## Engine-Specific Command Construction
 
@@ -401,23 +402,88 @@ Model mapping (engines.yaml の model 値 → Agent tool `model` パラメータ
 - その他 → `"sonnet"` (デフォルト)
 Effort mapping (subagents): effort=`high` → プロンプト先頭に `ultrathink` を追加。effort=`medium` → 追加なし。
 
-## SubAgent Fallback (外部エンジン失敗時)
+## Runtime Escalation Protocol
 
-外部エンジンで findings/verdict YAML 未生成の場合に発動。
+外部エンジンで成果物 (findings YAML / verdict YAML) が未生成の場合に発動。全ステージ (Briefer / Inspector / Auditor) で共通。
 
-### Inspector SubAgent Fallback
+### Failure Log Capture
+
+成果物不在を検出した時点で、直ちに diagnostic log を保存:
+
+- **ファイル名**: `{scope-dir}/active/failure-{role}-{name}-{engine}-L{level}.log`
+  - 例: `failure-inspector-impl-test-codex-L2.log`, `failure-auditor-claude-L4.log`
+  - エスカレーション先も失敗した場合にログが上書きされないよう、engine + level をファイル名に含める
+- **tmux mode**: `tmux capture-pane -t {pane_id} -p -S -100` の出力を Write
+- **background mode**: TaskOutput ファイルを Read して Write
+- **SubAgent mode**: Agent result を Write
+- **先頭行**: `timestamp: {ISO-8601}  engine: {engine}  model: {model}  effort: {effort}  level: L{N}  agent: {name}`
+
+### Failure Classification
+
+Failure log の内容から障害タイプを **Lead が判定** する:
+
+**ENGINE_FAILURE** (同一エンジンの上位レベルも同様に失敗する可能性が高い):
+- HTTP 5xx (500, 502, 503, 504)
+- Rate limit / quota exceeded
+- Connection refused / reset / timeout
+- API key invalid / authentication error
+- "service unavailable", "internal server error"
+
+**LEVEL_FAILURE** (エンジンは機能しているが、モデル/effort の変更で解決できる可能性あり):
+- 出力が空 (pane に応答はあるが成果物ファイル未生成)
+- YAML 構文エラー
+- タスク途中終了 (partial output)
+
+**判定不能** (ログが空、エラー情報なし): **ENGINE_FAILURE として扱う** (保守的判断)
+
+### Escalation Logic
+
+```
+ENGINE_FAILURE:
+  codex  (L1/L2/L3) → claude L4     (エンジン変更)
+  claude (L4/L5/L6) → subagents L0  (エンジン変更)
+  subagents (L0)    → 最終失敗
+
+LEVEL_FAILURE:
+  L{N} → L{N+1}    (同一チェーン内で次レベル)
+  L6   → L0        (チェーン末端、subagents fallback)
+  L0   → 最終失敗
+```
+
+新しいレベルの engine/model/effort は engines.yaml `levels.L{N}` から解決し、Engine-Specific Command Construction で新しいコマンドを組み立てる。
+
+### User Reporting
+
+エスカレーション発生時、ユーザーに報告:
+```
+Runtime escalation: {agent-name}
+  L{from} ({engine} {model}) → L{to} ({engine} {model})
+  Reason: {ENGINE_FAILURE|LEVEL_FAILURE} — {key error from log}
+  Log: {failure log path}
+```
+
+### Inspector Runtime Escalation
 
 `$INSPECTOR_ENGINE != "subagents"` かつ findings YAML 未生成の Inspector がある場合:
-1. 失敗 Inspector を `Agent(subagent_type="general-purpose", description="{inspector-name} fallback", run_in_background=true, prompt="Read .sdd/settings/templates/review/{inspector-name}.md and execute. {context brief}")` で再 dispatch。task-notification で完了を検知
-2. findings YAML 存在を再チェック。それでも不在 → Auditor に "Inspector {name} unavailable" を通知
+1. 失敗した Inspector のみを対象にリストアップ
+2. 各失敗 Inspector について **Failure Log Capture** を実行
+3. Failure Classification → Escalation Logic に従い次の dispatch 先を決定
+4. 失敗 Inspector を新しいレベルで再 dispatch (成功済み Inspector はそのまま)
+   - **tmux/background escalation**: 新レベルの Engine-Specific Command で dispatch
+   - **SubAgent escalation (L0)**: `Agent(subagent_type="general-purpose", description="{inspector-name} escalation", run_in_background=true, prompt="Read .sdd/settings/templates/review/{inspector-name}.md and execute. {context brief}")`
+5. findings YAML 存在を再チェック
+6. まだ失敗 → 再度 Step 2 から (次レベルへ escalation、L0 到達まで)
+7. L0 も失敗 → Auditor に "Inspector {name} unavailable" を通知
 
-`$INSPECTOR_ENGINE == "subagents"` → フォールバック先なし、即失敗扱い。
+`$INSPECTOR_ENGINE == "subagents"` (L0) → フォールバック先なし、即失敗扱い。
 
-### Auditor SubAgent Fallback
+### Auditor Runtime Escalation
 
 `$AUDITOR_ENGINE != "subagents"` かつ verdict-auditor.yaml 未生成の場合:
-1. `Agent(subagent_type="general-purpose", description="Auditor fallback", run_in_background=true, prompt="Read .sdd/settings/templates/review/{auditor-name}.md and execute. {auditor context}")` で再 dispatch。task-notification で完了を検知
-2. それでも失敗 → "Auditor failed. Manual review required." を報告し停止
+1. **Failure Log Capture** を実行
+2. Escalation Logic に従い次の dispatch 先を決定
+3. SubAgent (L0) の dispatch: `Agent(subagent_type="general-purpose", description="Auditor escalation", run_in_background=true, prompt="Read .sdd/settings/templates/review/{auditor-name}.md and execute. {auditor context}")`
+4. L0 も失敗 → "Auditor failed. Manual review required." を報告し停止
 
 ## Step 8: Lead Supervision + User Presentation
 
@@ -542,11 +608,11 @@ Standalone 呼び出し時 (run/revise pipeline 外):
 
 ## Error Handling
 
-- **Engine not installed**: `install_check` 失敗 → level chain で次 level へ自動エスカレート、最終的に L0 (subagents) にフォールバック
+- **Engine not installed**: `install_check` 失敗 → level chain で次 level へ自動エスカレート (Step 1c)、最終的に L0 (subagents) にフォールバック
 - **Claude nesting guard**: `env -u CLAUDECODE` で起動。なしでは "cannot be launched inside another Claude Code session" エラー
-- **Inspector failure**: findings YAML 不在 → SubAgent Fallback 試行。2 回失敗 → "Inspector {name} unavailable" として Auditor に通知
-- **Auditor failure**: verdict-auditor.yaml 不在 → SubAgent Fallback 試行。2 回失敗 → 停止
-- **Timeout**: `$TIMEOUT` 超過時は部分結果を確認。なければ該当 Agent を失敗扱い
+- **Inspector failure**: findings YAML 不在 → Runtime Escalation Protocol を適用。L0 まで失敗 → "Inspector {name} unavailable" として Auditor に通知。Failure log は `{scope-dir}/active/failure-*.log` に保存
+- **Auditor failure**: verdict-auditor.yaml 不在 → Runtime Escalation Protocol を適用。L0 まで失敗 → 停止
+- **Timeout**: `$TIMEOUT` 超過時は部分結果を確認。なければ Runtime Escalation Protocol を適用
 - **Slot safety**: MultiView スロットは kill しない。Timeout 時は `C-c` を send-keys で停止
 - **No findings**: Report "No issues detected." with confirmation checklist
 - **Inspector ERROR findings**: C-level findings → Auditor にエラーコンテキスト + C findings を渡す
