@@ -1,140 +1,164 @@
 ---
-description: Generate session handover document
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+name: sdd-handover
+description: |
+  Generate a high-quality session handover document for cross-session continuity.
+  This skill produces a polished handover.md that captures project state, user context,
+  tone, and nuance — the manual-polish counterpart to auto-draft.
+
+  Use this skill whenever the user says: "handover", "引き継ぎ", "セッション終了",
+  "session end", "wrap up", "終わり", "おわり", "closing", "end session",
+  "save session", "セッション保存", or any indication they want to stop and
+  preserve session context for next time. Also use when the user explicitly
+  invokes /sdd-handover.
+
+  This skill consolidates session data (decisions/issues/knowledge), archives
+  stale entries, enriches the handover with user input, and optionally commits
+  the results. It is the definitive session-closing workflow.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - Bash
 ---
 
-# SDD Handover
+# sdd-handover
 
-<instructions>
+Generate a session handover document that preserves project state, direction, and human context for the next session.
 
-## Core Task
+This is the **manual polish** mode of handover generation — richer than auto-draft because it incorporates user dialogue, consolidates session data, and archives stale entries. The output has no `**Mode**:` marker, which distinguishes it from auto-draft.
 
-Generate high-quality session handover document through user interaction. This is the **manual polish** version — it enriches the auto-draft with user context, tone, and nuance that cannot be captured automatically.
+## Step 1: Obtain Timestamp
 
-## Step 1: Auto-Collect Project State
+Run `date` once to get timestamps for all files written during this skill execution.
 
-Gather in parallel:
-- Git state (branch, recent commits, uncommitted changes)
-- Roadmap/spec progress (read all spec.yaml files)
-- Test results (if test commands available)
-- Steering changes (recent modifications)
-- Current `{{SDD_DIR}}/session/handover.md` (if exists — may be auto-draft or previous manual polish)
-- Recent entries from `{{SDD_DIR}}/session/decisions.yaml` (if exists)
+```
+date +%Y-%m-%dT%H:%M:%S%z    → ISO_TIMESTAMP  (for handover.md Generated field)
+date +%Y-%m-%d-%H%M          → ARCHIVE_SLUG   (for archive filenames)
+```
 
-## Step 1b: Note Uncommitted Changes
+Use a single `date` invocation and derive both formats. Reuse these values everywhere — no additional `date` calls.
 
-If Step 1 detected uncommitted changes (untracked files or modifications):
-- Note the list for later. Commit check is deferred to Step 5b (after all files are written).
+## Step 2: Flush Pending Session Data
 
-## Step 2: Collect Session Context (Interactive)
+Before consolidation, persist any decisions, issues, or knowledge that were noted during the session but not yet written to their respective files. This prevents data loss.
 
-Use `AskUserQuestion` tool to ask user:
-1. "What was accomplished in this session?" (key deliverables)
-2. "What should be done next?" (immediate next action)
-3. "Any decisions or caveats to note?" (context for next session)
-4. "Any tone or nuance to convey?" (e.g., "this approach is experimental", "user is enthusiastic about X direction", "prioritize speed over quality for now")
-5. "Any intentional deviations from steering/best practices?" (steering exceptions — prevents repeated review flags in future sessions)
+Check the conversation context for unrecorded items:
+- Decisions discussed but not appended to `decisions.yaml`
+- Issues identified but not appended to `issues.yaml`
+- Knowledge gained but not appended to `knowledge.yaml`
 
-## Step 3: Generate Handover Document
+Append any pending items using Edit (insert at end of the `entries:` list). Use ISO_TIMESTAMP from Step 1 for `created_at`.
 
-Generate comprehensive handover.md following the template at `{{SDD_DIR}}/settings/templates/session/handover.md`:
+## Step 3: Read Current State
 
-### Direction (from Lead perspective + user input)
-- Immediate Next Action: list open issues from `issues.yaml` sorted by severity (H→M→L), then user-specified next actions
-- Active Goals (from spec progress + user input)
-- Key Decisions: carry forward from previous handover.md + add new from this session (each with brief rationale, reference decisions.yaml D{seq} for details)
-- Warnings
+Read these files in parallel to build a picture of the session:
 
-### Session Context (from user interaction)
-- Tone and Nuance
-- Steering Exceptions (with decisions.yaml references)
+| File | Purpose |
+|------|---------|
+| `.sdd/session/handover.md` | Current handover (auto-draft or previous manual) |
+| `.sdd/session/decisions.yaml` | All decisions |
+| `.sdd/session/issues.yaml` | All issues |
+| `.sdd/session/knowledge.yaml` | All knowledge |
+| `.sdd/settings/templates/session/handover.md` | Template structure |
 
-### Accomplished (from auto-collected data + user input)
-- Work summary
-- Modified Files
+Also scan for active specs:
+- Glob `.sdd/project/specs/*/spec.yaml` and read any that exist to capture pipeline state
 
-### Resume Instructions
-- 1-3 concrete steps for next session startup
+## Step 4: Consolidate Session Data
 
-Do NOT include a `**Mode**:` marker — absence of marker indicates manual polish.
+Consolidation prunes stale entries from the three session data files. For each file, separate entries into **keep** and **archive** sets, then rewrite the active file and write the archive.
 
-## Step 4: Timestamp
+### 4a: decisions.yaml
 
-Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Steps 3, 4b, and 5: handover.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting). Do NOT call `date` again.
+- **Archive**: entries where `status: superseded`
+- **Keep**: entries where `status: active`
+- Additionally, scan active entries for conflicts — if two active decisions address the same topic and one supersedes the other, mark the older one `superseded` before archiving
+- Write archived entries to `.sdd/session/decisions/{ARCHIVE_SLUG}.yaml`
+- Rewrite `.sdd/session/decisions.yaml` with only kept entries
 
-## Step 4b: Flush and Consolidate
+### 4b: issues.yaml
 
-### Flush
+- **Archive**: entries where `status: resolved` or `status: rejected`
+- **Keep**: entries where `status: open` or `status: deferred`
+- Write archived entries to `.sdd/session/issues/{ARCHIVE_SLUG}.yaml`
+- Rewrite `.sdd/session/issues.yaml` with only kept entries
 
-Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and knowledge to `knowledge.yaml` that were noted during the session but not yet persisted. This ensures all session data is captured before consolidation.
+### 4c: knowledge.yaml
 
-### Consolidate decisions.yaml
+- **Archive**: entries where `status: superseded`
+- **Keep**: entries where `status: active`
+- **Duplicate detection**: if 3+ active entries have similar summaries (same topic), flag them. Consider proposing a steering update (`PROPOSE`) to codify the repeated knowledge. Mention this in the handover Warnings section.
+- Write archived entries to `.sdd/session/knowledge/{ARCHIVE_SLUG}.yaml`
+- Rewrite `.sdd/session/knowledge.yaml` with only kept entries
 
-1. Read all entries from `decisions.yaml`
-2. **Conflict detection**: Scan active entries for conflicting decisions on the same topic. If found, mark the older entry `status: superseded`
-3. **Superseded exclusion**: Separate entries with `status: superseded` from active entries
-4. **Archive pruned entries**: If any superseded entries exist, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
-5. **Rewrite decisions.yaml**: Write the header comment + remaining active entries (this is the one exception to append-only — consolidation is a controlled rewrite)
+### Archive file format
 
-### Consolidate issues.yaml
+Archive files use the same YAML schema as the source file. Include a header comment:
 
-1. Read all entries from `issues.yaml`
-2. **Terminal status exclusion**: Remove entries with `status: resolved` or `status: rejected`
-3. **Archive pruned entries**: If any entries were removed, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/issues/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
-4. **Rewrite issues.yaml**: Write the header comment + remaining entries (`open` and `deferred` only)
+```yaml
+# Archived from {source_file} at {ISO_TIMESTAMP}
+# Entries: {count}
+entries:
+  - ...
+```
 
-### Consolidate knowledge.yaml
+If no entries need archiving for a given file, skip creating the archive file for it.
+If the archive directory does not exist, create it.
 
-1. Read all entries from `knowledge.yaml`
-2. **Duplicate detection**: Group entries by `summary` similarity. If any group has ≥3 entries:
-   - Report the duplicate groups to the user
-   - For each group, propose a steering entry: `STEERING: PROPOSE — consolidate {count} repeated {type} findings into steering rule: "{summary}"`
-   - Use `AskUserQuestion` to ask: "以下の knowledge パターンを steering に昇格しますか？" with options per group: "Approve (steering に追加)" / "Skip (そのまま維持)"
-   - For approved groups: append the rule to the appropriate steering file, set the knowledge entries to `status: superseded`
-3. **Superseded exclusion**: Separate entries with `status: superseded` from active entries
-4. **Archive pruned entries**: If any superseded entries exist, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/knowledge/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
-5. **Rewrite knowledge.yaml**: Write the header comment + remaining active entries
+## Step 5: User Input
 
-## Step 5: Write Files
+Ask the user one question via `AskUserQuestion`:
 
-1. If `{{SDD_DIR}}/session/handover.md` exists:
-   - Ensure directory exists (`mkdir -p` via Bash) then copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
-   - If same-timestamp archive already exists, append `-2`, `-3`, etc.
-2. Write new handover.md to `{{SDD_DIR}}/session/handover.md`
+- **Question**: "追加したい判断や、次セッションへの引き継ぎ要素はありますか？"
+- **Options**: "特にない" / "自由記述"
 
-## Step 5b: Uncommitted Changes Commit
+If "特にない": proceed with auto-collected data only.
+If "自由記述": the user's free-text input may contain session goals, tone/nuance, warnings, steering exceptions, decision refinements, or resume instructions. Extract and classify these into the appropriate handover sections.
 
-If Step 1b noted uncommitted changes:
-- Report the list of uncommitted files to the user (including newly written handover.md, archives, and consolidated session files)
-- Use `AskUserQuestion` to ask: "未コミットの変更があります。コミットしますか？"
-  - Options: "コミットする (推奨)" / "コミットせずに続行"
-- If user chooses to commit: create a commit following the project's git workflow conventions, then proceed
-- If user chooses to skip: proceed without committing
+If duplicate knowledge entries were detected in Step 4c, also present the steering PROPOSE recommendation: "The following knowledge pattern has appeared 3+ times — consider codifying it in steering."
 
-## Step 6: Post-Completion
+## Step 6: Archive Existing Handover
 
-Report to user:
-- Handover file location
-- Archive location (if created)
-- Key items captured
-- Reminder: next session will auto-load handover.md on start
+If `.sdd/session/handover.md` exists:
+- Copy its content to `.sdd/session/handovers/{ARCHIVE_SLUG}.md`
+- Create the `handovers/` directory if it does not exist
 
-</instructions>
+## Step 7: Write New Handover
 
-## Relationship to Auto-Draft
+Write `.sdd/session/handover.md` using the template structure from `.sdd/settings/templates/session/handover.md`. Fill in all sections with collected and enriched data.
 
-| Aspect | Auto-Draft (Automatic) | Manual Polish (/sdd-handover) |
-|--------|------------------------|-------------------------------|
-| Trigger | Each command completion | User runs command |
-| Content | Carry-forward + Next Action/Accomplished | Full user context + tone + steering exceptions |
-| Quality | Functional (machine-generated) | High (user-validated) |
-| Mode marker | `**Mode**: auto-draft` | No marker |
-| Archive | No archive | Archives previous handover.md to handovers/ |
+Key rules:
+- **No `**Mode**:` marker** — its absence signals manual polish
+- **Generated**: use ISO_TIMESTAMP from Step 1
+- **Branch**: get from `git branch --show-current`
+- **Key Decisions**: split into "Continuing from previous sessions" and "Added this session". Reference decision IDs (e.g., D2, D214) so the next Lead can look up details
+- **Accomplished**: summarize work completed this session. Include a "Previous Sessions" subsection carrying forward the history chain
+- **Open Issues**: table of open/deferred issues from issues.yaml (ID, Severity, Summary)
+- **Modified Files**: list files modified during the session (from git diff or conversation context)
 
-## Error Handling
+## Step 8: Commit Proposal
 
-- **No active specs**: Still generate handover with available context
-- **No git repo**: Skip git state section
-- **No existing handover.md**: Generate from scratch (no archive step)
-- **No decisions.yaml**: Create from template
-- **No issues.yaml**: Create from template
+Present the user with three options:
+
+1. **Commit all changes** — stage and commit everything (session data + any other modified files)
+2. **Commit .sdd/session only** — stage and commit only files under `.sdd/session/`
+3. **No commit** — end without committing
+
+If the user chooses option 1 or 2, create a commit with message format:
+```
+session: handover + consolidation
+
+Co-Authored-By: sync-sdd <noreply@sync-sdd>
+```
+
+For option 2, stage only `.sdd/session/` files.
+
+## Edge Cases
+
+- **Empty session data files**: If a session data file has no entries (or doesn't exist), skip its consolidation step. Still generate the handover with available information.
+- **No existing handover.md**: Skip the archive step (Step 6). Generate a fresh handover.
+- **No specs**: The "Active Specifications" section can note "No active specifications" if the specs directory is empty.
+- **User declines enrichment**: If the user says "auto" or "skip", generate the handover using only auto-collected data. Still write without the Mode marker to distinguish from auto-draft.
+- **Large decision/knowledge sets**: If there are 50+ active entries, summarize by severity (H/M/L counts) in the handover rather than listing all. The full data remains in the YAML files.

@@ -124,6 +124,7 @@ When improving an existing skill based on feedback:
 - Never include `AskUserQuestion` in allowed-tools
 - **Do NOT use the Agent tool** — do all research and work inline
 - Session files (decisions.yaml, knowledge.yaml) are read-only context — do not modify them
+- **No project-specific IDs in skill content**: Session data (D{seq}, K{seq}, I{seq}) is project context for understanding the codebase, not for embedding into the skill. Skills are installed into other projects where these IDs do not exist. Use the *insight* from decisions/knowledge, but never reference specific IDs in the SKILL.md output
 - Do not create documentation files (README, etc.) unless the skill specifically needs them
 
 ## Completion Report
