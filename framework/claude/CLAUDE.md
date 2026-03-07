@@ -232,12 +232,13 @@ Pipeline state is NOT stored in session — `spec.yaml` is the single source of 
 handover.md is written in two modes:
 
 **Auto-draft** (after each command completion):
-1. Read current handover.md (if exists)
-2. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
-3. Update: Immediate Next Action based on current state
-4. Append: latest work to Accomplished section
-5. Mark with `**Mode**: auto-draft`
-6. Overwrite handover.md
+1. **Flush**: Write any pending decisions to `decisions.yaml` and knowledge to `knowledge.yaml` that were noted during the command but not yet persisted
+2. Read current handover.md (if exists)
+3. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
+4. Update: Immediate Next Action based on current state
+5. Append: latest work to Accomplished section
+6. Mark with `**Mode**: auto-draft`
+7. Overwrite handover.md
 
 **Exception — `run` pipeline dispatch loop**: Auto-draft only at Wave QG post-gate, user escalation, and pipeline completion. Skip at individual phase completions (Design, Impl, Review per spec). spec.yaml is ground truth for pipeline state; intermediate handover.md freshness is unnecessary.
 
@@ -293,8 +294,8 @@ Template: `{{SDD_DIR}}/settings/templates/session/knowledge.yaml`
 
 | Trigger | File | Notes |
 |---------|------|-------|
-| Command completion (design/impl/review/roadmap/steering) | handover.md auto-draft | Carry forward + update Next Action/Accomplished |
-| `/sdd-handover` | handover.md manual polish, decisions.yaml SESSION_END, handovers/ archive | Manual |
+| Command completion (design/impl/review/roadmap/steering) | handover.md auto-draft | Flush pending decisions/knowledge first, then carry forward + update Next Action/Accomplished |
+| `/sdd-handover` | handover.md manual polish, decisions.yaml SESSION_END, handovers/ archive | Flush + consolidate before write |
 | User decision | decisions.yaml | Auto-append with Reason |
 | STEERING change | decisions.yaml | Auto-append with Reason |
 | Direction change | decisions.yaml | Auto-append with Reason |
@@ -312,6 +313,7 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 - Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
 - Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/session/knowledge.yaml`
 - knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 same type×similar summary triggers steering PROPOSE at consolidation).
+- **Consolidation** occurs at `/sdd-handover` time (Step 4b): decisions.yaml superseded exclusion + SESSION pair condensation, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
 
 ## Pipeline Stop Protocol
 
@@ -327,6 +329,11 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Session Start**: On session start, resume request (e.g., "再開", "continue", "resume"), compact, or `/clear` → use `/sdd-start`. Do NOT attempt manual resume steps.
 - Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
+- **Natural Language Memory Triggers**: When user's message contains the following keywords, Lead writes the corresponding entry immediately (no Skill invocation needed):
+  - 「覚えて」「remember」→ knowledge.yaml に `PATTERN` エントリを追記 (severity: user が示唆する重要度、なければ `M`)
+  - 「ISSUE」「問題」「インシデント」→ knowledge.yaml に `INCIDENT` エントリを追記 (severity: `H`)
+  - 「判断」「decision」「決定」→ decisions.yaml に `USER_DECISION` エントリを追記
+  - Lead はユーザーの発言から summary/detail/impact/recommendation (knowledge) または summary/context/detail/reason/impact (decision) を抽出してフォーマットする。不足情報があれば簡潔に確認する
 
 ## Execution Conventions
 
