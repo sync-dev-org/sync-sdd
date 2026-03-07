@@ -1,43 +1,43 @@
-sid: "235959"
-created_at: "2026-03-08T00:00:38+0900"
+sid: "005302"
+created_at: "2026-03-08T00:53:40+0900"
 lead:
   pane_id: "%1"
   window_id: "@0"
 grid:
   window_id: "@0"
   slot-1:
-    pane_id: "%793"
+    pane_id: "%805"
     status: idle
   slot-2:
-    pane_id: "%795"
+    pane_id: "%807"
     status: idle
   slot-3:
-    pane_id: "%794"
+    pane_id: "%806"
     status: idle
   slot-4:
-    pane_id: "%796"
+    pane_id: "%808"
     status: idle
   slot-5:
-    pane_id: "%792"
+    pane_id: "%804"
     status: idle
   slot-6:
-    pane_id: "%800"
+    pane_id: "%812"
     status: idle
   slot-7:
-    pane_id: "%797"
+    pane_id: "%809"
     status: idle
   slot-8:
-    pane_id: "%801"
+    pane_id: "%813"
     status: idle
   slot-9:
-    pane_id: "%798"
+    pane_id: "%810"
     status: idle
   slot-10:
-    pane_id: "%802"
+    pane_id: "%814"
     status: idle
   slot-11:
-    pane_id: "%799"
+    pane_id: "%811"
     status: idle
   slot-12:
-    pane_id: "%803"
+    pane_id: "%815"
     status: idle

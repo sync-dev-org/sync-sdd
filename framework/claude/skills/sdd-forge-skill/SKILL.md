@@ -1,9 +1,9 @@
 ---
-name: sdd-skill-creator
+name: sdd-forge-skill
 description: Creates new skills, modifies and improves existing skills, and measures skill performance. Modes - create (draft a new skill from scratch), improve (iterate on an existing skill with feedback), eval (run test cases and benchmark), compare (blind A/B comparison), optimize-description (improve triggering accuracy). Use when users want to create a skill, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering.
 ---
 
-# Skill Creator
+# Skill Forge
 
 Adapted from [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0). See LICENSE.txt.
 
@@ -56,7 +56,7 @@ PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.run_loop --eval-set eval.json -
 
 ## Communicating with the user
 
-The skill creator is liable to be used by people across a wide range of familiarity with coding jargon. If you haven't heard (and how could you, it's only very recently that it started), there's a trend now where the power of Claude is inspiring plumbers to open up their terminals, parents and grandparents to google "how to install npm". On the other hand, the bulk of users are probably fairly computer-literate.
+The skill forge is liable to be used by people across a wide range of familiarity with coding jargon. If you haven't heard (and how could you, it's only very recently that it started), there's a trend now where the power of Claude is inspiring plumbers to open up their terminals, parents and grandparents to google "how to install npm". On the other hand, the bulk of users are probably fairly computer-literate.
 
 So please pay attention to context cues to understand how to phrase your communication! In the default case, just to give you some idea:
 
@@ -94,12 +94,12 @@ After capturing intent (create mode) or collecting feedback (improve mode), disp
 
 Spawn a generic `Agent()` with `run_in_background: true`. The prompt should include:
 
-1. **Read instruction**: "Read `{CLAUDE_SKILL_DIR}/references/skill-writer.md` and follow its instructions."
+1. **Read instruction**: "Read `{CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
 2. **Mode**: `create` or `improve`
 3. **Skill name and path**: where to write the output
 4. **Intent summary**: structured from the interview — purpose, trigger contexts, output format, edge cases, dependencies
 5. **Project context paths**: `.sdd/session/decisions.yaml`, `.sdd/session/knowledge.yaml` (if they exist)
-6. **Skill creator resources path**: `${CLAUDE_SKILL_DIR}` value
+6. **Skill forge resources path**: `${CLAUDE_SKILL_DIR}` value
 7. **Feedback** (improve mode): user feedback from previous eval, benchmark data, specific complaints
 
 ### Post-Generation Review
@@ -398,7 +398,7 @@ After packaging, direct the user to the resulting `.skill` file path so they can
 
 The references/ directory contains documentation for specialized tasks. Read them when you need to spawn a subagent or perform the relevant task.
 
-- `references/skill-writer.md` — Instructions for the skill drafting/improving SubAgent (dispatched in Phase 2)
+- `references/writer.md` — Instructions for the skill drafting/improving SubAgent (dispatched in Phase 2)
 - `references/grader.md` — How to evaluate assertions against outputs
 - `references/comparator.md` — How to do blind A/B comparison between two outputs
 - `references/analyzer.md` — How to analyze why one version beat another and benchmark patterns

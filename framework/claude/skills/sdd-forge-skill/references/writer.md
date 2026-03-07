@@ -15,7 +15,7 @@ Lead provides these in your prompt:
 - **User interview notes**: structured notes from Lead's conversation with the user
 - **Project context paths** (optional): `decisions.yaml`, `knowledge.yaml` — read for project-specific knowledge
 - **Feedback** (improve mode): user feedback from previous iteration, benchmark data, specific complaints
-- **Skill creator resources path**: path to this skill's directory (for reading schemas, etc.)
+- **Skill forge resources path**: path to this skill's directory (for reading schemas, etc.)
 
 ## Process
 
@@ -23,7 +23,7 @@ Lead provides these in your prompt:
 
 1. If project context paths are provided, read `decisions.yaml` and `knowledge.yaml` to understand the project's conventions, preferences, and past decisions
 2. If improve mode: read the existing SKILL.md thoroughly. Understand its structure, what works, what doesn't
-3. Read `references/schemas.md` from the skill creator resources path if you need eval/grading JSON schemas
+3. Read `references/schemas.md` from the skill forge resources path if you need eval/grading JSON schemas
 
 ### Step 2: Research
 
