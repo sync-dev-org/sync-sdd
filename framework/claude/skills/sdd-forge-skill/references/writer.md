@@ -29,7 +29,7 @@ Lead provides these in your prompt:
 
 Do all research inline using your own tools — **do NOT spawn subagents**.
 
-1. **Read reference examples**: Read skills in `references/examples/` within the skill forge resources path. These are curated high-quality skills from Anthropic, obra/superpowers, and Trail of Bits — use them as structural and stylistic references
+1. **Read the skill reference guide**: Read `references/skill-reference.md` within the skill forge resources path. This is a comprehensive guide covering the agentskills.io standard, platform-specific implementations (Claude Code, Codex CLI, Gemini CLI), cross-platform compatibility, and description/body best practices. Use it as your primary reference for skill structure, frontmatter fields, and writing patterns
 2. **Do NOT read other project skills**: Never browse `.claude/skills/` or other project-internal skills for reference. They may be pre-polish quality and will bias your output
 3. Check the user's codebase for project structure and coding conventions (not for skill patterns)
 4. Use WebSearch to find best practices, relevant documentation

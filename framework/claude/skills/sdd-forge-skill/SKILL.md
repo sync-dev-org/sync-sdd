@@ -1,6 +1,6 @@
 ---
 name: sdd-forge-skill
-description: Creates new skills, modifies and improves existing skills, and measures skill performance. Modes - create (draft a new skill from scratch), improve (iterate on an existing skill with feedback), eval (run test cases and benchmark), compare (blind A/B comparison), optimize-description (improve triggering accuracy). Use when users want to create a skill, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering.
+description: Creates new skills, modifies and improves existing skills, and measures skill performance. Modes - create (draft a new skill from scratch), reforge (rebuild an existing skill from scratch by extracting requirements and generating fresh), improve (iterate on an existing skill with feedback), eval (run test cases and benchmark), compare (blind A/B comparison), optimize-description (improve triggering accuracy). Use when users want to create a skill, edit or optimize an existing skill, reforge or rebuild a skill from scratch, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering.
 ---
 
 # Skill Forge
@@ -14,6 +14,7 @@ A skill for creating new skills and iteratively improving them.
 | Mode | Trigger | What happens |
 |------|---------|-------------|
 | `create` | "make a skill", "create a skill", "turn this into a skill" | Interview → SubAgent drafts → Review → Eval → Iterate |
+| `reforge` | "reforge skill", "rebuild skill from scratch", "regenerate skill" | Backup → Extract requirements → SubAgent creates fresh → Lead diff analysis → Iterate |
 | `improve` | "improve skill", "edit skill", "fix skill" | Read existing → Eval → SubAgent improves → Iterate |
 | `eval` | "test skill", "run evals", "benchmark" | Run test cases → Grade → Aggregate → Viewer |
 | `compare` | "compare versions", "is the new version better?" | Blind A/B comparison → Analysis |
@@ -64,6 +65,112 @@ So please pay attention to context cues to understand how to phrase your communi
 - for "JSON" and "assertion" you want to see serious cues from the user that they know what those things are before using them without explaining them
 
 It's OK to briefly explain terms if you're in doubt, and feel free to clarify terms with a short definition if you're unsure if the user will get it.
+
+---
+
+## Reforge Mode
+
+Reforge rebuilds an existing skill from scratch. Unlike `improve` (which patches incrementally), reforge extracts the core requirements from the existing skill, then generates a completely fresh SKILL.md via the writer SubAgent. This produces a clean design free from accumulated cruft, while preserving the original intent.
+
+Reforge is designed for repeated iteration. Each attempt is versioned as `.bak{N}`, enabling comparison across versions.
+
+### Step 1: Backup
+
+Determine the next backup number by scanning existing `.bak*` files:
+- If no `.bak` files exist → **move** `SKILL.md` to `SKILL.md.bak1`
+- If `.bak1` through `.bak{N}` exist → **move** current `SKILL.md` to `SKILL.md.bak{N+1}`
+
+Use `mv` (not `cp`) — this physically removes the original so the writer SubAgent cannot accidentally read it. The current SKILL.md (about to be replaced) is always the one being backed up.
+
+### Step 2: Requirements Extraction
+
+Read the existing SKILL.md thoroughly. Extract a **requirements summary** — what the skill needs to accomplish, not how it currently does it. This is intentionally high-level ("requirements", not "specifications" or "design").
+
+Extract:
+1. **Purpose**: What does this skill enable? What problem does it solve?
+2. **Trigger contexts**: When should this skill activate? What user phrases/situations?
+3. **Core capabilities**: What are the essential things this skill must do? (numbered list)
+4. **Output expectations**: What does the user expect to see when the skill completes?
+5. **Constraints**: Any hard constraints (line limits, format requirements, security rules)?
+
+Do NOT extract:
+- Implementation details (step-by-step procedures, specific variable names)
+- Internal structure (section headings, reference file organization)
+- Accumulated patches or workarounds
+
+The goal is to give the writer SubAgent a clean brief that communicates *what* is needed without biasing *how* to implement it (K14: requirements-only prompts produce higher-quality output than detailed specifications).
+
+### Step 3: External Interface Inventory
+
+Scan the existing SKILL.md and its bundled resources for external dependencies:
+
+1. **File references**: What files does the skill read or write? (e.g., `references/writer.md`, `scripts/run_loop.py`, `.sdd/session/decisions.yaml`)
+2. **MCP dependencies**: Does the skill use any MCP servers or tools?
+3. **Other skill interactions**: Does the skill trigger or reference other skills?
+4. **Tool dependencies**: What tools does the skill require? (listed in `allowed-tools` or mentioned in the body)
+5. **Environment expectations**: Variables, CLI tools, runtime requirements.
+
+Present the inventory to the user for confirmation. Ask: "Are there any interfaces to add or remove?"
+
+### Step 4: Dispatch Writer
+
+Dispatch the writer SubAgent in `create` mode (not `improve`) with:
+
+1. **Read instruction**: "Read `{CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
+2. **Mode**: `create`
+3. **Skill name and path**: same as the existing skill
+4. **Requirements summary**: from Step 2 (purpose, triggers, capabilities, outputs, constraints)
+5. **External interface inventory**: from Step 3 (file refs, MCP, skill interactions, tools, env)
+6. **Project context paths**: `.sdd/session/decisions.yaml`, `.sdd/session/knowledge.yaml` (if they exist)
+7. **Skill forge resources path**: `${CLAUDE_SKILL_DIR}` value
+8. **Explicit instruction**: "Generate a completely fresh SKILL.md. Do NOT read the existing skill — work only from the requirements and interfaces provided."
+
+### Step 5: Lead Diff Analysis
+
+After the writer SubAgent completes:
+
+1. **Read the new SKILL.md** and the latest backup (`.bak{N}`)
+2. **Diff analysis** — compare the two versions and produce a structured report:
+
+   **Improvements** (things the new version does better):
+   - New structure, clearer organization
+   - Better description (more pushy, better keywords)
+   - Removed cruft or accumulated workarounds
+   - Fresh design decisions
+
+   **Concerns** (things that may have been lost or degraded):
+   - Missing capabilities that were in the original
+   - External interface references that were dropped
+   - Edge cases the original handled that the new version doesn't mention
+   - Regressions in specificity or precision
+
+   **Lead improvement proposals** (further changes Lead recommends):
+   - Specific additions or corrections based on Lead's project knowledge
+   - Alignment with project conventions (decisions.yaml, knowledge.yaml insights)
+   - Description optimization suggestions
+
+3. **Present to user**: Show the analysis with the key diff highlights. Let the user decide:
+   - **Accept**: Keep the new version as-is
+   - **Iterate**: Reforge again (go back to Step 1 — the new version becomes the next `.bak{N+1}`)
+   - **Improve**: Switch to `improve` mode to patch specific issues in the new version
+   - **Revert**: Restore from a specific `.bak{N}` version
+
+### Version Management
+
+The `.bak{N}` files form a version history within the skill directory:
+
+```
+skill-name/
+├── SKILL.md          # Current (latest reforge output)
+├── SKILL.md.bak1     # Original before first reforge
+├── SKILL.md.bak2     # After first reforge (input to second)
+├── SKILL.md.bak3     # After second reforge
+└── ...
+```
+
+To compare any two versions, use the `compare` mode (blind A/B comparison) or ask Lead for a targeted diff analysis. For example: "Compare bak1 and bak3" or "What changed between the original and the latest?"
+
+To clean up old backups: the user can manually delete `.bak{N}` files when they're no longer needed, or ask Lead to prune them.
 
 ---
 
@@ -398,13 +505,15 @@ After packaging, direct the user to the resulting `.skill` file path so they can
 
 The references/ directory contains documentation for specialized tasks. Read them when you need to spawn a subagent or perform the relevant task.
 
-- `references/writer.md` — Instructions for the skill drafting/improving SubAgent (dispatched in Phase 2)
+- `references/writer.md` — Instructions for the skill drafting/improving SubAgent (dispatched in Phase 2 and Reforge Step 4)
+- `references/skill-reference.md` — Comprehensive Agent Skills reference guide (agentskills.io spec, platform differences, cross-platform compatibility, best practices)
 - `references/grader.md` — How to evaluate assertions against outputs
 - `references/comparator.md` — How to do blind A/B comparison between two outputs
 - `references/analyzer.md` — How to analyze why one version beat another and benchmark patterns
 
 The references/ directory also has:
 - `references/schemas.md` — JSON structures for evals.json, grading.json, etc.
+- `references/skill-reference-sources.md` — Information sources and update procedure for the skill reference guide
 
 ---
 

@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v2.5.2
+curl -LsSf <url>/install.sh | sh -s -- --version v2.6.0
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -151,7 +151,7 @@ steering → design → review → implement → review
 | `/sdd-start` | Session start (invoke on "再開", "continue", "resume", or at session start) |
 | `/sdd-handover` | Generate session handover document |
 | `/sdd-log` | Record decisions, issues, and knowledge to session files |
-| `/sdd-forge-skill` | Create, improve, and optimize skills (manual invocation only) |
+| `/sdd-forge-skill` | Create, reforge, improve, and optimize skills (manual invocation only) |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
 | `/sdd-review-self` | Self-review via external engine (Codex/Claude/Gemini) |
