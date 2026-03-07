@@ -1,0 +1,14 @@
+# Issue tracker for bugs, features, and enhancements
+# Append + status update. ID sequence continues across sessions (gaps allowed).
+entries: []
+# Entry schema:
+# - id: "I{N}"
+#   type: "BUG|FEATURE|ENHANCEMENT"
+#   status: "open|resolved|deferred"
+#   severity: "H|M|L"
+#   summary: "{one-line}"
+#   detail: "{詳細}"
+#   source: "{出所}"
+#   resolution: "{解決方法}"      # resolved 時に記入
+#   created_at: "{ISO-8601}"
+#   resolved_at: "{ISO-8601}"    # optional

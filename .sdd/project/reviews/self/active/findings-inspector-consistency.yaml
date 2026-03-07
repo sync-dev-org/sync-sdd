@@ -1,0 +1,70 @@
+scope: "inspector-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "schema"
+    location: "framework/claude/CLAUDE.md:259"
+    summary: "CLAUDE.md の session YAML スキーマ例が実テンプレートの `entries:` ラッパーを欠いている"
+    detail: "CLAUDE.md は decisions.yaml / issues.yaml / knowledge.yaml を配列直下の例で説明しているが、実テンプレートは 3 ファイルとも `entries: []` をトップレベルに持つ。sdd-start と sdd-handover も `entries` キー前提で読み書きしているため、共通仕様が二重化している。"
+    impact: "CLAUDE.md を正本として実装・修正すると session ファイルを誤形式で生成し、開始処理・統合処理・履歴参照が壊れる。"
+    recommendation: "CLAUDE.md の 3 つの YAML 例をテンプレート実体に合わせて `entries:` ラップ付きに修正し、session スキーマの単一正本を明示する。"
+  - id: "F2"
+    severity: "H"
+    category: "undefined-reference"
+    location: "framework/claude/skills/sdd-start/SKILL.md:52"
+    summary: "tmux 再利用判定で必須扱いされる `window-id.sh` が配布物にも scripts ディレクトリにも存在しない"
+    detail: "sdd-start Step 6d は current window_id の取得に `bash .sdd/settings/scripts/window-id.sh` を示しているが、配布元 scripts には `multiview-grid.sh`, `grid-check.sh`, `orphan-detect.sh`, `orphan-kill.sh`, `ensure-playwright-cli.sh`, `claude-stream-progress.jq` しかない。install.sh も存在しない helper を補完しない。"
+    impact: "state.yaml を使った Grid 再利用フローで参照先不在の実行パスが発生し、tmux セッション再開時の reuse 判定が実装依存になる。"
+    recommendation: "`window-id.sh` を追加して配布するか、sdd-start から存在する helper / 直接 tmux コマンドだけを使う手順に書き換える。"
+  - id: "F3"
+    severity: "M"
+    category: "dead-end"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:79"
+    summary: "/sdd-handover のアーカイブ書き込み先ディレクトリが初回作成される保証がない"
+    detail: "sdd-handover は `{{SDD_DIR}}/session/decisions/{timestamp}.yaml` と `{{SDD_DIR}}/session/handovers/{timestamp}.md` への保存を要求するが、手順内に `mkdir -p` がなく、install.sh も `.sdd/session` までしか新規作成しない。旧構成からの migrate がある場合だけ handovers が存在し得る。"
+    impact: "fresh install 後の最初の manual handover / consolidation で、アーカイブ段階だけ失敗する到達不能パスになり得る。"
+    recommendation: "sdd-handover の Step 4b/5 の前に `session/decisions` と `session/handovers` を明示的に作成する手順を追加する。"
+  - id: "F4"
+    severity: "M"
+    category: "protocol"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md:43"
+    summary: "self-review テンプレート群の stdout 契約が共通 review 出力規約と一致していない"
+    detail: "CLAUDE.md は Review SubAgents の task result を `WRITTEN:{path}` のみと定義している一方、review-self の fixed inspectors・dynamic briefer・auditor は `EXT_*`, `AGENT:`, `ISSUES:` を追加出力するよう要求している。通常 review テンプレートは `WRITTEN` のみで統一されている。"
+    impact: "Lead 側の完了判定や token budget 前提が review と review-self で分岐し、将来 parser を追加した際に self-review だけ別プロトコルになる。"
+    recommendation: "review-self を `WRITTEN:{path}` のみへ寄せるか、CLAUDE.md に self-review 専用の stdout 例外契約を明記して共通仕様を更新する。"
+  - id: "F5"
+    severity: "L"
+    category: "update-path"
+    location: "install.sh:592"
+    summary: "stale cleanup が `.sdd/settings/scripts` 配下の `.sh` しか掃除せず `.jq` を取り残す"
+    detail: "install.sh の update cleanup は scripts ディレクトリに対して `*.sh` のみを remove_stale 対象にしているが、同じディレクトリには `claude-stream-progress.jq` も配布されている。"
+    impact: "scripts の rename / 廃止が発生した場合、古い `.jq` 補助ファイルだけ update 後も残留し、実配布物との不整合が継続する。"
+    recommendation: "scripts ディレクトリの stale cleanup を `*` もしくは拡張子横断に変更し、`.sh` 以外も同期対象にする。"
+  - id: "F6"
+    severity: "L"
+    category: "terminology"
+    location: "framework/claude/sdd/settings/rules/tmux-integration.md:14"
+    summary: "tmux 連携ルールが `/sdd-start` の旧ステップ番号 7 を参照している"
+    detail: "tmux-integration.md は SID 生成・Grid Creation・Orphan Cleanup を `/sdd-start` Step 7 と説明しているが、実際の sdd-start ではこれらは Step 6 / 6a-6e に定義されている。"
+    impact: "自己レビューや手動トレース時に参照先を誤りやすく、step-based cross-reference の信頼性が下がる。"
+    recommendation: "tmux-integration.md 内の `/sdd-start Step 7` 参照を Step 6 系へ更新し、sdd-start 本文と一致させる。"
+notes: |
+  Cross-reference matrix
+
+  | Topic | Sources checked | Result |
+  |---|---|---|
+  | Session YAML schema | `CLAUDE.md`, `templates/session/{decisions,issues,knowledge}.yaml`, `skills/sdd-start/SKILL.md`, `skills/sdd-handover/SKILL.md` | NG: `CLAUDE.md` だけ `entries:` ラッパー欠落 |
+  | tmux window identity | `skills/sdd-start/SKILL.md`, `settings/rules/tmux-integration.md`, `settings/scripts/*`, `install.sh` | NG: `window-id.sh` 参照のみ未定義 |
+  | Handover archive paths | `skills/sdd-handover/SKILL.md`, `CLAUDE.md`, `install.sh` | NG: archive dir 作成手順なし |
+  | Review stdout contract | `CLAUDE.md`, `templates/review/*.md`, `templates/review-self/*.md` | NG: self-review だけ追加マーカー必須 |
+  | Script update cleanup | `install.sh`, `settings/scripts/` | NG: cleanup が `.sh` 限定で `.jq` を除外 |
+  | tmux step numbering | `settings/rules/tmux-integration.md`, `skills/sdd-start/SKILL.md` | NG: Step 7 vs Step 6 |
+  | Phase vocabulary | `CLAUDE.md`, `skills/sdd-roadmap/refs/{design,run,revise,impl,crud}.md`, `skills/sdd-review/SKILL.md`, `skills/sdd-status/SKILL.md`, `templates/specs/init.yaml` | OK: `initialized` / `design-generated` / `implementation-complete` / `blocked` は概ね整合 |
+  | Review verdict vocabulary | `CLAUDE.md`, `skills/sdd-review/SKILL.md`, `skills/sdd-reboot/refs/reboot.md`, `settings/rules/verdict-format.md`, `templates/review/auditor.md`, `templates/review-self/auditor.md` | OK: `GO` / `CONDITIONAL` / `NO-GO` / `SPEC-UPDATE-NEEDED` は整合 |
+  | Agent/skill naming | `CLAUDE.md`, `settings.json`, `agents/sdd-*.md`, `skills/sdd-*/SKILL.md` | OK: 現行 agent 5 件・skill 10 件は整合。`general-purpose` は意図的例外 |
+  | Roadmap ref graph | `skills/sdd-roadmap/SKILL.md`, `refs/{design,run,revise,impl,crud}.md`, `skills/sdd-reboot/refs/reboot.md` | OK: 重大な循環依存は未検出。reboot は run.md を参照するが design-only に制限している |
+
+  Additional context
+  - 指定された対象ファイルは全件存在確認済み。
+  - command count は 10、agent count は 5 で現行ツリーと一致。
+  - `general-purpose` に対応する agent file 不在はテンプレート注記どおり intentional のため未指摘。

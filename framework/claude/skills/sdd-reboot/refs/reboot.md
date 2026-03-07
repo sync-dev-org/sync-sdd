@@ -10,7 +10,7 @@ Detailed execution reference. Lead handles all phases directly.
 2. **Main branch**: `git branch --show-current` — if not `main`, BLOCK: "Switch to main branch first: `git checkout main`"
 3. **Existing reboot branch**: `git branch --list 'reboot/*'` — if found:
    - Present options: **Resume** (checkout existing branch, skip to appropriate phase), **Delete & restart** (delete branch, proceed), **Abort**
-   - Record `USER_DECISION` in decisions.yaml
+   - Record in decisions.yaml
 4. **Codebase check**: Glob for source files (exclude `.sdd/`, `.claude/`, `node_modules/`, `.git/`). If no source files found, BLOCK: "No source code found. Nothing to reboot."
 5. **Input state detection**:
 
@@ -30,7 +30,7 @@ Detailed execution reference. Lead handles all phases directly.
    - If `$ARGUMENTS` contains a name (not `-y`): `reboot/{name}`
    - Otherwise: `reboot/{YYYY-MM-DD}` (today's date)
 2. Create and checkout: `git checkout -b {branch_name}`
-3. Append `DIRECTION_CHANGE` to decisions.yaml: "Reboot started: zero-based redesign on branch reboot/{branch_name} (input state: {state})"
+3. Append to decisions.yaml: "Reboot started: zero-based redesign on branch reboot/{branch_name} (input state: {state})"
 
 ## Phase 3: Setup
 
@@ -69,8 +69,8 @@ Skip if `-y` flag is present. (Note: `-y` skips user review only. Lead still rea
 4. Ask user via `AskUserQuestion`:
    - **Approve**: Proceed to Phase 6
    - **Modify**: Collect user feedback. Re-dispatch Analyst with additional instructions appended to original prompt + user feedback. Max 2 modification rounds. After 2 rounds, present final version — user must Approve or Abort.
-   - **Abort**: `git checkout main && git branch -D reboot/{branch_name}`. Record `USER_DECISION` in decisions.yaml. Stop.
-5. Record `USER_DECISION` in decisions.yaml (include selected architecture alternative)
+   - **Abort**: `git checkout main && git branch -D reboot/{branch_name}`. Record in decisions.yaml. Stop.
+5. Record in decisions.yaml (include selected architecture alternative)
 
 ## Phase 6: Roadmap Regeneration
 
@@ -276,8 +276,8 @@ Lead generates the final report and presents it for user approval. **This is the
 4. **Ask user via `AskUserQuestion`**:
    - **Accept**: Proceed to Phase 10 (commit on branch)
    - **Iterate**: Skill terminates. User continues editing on the branch. Re-run `/sdd-reboot` to resume.
-   - **Reject**: `git checkout main && git branch -D reboot/{branch_name}`. Record `USER_DECISION` in decisions.yaml. Skill terminates.
-5. Record `USER_DECISION` in decisions.yaml
+   - **Reject**: `git checkout main && git branch -D reboot/{branch_name}`. Record in decisions.yaml. Skill terminates.
+5. Record in decisions.yaml
 
 ## Phase 10: Post-Completion
 
@@ -286,16 +286,16 @@ Lead generates the final report and presents it for user approval. **This is the
 1. **Deletion confirmation**: Show the Deletion Manifest summary (file count and list) and ask user via `AskUserQuestion`:
    - **Delete**: Delete all files listed under DELETE, then proceed to step 2
    - **Skip deletion**: Keep existing source files as-is, proceed to step 2 without deleting
-   - **Cancel**: Abort post-completion. Skill terminates (branch remains with designs, no commit). Record `USER_DECISION` in decisions.yaml.
+   - **Cancel**: Abort post-completion. Skill terminates (branch remains with designs, no commit). Record in decisions.yaml.
 
    If Delete chosen:
    - Delete all files listed under DELETE in the analysis report. Log each deletion.
    - If a file no longer exists (already deleted or moved), skip silently.
    - Do NOT delete files listed under KEEP.
-   Record `USER_DECISION` in decisions.yaml with chosen option.
+   Record in decisions.yaml with chosen option.
 
 2. Stage and commit all changes on reboot branch: `reboot: {1-line summary of redesign}`
    - The commit includes: new specs/designs, steering changes, analysis artifacts, and old source file deletions (if Delete was chosen)
 3. Auto-draft `{{SDD_DIR}}/session/handover.md`
-4. Append `DIRECTION_CHANGE` to decisions.yaml: "Reboot complete: {spec_count} specs across {wave_count} waves on branch reboot/{branch_name}. Old source files: {deleted|kept}."
+4. Append to decisions.yaml: "Reboot complete: {spec_count} specs across {wave_count} waves on branch reboot/{branch_name}. Old source files: {deleted|kept}."
 5. **DO NOT merge to main. DO NOT checkout main.** Report to user: branch is ready for review. User decides when to merge.

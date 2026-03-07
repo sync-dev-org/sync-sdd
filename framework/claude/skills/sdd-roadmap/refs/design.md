@@ -15,7 +15,7 @@ Triggered by: `$ARGUMENTS = "design {feature-or-description}"`
 ## Step 2: Phase Gate
 
 - BLOCK if `spec.yaml.phase` is `blocked`: "{feature} is blocked by {blocked_info.blocked_by}"
-- If `spec.yaml.phase` is `implementation-complete`: warn user that re-designing will invalidate existing implementation. Use AskUserQuestion to confirm: "Re-designing {feature} will invalidate the current implementation. Use `/sdd-roadmap revise {feature}` for targeted changes, or proceed with full re-design?" If rejected, abort and record `USER_DECISION` in decisions.yaml.
+- If `spec.yaml.phase` is `implementation-complete`: warn user that re-designing will invalidate existing implementation. Use AskUserQuestion to confirm: "Re-designing {feature} will invalidate the current implementation. Use `/sdd-roadmap revise {feature}` for targeted changes, or proceed with full re-design?" If rejected, abort and record in decisions.yaml.
 - If `spec.yaml.phase` is not one of `initialized`, `design-generated`, `implementation-complete`, `blocked`: BLOCK with "Unknown phase '{phase}' in {feature}/spec.yaml. Manual intervention required."
 - Otherwise: no phase restriction
 

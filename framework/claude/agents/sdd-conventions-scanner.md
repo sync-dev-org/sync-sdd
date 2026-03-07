@@ -32,7 +32,7 @@ Scan the existing codebase and generate a new conventions brief.
    - **Schema**: Grep for model/entity definitions → extract FK naming, field style
    - **Imports**: Read a few representative source files → extract ordering conventions
    - **Testing**: Glob for test files → extract placement, assert style, fixture patterns
-4. If knowledge.yaml exists: read and extract `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` entries
+4. If knowledge.yaml exists: read and extract knowledge entries
 5. Merge: steering context + observed patterns + buffer knowledge
 6. Write conventions brief to the specified output path
 7. Add header note: "Steering overrides this brief on conflict."

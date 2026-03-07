@@ -359,7 +359,7 @@ Auditor Agent に統合を委譲する。Lead は dispatch と成否確認のみ
 
 Auditor の `verdict-auditor.yaml` を入力として以下を実行:
 
-1. **FP 判定**: `decisions.yaml` の全エントリと突合。意図的決定 (USER_DECISION, STEERING_EXCEPTION) で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
+1. **FP 判定**: `decisions.yaml` の全エントリと突合。意図的決定で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
 2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.yaml の該当エントリを引用して確認
 3. **最終分類 (A/B)**: Auditor の classification を検証し、必要に応じて修正
 4. **verdict.yaml 作成**: Lead のオーバーライドを反映した最終 verdict を `$SCOPE_DIR/active/verdict.yaml` に書き出す (verdict-format.md の Lead Final Verdict スキーマに準拠)
@@ -564,12 +564,12 @@ Failure log の内容から障害タイプを **Lead が判定** する:
 ```
 ENGINE_FAILURE:
   codex  (L1/L2/L3) → claude L4     (エンジン変更)
-  claude (L4/L5/L6) → subagents L0  (エンジン変更)
+  claude (L5/L6/L7) → subagents L0  (エンジン変更)
   subagents (L0)    → 最終失敗
 
 LEVEL_FAILURE:
   L{N} → L{N+1}    (同一チェーン内で次レベル)
-  L6   → L0        (チェーン末端、subagents fallback)
+  L7   → L0        (チェーン末端、subagents fallback)
   L0   → 最終失敗
 ```
 

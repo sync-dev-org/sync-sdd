@@ -226,12 +226,12 @@ Process `STEERING:` entries from verdict.
 
 ## Level Chain Escalation
 
-Review engines are configured via `engines.yaml` level chain (L1-L6, L0=subagents fallback). Each review stage has a `start_level` that determines its default engine/model/effort.
+Review engines are configured via `engines.yaml` level chain (L1-L7, L0=subagents fallback). Each review stage has a `start_level` that determines its default engine/model/effort.
 
 ### Infrastructure Escalation (automatic)
 
 When `install_check` fails for a stage's engine:
-1. Advance to next level in chain (L1→L2→...→L6→L0)
+1. Advance to next level in chain (L1→L2→...→L7→L0)
 2. Re-run `install_check` for the new level's engine
 3. Repeat until a level passes or L0 (subagents) is reached
 4. Report: `{stage}: {engine} not available, escalating to L{N}`
@@ -286,11 +286,11 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:
-     - **Proceed**: Accept remaining issues, proceed to wave completion. Record `ESCALATION_RESOLVED` in decisions.yaml
-     - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
+     - **Proceed**: Accept remaining issues, proceed to wave completion. Record in decisions.yaml
+     - **Abort wave**: Stop wave execution, leave specs as-is. Record in decisions.yaml with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
-     - After `ESCALATION_RESOLVED` (any option): reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)
-   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). After `ESCALATION_RESOLVED`: reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
+     - After escalation resolved (any option): reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)
+   - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). After escalation resolved: reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **c. Post-gate**:
 - **Reset counters**: For each spec that reached `implementation-complete` in this wave: `retry_count=0`, `spec_update_count=0`. `blocked` specs retain their counters (resolved via Blocking Protocol user decision). Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start.

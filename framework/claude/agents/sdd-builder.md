@@ -105,31 +105,31 @@ After all assigned tasks are executed:
 - **No sys.modules manipulation**: Do NOT use `sys.modules`, `sys.modules.setdefault`, `sys.modules[...] = ...`, or `unittest.mock.patch.dict(sys.modules, ...)`. This includes test code. If an import fails because a package is not installed, report BUILDER_BLOCKED with cause "missing dependency: {name}". Lead scans all output files for `sys.modules` usage after completion — violations trigger automatic re-dispatch.
 - **No workspace-wide git operations**: Do NOT use `git stash`, `git checkout .`, `git restore .`, `git reset`, or `git clean`. These affect files outside your file scope (spec.yaml, design.md, etc. that Lead manages). If you need to undo your own changes, use file-level `git checkout -- <your-file>` only within your assigned scope.
 
-## Knowledge Reporting
+## Knowledge and Issue Reporting
 
-During implementation, if you encounter reusable learnings, include them in the Knowledge section of your report using YAML format (same schema as `knowledge.yaml`):
+During implementation, if you encounter reusable learnings or issues, include them in the Knowledge section of your report using YAML format with tags:
 
-- `PATTERN` — Recommended approach that worked well (replicate success)
-- `INCIDENT` — Problem encountered and how it was resolved (learn from failure)
-- `REFERENCE` — Useful technical reference discovered (quick lookup)
+- `[KNOWLEDGE]` — Recommended approach, lesson learned, useful reference (→ knowledge.yaml)
+- `[ISSUE]` — Bug found, problem encountered, enhancement needed (→ issues.yaml)
 
 Example:
 ```yaml
-- id: "K1"
-  type: "PATTERN"
+- tag: "[KNOWLEDGE]"
+  id: "K1"
   severity: "M"
   summary: "SQLModel self-referential relationship requires lazy=\"selectin\""
-  detail: "Without lazy loading config, recursive queries cause N+1 problems"
+  detail: "Without lazy loading config, recursive queries cause N+1 problems. Use lazy=\"selectin\" for all self-referential relationships."
   source: "{feature} Builder, group {G}"
-- id: "K2"
-  type: "INCIDENT"
+- tag: "[ISSUE]"
+  id: "I1"
+  type: "BUG"
   severity: "H"
-  summary: "Circular import in __init__.py resolved by reordering imports"
+  summary: "Circular import in __init__.py"
   detail: "Module A imported B which imported A. Fixed by moving shared types to a separate module"
   source: "{feature} Builder, group {G}"
 ```
 
-ID assignment: use `K1`, `K2`, etc. within this report. Lead re-assigns global IDs when appending to `knowledge.yaml`.
+ID assignment: use `K1`, `K2` / `I1`, `I2`, etc. within this report. Lead re-assigns global IDs when appending to session files.
 
 ## Completion Report
 

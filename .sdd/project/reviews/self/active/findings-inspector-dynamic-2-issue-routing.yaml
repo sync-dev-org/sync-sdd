@@ -1,0 +1,30 @@
+scope: "inspector-dynamic-2-issue-routing"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "migration-gap"
+    location: "install.sh:417"
+    summary: "v2.6.0 の handover→session 移行が旧 issues.yaml を移送していない"
+    detail: "v2.6.0 移行手順は `.sdd/handover/` から `handover.md`、`decisions.yaml`、`knowledge.yaml`、`handovers/` を `session/` へ移しますが、`.sdd/handover/issues.yaml` の移送がありません。移行後の読取先は `session/issues.yaml` に統一されているため、既存 issue 履歴が旧ディレクトリに取り残されます。"
+    impact: "アップグレード後に未解決 issue が `sdd-start` などから見えなくなり、`[ISSUE]` 導線のセッション継続性が失われます。既存 backlog の消失は運用上の回帰です。"
+    recommendation: "v2.6.0 移行に `.sdd/handover/issues.yaml -> .sdd/session/issues.yaml` を追加し、既存ファイルがある場合のマージまたは no-clobber 方針も明記してください。"
+  - id: "F2"
+    severity: "M"
+    category: "missing-initialization"
+    location: "framework/claude/skills/sdd-roadmap/refs/impl.md:91"
+    summary: "`Tags > 0` の issue 取り込みが `issues.yaml` 未作成時の初回 append と失敗時フォールバックを規定していない"
+    detail: "`impl` は Builder 完了時に `[ISSUE]` を `issues.yaml` へ追記するとだけ指示しています。一方で `sdd-start` は `issues.yaml` を「存在すれば読む」だけで、明示的なテンプレート生成は `sdd-handover` のエラーハンドリングまで現れません。`issues.yaml` 不在や追記失敗時に、作成して再試行するのか、issue 部分だけ警告に落として処理継続するのかが未定義です。"
+    impact: "新規プロジェクトや初回セッションで最初の `[ISSUE]` が出た場合、issue だけ欠落するか、Builder 完了処理全体が不安定になります。`knowledge.yaml` と `issues.yaml` の分離導入で最も壊れやすい分岐です。"
+    recommendation: "Builder タグ取り込み前に `session/issues.yaml` をテンプレートから必ず初期化し、追記失敗時は `knowledge.yaml` 取り込みや task 完了更新を維持したまま警告・再試行にフォールバックする手順を追加してください。"
+  - id: "F3"
+    severity: "L"
+    category: "context-gap"
+    location: "framework/claude/agents/sdd-conventions-scanner.md:21"
+    summary: "ConventionsScanner の入力が依然として knowledge 専用で、`[ISSUE]` 導線が規約学習に反映されない"
+    detail: "ConventionsScanner は `session/knowledge.yaml` だけを buffer として受け取り、`run.md` からも同じ単一路線で dispatch されています。`[ISSUE]` で蓄積された再発防止知見や既知問題は conventions brief に入らず、`[KNOWLEDGE]/[ISSUE]` 二系統化のうち issue 側が波コンテキスト生成で参照されません。"
+    impact: "不具合由来のアンチパターンや注意点が並列 Builder/Architect に共有されず、同じ問題の再発防止が手動 steering 化まで遅れます。"
+    recommendation: "`issues.yaml` を意図的に除外するなら明記し、除外しないなら open/resolved issue の要約を ConventionsScanner が読み込めるようにしてください。"
+notes: |
+  調査対象では `[PATTERN]` / `[INCIDENT]` / `[REFERENCE]` の旧タグ残留は確認できませんでした。
+  `framework/claude/sdd/settings/templates/session/issues.yaml` のスキーマ自体は `[ISSUE]` ルーティング先として整合しています。
+  `sdd-start` は `session/issues.yaml` の読取先を正しく向いていますが、存在前提を満たす初期化/移行が一部手順で不足しています。

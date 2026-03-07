@@ -64,31 +64,30 @@ Do NOT include a `**Mode**:` marker — absence of marker indicates manual polis
 
 ## Step 4: Timestamp
 
-Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Steps 3, 4b, and 5: handover.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting), SESSION_END entry, and archive filename. Do NOT call `date` again.
+Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Steps 3, 4b, and 5: handover.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting). Do NOT call `date` again.
 
 ## Step 4b: Flush and Consolidate
 
 ### Flush
 
-Write any pending decisions to `decisions.yaml` and knowledge to `knowledge.yaml` that were noted during the session but not yet persisted. This ensures all session data is captured before consolidation.
+Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and knowledge to `knowledge.yaml` that were noted during the session but not yet persisted. This ensures all session data is captured before consolidation.
 
 ### Consolidate decisions.yaml
 
 1. Read all entries from `decisions.yaml`
-2. **Superseded exclusion**: Remove entries that have a `superseded_by` field (they are replaced by the referenced entry)
-3. **SESSION pair condensation**: Keep only the latest `SESSION_START`/`SESSION_END` pair. Remove all older SESSION_START and SESSION_END entries
-4. **Archive pruned entries**: If any entries were removed, write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
-5. **Rewrite decisions.yaml**: Write the header comment + remaining entries (this is the one exception to append-only — consolidation is a controlled rewrite)
+2. **Superseded exclusion**: Remove entries with `status: superseded`
+3. **Archive pruned entries**: If any entries were removed, write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
+4. **Rewrite decisions.yaml**: Write the header comment + remaining entries (this is the one exception to append-only — consolidation is a controlled rewrite)
 
 ### Consolidate knowledge.yaml
 
 1. Read all entries from `knowledge.yaml`
-2. **Duplicate detection**: Group entries by `type` × `summary` similarity (same type AND semantically similar summary). If any group has ≥3 entries:
+2. **Duplicate detection**: Group entries by `summary` similarity. If any group has ≥3 entries:
    - Report the duplicate groups to the user
    - For each group, propose a steering entry: `STEERING: PROPOSE — consolidate {count} repeated {type} findings into steering rule: "{summary}"`
    - Use `AskUserQuestion` to ask: "以下の knowledge パターンを steering に昇格しますか？" with options per group: "Approve (steering に追加)" / "Skip (そのまま維持)"
-   - For approved groups: append the rule to the appropriate steering file, mark the knowledge entries with `superseded_by: "steering:{file}#{section}"`
-3. **Superseded exclusion**: Remove entries that have a `superseded_by` field
+   - For approved groups: append the rule to the appropriate steering file, set the knowledge entries to `status: superseded`
+3. **Superseded exclusion**: Remove entries with `status: superseded`
 4. **Rewrite knowledge.yaml**: Write the header comment + remaining entries
 
 ## Step 5: Write Files
@@ -97,15 +96,6 @@ Write any pending decisions to `decisions.yaml` and knowledge to `knowledge.yaml
    - Copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
    - If same-timestamp archive already exists, append `-2`, `-3`, etc.
 2. Write new handover.md to `{{SDD_DIR}}/session/handover.md`
-3. Append `SESSION_END` entry to `{{SDD_DIR}}/session/decisions.yaml` `entries` list (append-only, NEVER overwrite):
-   ```yaml
-   - id: "D{seq}"
-     type: "SESSION_END"
-     summary: "{brief session summary}"
-     context: "/sdd-handover executed"
-     detail: "Session ended, handover archived"
-     created_at: "{ISO-8601}"
-   ```
 
 ## Step 6: Post-Completion
 
@@ -132,4 +122,5 @@ Report to user:
 - **No active specs**: Still generate handover with available context
 - **No git repo**: Skip git state section
 - **No existing handover.md**: Generate from scratch (no archive step)
-- **No decisions.yaml**: Create with SESSION_END as first entry
+- **No decisions.yaml**: Create from template
+- **No issues.yaml**: Create from template

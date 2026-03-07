@@ -3,13 +3,9 @@
 entries: []
 # Entry schema:
 # - id: "D{N}"
-#   type: "USER_DECISION|STEERING_UPDATE|DIRECTION_CHANGE|ESCALATION_RESOLVED|REVISION_INITIATED|STEERING_EXCEPTION|SESSION_START|SESSION_END"
-#   summary: "{one-line summary}"
-#   context: "{context description}"
-#   detail: "{detailed description}"
-#   reason: "{why}"        # optional for SESSION_START/SESSION_END
-#   impact: "{what this affects}"  # optional for SESSION_START/SESSION_END
+#   status: "active|superseded"
+#   severity: "H|M|L"
+#   summary: "{one-line}"
+#   detail: "{背景・詳細・理由・影響を含む}"
 #   source: "user|lead|auditor"
-#   steering_ref: "{ref}"  # STEERING_EXCEPTION only
-#   superseded_by: "D{M}"  # optional
 #   created_at: "{ISO-8601}"

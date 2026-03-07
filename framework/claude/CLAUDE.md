@@ -23,7 +23,7 @@ Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScan
 | T2 | **Architect** | Design generation, research, discovery. Produces design.md + research.md. |
 | T2 | **Auditor** | Review synthesis. Merges Inspector findings into verdict (GO/CONDITIONAL/NO-GO; Impl Auditor also: SPEC-UPDATE-NEEDED). Product Intent checks. |
 | T3 | **TaskGenerator** | Task decomposition + execution planning. Generates tasks.yaml with detail bullets, parallelism analysis, file ownership, and Builder groupings. |
-| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [PATTERN]/[INCIDENT]/[REFERENCE] tags. |
+| T3 | **Builder** | TDD implementation. RED→GREEN→REFACTOR→VERIFY→SELF-CHECK→MARK COMPLETE cycle. Reports SelfCheck quality status and [KNOWLEDGE]/[ISSUE] tags. |
 | T3 | **Inspector** | Individual review perspectives. sdd-review: 5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code, +1-4 dynamic (design/impl only). sdd-review-self: 3 fixed (flow/consistency/compliance) +1-4 dynamic. Outputs YAML findings. |
 | T3 | **ConventionsScanner** | Codebase pattern scanning. Generates conventions brief (naming, error handling, schema, imports, testing). Pilot convention supplement. |
 
@@ -185,14 +185,13 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 
 ### decisions.yaml Recording
 
-Lead records the following decision types as a standard behavior:
-- `USER_DECISION`: when user makes an explicit choice
-- `STEERING_UPDATE`: steering modified
-- `DIRECTION_CHANGE`: spec split, wave restructure, scope change
-- `ESCALATION_RESOLVED`: outcome of an escalation to user
-- `REVISION_INITIATED`: user-initiated past-wave spec revision (append `(cross-cutting)` for multi-spec revisions)
-- `STEERING_EXCEPTION`: intentional deviation from steering (prevents review false-positives)
-- `SESSION_START`/`SESSION_END`: session lifecycle
+Lead records decisions to `decisions.yaml` whenever:
+- User makes an explicit choice
+- Steering is modified
+- Scope/wave/spec structure changes
+- Escalation is resolved
+- Revision is initiated (append `(cross-cutting)` for multi-spec revisions)
+- Intentional deviation from steering (prevents review false-positives)
 
 ## Product Intent
 
@@ -220,8 +219,9 @@ Session context is persisted to `{{SDD_DIR}}/session/` for cross-session continu
 | File | Behavior | Purpose |
 |------|----------|---------|
 | `handover.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
-| `decisions.yaml` | Append-only (consolidation rewrite at /sdd-handover only) | Decisions with rationale, steering updates, steering exceptions |
-| `knowledge.yaml` | Append (auto) | Knowledge tags from Builder reports, verdicts, Lead |
+| `decisions.yaml` | Append-only (consolidation rewrite at /sdd-handover only) | Decisions with rationale |
+| `issues.yaml` | Append + status update | Bug/feature/enhancement tracking |
+| `knowledge.yaml` | Append (auto) | Knowledge from Builder reports, verdicts, Lead |
 | `handovers/` | Archive | Dated copies of handover.md created by `/sdd-handover` |
 | `decisions/` | Archive | Dated archives of pruned decisions.yaml entries from consolidation |
 | `state.yaml` | Overwrite (auto) | tmux session state (SID, grid, slots) |
@@ -233,7 +233,7 @@ Pipeline state is NOT stored in session — `spec.yaml` is the single source of 
 handover.md is written in two modes:
 
 **Auto-draft** (after each command completion):
-1. **Flush**: Write any pending decisions to `decisions.yaml` and knowledge to `knowledge.yaml` that were noted during the command but not yet persisted
+1. **Flush**: Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and knowledge to `knowledge.yaml` that were noted during the command but not yet persisted
 2. Read current handover.md (if exists)
 3. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
 4. Update: Immediate Next Action based on current state
@@ -252,56 +252,57 @@ handover.md is written in two modes:
 
 Template: `{{SDD_DIR}}/settings/templates/session/handover.md`
 
-### decisions.yaml Format
+### Session Data Schemas
 
-Append-only YAML log. Each entry in `entries` list:
+Three session data files share a common base: `id`, `status`, `severity`, `summary`, `detail`, `source`, `created_at`.
 
+**decisions.yaml** — Append-only (consolidation rewrite at /sdd-handover only):
 ```yaml
 - id: "D{seq}"
-  type: "{DECISION_TYPE}"
-  summary: "{one-line summary}"
-  context: "{context}"
-  detail: "{detailed description}"
-  reason: "{why}"
-  impact: "{what this affects}"
+  status: "active|superseded"
+  severity: "H|M|L"
+  summary: "{one-line}"
+  detail: "{背景・詳細・理由・影響を含む}"
   source: "user|lead|auditor"
-  steering_ref: "{ref}"  # STEERING_EXCEPTION only
   created_at: "{ISO-8601}"
 ```
 
-Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `REVISION_INITIATED` (user-initiated past-wave spec revision; append `(cross-cutting)` for multi-spec revisions), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
+**issues.yaml** — Append + status update:
+```yaml
+- id: "I{seq}"
+  type: "BUG|FEATURE|ENHANCEMENT"
+  status: "open|resolved|deferred"
+  severity: "H|M|L"
+  summary: "{one-line}"
+  detail: "{詳細}"
+  source: "{出所}"
+  resolution: "{解決方法}"      # resolved 時に記入
+  created_at: "{ISO-8601}"
+  resolved_at: "{ISO-8601}"    # optional
+```
 
-Template: `{{SDD_DIR}}/settings/templates/session/decisions.yaml`
-
-### knowledge.yaml Format
-
-Append-only YAML log. Each entry in `entries` list:
-
+**knowledge.yaml** — Append-only:
 ```yaml
 - id: "K{seq}"
-  type: "PATTERN|INCIDENT|REFERENCE"
+  status: "active|superseded"
   severity: "H|M|L"
-  summary: "{one-line summary}"
-  detail: "{detailed description}"
-  impact: "{what this affects}"
-  recommendation: "{suggested action}"
-  source: "{spec} {role}, task {N}"
+  summary: "{one-line}"
+  detail: "{詳細・影響・推奨を含む}"
+  source: "{出所}"
   created_at: "{ISO-8601}"
 ```
 
-Template: `{{SDD_DIR}}/settings/templates/session/knowledge.yaml`
+Templates: `{{SDD_DIR}}/settings/templates/session/{decisions,issues,knowledge}.yaml`
 
 ### Write Triggers
 
 | Trigger | File | Notes |
 |---------|------|-------|
 | Command completion (design/impl/review/roadmap/steering) | handover.md auto-draft | Flush pending decisions/knowledge first, then carry forward + update Next Action/Accomplished |
-| `/sdd-handover` | handover.md manual polish, decisions.yaml SESSION_END, handovers/ archive | Flush + consolidate before write |
-| User decision | decisions.yaml | Auto-append with Reason |
-| STEERING change | decisions.yaml | Auto-append with Reason |
-| Direction change | decisions.yaml | Auto-append with Reason |
-| Session start | decisions.yaml | SESSION_START auto-append |
-| Builder completion (tags > 0) | knowledge.yaml | Auto-append from builder-report |
+| `/sdd-handover` | handover.md manual polish, handovers/ archive | Flush + consolidate before write |
+| User decision / steering change / direction change | decisions.yaml | Auto-append |
+| Bug report / feature request / enhancement | issues.yaml | Auto-append |
+| Builder completion (tags > 0) | knowledge.yaml, issues.yaml | Auto-append from builder-report |
 | Verdict confirmed | knowledge.yaml | Auto-append significant findings |
 | Lead operational insight | knowledge.yaml | Auto-append |
 
@@ -311,10 +312,10 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 
 ## Knowledge Auto-Accumulation
 
-- Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/session/knowledge.yaml`
-- knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 same type×similar summary triggers steering PROPOSE at consolidation).
-- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4b): flush pending decisions/knowledge, then decisions.yaml superseded exclusion + SESSION pair condensation, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
+- Builder reports learnings with tags: `[KNOWLEDGE]` (→ knowledge.yaml), `[ISSUE]` (→ issues.yaml)
+- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to the appropriate session file
+- knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 similar summary triggers steering PROPOSE at consolidation).
+- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4b): flush pending decisions/knowledge/issues, then decisions.yaml `status: superseded` exclusion, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
 
 ## Pipeline Stop Protocol
 
@@ -331,10 +332,10 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
 - **Natural Language Memory Triggers**: When user's message contains the following keywords, Lead writes the corresponding entry immediately (no Skill invocation needed):
-  - 「覚えて」「remember」→ knowledge.yaml に `PATTERN` エントリを追記 (severity: user が示唆する重要度、なければ `M`)
-  - 「ISSUE」「問題」「インシデント」→ knowledge.yaml に `INCIDENT` エントリを追記 (severity: `H`)
-  - 「判断」「decision」「決定」→ decisions.yaml に `USER_DECISION` エントリを追記
-  - Lead はユーザーの発言から summary/detail/impact/recommendation (knowledge) または summary/context/detail/reason/impact (decision) を抽出してフォーマットする。不足情報があれば簡潔に確認する
+  - 「覚えて」「remember」→ knowledge.yaml にエントリを追記 (severity: user が示唆する重要度、なければ `M`)
+  - 「ISSUE」「問題」「インシデント」→ issues.yaml にエントリを追記 (severity: `H`, status: `open`)
+  - 「判断」「decision」「決定」→ decisions.yaml にエントリを追記
+  - Lead はユーザーの発言から summary/detail を抽出してフォーマットする。不足情報があれば簡潔に確認する
 
 ## Execution Conventions
 
@@ -389,11 +390,12 @@ Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stag
 | Level | Engine | Model | Effort |
 |-------|--------|-------|--------|
 | L1 | codex | gpt-5.3-codex-spark | high |
-| L2 | codex | gpt-5.4 | medium |
-| L3 | codex | gpt-5.4 | high |
-| L4 | claude | claude-sonnet-4-6 | high |
-| L5 | claude | claude-opus-4-6 | medium |
-| L6 | claude | claude-opus-4-6 | high |
+| L2 | claude | claude-sonnet-4-6 | low |
+| L3 | codex | gpt-5.4 | medium |
+| L4 | codex | gpt-5.4 | high |
+| L5 | claude | claude-sonnet-4-6 | high |
+| L6 | claude | claude-opus-4-6 | medium |
+| L7 | claude | claude-opus-4-6 | high |
 | L0 | subagents | claude-opus-4-6 | medium |
 
 - **Infrastructure escalation** (automatic): `install_check` failure → next level → ... → L0

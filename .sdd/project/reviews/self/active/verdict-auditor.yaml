@@ -1,0 +1,298 @@
+verdict: "CONDITIONAL"
+scope: "self"
+review_type: "self"
+counts:
+  C: 0
+  H: 9
+  M: 6
+  L: 6
+  FP: 3
+files:
+  - "framework/claude/skills/sdd-roadmap/refs/run.md"
+  - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+  - "framework/claude/skills/sdd-roadmap/refs/impl.md"
+  - "framework/claude/CLAUDE.md"
+  - "framework/claude/skills/sdd-start/SKILL.md"
+  - "framework/claude/skills/sdd-review/SKILL.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md"
+  - "framework/claude/skills/sdd-handover/SKILL.md"
+  - "framework/claude/settings.json"
+  - "install.sh"
+  - "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md"
+  - "framework/claude/agents/sdd-conventions-scanner.md"
+  - "framework/claude/sdd/settings/rules/tmux-integration.md"
+issues:
+  - id: "A1"
+    source: "inspector-flow"
+    severity: "H"
+    category: "wave-quality-gate"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:276"
+    summary: "dead-code レビュー NO-GO 後に dead-code 専用観点が再検証されない"
+    detail: "dead-code で NO-GO が出た場合に Builder が inline fix して cross-check (impl レビュー) へ進む設計だが、impl レビューの Inspector 集合に dead-code 専用 Inspector は含まれない。fix 後の dead-code 再評価ステップが欠落している。"
+    impact: "未解消の不要コード・孤立テスト・死んだ設定が dead-code QG をすり抜けて implementation-complete になり得る。Wave レベル品質ゲートが dead-code 観点で閉じない。"
+    recommendation: "dead-code の NO-GO 後は dead-code レビュー自体を再実行するか、dead-code 専用 Inspector のみを再評価する補助ステップを追加し、GO/CONDITIONAL になるまで cross-check に進めないようにする。"
+    classification: "B"
+
+  - id: "A2"
+    source: "inspector-flow"
+    severity: "H"
+    category: "verdict-persistence"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:191"
+    summary: "pipeline auto-fix 後の verdict 更新責務が run.md に定義されていない"
+    detail: "sdd-review は pipeline mode で verdict.yaml を返して auto-fix を orchestration 側へ委譲するが、run.md の Design/Impl Review 後処理は counter 更新と Architect/Builder 再 dispatch のみ。verdict-format.md が要求する resolution/resolution_note/disposition の更新・verdicts.yaml への反映ステップが run.md にない。revise.md の 'Handle verdict per ...' でも同様に未具体化。"
+    impact: "NO-GO-FIXED や SPEC-UPDATE-CASCADED の batch 状態、tracked/resolved の繰り越し、過去 verdict の監査証跡が正しく残らず、resume や後続レビューで誤判定を招く。"
+    recommendation: "run/revise の auto-fix/cascade 完了時に、対象 batch の verdict.yaml を更新してから verdicts.yaml へ反映する明示ステップを追加する。user_decision/resolution/disposition/resolved の更新責務を orchestration 側へ文書化する。"
+    classification: "B"
+
+  - id: "A3"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "schema"
+    location: "framework/claude/CLAUDE.md:259"
+    summary: "CLAUDE.md の session YAML スキーマ例が entries: ラッパーを欠いている"
+    detail: "CLAUDE.md は decisions.yaml / issues.yaml / knowledge.yaml を配列直下の例で説明しているが、実テンプレートは 3 ファイルとも entries: [] をトップレベルに持つ。sdd-start と sdd-handover も entries キー前提で読み書きする。"
+    impact: "CLAUDE.md を正本として実装・修正すると session ファイルを誤形式で生成し、開始処理・統合処理・履歴参照が壊れる。"
+    recommendation: "CLAUDE.md の 3 つの YAML 例をテンプレート実体に合わせて entries: ラップ付きに修正し、session スキーマの単一正本を明示する。"
+    classification: "A"
+
+  - id: "A4"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "undefined-reference"
+    location: "framework/claude/skills/sdd-start/SKILL.md:52"
+    summary: "tmux 再利用判定で参照される window-id.sh が配布物に存在しない"
+    detail: "sdd-start Step 6d は current window_id の取得に bash .sdd/settings/scripts/window-id.sh を示しているが、配布元 scripts には orphan-detect.sh / grid-check.sh / orphan-kill.sh / multiview-grid.sh / ensure-playwright-cli.sh / claude-stream-progress.jq のみ存在し、window-id.sh は含まれない。install.sh も存在しない helper を補完しない。"
+    impact: "state.yaml を使った Grid 再利用フローで参照先不在の実行パスが発生し、tmux セッション再開時の reuse 判定が実装依存になる。"
+    recommendation: "window-id.sh を追加して配布するか、sdd-start から存在する helper / 直接 tmux コマンドだけを使う手順に書き換える。"
+    classification: "B"
+
+  - id: "A5"
+    source: "inspector-compliance"
+    severity: "H"
+    category: "permissions"
+    location: "framework/claude/settings.json:6"
+    summary: "Skill 権限が exact-match のままで引数付き Skill dispatch を事前許可できていない可能性"
+    detail: "permissions.allow の Skill ルールが Skill(sdd-roadmap) などの exact-match 形式になっている一方、実装側は Skill(skill=\"sdd-review\", args=\"design {feature}\") のように引数付きで sub-skill を呼び出している。Claude Code の権限ルールは Tool(specifier) が個別一致で、prefix 許可は * を使うため、この設定では引数付き dispatch が許可対象から外れる可能性がある。"
+    impact: "レビューやロードマップの自動委譲時に不要な permission prompt や拒否が発生し、想定した非対話パイプラインが停止するリスクがある。特に /sdd-roadmap から /sdd-review への委譲が影響を受ける。"
+    recommendation: "引数を取る skill は Skill(name *) 形式に変更する。少なくとも sdd-review, sdd-roadmap, sdd-status, sdd-release, sdd-reboot は prefix-match にし、引数を取らない skill だけ exact-match を維持する。なお本番動作で permission prompt が発生していないなら、マッチング挙動を確認してから対応する。"
+    classification: "B"
+
+  - id: "A6"
+    source: "inspector-dynamic-1-session-migration"
+    severity: "H"
+    category: "migration"
+    location: "install.sh:415"
+    summary: "v2.6.0 移行が session/state.yaml を無条件上書きし、既存 tmux 状態を破壊し得る"
+    detail: "v2.6.0 移行は .sdd/state.yaml を .sdd/session/state.yaml へ無条件で mv しており、すでに .sdd/session/state.yaml が存在する部分移行済み環境や手動退避済み環境を考慮していない。sdd-start は session/state.yaml を orphan cleanup と grid 再利用の唯一の入力として読む。"
+    impact: "更新後の初回起動で誤った window_id/pane_id を信頼し、孤児 pane の誤検知や別 session の grid 再利用を誘発して起動状態を壊すリスクがある。"
+    recommendation: "移行先が既に存在する場合は上書きせず、より新しい側を優先するか、競合として退避・警告する。少なくとも mv 前に存在確認し、手動解決を促す。"
+    classification: "A"
+
+  - id: "A7"
+    source: "inspector-dynamic-1-session-migration+inspector-dynamic-2-issue-routing"
+    severity: "H"
+    category: "migration"
+    location: "install.sh:417"
+    summary: "v2.6.0 の handover→session 移行に issues.yaml の移送が欠落している"
+    detail: "移行対象として handover.md / decisions.yaml / knowledge.yaml / handovers/ を扱っているが issues.yaml が欠落。runtime 側は sdd-start / sdd-handover / CLAUDE.md で .sdd/session/issues.yaml を現行の正規パスとして前提化している。旧 .sdd/handover/issues.yaml が残るため rmdir .sdd/handover も失敗し、旧形式が残留したままになる。"
+    impact: "アップグレード後に未解決 issue が sdd-start などから見えなくなり、open/resolved 状態の引き継ぎが失われる。既存 backlog の消失は運用上の回帰。"
+    recommendation: ".sdd/handover/issues.yaml も .sdd/session/issues.yaml へ移行対象に追加する。既存 target がある場合の競合ルール (no-clobber or merge) も定義する。"
+    classification: "A"
+
+  - id: "A8"
+    source: "inspector-dynamic-3-decision-schema"
+    severity: "H"
+    category: "state-filtering"
+    location: "framework/claude/skills/sdd-review/SKILL.md:494"
+    summary: "FP 判定が decisions.yaml の全件参照のままで status: active フィルタに切り替わっていない"
+    detail: "新スキーマでは decisions.yaml の有効性は status: active|superseded で表す設計だが、/sdd-review Step 8a は「decisions.yaml の全エントリと突合」と指示している。同じ前提が /sdd-review-self Step 7a、review-self auditor Step 3、/sdd-start Step 4 にも残っている。"
+    impact: "同一セッション中に superseded 化した決定が handover 前に残っていると、失効済みの判断を根拠に finding を FP 扱いしたり defer 扱いしたりして、実際は直すべき指摘を握りつぶす。"
+    recommendation: "decisions.yaml を読む全 consumer に「entries から status: active のみを対象にする」手順を明記し、FP 判定・監査・resume 要約の各テンプレート例も active 前提に更新する。"
+    classification: "A"
+
+  - id: "A9"
+    source: "inspector-dynamic-3-decision-schema"
+    severity: "H"
+    category: "defer-tracking"
+    location: "framework/claude/skills/sdd-review/SKILL.md:495"
+    summary: "defer の再発確認先が decisions.yaml のままで verdict の tracked/user_decision: deferred と接続していない"
+    detail: "/sdd-review と /sdd-review-self は「過去に defer 済みの finding」を decisions.yaml から確認する前提だが、現行の verdict-format.md では defer 状態は verdict.yaml の user_decision: deferred と tracked、および verdicts.yaml の tracked/resolved に保存される。decisions.yaml 新スキーマには backlog defer を識別する型や専用フィールドがなく、review-self auditor も Step 3 で旧前提のまま。"
+    impact: "defer 済み項目の再浮上判定が機械的にできず、同じ指摘を毎回新規 issue として扱うか、逆に unrelated な decision を根拠に FP 化するかのどちらかに寄りやすくなる。監査・Lead 監修・Consolidation が同じ履歴源を共有できない。"
+    recommendation: "defer 管理の一次ソースを verdict-format.md に合わせて verdict.yaml / verdicts.yaml の tracked に統一し、decisions.yaml は「その defer を選んだ理由の補助文脈」に限定する。auditor と Lead supervision の文言も同じ参照先へ更新する。"
+    classification: "B"
+
+  - id: "A10"
+    source: "inspector-flow"
+    severity: "M"
+    category: "revise-escalation"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:257"
+    summary: "Cross-Cutting revise のレビュー失敗時 exhaustion protocol が粗く、run.md と復旧契約が揃っていない"
+    detail: "Cross-Cutting Step 9 は NO-GO / SPEC-UPDATE-NEEDED の再試行と counter 上限まで書いているが、上限到達後は単に 'escalate to user' としか定義していない。run.md Step 7/8 のような fix/skip/abort/manual-fix、counter reset、部分完了 spec の扱い、resume 経路がない。"
+    impact: "Cross-Cutting へ昇格した revision が失敗した場合、どの spec を維持・巻き戻し・継続するかが実装者判断に委ねられ、途中状態の spec 群を不整合のまま残すリスクがある。"
+    recommendation: "Cross-Cutting Step 9 にも run.md と同等の exhaustion protocol を追加し、ユーザー選択肢、counter reset 条件、spec の phase/blocking 遷移、再開方法を明示する。"
+    classification: "B"
+
+  - id: "A11"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "dead-end"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:79"
+    summary: "/sdd-handover のアーカイブ書き込み先ディレクトリが初回作成される保証がない"
+    detail: "sdd-handover は session/decisions/{timestamp}.yaml と session/handovers/{timestamp}.md への保存を要求するが、手順内に mkdir -p がなく、install.sh も .sdd/session までしか新規作成しない。fresh install 後の最初の manual handover / consolidation でアーカイブ段階だけ失敗する到達不能パスになり得る。"
+    impact: "初回 /sdd-handover 実行時にアーカイブ書き込みが失敗し、consolidation 結果が失われる。"
+    recommendation: "sdd-handover の Step 4b/5 の前に session/decisions と session/handovers を明示的に作成する手順を追加する。"
+    classification: "A"
+
+  - id: "A12"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "protocol"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md:43"
+    summary: "self-review テンプレート群の stdout 契約が CLAUDE.md の Review SubAgent 規約と一致していない"
+    detail: "CLAUDE.md は Review SubAgents の task result を WRITTEN:{path} のみと定義している一方、review-self の fixed inspectors / dynamic briefer / auditor は EXT_* / AGENT: / ISSUES: を追加出力するよう要求している。sdd-review 外部エンジンテンプレートは WRITTEN のみで統一されている。"
+    impact: "Lead 側の完了判定や token budget 前提が review と review-self で分岐し、将来 parser を追加した際に self-review だけ別プロトコルになる。D134 のフェーズ移行が完了した際に齟齬が顕在化する。"
+    recommendation: "review-self を WRITTEN:{path} のみへ寄せるか、CLAUDE.md に self-review 専用の stdout 例外契約を明記して共通仕様を更新するか、どちらかに統一する。"
+    classification: "B"
+
+  - id: "A13"
+    source: "inspector-dynamic-1-session-migration"
+    severity: "M"
+    category: "archive"
+    location: "install.sh:421"
+    summary: "既存 handovers/ がある状態で移行すると archive が handovers/handovers/ にネストする"
+    detail: ".sdd/handover/handovers を .sdd/session/handovers へそのまま mv しているため、移行先ディレクトリが既に存在するケースでは POSIX mv の挙動により .sdd/session/handovers/handovers/ が作られる。/sdd-handover は archive の保存先を session/handovers/{timestamp}.md のフラット構造として扱う。"
+    impact: "旧 archive だけが別階層に隠れ、運用ルールと実ファイル配置が不一致になる。過去 handover の探索・比較が不完全になる。"
+    recommendation: "移行先を事前作成して中身をマージするか、既存 handovers/ がある場合は contents 単位で移送する。directory-to-directory の mv をそのまま使わない。"
+    classification: "A"
+
+  - id: "A14"
+    source: "inspector-dynamic-2-issue-routing"
+    severity: "M"
+    category: "missing-initialization"
+    location: "framework/claude/skills/sdd-roadmap/refs/impl.md:91"
+    summary: "issues.yaml 未作成時の [ISSUE] タグ初回 append と失敗時フォールバックが未定義"
+    detail: "impl は Builder 完了時に [ISSUE] を issues.yaml へ追記するとだけ指示している。sdd-start は issues.yaml を「存在すれば読む」だけで明示的なテンプレート生成をしない。issues.yaml 不在や追記失敗時に、作成して再試行するのか、issue 部分だけ警告に落として処理継続するのかが未定義。"
+    impact: "新規プロジェクトや初回セッションで最初の [ISSUE] が出た場合、issue だけ欠落するか Builder 完了処理全体が不安定になる。knowledge.yaml と issues.yaml の分離導入で最も壊れやすい分岐。"
+    recommendation: "Builder タグ取り込み前に session/issues.yaml をテンプレートから必ず初期化し、追記失敗時は knowledge.yaml 取り込みや task 完了更新を維持したまま警告・再試行にフォールバックする手順を追加する。"
+    classification: "B"
+
+  - id: "A15"
+    source: "inspector-dynamic-3-decision-schema"
+    severity: "M"
+    category: "consolidation"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:77"
+    summary: "status: superseded で pruning する設計なのに decision を superseded に遷移させる運用が定義されていない"
+    detail: "CLAUDE.md は decisions.yaml を append-only としつつ各 entry に status: active|superseded を持たせ、/sdd-handover は consolidation 時に status: superseded を除外・アーカイブすると定義している。しかし対象ファイル群には「どの条件で既存 decision を superseded に変更するか」「誰がその更新を行うか」の規則がない。旧 superseded_by を外した後の代替遷移が未定義。"
+    impact: "置き換え済み decision が active のまま残り続け、Consolidation は実質的に pruning できない。mutually-exclusive な決定が並存し、FP 判定や handover の Key Decisions 要約がぶれる。"
+    recommendation: "append-only 制約と両立する supersede プロトコルを追加する。例: handover 時に新旧 decision の対応規則で旧 entry を status: superseded に書き換えるか、replacement metadata を復活させて deterministic に archive 対象を決めるかのいずれかに統一する。"
+    classification: "B"
+
+  - id: "A16"
+    source: "inspector-flow"
+    severity: "L"
+    category: "verdict-format"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:493"
+    summary: "self-review の scope 名が active verdict と index verdict で一致していない"
+    detail: "self-review Auditor テンプレートは verdict-auditor.yaml に scope: \"self\" を書く一方、sdd-review-self の永続化ステップは verdicts.yaml へ scope: \"framework\" を append する。同じ review run の active 成果物と index 成果物で scope 識別子が変わる。"
+    impact: "現状はパスで辿れるため致命傷ではないが、scope ベースで集計・比較する将来の自動処理では self-review だけ特別扱いが必要になる。"
+    recommendation: "self-review の canonical scope 名を 1 つに統一し、verdict-auditor.yaml / verdict.yaml / verdicts.yaml の全段で同じ値を使う。"
+    classification: "A"
+
+  - id: "A17"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "update-path"
+    location: "install.sh:592"
+    summary: "stale cleanup が .sdd/settings/scripts 配下の .sh しか掃除せず .jq を取り残す"
+    detail: "install.sh の update cleanup は scripts ディレクトリに対して *.sh のみを remove_stale 対象にしているが、同じディレクトリには claude-stream-progress.jq も配布されている。"
+    impact: "scripts の rename / 廃止が発生した場合、古い .jq 補助ファイルだけ update 後も残留し、実配布物との不整合が継続する。"
+    recommendation: "scripts ディレクトリの stale cleanup を * もしくは拡張子横断に変更し、.sh 以外も同期対象にする。"
+    classification: "A"
+
+  - id: "A18"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "terminology"
+    location: "framework/claude/sdd/settings/rules/tmux-integration.md:14"
+    summary: "tmux 連携ルールが /sdd-start の旧ステップ番号 Step 7 を参照している"
+    detail: "tmux-integration.md は SID 生成・Grid Creation・Orphan Cleanup を /sdd-start Step 7 と説明しているが、実際の sdd-start ではこれらは Step 6 / 6a-6e に定義されている (D167 でフラット化)。"
+    impact: "自己レビューや手動トレース時に参照先を誤りやすく、step-based cross-reference の信頼性が下がる。"
+    recommendation: "tmux-integration.md 内の /sdd-start Step 7 参照を Step 6 系へ更新し、sdd-start 本文と一致させる。"
+    classification: "A"
+
+  - id: "A19"
+    source: "inspector-dynamic-1-session-migration"
+    severity: "L"
+    category: "compatibility"
+    location: "install.sh:424"
+    summary: "旧 decisions.md / buffer.md は legacy 名へ退避されるだけで移行案内がない"
+    detail: "pre-v2.5.0 形式の decisions.md と buffer.md は decisions-legacy.md / knowledge-legacy.md に rename されるが、現行 runtime 参照は decisions.yaml / knowledge.yaml に統一されており、legacy 名を読む箇所は存在しない。"
+    impact: "古い install から更新した利用者は、ファイル自体は残る一方で意思決定履歴や knowledge が起動時コンテキストに復元されず、セッション継続性が静かに弱化する。"
+    recommendation: "Markdown から現行 YAML への変換ガイドを提供するか、少なくとも install 時に legacy ファイルは自動読込されない旨を警告して手動移行手順を案内する。"
+    classification: "B"
+
+  - id: "A20"
+    source: "inspector-dynamic-2-issue-routing"
+    severity: "L"
+    category: "context-gap"
+    location: "framework/claude/agents/sdd-conventions-scanner.md:21"
+    summary: "ConventionsScanner の入力が knowledge.yaml 専用で issues.yaml 由来の知見が波コンテキストに入らない"
+    detail: "ConventionsScanner は session/knowledge.yaml だけを buffer として受け取り、run.md からも同じ単一路線で dispatch されている。[ISSUE] で蓄積された再発防止知見や既知問題は conventions brief に入らず、[KNOWLEDGE]/[ISSUE] 二系統化のうち issue 側が波コンテキスト生成で参照されない。"
+    impact: "不具合由来のアンチパターンや注意点が並列 Builder/Architect に共有されず、同じ問題の再発防止が手動 steering 化まで遅れる。"
+    recommendation: "issues.yaml を意図的に除外するなら明記し、除外しないなら open/resolved issue の要約を ConventionsScanner が読み込めるようにする。"
+    classification: "B"
+
+  - id: "A21"
+    source: "inspector-dynamic-3-decision-schema"
+    severity: "L"
+    category: "field-naming"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:430"
+    summary: "self-review Builder への引き渡しだけ旧 description フィールド名を使い続けている"
+    detail: "review/self-review の findings/verdict スキーマは summary + detail に統一済みだが、/sdd-review-self Step 8a は承認済み item を description 付き YAML に再整形し、builder テンプレートも「ID, location, description, recommended fix」を前提にしている。review/auditor 系の naming migration と Builder fix path だけ前提が分断されている。"
+    impact: "現状は人間向けプロンプトとして読めるが、後続の自動変換や検証を追加した際に self-review だけ旧語彙のブリッジが必要になる。schema migration の完了判定も曖昧になる。"
+    recommendation: "Builder 入力も summary と detail に揃えるか、少なくとも description = detail への投影を明記した互換層として文書化する。"
+    classification: "A"
+
+fp_eliminated:
+  - source_id: "compliance-UNCERTAIN-1"
+    source: "inspector-compliance"
+    target: "agent-tool-subagent_type-parameter"
+    reason: "CLAUDE.md が Agent(subagent_type=\"sdd-architect\", ...) を明示的にドキュメント化しており、D10 / D134 / D164 の一連の決定と B-series テストを通じて production-verified。公式 docs に明示記載はないが動作を否定する記述もない。"
+
+  - source_id: "compliance-UNCERTAIN-2"
+    source: "inspector-compliance"
+    target: "agent-tool-model-parameter"
+    reason: "Agent tool の model パラメータは agent frontmatter で model フィールドとして定義される設計と整合する。CLAUDE.md の Role Architecture で各 SubAgent モデルを明示しており、B-series テストで動作確認済み。"
+
+  - source_id: "compliance-UNCERTAIN-3"
+    source: "inspector-compliance"
+    target: "agent-tool-run_in_background-parameter"
+    reason: "D10 にて run_in_background: true を全 SubAgent dispatch に採用することを明示的に決定し production-verified。Web 検索で公式 docs の background: true (agent frontmatter) が確認できたが、Agent tool call での run_in_background パラメータは別途サポートされており、フレームワーク全体で問題なく機能している。"
+
+notes: |
+  ## 総合評価: CONDITIONAL
+
+  21 件の confirmed findings (H:9 / M:6 / L:6) が確認された。CRITICAL (完全な動作停止) 級はなく、フレームワークは B45 まで継続して機能している。しかし以下の 3 クラスタが次バージョン前に対処すべき問題として浮上した。
+
+  ### 最重要クラスタ: install.sh 移行バグ (H×3)
+
+  A6 (state.yaml 無条件上書き) / A7 (issues.yaml 未移行) / A13 (handovers/ ネスト) は、
+  v2.6.0 移行コードに存在する実利用者への直接的な回帰リスク。install --update を実行した
+  利用者が既存 session 状態を失う可能性がある。次リリース前に必須修正。
+
+  ### 重要クラスタ: decisions.yaml 新スキーマの consumer 未完全移行 (H×2 / M×1)
+
+  A8 (status: active フィルタ欠落) / A9 (defer 先が verdicts.yaml に非統一) / A15
+  (supersede 遷移プロトコル未定義) は D202 で設計した新スキーマの実装が不完全であることを示す。
+  FP 判定精度と Consolidation 健全性に影響する。
+
+  ### プロトコル/ドキュメント gap クラスタ (H×4 / M×3 / L×6)
+
+  run.md/revise.md の verdict 更新責務 (A2) と Cross-Cutting exhaustion (A10) は設計決定が必要な B 案件。
+  CLAUDE.md の schema 例 (A3) / tmux step 番号 (A18) / scope 名不一致 (A16) は機械的に修正可能な A 案件。
+  window-id.sh 参照 (A4) は B だが、D167 で grid-check.sh / orphan-detect.sh を整備した流れで
+  window-id.sh の追加 or 参照削除を決定すれば解決できる。
+
+  ### 分類サマリ
+  - A (auto-fix): A3, A6, A7, A8, A11, A13, A16, A17, A18, A21 — 10 件
+  - B (decision-required): A1, A2, A4, A5, A9, A10, A12, A14, A15, A19, A20 — 11 件

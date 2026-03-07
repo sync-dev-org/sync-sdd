@@ -21,9 +21,9 @@ Check if `{{SDD_DIR}}/session/handover.md` exists.
 
 Read `{{SDD_DIR}}/session/handover.md` → Direction, Context, Warnings, Steering Exceptions.
 
-## Step 2b: Read Knowledge
+## Step 2b: Read Knowledge and Issues
 
-Check `{{SDD_DIR}}/session/knowledge.yaml` existence with Glob first (Read errors on missing files cascade and cancel parallel tool calls). Read only if found.
+Check `{{SDD_DIR}}/session/knowledge.yaml` and `{{SDD_DIR}}/session/issues.yaml` existence with Glob first (Read errors on missing files cascade and cancel parallel tool calls). Read only if found.
 
 ## Step 3: Read Review State
 
@@ -68,19 +68,7 @@ e. **state.yaml Generation**: Write `{{SDD_DIR}}/session/state.yaml` with sessio
      # ... slot-3 through slot-12
    ```
 
-## Step 7: Record SESSION_START
-
-Run `date +%Y-%m-%dT%H:%M:%S%z` for timestamp. Append `SESSION_START` entry to `{{SDD_DIR}}/session/decisions.yaml` `entries` list:
-```yaml
-- id: "D{seq}"
-  type: "SESSION_START"
-  summary: "{summary}"
-  context: "{context}"
-  detail: "セッション開始、{next action or ユーザー指示待ち}"
-  created_at: "{timestamp}"
-```
-
-## Step 8: Pipeline Continuation
+## Step 7: Pipeline Continuation
 
 If roadmap pipeline was active (handover.md indicates run/revise in progress):
 - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.

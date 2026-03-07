@@ -1,0 +1,41 @@
+scope: "inspector-dynamic-3-decision-schema"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "state-filtering"
+    location: "framework/claude/skills/sdd-review/SKILL.md:494"
+    summary: "FP 判定が decisions.yaml の全件参照のままで `status: active` フィルタに切り替わっていない"
+    detail: "新スキーマでは decisions.yaml の有効性は `status: active|superseded` で表す設計ですが、/sdd-review は Step 8a で『decisions.yaml の全エントリと突合』と指示しており、同じ前提が /sdd-review-self Step 7a、review-self auditor Step 3、/sdd-start Step 4 にも残っています。`superseded_by` を廃止した以上、consumer 側が active のみを見る明示ルールに切り替わっていないのは新運用と矛盾します。"
+    impact: "同一セッション中に superseded 化した決定が handover 前に残っていると、失効済みの判断を根拠に finding を FP 扱いしたり defer 扱いしたりして、実際は直すべき指摘を握りつぶします。status ベース移行の中心前提が review 系で機能していません。"
+    recommendation: "decisions.yaml を読む全 consumer に『`entries` から `status: active` のみを対象にする』手順を明記し、FP 判定・監査・resume 要約の各テンプレート例も active 前提に更新してください。"
+  - id: "F2"
+    severity: "H"
+    category: "defer-tracking"
+    location: "framework/claude/skills/sdd-review/SKILL.md:495"
+    summary: "defer の再発確認先が decisions.yaml のままで verdict の `tracked`/`user_decision: deferred` と接続していない"
+    detail: "/sdd-review と /sdd-review-self は『過去に defer 済みの finding』を decisions.yaml から確認する前提ですが、現行の verdict-format.md では defer 状態は `verdict.yaml` の `user_decision: deferred` と `tracked`、および `verdicts.yaml` の `tracked/resolved` に保存されます。decisions.yaml の新スキーマには backlog defer を識別する型や専用フィールドがなく、review-self auditor も Step 3 で『previously deferred backlog item を decisions.yaml で FP 化』と旧前提のままです。"
+    impact: "defer 済み項目の再浮上判定が機械的にできず、同じ指摘を毎回新規 issue として扱うか、逆に unrelated な decision を根拠に FP 化するかのどちらかに寄りやすくなります。監査・Lead 監修・Consolidation が同じ履歴源を共有できません。"
+    recommendation: "defer 管理の一次ソースを verdict-format.md に合わせて `verdict.yaml` / `verdicts.yaml` の `tracked` に統一し、decisions.yaml は『その defer を選んだ理由の補助文脈』に限定してください。auditor と Lead supervision の文言も同じ参照先へ更新するべきです。"
+  - id: "F3"
+    severity: "M"
+    category: "consolidation"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:77"
+    summary: "`status: superseded` で pruning する設計なのに decision を superseded に遷移させる運用が定義されていない"
+    detail: "CLAUDE.md は decisions.yaml を append-only としつつ各 entry に `status: active|superseded` を持たせ、/sdd-handover は consolidation 時に `status: superseded` を除外・アーカイブすると定義しています。しかし対象ファイル群には『どの条件で既存 decision を superseded に変更するか』『誰がその更新を行うか』の規則がありません。旧 `superseded_by` を外した後の代替遷移が未定義です。"
+    impact: "置き換え済み decision が active のまま残り続け、Consolidation は実質的に pruning できません。時間が経つほど mutually-exclusive な決定が並存し、FP 判定や handover の Key Decisions 要約がぶれます。"
+    recommendation: "append-only 制約と両立する supersede プロトコルを追加してください。例: handover 時に新旧 decision の対応規則で旧 entry を `status: superseded` に書き換える、または replacement metadata を復活させて deterministic に archive 対象を決める、のいずれかに統一します。"
+  - id: "F4"
+    severity: "L"
+    category: "field-naming"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:430"
+    summary: "self-review Builder への引き渡しだけ旧 `description` フィールド名を使い続けている"
+    detail: "review/self-review の findings/verdict スキーマは `summary` + `detail` に統一済みですが、/sdd-review-self Step 8a は承認済み item を `description` 付き YAML に再整形し、builder テンプレートも『ID, location, description, recommended fix』を前提にしています。review/auditor 系の naming migration と Builder fix path だけ前提が分断されています。"
+    impact: "現状は人間向けプロンプトとして読めても、後続の自動変換や検証を追加した際に self-review だけ旧語彙のブリッジが必要になります。schema migration の完了判定も曖昧になります。"
+    recommendation: "Builder 入力も `summary` と `detail` に揃えるか、少なくとも `description = detail への投影` を明記した互換層として文書化してください。暗黙変換のまま残さない方が安全です。"
+notes: |
+  決定ログ移行の主なズレは 3 系統でした。
+  1) consumer が `status` を見ず、旧来どおり decisions.yaml 全件を根拠にしていること。
+  2) defer の保存先が verdict 系へ移ったのに、監査と Lead supervision がまだ decisions.yaml を見に行くこと。
+  3) consolidation が `superseded` を前提にする一方、その状態へ遷移させる規則が未定義なこと。
+
+  参考までに、現ワークツリーの `.sdd/session/decisions.yaml` には旧 `type: USER_DECISION` エントリがまだ残っており、後方互換の扱いが文書化されていない問題は実データ上でも観測できます。

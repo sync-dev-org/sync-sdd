@@ -70,7 +70,7 @@ For each difference:
 3. If wave reordering: re-validate dependency graph (no cycles)
 4. **Backfill optimization**: When adding new specs or reordering waves, check if specs can be consolidated into fewer waves while respecting dependency constraints. Present parallelism report (same format as Create Mode Step 4e).
 5. Auto-draft `{{SDD_DIR}}/session/handover.md`
-6. Record changes to `decisions.yaml` as `DIRECTION_CHANGE`
+6. Record changes in `decisions.yaml`
 
 ---
 

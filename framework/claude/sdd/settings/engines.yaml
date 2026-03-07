@@ -43,7 +43,7 @@ deny_patterns:
   - ":(){:|:&};:"
 
 # --- Level Chain (escalation order) ---
-# L1-L6: ascending capability/cost. L0: infrastructure fallback (subagents).
+# L1-L7: ascending capability/cost. L0: infrastructure fallback (subagents).
 # Escalation: infra failure (install_check) → next level, ultimate → L0.
 # NO-GO → same level retry → user escalate (no auto model escalation).
 # Sticky per session (session/state.yaml), reset on sdd-start.
@@ -57,22 +57,26 @@ levels:
     model: gpt-5.3-codex-spark
     effort: high
   L2:
-    engine: codex
-    model: gpt-5.4
-    effort: medium
+    engine: claude
+    model: claude-sonnet-4-6
+    effort: low
   L3:
     engine: codex
     model: gpt-5.4
-    effort: high
+    effort: medium
   L4:
-    engine: claude
-    model: claude-sonnet-4-6
+    engine: codex
+    model: gpt-5.4
     effort: high
   L5:
     engine: claude
+    model: claude-sonnet-4-6
+    effort: high
+  L6:
+    engine: claude
     model: claude-opus-4-6
     effort: medium
-  L6:
+  L7:
     engine: claude
     model: claude-opus-4-6
     effort: high
@@ -95,17 +99,17 @@ roles:
       briefer:
         start_level: L1
       inspectors:
-        start_level: L2
+        start_level: L4
       auditor:
-        start_level: L4
+        start_level: L5
       builder:
-        start_level: L4
+        start_level: L5
   review:
     timeout: 1200
     stages:
       briefer:
         start_level: L1
       inspectors:
-        start_level: L2
+        start_level: L4
       auditor:
-        start_level: L3
+        start_level: L5

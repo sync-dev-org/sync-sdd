@@ -26,7 +26,7 @@ Compare all findings. If two or more findings have the same location AND describ
 ## Step 3: False Positive Check
 
 For each finding, search `.sdd/session/decisions.yaml` for matching entries:
-- If the finding is explained by a `USER_DECISION` or `STEERING_EXCEPTION` entry → mark as FP with the decision ID and reason
+- If the finding is explained by a decisions.yaml entry (intentional decision or steering exception) → mark as FP with the decision ID and reason
 - If the finding matches a previously deferred backlog item → mark as FP with reason "pre-existing, deferred"
 
 ## Step 4: UNCERTAIN Resolution

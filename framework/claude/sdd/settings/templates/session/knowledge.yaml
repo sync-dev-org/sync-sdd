@@ -4,12 +4,9 @@
 entries: []
 # Entry schema:
 # - id: "K{N}"
-#   type: "PATTERN|INCIDENT|REFERENCE"
+#   status: "active|superseded"
 #   severity: "H|M|L"
-#   summary: "{one-line summary}"
-#   detail: "{detailed description}"
-#   impact: "{what this affects}"
-#   recommendation: "{suggested action}"
-#   source: "{spec} {role}, task {N}"
-#   superseded_by: "K{M}"  # optional
+#   summary: "{one-line}"
+#   detail: "{詳細・影響・推奨を含む}"
+#   source: "{出所}"
 #   created_at: "{ISO-8601}"
