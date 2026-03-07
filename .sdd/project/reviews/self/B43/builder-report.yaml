@@ -1,0 +1,74 @@
+status: "complete"
+items:
+  - id: "A3"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/settings.json"
+    note: "Added Bash(jq *), Bash(env *), Bash(kill *) to allow list."
+
+  - id: "A5"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Changed scripts stale removal glob from '*' to '*.sh' at line 572."
+
+  - id: "A6"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review-self/SKILL.md"
+    note: "Added $SCOPE_DIR/$TPL code block as new step 5 in Step 1 (before the $BATCH_SEQ reference). Removed the definition block from Step 2. Renumbered former step 5 to step 6 and removed the (Note: ...) parenthetical."
+
+  - id: "A7"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+    note: "Re-numbered Verdict Persistence steps: g→f, h→g. Sequence is now a,b,c,d,e,f,g (7 steps, no gaps)."
+
+  - id: "A8"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review-self/SKILL.md"
+    note: "Replaced 'Agent Prompts (Templates)' section heading with 'Inspector Prompts (Templates)' and '固定 Agent の' with '固定 Inspector の' per D185 Naming Migration."
+
+  - id: "A9"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-steering/SKILL.md"
+    note: "Removed '$ARGUMENTS = \"engines\" → External engine configuration' line from Step 1 Detect Mode block. argument-hint did not contain 'engines', so no change needed there."
+
+  - id: "A10"
+    result: "fixed"
+    files_modified:
+      - "README.md"
+    note: "Updated '5 SubAgents' to '5 agent profiles' in the tagline (line 5)."
+
+  - id: "A11"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+    note: "Added comment block after the revise mode detection lines in Step 1 explaining word-prefix matching algorithm and caveat about ambiguous invocation."
+
+  - id: "B1"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "In run.md: changed '/sdd-review dead-code' to '/sdd-review dead-code --context wave'. In sdd-review/SKILL.md: added 'dead-code --context wave' argument variant, updated scope directory table to use $CONTEXT=standalone/$CONTEXT=wave labels."
+
+  - id: "B2"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "In revise.md Step 9: added step 0 to generate $CC_ID=cc-$(date +%Y%m%d-%H%M%S), updated /sdd-review call to pass --id {cc_id}, updated verdict persist path to use {cc_id}. In sdd-review/SKILL.md: updated --cross-cutting argument variant to include --id {id}, updated cross-cutting scope directory row to use {CC_ID}."
+
+  - id: "B3"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Added explicit counter reset statement after both NO-GO escalation options and SPEC-UPDATE-NEEDED escalation: 'After ESCALATION_RESOLVED: reset retry_count and spec_update_count to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)'."
+
+tests:
+  ran: false
+  passed: true
+  output: ""

@@ -1,0 +1,5 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|dangling-reference|framework/claude/skills/sdd-review-self-ext/SKILL.md:167|テンプレート化で per-agent ファイル名を `agent-{N}-{name}.md` に変更したのに、起動手順だけ `agent-{N}-prompt.txt` のまま残っています。この手順どおりに `cat` すると存在しないファイルを参照し、Agent 起動が失敗します。
+M|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:127|`${FOCUS_TARGETS}` と `${CACHED_OK}` は 3-5 bullet や複数行の COMPLIANT 項目になる想定ですが、置換手順は単純な `sed 's|...|...|g'` しか示しておらず、改行や `&` を含む実データを安全に埋め込めません。テンプレート化後の生成手順として不完全で、未置換プレースホルダや壊れたプロンプトを残す回帰があります。
+L|template-integrity|install.sh:572|更新時の stale cleanup は `.sdd/settings/scripts` 配下の `.sh` を削除しますが、空になった `scripts/` ディレクトリは後始末しません。`templates/` と `profiles/` は空ディレクトリ削除まで行っており、管理対象ディレクトリの整合がここだけ崩れています。

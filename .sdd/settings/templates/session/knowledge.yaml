@@ -1,0 +1,15 @@
+# Knowledge entries accumulated during project lifecycle
+# Write: Builder (impl/fix), Verdict, Dead-code, Reboot, Lead
+# Read: Lead, Builder, Inspector, Architect, ConventionsScanner
+entries: []
+# Entry schema:
+# - id: "K{N}"
+#   type: "PATTERN|INCIDENT|REFERENCE"
+#   severity: "H|M|L"
+#   summary: "{one-line summary}"
+#   detail: "{detailed description}"
+#   impact: "{what this affects}"
+#   recommendation: "{suggested action}"
+#   source: "{spec} {role}, task {N}"
+#   superseded_by: "K{M}"  # optional
+#   created_at: "{ISO-8601}"

@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|verdict-persistence|framework/claude/skills/sdd-roadmap/refs/review.md:84|Cross-Cuttingのscope-dirが`specs/.cross-cutting/{id}/reviews/`になっており、Step 8の保存先`{scope-dir}/verdicts.md`は`.../reviews/verdicts.md`になる。一方でSKILL.md/refs/revise.mdは`specs/.cross-cutting/{id}/verdicts.md`を正規保存先としており、永続先が分岐して復元・参照フローが破綻する。
+M|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:4|引数ヒントは`run [--gate] [--consensus N]`だが、Detect Mode列挙には`run --gate --consensus N`が存在せず、複合フラグ時のRouter→refsディスパッチが未定義。
+M|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:4|`review dead-code [flags]`を受け付けると宣言している一方、Detect Modeは`review dead-code`のみでflags付きケースの分岐が明示されていない。`--consensus N`などの扱いが実装依存になる。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:22|Design ReviewのPhase Gateが`design.md`存在確認と`blocked`判定のみで、`phase=design-generated`必須条件がない。CLAUDE.mdの「requested operationに適切なphaseを検証する」規約と整合しない。
+M|wave-quality-gate|framework/claude/skills/sdd-roadmap/refs/run.md:240|Wave完了条件は`implementation-complete`または`blocked`だが、Step 7aのwave cross-checkで`blocked` specを除外する規則がない。`--wave N`レビュー側は`wave<=N`で収集するため、blocked spec混入時に不要なNO-GO/再試行を誘発しうる。
+L|read-clarity|framework/claude/skills/sdd-roadmap/refs/review.md:85|B{seq}決定責務が「review.mdで計算」と「consensus時はRouterが事前決定」の二重表現になっており、実装者が責務境界を誤読しやすい。

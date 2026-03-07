@@ -1,0 +1,7 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|router-dispatch|framework/claude/skills/sdd-roadmap/refs/review.md:5|Router は `review design|impl --cross-check` と `--wave N` を受理するが、この ref は `review design|impl {feature}` / `review dead-code` だけを起点にし、引数パースも feature 省略モードを明示していないため、Router→ref の分岐仕様が欠落している。
+H|consensus-scope|framework/claude/skills/sdd-roadmap/SKILL.md:116|Consensus Mode が `specs/{feature}/reviews/active-{p}/` と `specs/{feature}/reviews/active/` を固定使用しており、dead-code / cross-check / wave / cross-cutting の project-level scope と `refs/review.md:75-97` の `{scope-dir}` 運用に矛盾する。
+M|review-history|framework/claude/skills/sdd-roadmap/refs/review.md:38|`Cross-check / wave-scoped mode` を同一扱いにして `PREVIOUSLY_RESOLVED` を `project/reviews/wave/verdicts.md` から読む指示になっており、standalone cross-check の履歴が `project/reviews/cross-check/verdicts.md` に永続化される定義と食い違う。
+M|cross-cutting-scope|framework/claude/skills/sdd-roadmap/refs/review.md:75|Review Execution Flow の scope-dir 定義に `specs/.cross-cutting/{id}/` がなく、`refs/revise.md:255-256` と `refs/review.md:137` が要求する cross-cutting review の実行スコープが ref 内で未定義になっている。
+M|auto-fix-consistency|framework/claude/skills/sdd-roadmap/refs/review.md:103|Standalone review handling では `No auto-fix` と明記している一方、Next Steps では `SPEC-UPDATE-NEEDED → Auto-fix from spec level` と書かれており、CLAUDE.md の「auto-fix は pipeline orchestration 側で扱う」前提と整合しない。

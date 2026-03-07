@@ -1,0 +1,9 @@
+SCOPE:agent-dynamic-2-grid-state-alignment
+AGENT:dynamic-2
+REVIEW:grid-state-alignment
+ISSUES:
+M|state-consistency|framework/claude/sdd/settings/scripts/multiview-grid.sh:13-23|multiview-grid.sh のグリッド再利用判定が pane タイトル (`sdd-${SID}-slot-`) に依存している。フレームワーク原則「pane タイトルは装飾のみ、ロジック依存禁止」と矛盾。sdd-start は grid-check.sh (state.yaml ベース) を先に実行するため通常このパスは到達しないが、state.yaml 破損/欠損時に multiview-grid.sh が直接呼ばれた場合にタイトル依存パスが発動し、Claude Code によるタイトル上書きで誤判定する可能性がある
+M|scope-mismatch|framework/claude/sdd/settings/scripts/multiview-grid.sh:13|multiview-grid.sh の `tmux list-panes` が `-t @{window_id}` スコープ指定なしで current window のみ検索する。Lead が grid と異なるウィンドウにいる場合（ウィンドウ再配置後等）、既存スロットを検出できず不要な再作成が発生する。ただし multiview-grid.sh は Lead pane を起点に grid を作成するため、Lead と grid は常に同一ウィンドウにあるべきで、この状況は通常発生しない
+M|idle-intersection|framework/claude/skills/sdd-review-self/SKILL.md:124|sdd-review-self Step 3 で grid-check.sh の生存 pane_id と state.yaml の idle status を「突合」するが、突合ロジック（交差→利用可能スロット確定）の具体手順が未記述。Lead の実装裁量に委ねられており、busy slot を誤って idle と判定するリスクがある。grid-check.sh は pane の生死のみ報告し status は返さないため、state.yaml 側の status 読み取りが必須だが、その手順が明示されていない
+L|redundant-window-id|framework/claude/skills/sdd-start/SKILL.md:57-61|state.yaml スキーマで `lead.window_id` と `grid.window_id` が別フィールドとして存在するが、Lead は grid と同一ウィンドウにいるため常に同値。2箇所の window_id が乖離すると orphan 検出や grid-check のスコープが不整合になる。単一フィールドに統一するか、同値制約を明示すべき
+L|orphan-scope|framework/claude/sdd/settings/scripts/orphan-detect.sh:11-14|primary モードは state.yaml の全 pane_id のうち MY_PANE 以外の live pane を出力するが、busy/idle の区別をしない。sdd-start の文脈では全て orphan 扱いで正しい（前セッションの pane は全て不要）が、将来 orphan-detect が他のコンテキストから呼ばれた場合に busy pane を誤って orphan 報告する可能性がある。現時点では sdd-start 専用のため実害なし

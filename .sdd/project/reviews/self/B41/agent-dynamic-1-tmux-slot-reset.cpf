@@ -1,0 +1,15 @@
+SCOPE:agent-dynamic-1-tmux-slot-reset
+AGENT:dynamic-1
+TARGET:/sdd-review,/sdd-review-self tmux dispatch lifecycle
+ISSUES:
+H|state-reset|framework/claude/skills/sdd-review/SKILL.md:140|Prep tmux完了時の復帰手順が`status: idle`+タイトルリセットのみで、`agent/engine/channel`除去が明記されていない。Inspector解放手順(314行)と非対称で stale slot metadata が残る。
+H|state-reset|framework/claude/skills/sdd-review/SKILL.md:359|Auditor tmux完了時も`status: idle`更新のみで`agent/engine/channel`除去が欠落。Prepと同様に次バッチで誤った占有情報が残存し得る。
+H|state-reset|framework/claude/skills/sdd-review-self/SKILL.md:94|self-review Prep tmux復帰で`status: idle`のみが規定され、`agent/engine/channel`のクリアが規定されていない。close/release系(303行)との整合が崩れている。
+H|state-reset|framework/claude/skills/sdd-review-self/SKILL.md:321|self-review Auditor tmux完了後も`status: idle`+タイトルリセットのみで`agent/engine/channel`除去が未規定。stale state残留リスクがある。
+M|dispatch-order|framework/claude/skills/sdd-review/SKILL.md:139|`Prep dispatched...` が `tmux wait-for ...review-prep...` の完了待機前に送出される。完了シグナリング遅延/不達時に進捗表示が実態より先行する。
+M|dispatch-order|framework/claude/skills/sdd-review/SKILL.md:277|`Dispatched {N} inspectors...` が全チャネル `wait-for` 開始・完了前に送出されるため、dispatch成功と完了状態の境界が曖昧。
+M|dispatch-order|framework/claude/skills/sdd-review/SKILL.md:358|`Auditor dispatched...` も wait-for 完了前通知で、上記と同じ先行通知問題を持つ。
+M|dispatch-order|framework/claude/skills/sdd-review-self/SKILL.md:98|self-review の `Prep dispatched...` が wait-for完了前通知になっており、完了シグナル依存時の状態遅延と整合しない。
+M|dispatch-order|framework/claude/skills/sdd-review-self/SKILL.md:229|self-review の `Dispatched {N} inspectors...` も完了待機前通知で、運用上「投入済み」と「完了済み」が混同される。
+M|dispatch-order|framework/claude/skills/sdd-review-self/SKILL.md:320|self-review の `Auditor dispatched...` も wait-for 完了前通知。
+L|subagent-hygiene|framework/claude/skills/sdd-review-self/SKILL.md:190|SubAgent分岐はtmuxタイトル変更を行わず設計意図どおりだが、既存 stale slot を明示的に正規化する前処理がないため、tmux併用セッションでは見かけ上の busy 残留が継続し得る。

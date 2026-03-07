@@ -1,0 +1,13 @@
+SCOPE:agent-4-compliance
+COMPLIANT:
+agent-frontmatter-fields|OK|cached:B34
+agent-model-values|OK|cached:B34
+agent-tool-dispatch-patterns|OK|cached:B34
+settings-permission-format|OK|cached:B34
+settings-agent-skill-entry-match|OK|cached:B34
+tool-availability-names|OK|cached:B34
+agent-tool-parameters-subagent_type|OK|cached:B34
+ISSUES:
+M|skills-frontmatter|framework/claude/skills/sdd-handover/SKILL.md:1|NG: frontmatter に argument-hint がありません（description/allowed-tools/argument-hint 構成を満たしていません）
+M|skills-frontmatter|framework/claude/skills/sdd-publish-setup/SKILL.md:1|NG: frontmatter に argument-hint がありません（description/allowed-tools/argument-hint 構成を満たしていません）
+H|tool-availability|framework/claude/skills/sdd-review-self/SKILL.md:3|NG: allowed-tools に Agent がない一方で本文で Agent(subagent_type="general-purpose") を利用しており、利用可能ツール宣言と実装が不一致です

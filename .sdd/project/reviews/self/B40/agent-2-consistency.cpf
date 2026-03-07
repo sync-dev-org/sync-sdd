@@ -1,0 +1,21 @@
+SCOPE:agent-2-consistency
+ISSUES:
+C|undefined-reference|framework/claude/skills/sdd-reboot/refs/reboot.md:174|`sdd-auditor-design` というSubAgent名を参照しているが、定義ファイルが存在せずレビュー統合フェーズが到達不能。
+C|numeric-consistency|framework/claude/skills/sdd-reboot/refs/reboot.md:173|Rebootは「design Inspectorを6体（holistic含む）」と規定しているが、実体定義は `sdd-review` の固定5体+動的であり、`holistic` テンプレートも存在しないため件数・名称が不整合。
+H|path-consistency|framework/claude/skills/sdd-reboot/refs/reboot.md:30|`branch_name` を `reboot/{name}` 形式で決めた直後に `git checkout -b reboot/{branch_name}` を実行するため、`reboot/reboot/...` の二重prefixが発生する。
+H|protocol-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:3|`allowed-tools` に `Skill` がない一方で同ファイル:98で `Skill(skill="sdd-review", ...)` を必須手順としており、委譲手順がツール権限上到達不能。
+H|protocol-consistency|framework/claude/skills/sdd-reboot/SKILL.md:3|`allowed-tools` に `AskUserQuestion` がないが、実処理参照先 `refs/reboot.md` の Phase 5/9/10 でユーザー選択を必須化しており、分岐プロトコルが実行不能。
+H|protocol-consistency|framework/claude/skills/sdd-start/SKILL.md:3|`allowed-tools` に `AskUserQuestion` がないが、同ファイル:51で orphan pane削除前の確認を `AskUserQuestion` 必須としているため安全確認フローが不達。
+H|protocol-consistency|framework/claude/skills/sdd-handover/SKILL.md:3|`allowed-tools` に `AskUserQuestion` がないが、同ファイル:26で対話収集を必須化しており、手順定義と実行権限が矛盾。
+H|protocol-consistency|framework/claude/skills/sdd-steering/SKILL.md:3|`allowed-tools` に `AskUserQuestion` がないが、同ファイル:103-104で Engines設定に対話質問を必須化しており、設定フローが実行不能。
+H|protocol-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:3|`allowed-tools` に `AskUserQuestion` がないが、`refs/design.md`:18で再設計確認を `AskUserQuestion` 必須としており、phase gate確認分岐が実行不能。
+M|protocol-consistency|framework/claude/CLAUDE.md:39|Review SubAgent出力を「`WRITTEN:{path}` のみ」と規定している一方、`review-self` Inspectorテンプレートは `EXT_REVIEW_COMPLETE`/`AGENT`/`ISSUES` もstdout必須（例: `agent-2-consistency.md`:28-32）で出力契約が二重定義。
+M|numeric-consistency|framework/claude/skills/sdd-release/SKILL.md:134|Commands数検証で `sdd-review-self` を除外する規則だが、基準元 `CLAUDE.md` は `/sdd-review-self` を Commands(10) に含める（CLAUDE.md:146,153）。リリース時に件数照合が恒常的にズレる。
+L|terminology-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:2|同一コマンドで `implement`（説明文）と `impl`（実際のサブコマンド）を混在させており、用語の一貫性が低い（動作には直結しないが読解コストを上げる）。
+XREF_MATRIX:
+subagent-design-review|framework/claude/skills/sdd-reboot/refs/reboot.md:173-174|framework/claude/skills/sdd-review/SKILL.md:88-92|NG
+branch-naming|framework/claude/skills/sdd-reboot/SKILL.md:34|framework/claude/skills/sdd-reboot/refs/reboot.md:30-33|NG
+tool-skill-delegation|framework/claude/skills/sdd-roadmap/SKILL.md:3|framework/claude/skills/sdd-roadmap/SKILL.md:98|NG
+tool-interactive-question|framework/claude/skills/sdd-start/SKILL.md:3;framework/claude/skills/sdd-handover/SKILL.md:3;framework/claude/skills/sdd-steering/SKILL.md:3;framework/claude/skills/sdd-reboot/SKILL.md:3;framework/claude/skills/sdd-roadmap/SKILL.md:3|各参照先のAskUserQuestion手順|NG
+review-output-contract|framework/claude/CLAUDE.md:39|framework/claude/sdd/settings/templates/review-self/agent-2-consistency.md:28-32|NG
+command-count-source|framework/claude/CLAUDE.md:146-159|framework/claude/skills/sdd-release/SKILL.md:134|NG

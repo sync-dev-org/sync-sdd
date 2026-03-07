@@ -1,0 +1,6 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/refs/prep.md:23|レビュー対象FILE_LISTに`framework/claude/sdd/settings/scripts/*.sh`が含まれておらず、tmux統合で必須化された`multiview-grid.sh`の変更回帰を検知できない。`SKILL.md`側の同等スコープ定義(112-122行)も同じ欠落で、変更検知プロトコルが不完全。
+M|protocol-consistency|framework/claude/sdd/settings/rules/tmux-integration.md:115|One-Shot/Hold-and-Releaseのチャネル例が`B{seq}`なし(`sdd-{SID}-ext-1`/`sdd-{SID}-close`)のままで、`sdd-review-self-ext`の最新版仕様(`-B{seq}`必須)と不整合。並行バッチ時に旧例準拠で衝突リスクが残る。
+M|template-integrity|framework/claude/skills/sdd-review-self-ext/refs/auditor.md:65|Auditorレポート雛形が旧フォーマット（Pipeline行なし・旧列定義）のままで、`SKILL.md`の最新版提示テンプレート要件（Pipeline明記/更新済み列構成）と一致しない。agentパイプライン時に出力フォーマットが分岐する。
+L|protocol-clarity|framework/claude/skills/sdd-review-self-ext/SKILL.md:66|`$BATCH_SEQ`算出で`$SCOPE_DIR`を参照しているが、同ファイル内で`$SCOPE_DIR`の定義は後段(86行)に記載されている。実装者解釈に依存する手順順序の曖昧さがある。

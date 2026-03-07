@@ -1,0 +1,26 @@
+SCOPE:agent-4-compliance
+STATUS:
+agent-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+skill-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/slash-commands
+dispatch-existing-agent-definitions|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+general-purpose-built-in-agent|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+settings-permission-format|OK|https://docs.claude.com/en/docs/claude-code/settings
+settings-agent-skill-entry-match|OK|https://docs.claude.com/en/docs/claude-code/settings
+tool-availability-names|OK|https://docs.claude.com/en/docs/claude-code/settings
+agent-tool-parameter-subagent_type|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-tool-parameter-run_in_background|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-tool-parameter-model-override|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/sub-agents
+COMPLIANT:
+agent-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+skill-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/slash-commands
+dispatch-existing-agent-definitions|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+general-purpose-built-in-agent|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+settings-permission-format|OK|https://docs.claude.com/en/docs/claude-code/settings
+settings-agent-skill-entry-match|OK|https://docs.claude.com/en/docs/claude-code/settings
+tool-availability-names|OK|https://docs.claude.com/en/docs/claude-code/settings
+ISSUES:
+L|agent-tool-params|framework/claude/CLAUDE.md:5|Claude Code 公式 docs では Agent 起動引数名として `subagent_type` を確認できませんでした。SubAgent 概念と定義場所は確認できましたが、引数名自体は docs 未確証のため UNCERTAIN です。
+L|agent-tool-params|framework/claude/CLAUDE.md:84|Claude Code 公式 docs では Agent ツール引数として `run_in_background` を確認できませんでした。バックグラウンド実行の概念は確認できましたが、API パラメータ名は docs 未確証のため UNCERTAIN です。
+L|agent-tool-params|framework/claude/skills/sdd-review-self/SKILL.md:58|Claude Code 公式 docs では Agent ツール呼び出し時の `model` オーバーライド可否を確認できませんでした。`general-purpose` への `model="sonnet"` 指定は docs 未確証のため UNCERTAIN です。

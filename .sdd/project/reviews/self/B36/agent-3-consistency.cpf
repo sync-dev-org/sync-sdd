@@ -1,0 +1,16 @@
+SCOPE:agent-3-consistency
+TOTAL_FILES:78
+LANG:ja
+MATRIX:
+Router-Mode|framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/review.md|NG(review impl --cross-check例外漏れ)
+Phase-Model|framework/claude/CLAUDE.md|framework/claude/skills/sdd-roadmap/refs/{design,impl,run,review}.md|OK
+Verdict-Enum|framework/claude/sdd/settings/rules/cpf-format.md|framework/claude/agents/sdd-auditor-{design,impl,dead-code}.md|OK
+SubAgent-Names|framework/claude/settings.json|framework/claude/agents/*.md|OK(general-purposeは意図的除外)
+Template-Path|framework/claude/skills/sdd-steering/SKILL.md|framework/claude/sdd/settings/templates/steering/{tech,structure}.md|NG(表記曖昧)
+Migration-Docs|install.sh|framework/claude/skills/sdd-roadmap/refs/{impl}.md|NG(tasks.md/tasks.yaml不一致)
+ISSUES:
+H|protocol-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:70|`review impl --cross-check` が単一Spec enrollment例外に含まれておらず、同ファイル Step1 のモード定義および `refs/review.md` の仕様と矛盾している。
+H|unreachable-path|framework/claude/skills/sdd-roadmap/SKILL.md:72|roadmap未作成時の例外判定でも `review impl --cross-check` が漏れており、レビュー専用導線が誤って通常 enrollment フローへ流入する。
+M|terminology-consistency|install.sh:349|移行メッセージが `tasks.md` 再生成を案内しているが、現行実装は `tasks.yaml` を正とする（`refs/impl.md`, `sdd-taskgenerator.md`）。
+M|protocol-consistency|framework/claude/CLAUDE.md:316|グローバル規約は「ファイル操作で Bash(cat/sed等)を使わない」だが、`skills/sdd-review-self/SKILL.md:90` と `:282` は cat/sed 前提で手順を必須化しており規約が競合している。
+L|path-consistency|framework/claude/skills/sdd-steering/SKILL.md:82|`tech.md/structure.md` という単一路径表記で記述されており、実体の2ファイル (`tech.md` と `structure.md`) 参照として曖昧。

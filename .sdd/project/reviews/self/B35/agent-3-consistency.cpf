@@ -1,0 +1,15 @@
+SCOPE:agent-3-consistency
+MATRIX:
+topic|source_of_truth|cross_refs|status
+phase-enum(initialized/design-generated/implementation-complete/blocked)|framework/claude/CLAUDE.md:159|framework/claude/skills/sdd-roadmap/refs/design.md:19,framework/claude/skills/sdd-roadmap/refs/run.md:159,framework/claude/skills/sdd-status/SKILL.md:36|OK
+auditor-verdict(impl:GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED)|framework/claude/agents/sdd-auditor-impl.md:243|framework/claude/CLAUDE.md:24,framework/claude/skills/sdd-roadmap/refs/run.md:201|OK
+inspector-error-verdict(ERROR)|framework/claude/skills/sdd-roadmap/refs/review.md:130|framework/claude/agents/sdd-inspector-impl-rulebase.md:124,framework/claude/agents/sdd-inspector-impl-rulebase.md:156|PARTIAL
+self-review-tool-contract|framework/claude/skills/sdd-review-self/SKILL.md:4|framework/claude/skills/sdd-review-self/SKILL.md:183,framework/claude/skills/sdd-review-self/SKILL.md:250,framework/claude/skills/sdd-review-self/SKILL.md:293,framework/claude/skills/sdd-review-self/SKILL.md:333,framework/claude/skills/sdd-review-self/SKILL.md:385|NG
+self-review-scope|framework/claude/skills/sdd-review-self/SKILL.md:113|framework/claude/skills/sdd-roadmap/refs/run.md:1,framework/claude/skills/sdd-roadmap/refs/review.md:1,framework/claude/skills/sdd-reboot/refs/reboot.md:1|NG
+compliance-template-section-name|framework/claude/sdd/settings/templates/review-self/agent-4-compliance.md:40|framework/claude/sdd/settings/templates/review-self/agent-4-compliance.md:43|NG
+ISSUES:
+H|tooling-contract|framework/claude/skills/sdd-review-self/SKILL.md:4|allowed-toolsにAgentが無い一方で同ファイル183/250/293/333/385行でAgent(...)実行を必須化しており、agent/subagents経路が仕様上到達不能。
+M|scope-gap|framework/claude/skills/sdd-review-self/SKILL.md:113|Review ScopeがskillsのSKILL.mdのみを対象にしており、skills配下refs/*.md（run/review/reboot等）を収集しないため、主要プロトコルの整合性検査が欠落する。
+M|cpf-section-name-conflict|framework/claude/sdd/settings/templates/review-self/agent-4-compliance.md:40|同一テンプレート内で`COMPLIANCE_TABLE`指定と`COMPLIANT`指定（43-45行）が競合し、キャッシュ抽出セクション名が一意に定まらない。
+M|verdict-enum-drift|framework/claude/agents/sdd-inspector-impl-rulebase.md:124|出力フォーマットでVERDICTを{GO|CONDITIONAL|NO-GO}に限定しつつ、エラーハンドリング例（156行）でVERDICT:ERRORを要求しており判定値契約が同一ファイル内で不一致。
+L|doc-duplication|framework/claude/CLAUDE.md:240|`**Manual polish** (`/sdd-handover`)`見出しが重複しており、手順参照の一貫性を下げる。

@@ -1,0 +1,7 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:251|Wave QGの`SPEC-UPDATE-NEEDED`分岐で`spec_update_count`上限(2)とaggregate cap(6)の判定が明示されておらず、再実行ループが上限なしで継続し得るため、CLAUDE.mdのカウンタ制約と不整合。
+M|verdict-persistence|framework/claude/skills/sdd-roadmap/SKILL.md:114|Verdictヘッダー定義にCross-Cutting専用形式`[CC-B{seq}]`がなく、`sdd-review` Step8の永続化仕様と一致しないため、レビュー種別間でフォーマット互換性が崩れる。
+M|edge-case|framework/claude/skills/sdd-roadmap/refs/run.md:240|Wave完了条件で`blocked`除外は定義されているが、対象specが0件(全specがblocked)の場合にCross-check/Dead-codeを明示スキップしてPost-gateへ進む分岐がなく、空スコープ実行の挙動が未定義。
+L|reference-clarity|framework/claude/skills/sdd-roadmap/SKILL.md:117|Cross-cutting verdict persistenceの参照先が`revise.md Part B Step 8`になっているが、実際の永続化はPart B Step 9に記載されており、Router→refs読解時に誤誘導を生む。
+L|router-dispatch-clarity|framework/claude/skills/sdd-roadmap/SKILL.md:37|`-y`を「roadmap有=run / 無=create」と定義する一方、Auto-Detect Step2は「Run/Update/Delete提示」とだけ記述され、`-y`時に選択提示を省略する明示規定がなくRouter分岐の可読性が低い。

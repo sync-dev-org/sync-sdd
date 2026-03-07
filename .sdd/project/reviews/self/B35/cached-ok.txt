@@ -1,0 +1,8 @@
+agent-frontmatter-fields: OK (cached from B34)
+agent-model-values: OK (cached from B34)
+agent-tool-dispatch-patterns: OK (cached from B34)
+skills-frontmatter-description-allowed-tools-argument-hint: OK (cached from B34)
+settings-permission-format: OK (cached from B34)
+settings-agent-skill-entry-match: OK (cached from B34)
+tool-availability-names: OK (cached from B34)
+agent-tool-parameters-subagent_type: OK (cached from B34)

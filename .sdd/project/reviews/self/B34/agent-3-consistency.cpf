@@ -1,0 +1,31 @@
+SCOPE:agent-3-consistency
+ISSUES:
+L|ValueConsistency|framework/claude/CLAUDE.md|`/sdd-roadmap` の簡易コマンド一覧では `update` と `delete` が未表示のため、実体実装（`framework/claude/skills/sdd-roadmap/SKILL.md`）に含まれる `update|delete` サブコマンド仕様と対照的で、公開インターフェース表現と実装仕様の整合性が一部崩れます。
+
+CROSS_REFERENCE_MATRIX:
+framework/claude/CLAUDE.md|framework/claude/skills/sdd-roadmap/SKILL.md|OK|`/sdd-roadmap` 受け口→実行 SKILL
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/crud.md|OK|`update|delete` の処理参照先
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/design.md|OK|`design` サブコマンド参照先
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/impl.md|OK|`impl` サブコマンド参照先
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/run.md|OK|`run` サブコマンド参照先
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/review.md|OK|`review` サブコマンド参照先
+framework/claude/skills/sdd-roadmap/SKILL.md|framework/claude/skills/sdd-roadmap/refs/revise.md|OK|`revise` サブコマンド参照先
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-analyst.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-architect.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-auditor-design.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-auditor-impl.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-auditor-dead-code.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-inspector-impl-consistency.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-inspector-dead-settings.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-builder.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-taskgenerator.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/agents/sdd-conventions-scanner.md|OK|agent参照
+framework/claude/CLAUDE.md|framework/claude/skills/sdd-review-self-ext/SKILL.md|OK|skill参照
+framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/agent-1-flow.md|OK|実行参照先
+framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/agent-2-changes.md|OK|実行参照先
+framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/agent-3-consistency.md|OK|実行参照先
+framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/agent-4-compliance.md|OK|実行参照先
+framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/auditor.md|OK|実行参照先
+framework/claude/CLAUDE.md|framework/claude/skills/sdd-review-self/SKILL.md|OK|skill参照
+framework/claude/skills/sdd-review-self/SKILL.md|framework/claude/skills/sdd-review-self-ext/SKILL.md|OK|委任参照
+framework/claude/skills/sdd-review-self-ext/refs/agent-3-consistency.md|.sdd/project/reviews/self-ext/active/agent-3-consistency.cpf|OK|成果物参照

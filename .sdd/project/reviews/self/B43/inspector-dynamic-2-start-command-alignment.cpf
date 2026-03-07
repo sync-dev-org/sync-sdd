@@ -1,0 +1,5 @@
+SCOPE:inspector-dynamic-2-start-command-alignment
+AGENT:inspector-dynamic-2
+ISSUES:
+M|start-flow|framework/claude/skills/sdd-start/SKILL.md:3|allowed-toolsにAskUserQuestionが含まれていない一方でStep 7cはAskUserQuestionツール使用を必須化しており、tmux orphan検出時の確認フローが仕様上実行不能になっている。
+L|argument-hint|framework/claude/skills/sdd-steering/SKILL.md:4|argument-hintが[-y] [custom]のみでStep 1の"engines"モードが露出しておらず、コマンドヘルプと実装モード定義が不一致。

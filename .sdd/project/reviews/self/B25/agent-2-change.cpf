@@ -1,0 +1,8 @@
+SCOPE:agent-2-change
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-roadmap/refs/review.md:38|`sdd-inspector-e2e` の起動条件が `steering/tech.md` の `# E2E` 定義の有無だけに縮退しており、設計書側の per-spec E2E コマンドを見ていません。新 inspector は design.md を primary source にしているため、design.md のみに E2E を書く spec では inspector 自体が起動されず、E2E が黙って未実行になります。
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:119|fallback mode を定義しているのに Step 4 で無条件に `tmux display-message` と `tmux list-panes` を実行しています。`$TMUX` 未設定環境では Step 5 の fallback 分岐に到達する前に失敗し、外部 self-review 全体を開始できません。
+H|protocol-completeness|framework/claude/skills/sdd-roadmap/refs/revise.md:255|cross-cutting consistency review を wave-scoped cross-check で流用するようにした一方で、`refs/review.md` には cross-cutting 用の起動引数、`{id}` の受け渡し、`ALL affected specs` だけに絞る規則がありません。保存先パスだけ `.cross-cutting/{id}` に増えており、実行プロトコルの移設が完了していません。
+M|protocol-completeness|framework/claude/agents/sdd-inspector-e2e.md:25|新しい E2E inspector は single-spec / cross-check しか入力契約を定義しておらず、`refs/review.md` が要求する wave-scoped impl review の受け口がありません。出力例には `wave-1..{N}` があるのに、wave 番号の受け取り方と対象 spec の絞り込み手順が欠落しています。
+L|dangling-reference|framework/claude/skills/sdd-review-self-ext/SKILL.md:329|Pane Cleanup は `tmux list-panes -a -F '#{pane_id} #{pane_current_command}'` の出力から `sdd-ext-review-` タイトルの pane を探す手順ですが、`pane_current_command` には pane title が含まれません。参照する出力形式と探している情報が一致していません。
+L|template-integrity|framework/claude/skills/sdd-review-self-ext/SKILL.md:76|CPF 共通定義では issue 先頭列を `C/H/M/L` の severity と固定している一方、Agent 4 には `UNCERTAIN|...` をそのまま `ISSUES` に書くよう追加されています。同じ skill 内で CPF スキーマが二重化しており、集約処理の実装によっては非準拠レコードとして扱われます。

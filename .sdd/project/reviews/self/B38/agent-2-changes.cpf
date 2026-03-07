@@ -1,0 +1,8 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-reboot/SKILL.md:3|allowed-tools から AskUserQuestion を削除した一方で、再起動フロー本体は AskUserQuestion 前提の分岐を必須化しており（refs/reboot.md:66,69,276,286）、非 `-y` 実行で対話分岐が実行不能になる。
+H|protocol-completeness|framework/claude/skills/sdd-steering/SKILL.md:3|allowed-tools から AskUserQuestion を削除したが、engines モードは AskUserQuestion を明示必須にしている（sdd-steering/SKILL.md:103-104）。許可設定と手順が不整合で設定更新フローが詰まる。
+H|safety-orphan-cleanup|framework/claude/skills/sdd-resume/SKILL.md:51|Orphan 判定を「現在 SID と不一致」で定義しており、他の稼働中セッション pane まで孤児候補に含める。tmux-integration 既定（sdd-{SID}-lead の実在確認で判定、rules/tmux-integration.md:206-207）と矛盾し、誤 kill 誘発リスクがある。
+H|dispatch-quoting|framework/claude/skills/sdd-review-self/SKILL.md:154|claude エンジンコマンドに `jq -rj '...'` の単引用符を導入したが、tmux dispatch テンプレートは全体を単引用符で包む前提（同ファイル:91,197,280）。そのまま埋め込むとクォート破綻し、send-keys 実行が失敗しうる。
+M|rule-consistency|framework/claude/sdd/settings/rules/tmux-integration.md:198|Fallback 手順が `2>/dev/null` 使用を推奨しているが、共通規約はリダイレクト回避を明示（CLAUDE.md:309）。同一フレームワーク内で Bash ヒューリスティクス回避方針が衝突している。
+L|dependency-check|framework/claude/skills/sdd-review-self/SKILL.md:157|`jq` 必須化を追記したが、Step 0 の可用性チェックは `claude --version` のみで `jq` 未検証。事前検出できず実行時失敗→フォールバックに流れるため、運用上の診断性が低下している。

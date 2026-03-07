@@ -1,0 +1,16 @@
+SCOPE:agent-4-compliance
+ISSUES:
+H|frontmatter-syntax|framework/claude/skills/sdd-roadmap/SKILL.md|argument-hintの値に YAML の特殊文字（'[' や '|'）が含まれていますが、引用符で囲まれていません。これにより YAML パースエラーが発生する可能性があります。
+H|frontmatter-syntax|framework/claude/skills/sdd-reboot/SKILL.md|argument-hintの値に YAML の特殊文字（'['）が含まれていますが、引用符で囲まれていません。
+H|frontmatter-syntax|framework/claude/skills/sdd-release/SKILL.md|argument-hintの値に YAML の特殊文字（'[' や '|'）が含まれていますが、引用符で囲まれていません。
+H|frontmatter-syntax|framework/claude/skills/sdd-status/SKILL.md|argument-hintの値に YAML の特殊文字（'['）が含まれていますが、引用符で囲まれていません。
+H|frontmatter-syntax|framework/claude/skills/sdd-steering/SKILL.md|argument-hintの値に YAML の特殊文字（'['）が含まれていますが、引用符で囲まれていません。
+M|frontmatter-syntax|framework/claude/agents/sdd-*.md|tools リストが YAML のリスト形式（[Tool1, Tool2]）ではなく、カンマ区切りの文字列として記述されています。プラットフォームの仕様ではリスト形式が期待されています。
+M|frontmatter-syntax|framework/claude/skills/sdd-*/SKILL.md|allowed-tools リストが YAML のリスト形式ではなく、文字列として記述されています。
+L|platform-spec-deviation|framework/claude/agents/sdd-*.md|YAML frontmatter に非推奨または未ドキュメントのフィールド "background: true" が含まれています。Claude Code の公式仕様には存在しません。
+UNCERTAIN|tool-availability|framework/claude/skills/sdd-steering/SKILL.md|allowed-tools に "Skill" という名前のツールが含まれていますが、Claude Code の標準ツールセットに含まれているか不明です。
+OK|agent-frontmatter|framework/claude/agents/sdd-*.md|name, description, model フィールドの存在を確認。
+OK|skill-frontmatter|framework/claude/skills/sdd-*/SKILL.md|description フィールドの存在を確認。
+OK|dispatch|framework/claude/CLAUDE.md|Agent() ツールにおける subagent_type と run_in_background パラメータの使用が公式仕様に準拠しています。
+OK|settings-permission-format|framework/claude/settings.json|Skill() および Agent() の権限設定フォーマットが正しいことを確認。
+OK|settings-skill-agent-parity|framework/claude/settings.json|settings.json の権限リストと実際のファイル構成が完全に一致していることを確認。

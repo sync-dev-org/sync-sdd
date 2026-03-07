@@ -1,0 +1,6 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:204|Impl ReviewでSPEC-UPDATE-NEEDED時のカスケードが「Architect→TaskGenerator→Builder→Impl Review」となっており、同ファイルで必須化しているDesign Review（run.md:94）を通らない分岐が存在します。Wave QG側の同系分岐（run.md:249）も同様で、CLAUDE.mdの運用方針と不整合です。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/run.md:160|RunのReadiness RulesではDesign Review遷移をphase=design-generatedに限定していますが、review.mdはDesign Reviewをimplementation-completeでも許可（review.md:22）しています。結果として「RunではDesign/Impl Review必須」（run.md:94）という宣言と、既存実装完了spec再投入時の実動線が一致しません。
+M|revise-routing|framework/claude/skills/sdd-roadmap/SKILL.md:32|Revise Detect Modeが「先頭語がspec名なら常にSingle-Spec」に固定され、Cross-Cuttingへの昇格条件が依存グラフ起点（revise.md:42）に寄っています。依存関係に現れない横断変更は、先頭語がspec名だとCross-Cuttingへ到達しにくいルーティング欠陥があります。
+L|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:44|Auto-Detectの提示オプションが「Run / Update / Reset」ですが、同ファイルの正式サブコマンドはdelete表記（SKILL.md:36）です。Router表示語と実サブコマンド名がずれており、運用時の入力誘導が曖昧です。

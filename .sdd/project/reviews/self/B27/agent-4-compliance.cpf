@@ -1,0 +1,4 @@
+SCOPE:agent-4-compliance
+ISSUES:
+L|docs-coverage|framework/claude/skills/sdd-reboot/SKILL.md:4|`argument-hint` は公式ドキュメントに存在するが、値の厳密な文法仕様は確認できず、各 skill の書式妥当性を断定できないため UNCERTAIN
+L|docs-coverage|framework/claude/CLAUDE.md:84|SubAgent 結果取得手段としての `TaskOutput` は公式ドキュメントで確認できず、現行 Claude Code 仕様上の正式な用語・機能か判定できないため UNCERTAIN

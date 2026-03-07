@@ -1,0 +1,14 @@
+SCOPE:agent-3-consistency
+LANG:ja
+ISSUE_COUNT:4
+MATRIX:
+framework/claude/CLAUDE.md:146|framework/claude/skills/sdd-*/SKILL.md|OK: user command count is 7 when excluding internal `sdd-review-self` and `sdd-review-self-ext`
+framework/claude/settings.json:6-14|framework/claude/skills/sdd-review-self-ext/SKILL.md:1-3|NG: `Skill(sdd-review-self-ext)` permission is missing although the skill is shipped
+framework/claude/skills/sdd-roadmap/SKILL.md:21-28|framework/claude/skills/sdd-roadmap/refs/review.md:5-14|NG: router accepts feature-less `--cross-check` / `--wave`, but review ref still requires `{feature}` and misclassifies the flags as review type
+framework/claude/skills/sdd-roadmap/refs/review.md:75-79,133-138|framework/claude/skills/sdd-roadmap/refs/revise.md:251-259|NG: cross-cutting verdict destination exists, but review execution flow has no matching cross-cutting scope route
+framework/claude/skills/sdd-reboot/refs/reboot.md:159-180|framework/claude/skills/sdd-reboot/refs/reboot.md:192-194|NG: skipped-spec handling and phase completion condition disagree
+ISSUES:
+H|undefined-reference|framework/claude/settings.json:6|`sdd-review-self-ext` has a shipped skill definition, but `settings.json` does not grant `Skill(sdd-review-self-ext)`. After install, the skill is present under `.claude/skills/` yet blocked by permissions, so the external self-review entrypoint is unreachable.
+H|protocol-inconsistency|framework/claude/skills/sdd-roadmap/refs/review.md:5|The canonical review ref still declares `review design|impl {feature}` as the trigger and parser contract, while the router explicitly supports `review design --cross-check`, `review impl --cross-check`, `review design --wave N`, and `review impl --wave N` without a feature operand. This leaves the router→ref handoff ambiguous and makes the feature-less review modes internally inconsistent.
+M|unreachable-path|framework/claude/skills/sdd-roadmap/refs/review.md:137|`review.md` documents a cross-cutting verdict path at `specs/.cross-cutting/{id}/verdicts.md`, and `refs/revise.md` Step 8 says to persist there, but the review execution flow never defines a cross-cutting scope directory or invocation path. The destination exists only as documentation, so cross-cutting review archival is underspecified.
+M|protocol-inconsistency|framework/claude/skills/sdd-reboot/refs/reboot.md:194|Phase 7 allows `skip` on design-review exhaustion and explicitly excludes skipped specs from the wave EXIT condition, but the later Completion Condition still requires all specs to have `design-generated` plus GO/CONDITIONAL verdicts. Those two rules cannot both be true, so the skip branch has no consistent completion criterion.

@@ -1,0 +1,2 @@
+C:0 H:5 M:5 L:5 | FP:3 eliminated
+Files: framework/claude/sdd/settings/templates/review-self/briefer.md,install.sh,framework/claude/settings.json,framework/claude/skills/sdd-start/SKILL.md,framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/skills/sdd-roadmap/SKILL.md,framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-roadmap/refs/revise.md,framework/claude/skills/sdd-steering/SKILL.md,README.md

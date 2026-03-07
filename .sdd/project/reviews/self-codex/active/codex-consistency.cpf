@@ -1,0 +1,12 @@
+SCOPE:self-codex-consistency
+REVIEWER:codex
+LANG:ja
+ISSUES:
+H|path-inconsistency|framework/claude/skills/sdd-roadmap/SKILL.md:116|Consensus Mode が review scope を `specs/{feature}/reviews/active-{p}/` に固定しており、`refs/review.md` の project-level scope 規約（dead-code/cross-check/wave は `{{SDD_DIR}}/project/reviews/...`）と矛盾しています。`review dead-code`・`--cross-check`・`--wave` では `{feature}` が未定義になり、到達不能パスになります。
+H|undefined-ref|framework/claude/skills/sdd-roadmap/refs/revise.md:71|同じ `framework/claude/skills/sdd-roadmap/refs/` 配下から `refs/design.md`・`refs/review.md`・`refs/impl.md` を参照しており、相対解決すると `refs/refs/...` になります。兄弟 ref 参照の書式が壊れており、実在ファイルに到達できません。
+M|undefined-ref|framework/claude/skills/sdd-reboot/refs/reboot.md:120|`sdd-reboot/refs/reboot.md` が `refs/run.md` を参照していますが、このディレクトリ配下に対応ファイルはありません。`sdd-roadmap` 側 ref を指すなら明示的な別パスが必要です。
+H|protocol-inconsistency|framework/claude/skills/sdd-reboot/refs/reboot.md:270|Phase 9 の Next Steps は Accept 後に「main へ merge して `/sdd-roadmap run`」と案内していますが、Phase 10 は `DO NOT merge to main` を明記しています。Accept 後の遷移先が二重定義で、reboot の終端プロトコルが矛盾しています。
+H|numeric-inconsistency|framework/claude/skills/sdd-release/SKILL.md:134|コマンド数検証で除外している内部 skill が `sdd-review-self` だけです。しかし skill 実体は 9 個あり、そのうち内部用は `sdd-review-self` と `sdd-review-self-codex` の 2 個です。現行ロジックでは `framework/claude/CLAUDE.md` の `### Commands (7)` と恒常的に 1 件ずれます。
+H|undefined-ref|framework/claude/settings.json:5|`framework/claude/skills/sdd-review-self-codex/SKILL.md` は存在するのに、`settings.json` の `permissions.allow` に `Skill(sdd-review-self-codex)` がありません。既定設定のままではこの skill を起動できず、定義と許可設定が分離しています。
+M|protocol-inconsistency|framework/claude/skills/sdd-roadmap/refs/review.md:5|Router は `review design --cross-check` / `review impl --wave N` を正式モードとして受け付けますが、`refs/review.md` の Triggered by と Usage は `review design|impl {feature}` または `review dead-code` しか案内していません。feature なし review の呼び出し契約がファイル間で一致していません。
+L|path-inconsistency|install.sh:346|インストーラ移行メッセージは `tasks.md` が次回 impl で再生成されると案内していますが、現行フレームワークは `tasks.yaml` を正規成果物として扱います。移行メッセージだけが旧ファイル名のまま残っています。

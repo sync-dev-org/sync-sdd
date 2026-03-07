@@ -1,0 +1,15 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-03
+LANG:ja
+STATUS:
+Item|Status (OK/NG/UNCERTAIN)|Source URL
+agent-frontmatter|OK (cached)|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+skill-frontmatter|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+dispatch|OK (cached)|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+settings-permission-format|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permissions
+settings-skill-agent-parity|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permissions
+tool-availability|NG|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+argument-hint-format|UNCERTAIN|https://docs.anthropic.com/en/docs/claude-code/skills
+ISSUES:
+M|tool-availability|framework/claude/agents/sdd-inspector-test.md:17|`framework/claude/agents/sdd-inspector-test.md:5` の `tools` は `Read, Glob, Grep, Write, Bash` ですが、本文は「Use Read/Write/Edit/Glob/Grep for file operations」と `Edit` 使用を明示しています。公式仕様では subagent が使えるツールは frontmatter `tools` で定義されるため、この指示は実際の利用可能ツールと不一致です。Contradiction: https://docs.anthropic.com/en/docs/claude-code/sub-agents
+L|skill-frontmatter|framework/claude/skills/sdd-roadmap/SKILL.md:4|UNCERTAIN|`argument-hint` 自体は公式 skills frontmatter に存在しますが、`design <feature> | impl <feature> [tasks] | ...` のような複合 BNF 風文字列まで公式に許容されるかは docs で明示確認できませんでした。文字列 frontmatter としては自然ですが、形式仕様は曖昧です。Source: https://docs.anthropic.com/en/docs/claude-code/skills

@@ -1,0 +1,15 @@
+SCOPE:agent-4-compliance
+COMPLIANT:
+agent-frontmatter-model|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+agent-frontmatter-tools|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tools-available-to-claude
+agent-frontmatter-description|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+skills-frontmatter-description-and-allowed-tools|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-argument-hint-format|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+dispatch-subagent-type-to-existing-agents|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+settings-permission-format-skill-agent|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tool-specific-permission-rules
+settings-skill-agent-entries-vs-files|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tool-specific-permission-rules
+agent-tool-availability-vs-declared-tools|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tools-available-to-claude
+ISSUES:
+UNCERTAIN|agent-tool-params|framework/claude/CLAUDE.md:32|公式公開ドキュメントでAgentツール呼び出し時のパラメータ名（subagent_type/model/run_in_background）を明示した仕様を確認できず、`subagent_type`記法の準拠性を断定できない。
+UNCERTAIN|agent-frontmatter-extra-key|framework/claude/agents/sdd-analyst.md:7|SubAgent frontmatterの`background`キーについて、確認できた公式仕様ページに明示的な定義がなく受理可否を断定できない（全sdd-* agentで同様）。
+L|dispatch-traceability|framework/claude/skills/sdd-roadmap/refs/review.md:88|`Agent(subagent_type=...)`の省略記法が残っており、静的な整合性検証（実在agentとの1対1照合）を機械的に行いにくい。

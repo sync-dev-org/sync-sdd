@@ -1,0 +1,7 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:70|Routerの単一Spec enrollment例外が不完全です。`review impl --cross-check` と `review design --wave N` が例外に含まれず、feature不要モードなのに `specs/{feature}/spec.yaml` 読み取り経路へ誤進入するため、refs/review.mdのスコープ定義と衝突します。
+M|phase-gate|framework/claude/skills/sdd-roadmap/SKILL.md:72|No-roadmap時のBLOCK対象も不完全で、`review impl --cross-check` と `review design --wave N` が未列挙です。review.mdでは両方ともfeatureなしの正規モードとして定義されており、Router段でのガード一貫性が崩れています。
+M|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:249|Wave QG cross-check の `SPEC-UPDATE-NEEDED` 分岐に、CLAUDE.mdの上限規約（`spec_update_count` max2 / aggregate cap6）到達時エスカレーション手順が明記されていません。NO-GO分岐には上限記述があるため、同一ループ内で終端条件が非対称です。
+L|read-clarity|framework/claude/skills/sdd-roadmap/SKILL.md:44|Auto-detectの選択肢が `Run / Update / Reset` ですが、Detect Mode定義は `delete` です。`Reset` が `delete` へどうマップされるか未明示で、Routerがどのref（crud delete）を読むかの可読性が下がっています。
+L|revise-mode|framework/claude/skills/sdd-roadmap/SKILL.md:32|ReviseのDetect Modeが「先頭語のspec名一致」でのみSingle/Cross-Cuttingを判定しており、明示オーバーライド（例: `--cross-cutting`）がありません。先頭語衝突時に意図しないSingle-Specルートへ入る余地があり、refs/revise.mdのモード間エスカレーション開始点がユーザー意図に依存して不安定です。

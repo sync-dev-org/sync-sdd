@@ -1,0 +1,16 @@
+SCOPE:agent-3-consistency
+MATRIX:
+framework/claude/agents/sdd-builder.md|framework/claude/sdd/settings/rules/tasks-generation.md|MISMATCH|tasks.yaml の実行セクション名が不一致
+framework/claude/skills/sdd-roadmap/refs/review.md|framework/claude/skills/sdd-roadmap/refs/revise.md|MISMATCH|cross-cutting review の verdict 保存先が不一致
+framework/claude/skills/sdd-roadmap/refs/review.md|framework/claude/skills/sdd-roadmap/SKILL.md|MISMATCH|cross-cutting verdict の説明先が不一致
+framework/claude/skills/sdd-publish-setup/SKILL.md|framework/claude/sdd/settings/templates/steering/tech.md|PARTIAL|Python publish 手順が uv 前提に寄りすぎて package manager 分岐と整合しない
+framework/claude/CLAUDE.md|framework/claude/settings.json|MISMATCH|必須 Bash コマンド方針と許可リストが一致しない
+framework/claude/skills/sdd-roadmap/refs/run.md|framework/claude/skills/sdd-roadmap/refs/review.md|CYCLE|相互参照で読解順が循環する
+ISSUES:
+H|schema|framework/claude/agents/sdd-builder.md:31|Builder は tasks.yaml の `execution_plan` セクションを読む前提だが、TaskGenerator 規約と impl 実行フローは `execution` セクションしか定義していないため、Builder が自分の group を解決できない。
+H|path|framework/claude/skills/sdd-roadmap/refs/review.md:84|cross-cutting review の scope は `specs/.cross-cutting/{id}/reviews/` と定義されている一方、verdict 保存先は `specs/.cross-cutting/{id}/verdicts.md` と別階層で説明され、revise.md も後者を前提にしているため、review 実行結果の読取先が分岐する。
+M|protocol|framework/claude/skills/sdd-publish-setup/SKILL.md:205|Python publish は Step 2 で `uv`/`poetry`/`pip` を分岐しているのに、Step 4 は `[dependency-groups] dev` への追記と `uv sync` を常に要求しており、poetry/pip 系 pyproject では手順が到達不能になる。
+M|protocol|framework/claude/skills/sdd-publish-setup/SKILL.md:49|TypeScript publish を `npm provenance (OIDC)` と説明しているが、生成 workflow とセットアップ手順は `NPM_TOKEN` secret を必須にしており、認証方式の説明が二重化している。
+M|permissions|framework/claude/settings.json:43|CLAUDE.md は全タイムスタンプを `date` コマンドで取得することを必須化し、release/publish は `uv` `cargo` `python` 実行を前提にしているが、settings.json の Bash allowlist にはそれらが含まれず、定義どおりの運用で都度承認/失敗が発生する。
+L|protocol|framework/claude/skills/sdd-roadmap/refs/review.md:132|Inspector 障害時は `VERDICT:ERROR` を読む前提だが、CPF ルールにはその verdict 値が定義されておらず、明示的にこの形式を教えている inspector も `sdd-inspector-impl-rulebase` だけなので、失敗表現が全 inspector で統一されていない。
+L|circular-ref|framework/claude/skills/sdd-roadmap/refs/run.md:135|run.md は review.md の手順を実行単位として参照し、review.md は Wave QG の保存先・分岐を run.md に委譲しているため、単独読解で完結しない相互参照ループがある。

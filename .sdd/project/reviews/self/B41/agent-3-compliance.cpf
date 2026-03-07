@@ -1,0 +1,16 @@
+SCOPE:agent-3-compliance
+COMPLIANT:
+agent-frontmatter-model(cached)|OK|https://code.claude.com/docs/en/sub-agents
+agent-frontmatter-tools(cached)|OK|https://code.claude.com/docs/en/sub-agents
+agent-frontmatter-description(cached)|OK|https://code.claude.com/docs/en/sub-agents
+skills-frontmatter-description|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-allowed-tools|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-argument-hint|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+agent-tool-subagent-type-general-purpose|OK|https://docs.anthropic.com/en/docs/claude-code/sdk
+agent-tool-params-model-run_in_background|OK|https://docs.anthropic.com/en/docs/claude-code/sdk
+settings-permission-format|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permission-settings
+settings-skill-permission-syntax|OK|https://docs.anthropic.com/en/docs/claude-code/skills#restrict-claudes-skill-access
+settings-agent-skill-entries-match-files|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permission-settings
+ISSUES:
+H|agent-tool-params|framework/claude/skills/sdd-review-self/SKILL.md:194|NG: Agentツールのdescriptionは必須仕様だが、複数のdispatch例（194,197,284,313,333行）で未指定。公式スキーマに反するため実行時のパラメータ不足リスクがある。
+L|agent-tool-params|framework/claude/CLAUDE.md:32|NG: Agent(subagent_type="sdd-architect", prompt="...")の例がdescription必須仕様を満たしておらず、実装例として誤誘導の可能性がある。

@@ -1,0 +1,6 @@
+SCOPE:agent-dynamic-3-script-command-alignment
+ISSUES:
+H|permission-drift|install.sh:498|`--update` 実行時に既存 `.claude/settings.json` を常に保持するため、新規追加された `Bash(bash .sdd/settings/scripts/*)` などの許可ルールが既存ユーザー環境へ反映されず、`bash .sdd/settings/scripts/*.sh` 呼び出しが承認待ち/失敗に変わる。
+M|stale-cleanup|install.sh:568|更新時の stale 削除が `*.sh` のみで、同ディレクトリの非 `.sh` スクリプト（例: `claude-stream-progress.jq`）を追跡しない。将来の改名/廃止時に旧ファイルが残留し、実行経路の実体とドキュメントが乖離する。
+L|review-coverage|framework/claude/sdd/settings/templates/review-self/prep.md:32|self-review 用の対象収集が `framework/claude/sdd/settings/scripts/*.sh` 固定のため、スクリプト連携で実行される `.jq` 等の補助スクリプトは点検対象外になり、参照不整合の早期検知が漏れる。
+L|path-style-mix|framework/claude/sdd/settings/rules/tmux-integration.md:87|呼び出し例が `bash {{SDD_DIR}}/settings/scripts/...`、許可パターンが `Bash(bash .sdd/settings/scripts/*)` と表記体系で分離している。`{{SDD_DIR}}` 展開が抜ける運用では許可パターン不一致を誘発しやすい。

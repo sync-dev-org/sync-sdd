@@ -1,0 +1,4 @@
+SCOPE:agent-dynamic-2-resume-skill-permission
+RESULT:ISSUES_FOUND
+ISSUES:
+L|migration-clarity|framework/claude/skills/sdd-roadmap/refs/run.md:163|`resume` という語が複数箇所で使われるが、セッション再開時の起点が `/sdd-start` である明示が refs 側にないため、運用者が `/sdd-roadmap run` 直接実行で初期化手順（tmux/state 復元）を迂回する解釈余地が残る。

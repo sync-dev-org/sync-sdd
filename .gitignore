@@ -12,8 +12,8 @@
 # Claude Code (install target is .claude/, source is framework/)
 .claude/
 
-# SDD project data (install target is .sdd/, source is framework/claude/sdd/)
-.sdd/
+# SDD project data (install target — tracked in dev repo)
+# .sdd/ is NOT ignored: this is the framework dev repo, session/project data is part of the source
 
 # Local-only directories
 docs/

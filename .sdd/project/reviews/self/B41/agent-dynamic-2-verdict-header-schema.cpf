@@ -1,0 +1,10 @@
+SCOPE:agent-dynamic-2-verdict-header-schema
+REVIEW_KIND:verdict-header-schema
+STATUS:ISSUES_FOUND
+ISSUE_COUNT:5
+ISSUES:
+H|schema-consistency|framework/claude/skills/sdd-review-self/SKILL.md:347; .sdd/project/reviews/self/verdicts.md:171|self-review の書き込み仕様が `self | ... | v{version} | fixed:{N} dynamic:{N}` のままですが、実データ最新バッチは `prep/insp/aud | agents:6/6 (fixed:3, dynamic:3)` 形式で、同一パーサでの解釈が衝突します。
+H|schema-consistency|framework/claude/skills/sdd-review/SKILL.md:421; framework/claude/skills/sdd-roadmap/SKILL.md:114|`sdd-review` と `sdd-roadmap` は旧来の `review-type | ISO-8601 | v... | fixed/conditional/dynamic` ヘッダー例を維持しており、self-review 側の新しい `agents/fixed/dynamic` 系メタデータ文法と統一されていません。
+M|parser-compatibility|framework/claude/skills/sdd-review-self/SKILL.md:343|永続化手順に「既存 verdicts.md の複数ヘッダー世代（例: `full`, `self`, engine-only, agents付き）をどう読むか」の互換パース規則がなく、B{seq} 以外のメタ抽出を追加した場合に破綻しやすい状態です。
+M|count-contract|framework/claude/skills/sdd-review-self/SKILL.md:347; framework/claude/CLAUDE.md:27|self-review は固定 Inspector が仕様上 3 件なのに、ヘッダー例が `fixed:{N}` 可変として定義されており、`fixed:3 dynamic:N` 契約とずれます。集計時に固定件数の検証不能・二重表現を招きます。
+L|path-hygiene|framework/claude/skills/sdd-review/SKILL.md|調査指示で参照された `framework/claude/skills/sdd-review.md` は実体がなく、正は `framework/claude/skills/sdd-review/SKILL.md` です。自動化スクリプトが旧パスを使うとレビュー対象の取りこぼしが発生します。

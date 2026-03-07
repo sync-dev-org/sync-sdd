@@ -1,0 +1,52 @@
+scope: "inspector-compliance"
+issues: []
+compliance:
+  - target: "agent-frontmatter-model"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+  - target: "agent-frontmatter-tools"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+  - target: "agent-frontmatter-description"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+  - target: "skill-frontmatter-description"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/skills"
+  - target: "skill-frontmatter-allowed-tools"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/skills"
+  - target: "skill-frontmatter-argument-hint"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/skills"
+  - target: "dispatch-subagent-target-existence"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+  - target: "settings-permission-format"
+    status: "OK"
+    citation: "OK (cached from B44; unchanged file)"
+  - target: "settings-skill-agent-entry-match"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/permissions"
+  - target: "agent-tool-availability"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+  - target: "agent-tool-parameter-subagent_type"
+    status: "UNCERTAIN"
+    citation: ""
+  - target: "agent-tool-parameter-model"
+    status: "UNCERTAIN"
+    citation: ""
+  - target: "agent-tool-parameter-run_in_background"
+    status: "UNCERTAIN"
+    citation: ""
+notes: |
+  公式ドキュメントで確認できた範囲では、agent frontmatter の `model: sonnet|opus|haiku|inherit`、`tools`、`description`、skill frontmatter の `description`、`allowed-tools`、`argument-hint` は仕様に整合していた。
+
+  `framework/claude/settings.json` は git 上で未変更であり、キャッシュ済み検証条件を満たすため `settings-permission-format` は OK (cached) とした。
+
+  `settings.json` の `Skill(...)` / `Agent(...)` 許可エントリと実在する `framework/claude/skills/sdd-*/SKILL.md` / `framework/claude/agents/sdd-*.md` の対応はローカル照合で全件一致した。
+
+  UNCERTAIN|agent-tool-parameter|framework/claude/CLAUDE.md:32|`Agent(subagent_type="...")` の呼び出しシグネチャそのものは公式ドキュメントで直接確認できなかった。subagent の概念と名称規則は確認できたが、呼び出し時の named parameter 名は未確認。
+  UNCERTAIN|agent-tool-parameter|framework/claude/skills/sdd-review/SKILL.md:124|`run_in_background=true` を Agent 呼び出し引数として渡す構文は公式ドキュメントで直接確認できなかった。subagent frontmatter の `background: true` は確認できた。
+  UNCERTAIN|agent-tool-parameter|framework/claude/skills/sdd-review-self/SKILL.md:99|`model=...` を Agent 呼び出し引数として上書きする構文は公式ドキュメントで直接確認できなかった。subagent frontmatter の `model` 自体は確認できた。

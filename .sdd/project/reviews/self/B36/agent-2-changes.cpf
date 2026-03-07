@@ -1,0 +1,5 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-roadmap/SKILL.md:70|`review impl --cross-check` と `review design --wave N` が enrollment skip / no-roadmap block の例外から欠落しており、`refs/review.md` の許容モード定義と不整合。特定モードで誤って spec enrollment 判定や1-spec自動作成分岐に入りうる。
+H|engine-routing|framework/claude/skills/sdd-review-self/SKILL.md:142|per-stage engine override を導入している一方で Inspector の dispatch 判定が `$ENGINE_NAME` 基準のまま（Step4/5/6）。`inspectors.engine` を個別設定した場合に SubAgent/外部CLI の選択とフォールバック条件が誤作動する。
+L|tmux-grid-idempotency|framework/claude/sdd/settings/scripts/multiview-grid.sh:14|既存グリッド再利用判定が `COUNT==12` の件数のみで、slot 1..12 の完全性を検証していない。重複タイトルや欠番がある状態で空の pane_id を返し、後続 dispatch が失敗する余地がある。

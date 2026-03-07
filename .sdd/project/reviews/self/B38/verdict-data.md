@@ -1,0 +1,2 @@
+C:0 H:5 M:6 L:4 | FP:3 eliminated
+Files: framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-roadmap/SKILL.md,framework/claude/skills/sdd-reboot/SKILL.md,framework/claude/skills/sdd-steering/SKILL.md,framework/claude/skills/sdd-resume/SKILL.md,framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/sdd/settings/rules/tmux-integration.md,framework/claude/agents/sdd-auditor-impl.md,framework/claude/agents/sdd-auditor-design.md,framework/claude/skills/sdd-roadmap/refs/review.md

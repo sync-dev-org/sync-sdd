@@ -1,0 +1,14 @@
+scope: "inspector-dynamic-1-template-migration"
+issues:
+  - id: "F1"
+    severity: "L"
+    category: "migration"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:87"
+    description: "`agent-*` 廃止後も Step 6 の見出しと本文が `Fixed Agent Prompts` / `agent template` のままで、固定 Inspector プロンプト生成工程を旧用語で説明している。"
+    impact: "実行時の参照切れは起こさないが、self-review の新契約が inspector ベースである前提を読み違えやすく、後続修正で旧命名を再導入する温床になる。"
+    recommendation: "Step 6 の見出しと本文を `Fixed Inspector Prompts` / `inspector template` に更新し、`sdd-review-self/SKILL.md` と同じ用語へ統一する。"
+notes: |
+  `framework/claude/skills/sdd-review-self/SKILL.md` と `framework/claude/settings.json` には、
+  削除済みの `agent-1-flow` / `agent-2-changes` / `agent-3-consistency` / `agent-4-compliance` /
+  `prep` / `sdd-auditor-*` / `sdd-inspector-*-holistic` への直接参照は見当たらなかった。
+  `framework/claude/CLAUDE.md` の self-review 説明も 3 fixed + 1-4 dynamic で `SKILL.md` と一致している。

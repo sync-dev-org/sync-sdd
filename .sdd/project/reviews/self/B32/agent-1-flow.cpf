@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|consensus-flow|framework/claude/skills/sdd-roadmap/SKILL.md:115|`--consensus N` は Router 側で集約判定する定義だが、`refs/review.md:85-104` と `refs/run.md:146-149` は各 pipeline の verdict を先に永続化・アーカイブする流れになっており、集約前後の永続化責務が矛盾している。
+H|verdict-path|framework/claude/skills/sdd-roadmap/refs/review.md:84|クロスカッティング review の scope dir を `specs/.cross-cutting/{id}/reviews/` と定義している一方、同ファイル `:144`・`SKILL.md:135`・`refs/revise.md:256` は `specs/.cross-cutting/{id}/verdicts.md` を要求しており、verdict 保存先が二重定義になっている。
+H|spec-update-loop|framework/claude/skills/sdd-roadmap/refs/run.md:205|Impl Review の `SPEC-UPDATE-NEEDED` cascade が `Architect→TaskGenerator→Builder→Impl Review` で `Design Review` を再実行しない。mandatory review 前提の run フローと整合せず、`refs/revise.md:243-260` の cross-cutting も同じ抜けを継承している。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:22|Standalone Design Review の gate が `design.md` 存在と blocked 判定のみで `design-generated` を要求しない。`CLAUDE.md:74-80` の phase gate 原則および `refs/run.md:160`/`sdd-reboot/refs/reboot.md:129` の readiness 定義と不一致。
+M|wave-qg-blocked|framework/claude/skills/sdd-roadmap/refs/run.md:240|Wave QG は `blocked` spec を完了扱いにするが、直後の wave-scoped cross-check (`:242-251`) で blocked spec 除外規則がない。未実装 spec を review scope に含めると inspector 読込規則と衝突し、偽陽性や到達不能フローを誘発する。
+L|scope-example|framework/claude/skills/sdd-roadmap/SKILL.md:125|Consensus Mode の N=1 説明が `specs/{feature}/reviews/active/` のみを例示し、`dead-code`/`--cross-check`/`--wave` の project-level scope を示していない。実装不能ではないが Router 単体読解で誤解を招きやすい。

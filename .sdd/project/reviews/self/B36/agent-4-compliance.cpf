@@ -1,0 +1,15 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-04
+COMPLIANT:
+agent-frontmatter-fields(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+agent-model-values(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+agent-tool-dispatch-patterns(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+agent-tool-parameters-subagent_type(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+settings-permission-format(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permissions
+settings-agent-skill-entry-match(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/settings#permissions
+tool-availability-names(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tools-available-to-claude
+skills-frontmatter-description|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-allowed-tools|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-argument-hint|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-optional-fields|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+ISSUES:

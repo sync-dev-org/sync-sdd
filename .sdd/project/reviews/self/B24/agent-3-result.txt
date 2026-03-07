@@ -1,0 +1,4 @@
+EXT_REVIEW_COMPLETE
+AGENT:3
+ISSUES: 4
+WRITTEN:.sdd/project/reviews/self-ext/active/agent-3-consistency.cpf

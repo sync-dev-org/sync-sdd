@@ -1,0 +1,26 @@
+scope: "inspector-dynamic-2-output-format"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "schema"
+    location: "framework/claude/sdd/settings/templates/review-self/auditor.md:83"
+    description: "Auditor テンプレートが `verdict-auditor.yaml` の各 issue に `classification` を必須出力させており、`verdict-format.md` の Auditor Verdict スキーマと不一致です。"
+    impact: "監査成果物の正規スキーマが `verdict-format.md` では Lead 段階まで `classification` を持たないため、YAML スキーマ準拠の consumer で余剰フィールド扱いになったり、A/B 判定の責務境界が崩れて Lead 監修前の verdict を過信するリスクがあります。"
+    recommendation: "`framework/claude/sdd/settings/templates/review-self/auditor.md` から `classification` の出力例と必須ルールを外し、A/B 判定は `verdict.yaml` を作る Lead ステップでのみ付与するように揃えてください。"
+  - id: "F2"
+    severity: "L"
+    category: "documentation"
+    location: "framework/claude/sdd/settings/rules/cpf-format.md:3"
+    description: "`cpf-format.md` 冒頭が CPF を現在の \"inter-agent communication\" 用フォーマットとして説明しており、YAML へ移行済みという `verdict-format.md` の整理と読み手レベルで矛盾しています。"
+    impact: "実装上の直接参照は残っていなくても、変更範囲を読む担当者や将来のテンプレート更新者が CPF を現行出力規約と誤認し、`.cpf` や `SCOPE:` ベースの例を再導入する誤誘導になります。"
+    recommendation: "`cpf-format.md` は legacy / historical reference であることを冒頭に明記し、review pipeline の現行成果物は `verdict-format.md` の YAML のみであると明示してください。"
+  - id: "F3"
+    severity: "L"
+    category: "reproducibility"
+    location: "install.sh:524"
+    description: "`install.sh` が `.sdd/settings/engines.yaml` を毎回無条件で上書きしており、self-review の `deny_patterns` と engine 解決設定を利用者環境で保持できません。"
+    impact: "`sdd-review-self` の shared prompt は `.sdd/settings/engines.yaml` から禁止コマンドと engine 既定値を読むため、アップデート後に同じ変更セットでも reviewer の制約条件や dispatch 振る舞いが変わり、生成される YAML 所見の再現性と解釈前提がずれます。"
+    recommendation: "少なくとも `--update` 時は既存 `engines.yaml` を保持するか、ユーザー変更のあるキーだけマージ確認する方式に変えて、review-self が参照するローカル方針を不用意に失わないようにしてください。"
+notes: |
+  変更範囲内では、`sdd-review-self` / `sdd-review` の主経路に `verdicts.md` や `*.cpf` を直接読む未解決依存は確認できませんでした。
+  主リスクは、旧 CPF 説明の残存よりも、review-self auditor テンプレートが canonical な YAML スキーマより先に A/B 分類を持ち込んでいる点です。

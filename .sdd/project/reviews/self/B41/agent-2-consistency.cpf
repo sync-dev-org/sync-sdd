@@ -1,0 +1,21 @@
+SCOPE:agent-2-consistency
+FILES_REVIEWED:81
+MATRIX:
+C|tools-availability|framework/claude/skills/sdd-handover/SKILL.md:3,framework/claude/skills/sdd-start/SKILL.md:3,framework/claude/skills/sdd-roadmap/SKILL.md:3,framework/claude/skills/sdd-reboot/SKILL.md:3|AskUserQuestion参照があるがallowed-toolsに未定義で実行不能経路が存在
+H|commit-policy|framework/claude/CLAUDE.md:330,framework/claude/settings.json:2|コミット末尾Co-Authored-By必須とincludeCoAuthoredBy:falseが矛盾
+M|path-resolution|framework/claude/skills/sdd-reboot/refs/reboot.md:172|同ディレクトリ基準でrefs/run.mdが解決不能（refs/refs/run.md）
+M|path-resolution|framework/claude/skills/sdd-roadmap/refs/run.md:184,framework/claude/skills/sdd-roadmap/refs/revise.md:71|同ディレクトリ内でrefs/design.md/refs/impl.md参照が二重refsとなり解決曖昧
+M|agent-permission|framework/claude/skills/sdd-review/SKILL.md:243,framework/claude/settings.json:16|general-purpose Agent運用を前提にする一方でpermissions.allowにAgent(general-purpose)がなく実行環境依存の失敗リスク
+L|phase-terminology|framework/claude/sdd/settings/templates/review/impl-rulebase.md:136|例示に"status says implementing"があり正式phase列挙（initialized/design-generated/implementation-complete/blocked）と用語不整合
+ISSUES:
+C|undefined-tool|framework/claude/skills/sdd-handover/SKILL.md:3|allowed-toolsにAskUserQuestionが無いのにStep2でAskUserQuestion実行を必須化しており手順が到達不能
+C|undefined-tool|framework/claude/skills/sdd-start/SKILL.md:3|allowed-toolsにAskUserQuestionが無いのにStep7cでAskUserQuestionを要求しており孤児pane削除確認フローが破綻
+H|undefined-tool|framework/claude/skills/sdd-roadmap/SKILL.md:3|refs/design.mdでAskUserQuestion確認を要求するがSkill側のallowed-toolsに未定義で設計再実行確認プロトコルが不一致
+H|undefined-tool|framework/claude/skills/sdd-reboot/SKILL.md:3|reboot参照手順が複数箇所でAskUserQuestion必須だがSkill許可ツールに未定義でユーザー選択フェーズが実行不能
+H|value-contradiction|framework/claude/CLAUDE.md:330|全コミットにCo-Authored-By必須と規定
+H|value-contradiction|framework/claude/settings.json:2|includeCoAuthoredBy:falseで上記必須規則と逆方向の設定
+M|dead-reference|framework/claude/skills/sdd-reboot/refs/reboot.md:172|`refs/run.md`参照はreboot/refs配下では実体がなく相対解決時にデッドエンド
+M|ambiguous-reference|framework/claude/skills/sdd-roadmap/refs/run.md:184|`refs/design.md`参照が同階層解決時に`refs/refs/design.md`となるため参照規約が曖昧
+M|ambiguous-reference|framework/claude/skills/sdd-roadmap/refs/revise.md:71|`refs/design.md`/`refs/impl.md`参照が同様に二重refs解決となりパス規約が一貫しない
+M|permission-gap|framework/claude/skills/sdd-review/SKILL.md:243|review実装はgeneral-purpose Agent dispatchを前提とするがsettings許可リストに対応エントリがなく環境次第で拒否され得る
+L|terminology-drift|framework/claude/sdd/settings/templates/review/impl-rulebase.md:136|CPF例の"status implementing"は現行phase語彙と一致せずレビュー判定語彙の混乱を誘発

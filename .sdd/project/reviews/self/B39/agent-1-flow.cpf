@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|wave-quality-gate|framework/claude/skills/sdd-roadmap/refs/run.md:254|Wave QG の Dead-Code 実行が `/sdd-review dead-code` のみで、wave コンテキスト受け渡し規約が未定義です。`sdd-review` 側も dead-code の scope 切替条件が明示されておらず、`project/reviews/wave/` ではなく `project/reviews/dead-code/` に永続化される経路が残っています。
+M|verdict-persistence|framework/claude/skills/sdd-roadmap/SKILL.md:115|Verdict 永続化の参照先が `run.md Step 7a/7b` になっていますが、実際の Wave QG は `run.md Step 8a/8b` です。Router→refs の参照整合が崩れています。
+M|verdict-persistence|framework/claude/skills/sdd-roadmap/SKILL.md:117|Cross-Cutting の verdict 永続化参照が `revise.md Part B Step 8` ですが、実際に cross-cutting consistency review と永続化を実施するのは Step 9 です。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/run.md:7|`run` の Step 1 は phase を走査するだけで、CLAUDE.md が必須化している「未知 phase の即時 BLOCK」判定が明示されていません。未知値が dispatch loop に流入する余地があります。
+L|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:4|Router の `argument-hint` は review の engine/model/timeout オプション引き回しを表現しておらず、`/sdd-review` が受け付けるモード全体に対する dispatch 仕様の可読性が不足しています。
+L|edge-case|framework/claude/skills/sdd-roadmap/SKILL.md:59|Backfill 判定で `max(existing waves)+1` を使う説明はありますが、`roadmap.md` が存在していて wave 定義が空の場合の既定波 (Wave 1) が明文化されていません。空 roadmap ケースの分岐が曖昧です。

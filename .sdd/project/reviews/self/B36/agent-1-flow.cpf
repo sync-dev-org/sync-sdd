@@ -1,0 +1,6 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:70|`review` の単一Spec enrollment例外が不完全です。`review impl --cross-check` と `review design --wave N` が除外されており、有効な全体スコープReviewがfeature前提の分岐に誤流入する可能性があります。
+H|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:72|roadmap未作成時のBLOCK条件が不完全です。`review impl --cross-check` と `review design --wave N` が列挙漏れしており、`review.md`の想定（全体/波スコープはroadmap必須）と不整合です。
+M|edge-case|framework/claude/skills/sdd-roadmap/refs/run.md:7|Run Step 1は`roadmap.md`と全`spec.yaml`を読むが、roadmap側に存在してspec.yamlが欠落したエントリ（orphan）を明示的に検出/停止しません。空roadmap以外の欠損ケースで実行対象が静かに欠落する余地があります。
+L|read-clarity|framework/claude/skills/sdd-roadmap/refs/revise.md:27|Part A Step 1で`phase=implementation-complete`必須を先に要求した後、同Stepで`blocked`を別途BLOCKしています。`blocked`は前条件で既に不許可のため重複条件となっており、ゲート仕様の可読性を下げます。

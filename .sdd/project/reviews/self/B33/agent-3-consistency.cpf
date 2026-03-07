@@ -1,0 +1,11 @@
+SCOPE:agent-3-consistency
+XREF_ROW:framework/claude/skills/sdd-roadmap/refs/run.md|framework/claude/skills/sdd-roadmap/refs/review.md|CYCLE
+XREF_ROW:framework/claude/skills/sdd-roadmap/refs/run.md|framework/claude/skills/sdd-roadmap/refs/impl.md|CYCLE
+XREF_ROW:framework/claude/skills/sdd-roadmap/refs/design.md|framework/claude/skills/sdd-roadmap/refs/crud.md|TERM_CONFLICT
+XREF_ROW:framework/claude/skills/sdd-review-self-ext/SKILL.md|framework/claude/skills/sdd-review-self-ext/refs/auditor.md|OUTPUT_GAP
+ISSUES:
+H|protocol-consistency|framework/claude/skills/sdd-review-self-ext/refs/agent-4-compliance.md:40|CPF出力を要求しているにもかかわらず「compliance status table」を必須化しており、表形式(Markdown)とCPF行指向フォーマットの指示が同一ファイル内で矛盾している。
+M|protocol-consistency|framework/claude/skills/sdd-review-self-ext/refs/agent-4-compliance.md:43|「ISSUESとCOMPLIANTを必ず両方出力」とあるが、CPF共通規則では空セクションは省略必須であり、空データ時の挙動が相互矛盾している（rules/cpf-format.md:13,21）。
+M|unreachable-path|framework/claude/skills/sdd-review-self-ext/SKILL.md:356|Agent pipelineでは`verdict-data.txt`読込を前提に件数集計する一方、直前の完了検証は`report.md`存在のみで`verdict-data.txt`欠落時の分岐がないため、集計フェーズでデッドエンドが発生しうる（同:345-347）。
+L|circular-reference|framework/claude/skills/sdd-roadmap/refs/run.md:185|`run.md`が`review.md`を正典参照し、`review.md`もdispatch loop文脈で`run.md`参照を要求しており、相互依存サイクルが形成されている（review.md:77）。
+L|terminology-consistency|framework/claude/skills/sdd-roadmap/refs/design.md:13|「createで作成されたspecはdesign.mdなしの場合がある」という例示があるが、crud.mdはCreate Modeで「skeleton design.mdを作成」と定義しており、新規spec初期状態の説明が不一致（crud.md:30）。

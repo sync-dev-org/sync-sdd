@@ -1,0 +1,14 @@
+SCOPE:inspector-consistency
+MATRIX_HEADER:domain|primary|secondary|status
+MATRIX_ROW_1:verdict-storage|framework/claude/sdd/settings/rules/verdict-format.md#L197(verdicts.yaml)|framework/claude/skills/sdd-review/SKILL.md#L417(verdicts.md+CPF)|CONFLICT
+MATRIX_ROW_2:wave-review-path|framework/claude/sdd/settings/rules/verdict-format.md#L206(wave-{N})|framework/claude/skills/sdd-review/SKILL.md#L161(framework uses wave/)|CONFLICT
+MATRIX_ROW_3:phase-values|framework/claude/CLAUDE.md#L162(initialized/design-generated/implementation-complete/blocked)|framework/claude/sdd/settings/templates/specs/init.yaml#L9(initialized)|ALIGNED
+MATRIX_ROW_4:severity-codes|framework/claude/sdd/settings/rules/cpf-format.md#L14(C/H/M/L)|framework/claude/sdd/settings/templates/review-self/briefer.md#L53(C/H/M/L)|ALIGNED
+MATRIX_ROW_5:agent-names|framework/claude/settings.json#L16-L20(sdd-analyst/architect/builder/conventions-scanner/taskgenerator)|framework/claude/agents/sdd-*.md|ALIGNED
+ISSUES:
+C|protocol-consistency|framework/claude/sdd/settings/rules/verdict-format.md:3|本ファイルは「CPFを廃止しYAMLへ置換」と定義しているが、実運用フローは `sdd-review`/`sdd-review-self`/`CLAUDE.md` で `verdict.cpf` と `verdicts.md` を前提としており、レビュー永続化プロトコルが二重定義になっている。
+H|path-consistency|framework/claude/skills/sdd-roadmap/refs/run.md:246|Wave品質ゲートの保存先が `project/reviews/wave/verdicts.md` 固定で、`verdict-format.md` の `project/reviews/wave-{N}/verdicts.yaml` と不一致。波番号単位の履歴分離ルールに到達できない。
+H|protocol-consistency|framework/claude/settings.json:5|許可コマンドに `jq`/`env`/`kill` が無い一方、`sdd-review`/`sdd-review-self` は `jq --version`・`env -u CLAUDECODE ...`・`kill {PID}` を必須手順として要求しており、権限制約下で手順の一部が実行不能。
+M|unreachable-flow|framework/claude/skills/sdd-review-self/SKILL.md:68|Step 1で `$SCOPE_DIR/verdicts.md` を読むよう指示しているが、`$SCOPE_DIR` の定義は Step 2（同ファイル83行目）。手順順序として未定義変数参照が発生しうる。
+M|circular-reference|framework/claude/skills/sdd-roadmap/refs/run.md:133|`run.md` は `/sdd-review` のステップに依存し、`sdd-review` は standalone説明で `run.md/revise.md` を参照するため、仕様参照が相互循環している。改訂時に片側のみ更新されると解釈差分を誘発する。
+L|terminology-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:123|Verdict Persistence手順の列挙が `a,b,c,d,e,g,h` となっており `f` が欠番。実行仕様への影響は軽微だが、手順参照時の指示整合性を下げる。

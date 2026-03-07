@@ -1,0 +1,5 @@
+SCOPE:agent-dynamic-1-template-migration
+ISSUES:
+H|migration-residue|framework/claude/skills/sdd-reboot/refs/reboot.md:174|テンプレート名移行後にも旧 Auditor 名 `sdd-auditor-design` が残存しており、命名体系の参照一貫性を壊している。
+M|inspector-count-consistency|framework/claude/skills/sdd-review-self/SKILL.md:26|`--inspector-*` の説明が「Inspector ×4」となっているが、同ファイルの固定 Inspector 定義は agent-1/2/3 の3体であり、実行対象数の解釈が食い違う。
+L|migration-audit-observability|framework/claude/CLAUDE.md:27|Inspector 種別説明は `/sdd-review` 系の分類のみで、`/sdd-review-self` の固定 3 体（flow/consistency/compliance）への明示参照がなく、命名移行監査時の追跡性が低い。

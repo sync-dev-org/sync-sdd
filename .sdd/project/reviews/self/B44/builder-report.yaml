@@ -1,0 +1,81 @@
+status: "complete"
+items:
+  - id: "A1"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+    note: "Shared Protocols の Verdict Persistence Format を削除し、verdict-format.md §4 参照に置換。"
+  - id: "A2"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "wave scope directory を `project/reviews/wave-{N}/` に統一。"
+  - id: "A3"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Wave QG の verdict 保存先を `wave-{wave}/verdicts.yaml` に更新。"
+  - id: "A4"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+    note: "Cross-Cutting 用の `CC_ID` 生成ステップを追加し、以降の参照を統一。"
+  - id: "A5"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "grid 再利用時と fresh 作成時の state.yaml 生成分岐を追記。"
+  - id: "A6"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "argument-hint に cross-cutting / dead-code context の引数を追加。"
+  - id: "A7"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-reboot/refs/reboot.md"
+    note: "sdd-roadmap の `refs/run.md` 参照をフルパス付き表現に統一。"
+  - id: "A8"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/CLAUDE.md"
+    note: "Behavioral Rules に AskUserQuestion exclusion を追記。"
+  - id: "A9"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+    note: "Validate に blocked_info.blocked_by と unknown phase の BLOCK 条件を追加。"
+  - id: "A11"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/templates/review-self/briefer.md"
+    note: "旧用語 `Fixed Agent Prompts` / `agent template` を inspector ベースの用語へ置換。"
+  - id: "A12"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/rules/cpf-format.md"
+    note: "CPF を legacy format と明記し、現行 YAML への参照を追加。"
+  - id: "A13+B1"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/scripts/multiview-grid.sh"
+      - "framework/claude/skills/sdd-review-self/SKILL.md"
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "slot title 規約を `sdd-{SID}-slot-{N}` に統一。"
+tests:
+  ran: false
+  passed: false
+  output: ""
+diff_summary: |
+   framework/claude/CLAUDE.md                             |  1 +
+   framework/claude/sdd/settings/rules/cpf-format.md      |  4 +++-
+   .../claude/sdd/settings/scripts/multiview-grid.sh      |  2 +-
+   .../sdd/settings/templates/review-self/briefer.md      |  4 ++--
+   framework/claude/skills/sdd-reboot/refs/reboot.md      |  6 +++---
+   framework/claude/skills/sdd-review-self/SKILL.md       |  6 +++---
+   framework/claude/skills/sdd-review/SKILL.md            | 12 ++++++------
+   framework/claude/skills/sdd-roadmap/SKILL.md           | 13 +------------
+   framework/claude/skills/sdd-roadmap/refs/revise.md     | 18 +++++++++++-------
+   framework/claude/skills/sdd-roadmap/refs/run.md        |  4 ++--
+   framework/claude/skills/sdd-start/SKILL.md             |  2 +-
+   11 files changed, 34 insertions(+), 38 deletions(-)

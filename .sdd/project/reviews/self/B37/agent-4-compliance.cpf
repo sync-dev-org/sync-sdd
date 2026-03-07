@@ -1,0 +1,12 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-05
+COMPLIANT:
+agent-frontmatter-required-fields|OK|https://docs.claude.com/en/docs/claude-code/subagents
+agent-frontmatter-model-aliases|OK|https://docs.claude.com/en/docs/claude-code/subagents
+skills-frontmatter-description-allowed-tools-argument-hint|OK|https://code.claude.com/docs/en/skills
+built-in-general-purpose-subagent|OK|https://docs.claude.com/en/docs/claude-code/subagents
+settings-permission-rule-format-tool-specifier|OK|https://code.claude.com/docs/en/permissions
+settings-agent-skill-entries-match-files|OK|https://code.claude.com/docs/en/permissions
+ISSUES:
+M|agent-frontmatter|framework/claude/agents/sdd-*.md|YAML frontmatter に `background: true` が含まれるが、公式「Supported frontmatter fields」に `background` は列挙されておらず、許可フィールド外の可能性が高い。
+UNCERTAIN|agent-tool-params|framework/claude/skills/sdd-review-self/SKILL.md:87,framework/claude/skills/sdd-roadmap/refs/design.md:39,framework/claude/skills/sdd-roadmap/refs/impl.md:26,framework/claude/skills/sdd-roadmap/refs/run.md:33,framework/claude/skills/sdd-reboot/refs/reboot.md:45|`Agent(subagent_type=..., model=..., run_in_background=true)` 記法を使用しているが、公式 Agent SDK の Task 入力スキーマでは `description/prompt/subagent_type` のみ明示されており、`model` と `run_in_background` の入力可否を一次資料で断定できない。

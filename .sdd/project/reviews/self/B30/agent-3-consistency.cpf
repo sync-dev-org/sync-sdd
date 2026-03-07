@@ -1,0 +1,16 @@
+SCOPE:agent-3-consistency
+XREF:
+protocol|framework/claude/agents/sdd-auditor-design.md:164|framework/claude/skills/sdd-roadmap/refs/run.md:187
+protocol|framework/claude/agents/sdd-auditor-impl.md:216|framework/claude/skills/sdd-roadmap/refs/run.md:202
+protocol|framework/claude/agents/sdd-auditor-dead-code.md:125|framework/claude/skills/sdd-roadmap/refs/run.md:253
+path|framework/claude/skills/sdd-roadmap/refs/review.md:79|framework/claude/skills/sdd-roadmap/refs/revise.md:256
+path|framework/claude/CLAUDE.md:277|framework/claude/skills/sdd-status/SKILL.md:47
+compliance|framework/claude/skills/sdd-review-self-ext/SKILL.md:46|framework/claude/settings.json:43
+ISSUES:
+C|protocol|framework/claude/agents/sdd-auditor-design.md:168|設計監査の判定式はC/HをNO-GO、M/LのみをGOに固定している一方で、同ファイルの出力契約と例はCONDITIONALを前提にしている。run側はCONDITIONALを通過扱いにするため、同一仕様内で設計レビューのゲート条件が二重定義になっている。
+C|protocol|framework/claude/agents/sdd-auditor-impl.md:220|実装監査は「High多発・テスト失敗・インターフェース不一致」をCONDITIONALに落とすが、run側はCONDITIONALを自動修正なしで通過させる。重大不具合を含む実装が再試行ループを経ずに完了扱いになりうる。
+H|path|framework/claude/skills/sdd-roadmap/refs/review.md:84|cross-cutting reviewのscope-dirだけ`specs/.cross-cutting/{id}/reviews/`になっており、review.mdの`{scope-dir}/verdicts.md`規約、reprise.mdの`specs/.cross-cutting/{id}/verdicts.md`、CLAUDE.mdのresume/status参照先と整合しない。verdict保存先とarchive先が分岐して復元経路が不定になる。
+H|protocol|framework/claude/agents/sdd-auditor-dead-code.md:129|Dead-code監査の判定式は`>3 High`でしかCONDITIONALにならず、1-3件のHigh所見に対応する分岐が存在しない。さらに同ファイルの例はHigh 2件でCONDITIONALを返しており、判定式・例・run側のWave完了条件が相互に矛盾している。
+M|path|framework/claude/skills/sdd-review-self-ext/SKILL.md:167|Parallel Dispatch節はprompt fileを`agent-{N}-prompt.txt`と定義しているが、Prepare節で実際に生成するのは`agent-{N}-{name}.md`で、起動例も後者を参照している。外部エンジン起動時の入力ファイル名契約が自己矛盾している。
+M|compliance|framework/claude/settings.json:43|同梱permissionsには`Bash(rm *)` `Bash(claude *)` `Bash(env *)`がないが、`sdd-review-self-ext`は`rm -rf ...`、`claude --version`、`env -u CLAUDECODE claude ...`を必須手順としている。Claude engine経路とactive清掃手順が出荷設定のままでは到達不能になる。
+L|protocol|framework/claude/skills/sdd-status/SKILL.md:47|statusはreview historyで`consensus-verdict`表示を要求しているが、roadmap側のVerdict Persistence Formatは明示的な`consensus-verdict`フィールドを定義していない。取得元が暗黙依存のため、実装者ごとにparser解釈がぶれやすい。

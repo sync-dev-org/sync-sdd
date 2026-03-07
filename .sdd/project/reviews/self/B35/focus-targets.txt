@@ -1,0 +1,4 @@
+- SDD review-self 系のテンプレート一式（agent-1/2/3/4、auditor、prep）と関連する skill 定義を大幅に入れ替え。
+- `sdd-review-self-ext` 系の更新/整理と `sdd-roadmap` 系 skill・refs の整合を再調整。
+- `tmux-integration` ルールと `multiview-grid.sh` を更新し、表示/確認フローを共通化。
+- `framework/claude/settings.json` と `framework/claude/CLAUDE.md` の定義整合を改善し、インストールスクリプト `install.sh` も追随。

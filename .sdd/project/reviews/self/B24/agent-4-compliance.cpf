@@ -1,0 +1,12 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-03
+LANG:ja
+STATUS:
+OK|agent-models-tools|`model` は sonnet/opus のみで、`tools` も Claude Code の公式ツール名に一致
+OK|skill-frontmatter|全 skill で `description` と `allowed-tools` は有効。`argument-hint` は任意項目として使用形式も妥当
+OK|dispatch|明示的な `subagent_type` 参照は `sdd-architect` と組み込み `general-purpose` のみで、解決可能
+NG|agent-frontmatter|subagent frontmatter の対応フィールド外に `background: true` を全 agent が定義
+NG|settings|`settings.json` の `Skill()` 許可一覧と実在 skill 一覧が不一致
+ISSUES:
+M|agent-frontmatter|framework/claude/agents/sdd-*.md:6|Claude Code 公式の subagent frontmatter 対応フィールドは `name` `description` `tools` `disallowedTools` `model` `permissionMode` `skills` `hooks` で、全 agent 定義にある `background: true` は未サポートです。無視される可能性が高いですが、公式仕様には適合していません。
+H|settings-permissions|framework/claude/settings.json:14|`framework/claude/skills/sdd-review-self-ext/SKILL.md` が存在するのに、`permissions.allow` に `Skill(sdd-review-self-ext)` がありません。レビュー基準 4 の「Skill() entries match actual files」に違反しています。

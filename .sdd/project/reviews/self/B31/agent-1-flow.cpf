@@ -1,0 +1,7 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|verdict-persistence|framework/claude/skills/sdd-roadmap/refs/review.md:84|cross-cutting review の scope dir は `specs/.cross-cutting/{id}/reviews/` なのに、Router は verdict を `specs/.cross-cutting/{id}/verdicts.md` に保存する前提です。`review.md` Step 8 の `{scope-dir}/verdicts.md` と `revise.md` Part B Step 8 が衝突し、cross-cutting の verdict が別場所へ分岐します。
+M|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:22|Router は `review impl {feature} [tasks]` を受け付けると宣言していますが、`refs/review.md` は `--consensus` `--cross-check` `--wave` しか解析しておらず task 番号の入力先も分岐もありません。公開インターフェースに対して ref dispatch が未完成です。
+M|revise-routing|framework/claude/skills/sdd-roadmap/SKILL.md:34|`revise` は先頭語が spec 名に一致すると即 Single-Spec に落ちますが、`refs/revise.md` の cross-cutting への昇格判定は downstream 依存探索だけです。依存関係を持たない複数 spec へまたがる変更や、説明文の先頭語がたまたま spec 名だったケースを Cross-Cutting に正しく route できません。
+M|wave-quality-gate|framework/claude/skills/sdd-roadmap/refs/run.md:240|Wave 完了条件が `implementation-complete` または `blocked` なのに、その直後の Wave QG は wave 全体の impl cross-check/dead-code review を前提に進みます。blocked spec を除外する規則も QG 中断条件もないため、未完了 wave に対して review/commit が走る解釈になっています。
+L|scope-normalization|framework/claude/agents/sdd-auditor-impl.md:242|wave scope の表記が Auditor では `wave-scoped-cross-check`、Inspector 群では `wave-1..{N}` です。`refs/review.md` も正規の scope 名を明示しておらず、wave review の読み取り規約が file 間で揺れています。

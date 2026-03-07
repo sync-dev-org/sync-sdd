@@ -1,0 +1,10 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:249|Wave QG の SPEC-UPDATE-NEEDED 分岐に上限到達時の停止条件（max2/aggregate cap6 時の明示的エスカレーション手順）が書かれておらず、反復再実行が無制限化する解釈余地がある。
+M|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/revise.md:76|Single-Spec revise は「CLAUDE.md の上限に従う」とだけあり、上限到達時の fix/skip/abort 相当の分岐が run.md ほど明示されていないため、運用時の停止/再開フローが曖昧。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:20|review.md の Phase Gate は単一 spec 前提の記述が中心で、`--wave`/`--cross-check` 実行時の blocked spec 除外条件が明記されていない（run.md:238 では除外必須）。
+M|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:44|Auto-Detect の選択肢に `Reset` があるが、Detect Mode 表および Execution Reference に Reset の正式ルーティング先（delete/create 連鎖など）が定義されていない。
+M|verdict-persistence|framework/claude/skills/sdd-roadmap/SKILL.md:114|Verdict header の基準が `v{version}` 前提だが、wave/cross-check/dead-code の project-level review は単一 version を持たず、review.md/run.md 側の記録形式と解釈が分岐しうる。
+L|read-clarity|framework/claude/skills/sdd-roadmap/refs/run.md:136|Dispatch Loop の Review Decomposition が「review.md step1-4 実行」と書く一方、step1 は CLI 引数解析であり run 内部イベント入力との対応が明示されていない。
+L|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:70|Single-Spec Roadmap Ensure の例外表記が `review --cross-check` / `review --wave N` になっており、Detect Mode の正規形 `review design|impl --...` と文法がずれている。
+L|revise-routing|framework/claude/skills/sdd-roadmap/SKILL.md:32|`revise` は先頭語が spec 名に一致すると常に Single-Spec へ入るため、ユーザーが初手で Cross-Cutting を意図していても明示的強制フラグがなく、Step3 の事後昇格に依存する。

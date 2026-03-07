@@ -1,0 +1,2 @@
+C:0 H:5 M:4 L:3 | FP:3 eliminated
+Files: framework/claude/skills/sdd-roadmap/refs/review.md, framework/claude/skills/sdd-roadmap/SKILL.md, framework/claude/skills/sdd-review-self-ext/SKILL.md, framework/claude/skills/sdd-roadmap/refs/run.md, framework/claude/agents/sdd-auditor-impl.md, framework/claude/CLAUDE.md, framework/claude/settings.json, framework/claude/skills/sdd-reboot/refs/reboot.md

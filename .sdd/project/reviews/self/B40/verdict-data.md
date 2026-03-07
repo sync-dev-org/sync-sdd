@@ -1,0 +1,2 @@
+C:1 H:5 M:6 L:6 | FP:10 eliminated
+Files: framework/claude/skills/sdd-reboot/refs/reboot.md,framework/claude/skills/sdd-roadmap/SKILL.md,framework/claude/skills/sdd-review/SKILL.md,framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/skills/sdd-release/SKILL.md,framework/claude/CLAUDE.md,framework/claude/sdd/settings/templates/review-self/prep.md,framework/claude/sdd/settings/rules/tmux-integration.md,framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-roadmap/refs/revise.md,install.sh

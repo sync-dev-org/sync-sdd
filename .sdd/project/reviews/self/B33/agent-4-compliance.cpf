@@ -1,0 +1,26 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-04
+TARGET:framework/claude
+COMPLIANCE_TABLE:
+agent-frontmatter-fields|OK (cached)|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK (cached)|https://docs.claude.com/en/docs/claude-code/sub-agents
+skills-frontmatter-description-allowed-tools-argument-hint|OK|https://docs.claude.com/en/docs/claude-code/skills
+settings-permission-format|OK (cached)|https://docs.claude.com/en/api/agent-sdk/permissions
+settings-agent-skill-entry-match|OK (cached)|https://docs.claude.com/en/api/agent-sdk/permissions
+tool-availability-names|OK (cached)|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-tool-parameters-subagent_type|OK|https://docs.claude.com/en/api/agent-sdk/tools/task
+agent-tool-parameters-model|NG|https://docs.claude.com/en/api/agent-sdk/tools/task
+agent-tool-parameters-run_in_background|NG|https://docs.claude.com/en/api/agent-sdk/tools/task
+general-purpose-built-in-exception|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/sub-agents
+COMPLIANT:
+agent-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+skills-frontmatter-description-allowed-tools-argument-hint|OK|https://docs.claude.com/en/docs/claude-code/skills
+settings-permission-format|OK|https://docs.claude.com/en/api/agent-sdk/permissions
+settings-agent-skill-entry-match|OK|https://docs.claude.com/en/api/agent-sdk/permissions
+tool-availability-names|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-tool-parameters-subagent_type|OK|https://docs.claude.com/en/api/agent-sdk/tools/task
+ISSUES:
+H|agent-tool-params|framework/claude/skills/sdd-review-self/SKILL.md:58|NG: Agent()呼び出しで`model`と`run_in_background`を指定しているが、公式Taskツール仕様の入力フィールドは`description`/`prompt`/`subagent_type`のみで矛盾。
+M|agent-dispatch-policy|framework/claude/CLAUDE.md:84|NG: 「Agentは常にrun_in_background:true」運用規則が記載されているが、公式Taskツール仕様に`run_in_background`パラメータ定義がなく仕様不一致。
+L|built-in-agent-doc|framework/claude/skills/sdd-review-self/SKILL.md:157|UNCERTAIN: `general-purpose`を組み込みSubAgentとして設定/ファイル照合から除外する根拠を、今回の公式検索結果で一次資料として明示確認できず。

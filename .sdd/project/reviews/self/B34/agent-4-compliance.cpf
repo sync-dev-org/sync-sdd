@@ -1,0 +1,11 @@
+SCOPE:agent-4-compliance
+COMPLIANT:
+agent-frontmatter-fields|OK|https://code.claude.com/docs/en/sub-agents
+agent-model-values|OK|https://code.claude.com/docs/en/sub-agents
+agent-tool-dispatch-patterns|OK|https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/code-execution-tool
+skills-frontmatter-description-allowed-tools-argument-hint|OK|https://code.claude.com/docs/en/slash-commands
+settings-permission-format|OK|https://code.claude.com/docs/en/settings
+settings-agent-skill-entry-match|OK|https://code.claude.com/docs/en/settings
+tool-availability-names|OK|https://code.claude.com/docs/en/settings
+agent-tool-parameters-subagent_type|OK|https://platform.claude.com/docs/en/agent-sdk/python
+ISSUES:

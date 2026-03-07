@@ -1,0 +1,6 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-roadmap/SKILL.md:70|`review impl --cross-check` と `review design --wave N` が例外条件から漏れており、Step 1 の対応コマンド定義と不整合。エンロール確認/roadmap未作成時の分岐が誤動作する。
+H|protocol-completeness|framework/claude/agents/sdd-auditor-impl.md:220|最終判定ロジックに「Highが1〜3件」の分岐が存在せず、`CONDITIONAL`/`GO` 判定が未定義のケースがある（`>3 High` のみ定義）。
+M|consistency|framework/claude/sdd/settings/templates/review-self/prep.md:13|`git rev-list --count HEAD` を要求しているが、`framework/claude/CLAUDE.md` の Bash ヒューリスティクス回避規約（`--count` 回避）と矛盾し、self-review 実行手順が自己矛盾している。
+L|readability|framework/claude/skills/sdd-review-self/SKILL.md:107|Prep/Auditor の SubAgent fallback 手順で手順番号が `1 -> 3 -> 4` になっており、実行順序の読み取り性を下げる（内容は推測可能だが運用ドキュメントとしてはノイズ）。

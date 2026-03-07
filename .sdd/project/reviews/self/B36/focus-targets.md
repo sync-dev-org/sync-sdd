@@ -1,0 +1,4 @@
+- `.sdd` 配下の自動レビュー関連テンプレート群（`agent-1-flow`, `agent-2-changes`, `agent-3-consistency`, `agent-4-compliance`, `auditor`, `prep`）の新規追加・更新で、Inspector/準備ワークフローの入力・出力が再構成された。
+- レビュー関連の実行基盤（`framework/claude/agents/sdd-auditor-*.md`, `framework/claude/skills/sdd-review-self/SKILL.md`, `framework/claude/skills/sdd-review-self-ext/SKILL.md`）が同時更新され、フロー名・テンプレート参照・引数仕様の整合が主題。
+- `framework/claude/settings.json` と `framework/claude/sdd/settings/rules/tmux-integration.md` の更新により、エンジン/権限運用と tmux 連携ルールの適用条件が見直されている。
+- `framework/claude/sdd/settings/scripts/multiview-grid.sh` と `framework/claude/skills/sdd-*/SKILL.md` の更新で、レビュー補助スクリプトとスキルディレクティブの運用実装に変更が入っている。

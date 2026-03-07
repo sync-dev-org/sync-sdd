@@ -1,0 +1,7 @@
+SCOPE:agent-dynamic-3-template-migration
+TARGET:install-template-stack
+LANG:ja
+ISSUES:
+M|install|install.sh:523|`.sdd/settings/engines.yaml` を `cp` で毎回無条件上書きしており、通常再インストール/`--update`/`--force` のいずれでも既存の engine/model/deny_patterns 設定を消去する。`install_file` ベースの既存ファイル保護挙動と不整合で、更新運用時に設定競合を起こす。
+L|docs|install.sh:84|Usage の「FRAMEWORK FILES/USER FILES」に `engines.yaml` の管理対象・上書き方針が記載されておらず、実装（行523の無条件上書き）と説明が不一致。
+L|cleanup-scope|install.sh:569|`remove_stale ".sdd/settings/templates" ... "*"` により、上流ソースに存在しないローカル追加テンプレート（`.md`/`.yaml` 含む）が update/force 時に削除される。削除対象の allowlist がなく、拡張テンプレート運用と衝突しうる。

@@ -1,0 +1,4 @@
+SCOPE:agent-2-changes
+ISSUES:
+M|protocol|framework/claude/sdd/settings/scripts/multiview-grid.sh:20|マルチビュー格納スクリプトから以前のLead上限ガード（`OTHER_LEADS >= 2` で grid 作成を停止）が削除された一方、運用仕様は「Max Lead: 1」「2 Lead以上は MultiView フォールバック」を維持しているため、2nd Lead 開始時も無条件で pane 分割が進み、レイアウト崩れや既存 pane 干渉を引き起こす回帰があり得る。
+L|protocol|framework/claude/sdd/settings/rules/tmux-integration.md:14|`SID` を `date +%H%M%S` の秒解像度のみで採番していると、同一秒内に2つの Lead を起動した場合に SID・wait-for チャネルが衝突し、完了通知の取り違えや誤停止を起こす可能性がある。衝突耐性が従来の pane ID より低くなる。

@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|verdict-persistence|framework/claude/skills/sdd-roadmap/refs/review.md:84|Cross-Cutting review の scope-dir が `specs/.cross-cutting/{id}/reviews/` になっているため、実行フローは `.../reviews/verdicts.md` へ永続化します。一方で Router・`refs/revise.md`・`CLAUDE.md` の再開処理は `specs/.cross-cutting/{id}/verdicts.md` を期待しており、Cross-Cutting verdict の保存先が一貫せず再開/参照が壊れます。
+H|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:205|`run` の Impl Review で `SPEC-UPDATE-NEEDED` が出た場合、Architect→TaskGenerator→Builder→Impl Review に直行しており Design Review を再実行しません。`CLAUDE.md` の「spec 修正後は cascade」「multi-feature run では review が必須」という定義を破り、spec 変更が未審査のまま実装へ流れます。
+H|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/revise.md:260|Cross-Cutting revise の Step 8 でも `SPEC-UPDATE-NEEDED` 後に「design 更新→再実装→cross-check 再実行」だけで Design Review が抜けています。Part A の標準パイプラインと整合せず、Single-Spec と Cross-Cutting で auto-fix の品質ゲートが食い違います。
+M|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:22|`refs/review.md` の phase gate は単体 spec 前提の記述しかなく、`--wave`/`--cross-check` で `blocked` spec をどう扱うかが未定義です。`refs/run.md` は wave 完了条件を `implementation-complete` または `blocked` としてから wave-scoped impl review を起動するため、Router が許可した edge case で参照先の gate が曖昧になります。
+L|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:31|Mode Detection 一覧に `run --gate --consensus N` がありません。`argument-hint` では `run [--gate] [--consensus N]` を許可しているため、Router の分岐表だけを見る実装では複合モードの dispatch が抜ける余地があります。
+L|phase-gate|framework/claude/skills/sdd-roadmap/refs/revise.md:27|Single-Spec revise は `phase == implementation-complete` の検証を `blocked` 判定より先に実施しています。これだと blocked spec が `CLAUDE.md` の標準エラー「{feature} is blocked by ...」で止まらず、blocked 専用の phase gate 一貫性が崩れます。

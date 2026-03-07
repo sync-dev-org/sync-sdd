@@ -1,0 +1,5 @@
+SCOPE:inspector-dynamic-1-template-migration
+ISSUES:
+H|migration-compatibility|framework/claude/sdd/settings/templates/review-self/briefer.md:68|キャッシュ再利用手順がアーカイブ CPF を `.sdd/project/reviews/self/B{seq}/inspector-compliance.cpf` 固定で参照しており、直近アーカイブ B41 の実ファイル名 `agent-3-compliance.cpf` と不一致のため、7日以内キャッシュ取得でファイル未検出を起こす。
+M|stale-terminology|framework/claude/sdd/settings/templates/review-self/briefer.md:66|手順説明に旧ロール名 `Agent 3 (Platform Compliance)` が残っており、現行命名 `inspector-compliance` と一致しないため、対象バッチ抽出条件の実装解釈が曖昧になる。
+L|archive-schema-drift|.sdd/project/reviews/self/verdicts.md:179|最新バッチ見出しが `prep:` 表記のままで、現行ステージ名 `briefer` と命名系が混在している。現状は履歴として読めるが、見出し文字列をキーにする補助ロジックを追加した場合に取りこぼしリスクが残る。

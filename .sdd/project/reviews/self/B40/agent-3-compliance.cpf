@@ -1,0 +1,19 @@
+SCOPE:agent-3-compliance
+COMPLIANT:
+agent-frontmatter-model(cached)|OK|https://code.claude.com/docs/en/sub-agents
+agent-frontmatter-tools(cached)|OK|https://code.claude.com/docs/en/sub-agents
+agent-frontmatter-description(cached)|OK|https://code.claude.com/docs/en/sub-agents
+skills-frontmatter-description|OK|https://code.claude.com/docs/en/skills
+skills-frontmatter-allowed-tools|OK|https://code.claude.com/docs/en/skills
+skills-frontmatter-argument-hint|OK|https://code.claude.com/docs/en/skills
+dispatch-subagent-type-general-purpose|OK|https://code.claude.com/docs/en/skills
+settings-permission-format|OK|https://code.claude.com/docs/en/permissions
+settings-skill-agent-entries-match-files|OK|https://code.claude.com/docs/en/permissions
+ISSUES:
+H|agent-tool-parameters|framework/claude/skills/sdd-review/SKILL.md:117|Agent呼び出しで`model`と`run_in_background`を指定しているが、公式SDKのTask(Agent互換)入力は`description`/`prompt`/`subagent_type`のみであり仕様と矛盾します。
+H|agent-tool-parameters|framework/claude/skills/sdd-review-self/SKILL.md:92|Agent呼び出しで`model`と`run_in_background`を指定しているが、公式SDKのTask(Agent互換)入力は`description`/`prompt`/`subagent_type`のみであり仕様と矛盾します。
+M|agent-tool-required-field|framework/claude/skills/sdd-review/SKILL.md:117|公式SDK仕様ではTask(Agent互換)入力に`description`が必要ですが、Agent呼び出し例で未指定です。
+M|agent-tool-required-field|framework/claude/skills/sdd-review-self/SKILL.md:92|公式SDK仕様ではTask(Agent互換)入力に`description`が必要ですが、Agent呼び出し例で未指定です。
+L|tool-availability|framework/claude/skills/sdd-handover/SKILL.md:26|`AskUserQuestion`利用を指示していますが、Claude Code公式Skillsドキュメントでは同ツールのallowed-tools記法が確認できず、可用性判定はUNCERTAINです。
+L|tool-availability|framework/claude/skills/sdd-start/SKILL.md:51|`AskUserQuestion`利用を指示していますが、Claude Code公式Skillsドキュメントでは同ツールのallowed-tools記法が確認できず、可用性判定はUNCERTAINです。
+L|tool-availability|framework/claude/skills/sdd-steering/SKILL.md:103|`AskUserQuestion`利用を指示していますが、Claude Code公式Skillsドキュメントでは同ツールのallowed-tools記法が確認できず、可用性判定はUNCERTAINです。

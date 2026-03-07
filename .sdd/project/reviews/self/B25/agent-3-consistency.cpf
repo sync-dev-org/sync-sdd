@@ -1,0 +1,19 @@
+SCOPE:agent-3-consistency
+DATE:2026-03-03
+LANG:ja
+TARGETS:73
+XREF_MATRIX_1:framework/claude/CLAUDE.md->skills/sdd-roadmap/refs/{crud,impl,review,run}.md;skills/sdd-release/SKILL.md;settings/rules/{tmux-integration,cpf-format}.md
+XREF_MATRIX_2:framework/claude/skills/sdd-roadmap/SKILL.md->refs/{design,impl,review,run,revise,crud}.md
+XREF_MATRIX_3:framework/claude/skills/sdd-roadmap/refs/run.md->refs/{impl,review}.md;framework/claude/skills/sdd-roadmap/refs/review.md->run.md
+XREF_MATRIX_4:framework/claude/skills/sdd-roadmap/refs/revise.md->refs/{design,impl,review,run}.md;cross-cutting verdict root=.cross-cutting/{id}/verdicts.md
+XREF_MATRIX_5:framework/claude/skills/sdd-reboot/SKILL.md->refs/reboot.md;framework/claude/skills/sdd-reboot/refs/reboot.md->(broken)local refs/run.md
+XREF_MATRIX_6:framework/claude/skills/sdd-steering/SKILL.md,framework/claude/skills/sdd-review-self-ext/SKILL.md->.sdd/settings/engines.yaml via templates/engines.yaml
+ISSUES:
+H|path-consistency|framework/claude/skills/sdd-roadmap/refs/review.md:84|クロスカッティング review の scope-dir が `.cross-cutting/{id}/reviews/` になっている一方、同ファイル 142 行と `refs/revise.md` 256 行は verdict を `.cross-cutting/{id}/verdicts.md` に置く前提になっている。101 行の `{scope-dir}/verdicts.md` と整合せず、保存先と参照先が分岐する。
+H|undefined-reference|framework/claude/skills/sdd-reboot/refs/reboot.md:120|reboot フローが `refs/run.md` を再利用すると書いているが、reboot skill 配下には `refs/run.md` が存在しない。172 行と 180 行の参照も同じで、設計パイプラインの中核手順がローカル解決不能。
+H|value-consistency|framework/claude/agents/sdd-auditor-design.md:168|Design Auditor は `NO-GO` を Critical 残件時にしか返さないが、`design-review.md` 209-212 行はブロッカー級の SDD drift / missing info を `H` にも割り当てる。High のみの重大設計欠陥が `CONDITIONAL` 扱いで実装へ進みうる。
+M|unreachable-path|framework/claude/CLAUDE.md:277|Session Resume が読む verdict は per-spec と `project/reviews/*/verdicts.md` だけで、クロスカッティング revision の `project/specs/.cross-cutting/{id}/verdicts.md` を再読しない。compact / 再開時に revise パイプラインの review 状態を完全復元できない。
+M|tool-consistency|framework/claude/agents/sdd-inspector-test.md:17|Constraint で `Edit` の利用を指示しているが frontmatter の tools には `Edit` が含まれていない。定義どおりに実行すると自己矛盾になる。
+L|protocol-consistency|framework/claude/skills/sdd-roadmap/refs/review.md:18|1-spec guard が「review type is `--cross-check` or `--wave N`」としているが、13 行で定義された review type は `design` / `impl` / `dead-code`。オプションと型の用語が混線している。
+L|circular-reference|framework/claude/skills/sdd-roadmap/refs/run.md:135|`run.md` が review 実行を `review.md` に委譲し、`review.md` 77 行は dispatch-loop 文脈を `run.md` に戻している。責務分担としては成立するが、ファイル参照関係としては双方向サイクルになっている。
+L|scope-consistency|framework/claude/skills/sdd-review-self/SKILL.md:35|内部 self-review の固定 scope は `templates/**/*.md` までで `templates/**/*.yaml` を含まないため、`engines.yaml` テンプレートが通常 self-review の対象外になる。external 版 `sdd-review-self-ext` 61-62 行とは監査範囲がずれている。

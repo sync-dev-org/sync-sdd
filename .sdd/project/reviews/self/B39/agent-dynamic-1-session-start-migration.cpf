@@ -1,0 +1,8 @@
+SCOPE:agent-dynamic-1-session-start-migration
+TARGET:session-start-migration
+LANG:ja
+ISSUES:
+H|permissions|framework/claude/skills/sdd-start/SKILL.md:51|手順で `AskUserQuestion` ツール実行を必須化しているが、frontmatter の `allowed-tools` に `AskUserQuestion` が含まれておらず、孤児 pane 削除確認フローが実行不能化する。
+H|permissions|framework/claude/settings.json:5|`/sdd-review-self` 手順では `rm -rf $SCOPE_DIR/active` を実行するが、許可リストに `Bash(rm *)` が存在しないため、初期化ステップが権限ブロックされる。
+M|migration|install.sh:537|stale skill の除去が `--update`/`--force` 時のみ実行される。既存環境で通常インストールを再実行した場合、旧 `sdd-resume` ディレクトリが残留し、新 `sdd-start` と並存する移行不整合が発生しうる。
+L|consistency|framework/claude/skills/sdd-start/SKILL.md:2|説明文は開始トリガを「再開/continue/resume/毎セッション開始」に限定しており、`CLAUDE.md` が明示する `compact` と `/clear` トリガが欠落している。実装意図の伝達が弱く、運用解釈のブレ要因になる。

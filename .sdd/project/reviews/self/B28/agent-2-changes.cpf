@@ -1,0 +1,6 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol|framework/claude/skills/sdd-review-self-ext/SKILL.md:180|tmux dispatch 手順が自己矛盾しています。`engine_cmd` の定義自体が `cat $SHARED_PROMPT $AGENT_PROMPT | ...` を含むのに、投入例でさらに `cat {shared} {agent-N} | {engine_cmd}` を前置しており、そのまま組み立てると二重 `cat` パイプになって実行コマンドが壊れます。
+M|consistency|framework/claude/skills/sdd-review-self-ext/SKILL.md:170|Step 5 では `Pane title = Channel = sdd-{SID}-ext-{N}` としていますが、参照先の One-Shot Command 規約は channel のみを一意化対象にしており、スロット復元手順もありません。pane title を変える前提と変えない前提が混在しており、既存グリッドの再検出 (`sdd-{SID}-slot-*`) と両立しません。
+M|protocol|framework/claude/sdd/settings/scripts/multiview-grid.sh:7|Lead 数チェックが仕様とずれています。規約側は「自分以外の Lead が 2 以上でスキップ」ですが、スクリプトは全 `sdd-*-lead` を数えて `>=2` で失敗します。現在 pane が既に `sdd-{SID}-lead` になっている再実行や復旧時に、他 Lead が 1 ついるだけで誤って作成不能になります。
+L|template|install.sh:590|インストール後サマリーの `.sdd/` 説明がまだ `Rules + templates` のままで、今回追加した `profiles` と `scripts` を反映していません。help/uninstall/install 本体は更新済みなので、案内文だけが分断されています。

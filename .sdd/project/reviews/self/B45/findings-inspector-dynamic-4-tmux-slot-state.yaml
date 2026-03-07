@@ -1,0 +1,52 @@
+scope: "inspector-dynamic-4-tmux-slot-state"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "dead-logic"
+    location: "framework/claude/skills/sdd-start/SKILL.md:53"
+    summary: "grid 再利用時の busy slot metadata 保持ロジックは到達不能"
+    detail: "Step 7d の再利用条件は grid-check.sh exit 0 (全 slot 生存) かつ全 slot が status: idle であることを要求する。しかし Step 7e では「grid 再利用時: 既存 state.yaml の grid セクションから busy slot の metadata (agent, engine, channel) を保持し」と記述している。全 slot が idle でなければ再利用に入らないため、busy slot の metadata を保持する分岐は到達不能なデッドロジックである。tmux-integration.md の Pattern A (Server Lifecycle) では busy slot 上のサーバー再利用を想定しているが、sdd-start の再利用条件がそれを阻害している。"
+    impact: "現時点では実害はないが、Step 7e の記述が保持ロジックの存在を暗示するため、将来の開発者が再利用条件を誤解する可能性がある。また Pattern A のサーバー再利用シナリオが sdd-start の再利用条件によって暗黙にブロックされている。"
+    recommendation: "設計意図を明確にする。(a) busy slot を含む grid の再利用を意図しないなら、Step 7e の busy slot metadata 保持記述を削除し簡素化する。(b) Pattern A サーバー再利用を意図するなら、Step 7d の再利用条件を「全 slot 生存」のみに緩和し、busy slot を保持しつつ再利用可能にする。"
+
+  - id: "F2"
+    severity: "M"
+    category: "reuse-guard"
+    location: "framework/claude/skills/sdd-start/SKILL.md:52"
+    summary: "grid 再利用判定で現在の lead pane が grid.window_id と同一 window に属するかの検証がない"
+    detail: "sdd-start Step 7d は state.yaml の grid.window_id と slot pane の生存のみで再利用を判定する。しかし現在の lead pane ($MY_PANE) がその window に属しているかは確認しない。Step 7e では lead.window_id と grid.window_id は常に同一と定義されている。別 window で Claude Code を再起動した場合、旧 window の grid を再利用するが lead は別 window に存在することになり、この不変条件が壊れる。"
+    impact: "state.yaml 上で lead と grid が同一 window と記録されるが実体が異なるため、orphan 検出や grid-check のスコープが誤った window を参照する可能性がある。"
+    recommendation: "reuse 前に現在の lead pane の window_id を取得し (orphan-detect.sh 等のヘルパー経由で #{window_id} ヒューリスティクス回避)、grid.window_id と一致する場合のみ reuse する。不一致なら fresh grid を作成する。"
+
+  - id: "F3"
+    severity: "L"
+    category: "slot-lifecycle"
+    location: "framework/claude/skills/sdd-review/SKILL.md:316"
+    summary: "Hold-and-Release の close signal 送出直後に state.yaml を idle 化しており、command chain 完了前の微小な競合窓がある"
+    detail: "sdd-review Step 6f と sdd-review-self Step 5 Slot Release では、tmux wait-for -S {close-channel} の直後に state.yaml を idle に更新する。tmux-integration.md では close signal 後に command chain が完了して shell が idle に戻ると説明しているが、signal 送出から pane の実 idle 化までの間に微小な競合窓がある。ただし、実際にはレビューパイプラインは Inspector 完了 → Auditor 完了 → slot release の順序で進むため、release 直後に同じ slot を再割り当てするケースは極めて稀である。"
+    impact: "理論上の race condition だが、実運用上は Inspector release 後に Auditor が別 slot を使用し、パイプライン完了後に全 slot を一括 release するフローのため、実害が発生する可能性は非常に低い。"
+    recommendation: "現状維持で問題ない。厳密に対処する場合は、close signal 後に短い sleep (0.1秒) を挿入するか、per-slot の completion channel を追加して command chain 完了を確認する。"
+
+  - id: "F4"
+    severity: "L"
+    category: "metadata-consistency"
+    location: "framework/claude/skills/sdd-start/SKILL.md:53"
+    summary: "busy slot metadata 保持リストに Pattern A の url 属性が含まれていない"
+    detail: "Step 7e で保持対象として列挙されている metadata は agent, engine, channel (Pattern B 属性) のみ。tmux-integration.md の Slot Management では Pattern A は agent/url を使用すると定義されているが、url は保持リストに含まれていない。F1 により現状到達不能なため実害はないが、仮に到達可能になった場合に Pattern A (Server Lifecycle) の slot 情報が失われる。"
+    impact: "F1 が到達不能である限り影響なし。F1 を option (b) で解決した場合に url が消失するリスクがある。"
+    recommendation: "F1 の対応方針に依存する。デッドロジック削除 (option a) なら本件も自然消滅。保持ロジックを残す場合 (option b) は保持リストを agent/engine/channel/url に拡張し、Pattern A/B 両方をカバーする。"
+
+  - id: "F5"
+    severity: "L"
+    category: "documentation-consistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:449"
+    summary: "review-self の Builder slot release で agent/engine/channel 除去が明記されていない"
+    detail: "sdd-review-self の Briefer (Step 2)、Inspector (Step 5 Slot Release)、Auditor (Step 6) は取得時に agent/engine/channel を保存し、解放時にそれらを除去すると明記されている。しかし Builder (Step 8b) は取得時の保存はあるが、完了後の記述が「slot を idle に戻す」のみで agent/engine/channel の除去が明示されていない。"
+    impact: "実装者が Builder 解放時に stale metadata を残す形で解釈すると、後続の slot 再利用判定やデバッグに支障が出る可能性がある。ただし Builder は通常パイプラインの最終ステージであり、直後に slot を再利用するケースは少ない。"
+    recommendation: "Builder も他ステージと同じ文言に揃え、status: idle 更新に加えて agent/engine/channel を除去し pane タイトルをリセットすると明記する。"
+notes: |
+  4つの調査フォーカスについて検証した結果:
+  1. sdd-start の再利用条件と tmux-integration の判定条件: 基本的に整合しているが、再利用条件の「全 slot idle」要件が busy slot metadata 保持ロジック (F1) および Pattern A サーバー再利用シナリオと矛盾する。また window 一致検証の欠如 (F2) がある。
+  2. Review/Review-self の slot 取得・解放フロー: agent/engine/channel の記入・除去パターンは概ね一貫しているが、Builder の解放記述が他ステージより簡素 (F5)。
+  3. grid-check.sh, multiview-grid.sh, orphan-kill.sh のコマンド仕様: 各 SKILL の呼び出し引数と一致しており不整合なし。
+  4. grid 再利用時の state 保存例外: busy slot 保持ロジックが到達不能 (F1)、Pattern A の url が保持リストに未記載 (F4)。fresh grid 初期化は正しく記述されている。

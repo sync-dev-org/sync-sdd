@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|verdict-persistence|framework/claude/skills/sdd-roadmap/refs/review.md:84|Cross-Cutting review の scope-dir を `specs/.cross-cutting/{id}/reviews/` と定義している一方で、同ファイル:142 と [revised flow] は保存先を `specs/.cross-cutting/{id}/verdicts.md` としており、verdict の読取・追記・再開位置が一致しない。
+H|blocking-protocol|framework/claude/skills/sdd-roadmap/refs/run.md:231|Blocking Protocol の `fix` は upstream が `implementation-complete` に戻ることを前提に downstream を unblock するが、同ファイル:186-189 では Design Review 失敗でも retry 枯渇後に Step 6 へ入るため、設計段階で止まった spec を正しく復旧できない。
+H|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:22|Design Review の phase gate が `design.md` の存在確認と `blocked` 判定しかなく、`initialized` の skeleton design.md でも review を開始できる。`spec.yaml.phase` の妥当性確認を必須とする [CLAUDE.md](/Users/mia/Repositories/sync-sdd/framework/claude/CLAUDE.md#L76) の定義と不整合。
+M|consensus-mode|framework/claude/CLAUDE.md:111|CLAUDE.md は `--consensus N` を「N pipelines in parallel」と定義する一方、Router の Shared Protocol は review 用 Inspector/Auditor セットの複製だけを定義しており、`run --consensus N` が全体 pipeline 複製なのか review-only consensus なのか決まらない。
+M|consensus-path|framework/claude/skills/sdd-roadmap/refs/review.md:89|Review Execution Flow は Step 3 で consensus 用に `active-{p}/` を作成した後も、Step 4-7 で Inspector/Auditor の入出力先を `{scope-dir}/active/` のまま記述しているため、逐語実装すると multi-pipeline の出力先が衝突する。
+L|revise-detect-mode|framework/claude/skills/sdd-roadmap/SKILL.md:34|`revise` の Detect Mode が「先頭語が既存 spec 名に一致するか」だけで Single-Spec/Cross-Cutting を分岐しており、cross-cutting 指示文が既存 spec 名で始まると誤って Single-Spec に入る。`crud.md:11` の命名規則は一般動詞しか避けておらず、この衝突を防げていない。

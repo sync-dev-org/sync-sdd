@@ -1,0 +1,7 @@
+SCOPE:inspector-flow
+ISSUES:
+H|dispatch-scope|framework/claude/skills/sdd-roadmap/refs/run.md:256|Wave QG では `/sdd-review dead-code` を呼ぶ一方、`sdd-review` 側は dead-code の保存先を「standalone」と「Wave QG」で分岐定義しているが、引数仕様に文脈識別子がなくルーティング条件が明示されていないため、誤スコープ永続化のリスクがある。
+H|dispatch-parameter|framework/claude/skills/sdd-roadmap/refs/revise.md:255|Cross-Cutting 実行で `/sdd-review impl --cross-cutting {specs}` しか渡さないが、`sdd-review` は保存先として `specs/.cross-cutting/{id}/` を前提にしており、`{id}` の受け渡し経路が定義されていないため、revise→review のディスパッチが不完全。
+H|verdict-format-consistency|framework/claude/sdd/settings/rules/verdict-format.md:3|`verdict-format.md` は CPF→YAML への移行（`verdict*.yaml`/`verdicts.yaml`）を規定しているが、`sdd-roadmap`/`sdd-review`/`sdd-review-self`/`sdd-start`/`sdd-status` は `verdict.cpf` と `verdicts.md` を前提にしており、レビュー種別間および参照ルール間で永続化形式が不整合。
+M|auto-fix-counter|framework/claude/skills/sdd-roadmap/refs/run.md:249|Wave QG の NO-GO/SPEC-UPDATE-NEEDED 枯渇時エスカレーション分岐（Proceed/Abort/Manual fix）で、CLAUDE.md が定義する「user escalation decision 時の counter reset」の適用タイミングが明記されておらず、再開時のカウンタ整合に解釈差が出る。
+L|revise-detect-clarity|framework/claude/skills/sdd-roadmap/SKILL.md:4|`argument-hint` は `revise [feature] [instructions]` とだけ示すが、実際の Detect Mode は「先頭語が既存 spec 名に一致するか」で Single-Spec/Cross-Cutting を分岐する仕様であり、同名語を含む指示文の誤判定リスクに対する明示ガイドが不足している。

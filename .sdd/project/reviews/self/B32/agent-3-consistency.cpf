@@ -1,0 +1,16 @@
+SCOPE:agent-3-consistency
+MATRIX:
+value|phase-values|CLAUDE.md↔refs/design.md↔refs/impl.md↔templates/specs/init.yaml|OK
+value|verdict-values|CLAUDE.md↔refs/run.md↔refs/review.md↔auditor/inspector群|OK
+value|severity-codes|rules/cpf-format.md↔agents/*↔skills/sdd-review-self-ext/*|OK
+path|agent-skill-registration|settings.json↔agents/sdd-*.md↔skills/sdd-*/SKILL.md|OK
+path|review-scope-files|skills/sdd-review-self*.md↔skills/sdd-review-self-ext/refs/prep.md|OK
+protocol|tooling-policy|CLAUDE.md↔skills/sdd-review-self-ext/SKILL.md↔settings.json|NG
+protocol|wave-scope-token|agents/sdd-inspector-*.md↔agents/sdd-auditor-*.md|NG
+protocol|self-review-history-window|skills/sdd-review-self/SKILL.md↔skills/sdd-review-self-ext/refs/prep.md|NG
+protocol|cpf-extended-sections|skills/sdd-review-self-ext/refs/agent-3-consistency.md↔rules/cpf-format.md|NG
+ISSUES:
+M|protocol-consistency|framework/claude/CLAUDE.md:316|「Bashでの読書き/検索禁止」を定義している一方で、self-review-extは `cp/sed/cat/rm` 前提で実装され、settings.jsonも `Bash(sed *)` `Bash(cat *)` などを許可しており、基準プロトコルが二重定義になっている。
+M|terminology-consistency|framework/claude/agents/sdd-inspector-test.md:201|waveスコープ表現がInspectorは `wave-1..{N}`、Auditorは `wave-scoped-cross-check`（sdd-auditor-design.md:184 / sdd-auditor-impl.md:242）で不一致。集約時のキー正規化前提が暗黙化している。
+M|unreachable-path|framework/claude/skills/sdd-review-self-ext/refs/prep.md:13|`git diff HEAD~10..HEAD` を固定実行しており、履歴10未満のリポジトリで失敗時フォールバックがない。初期段階プロジェクトでPrepが停止しうる。
+L|protocol-consistency|framework/claude/skills/sdd-review-self-ext/refs/agent-3-consistency.md:18|「cross-reference matrix を含める」要件があるが、CPF仕様（rules/cpf-format.md）にMATRIXセクションの書式定義がなく、実装ごとに任意形式になって監査の機械処理が不安定化する。

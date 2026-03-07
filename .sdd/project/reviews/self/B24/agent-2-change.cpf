@@ -1,0 +1,4 @@
+SCOPE:agent-2-change
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:52|`sdd-review-self-ext` の Review Scope が `framework/claude/sdd/settings/templates/**/*.md` までしか収集せず、新設された `framework/claude/sdd/settings/templates/engines.yaml` をレビュー対象に含めていません。重点項目にある engines.yaml 連携を 4 Agent が検証できず、テンプレート変更の回帰を見落とす経路が残っています。
+H|dangling-permission|framework/claude/settings.json:5|新設された `framework/claude/skills/sdd-review-self-ext/SKILL.md` に対応する `Skill(sdd-review-self-ext)` が `permissions.allow` にありません。`Skill(sdd-review-self)` は登録済みのため置換先だけ未追随の状態で、外部エンジン版 self-review を既定設定で起動した際に権限確認や実行ブロックが発生する可能性があります。

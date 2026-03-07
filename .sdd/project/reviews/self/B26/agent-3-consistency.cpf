@@ -1,0 +1,29 @@
+SCOPE:agent-3-consistency
+ISSUES:
+H|undefined-reference|framework/claude/skills/sdd-roadmap/refs/run.md:40|「Blocking Protocol」の定義ファイルが存在せず、仕様失敗時の動作がエージェントの推測に依存している
+H|undefined-reference|framework/claude/skills/sdd-roadmap/refs/run.md:40|「auto-draft policy」の定義場所が不明確。CLAUDE.mdの記述を指していると思われるが、正式なポリシー文書としての参照が欠落
+M|value-consistency|framework/claude/agents/sdd-auditor-design.md|実装監査には存在する「SPEC-UPDATE-NEEDED」評決が設計監査に存在せず、仕様不備発見時の挙動が不統一
+M|unreachable-path|framework/claude/skills/sdd-roadmap/refs/review.md:25|「review cross-check」実行時、設計(design)と実装(impl)のどちらのAuditor群を起動すべきかの判断基準が不明確
+M|protocol-consistency|framework/claude/agents/sdd-auditor-impl.md:50|Builderが報告する「FAIL-RETRY-{N}」形式をAuditorが適切に解釈・検証するためのロジックの記述が不足
+M|undefined-reference|framework/claude/agents/sdd-inspector-impl-rulebase.md:45|「AC: {feature}」パターンでのGrepを指示しているが、他ファイルでは「AC: {feature}.S{N}.AC{M}」が標準であり、不完全なマッチングを招く恐れ
+L|path-consistency|framework/claude/skills/sdd-handover/SKILL.md:18|「decisions.md」の参照において、他のスキルで標準的な「{{SDD_DIR}}」変数が使用されていない
+L|numeric-consistency|framework/claude/agents/sdd-builder.md:42|Builder内部のリトライ回数(2回)と、ロードマップスキル側のリトライ制限(3回)の整合性が曖昧
+L|terminology-inconsistency|framework/claude/agents/sdd-auditor-dead-code.md:120|Auditorが期待するCPFカテゴリ名(unused-import等)が、対応する各Inspectorの指示書内の例と一部乖離している
+NOTES:
+## 相互参照マトリックス (Cross-Reference Matrix)
+
+| 構成要素 | 参照元 (主要) | 整合性 | 備考 |
+| :--- | :--- | :--- | :--- |
+| spec.yaml | 全Roadmap, 全Inspector, TaskGen | OK | フェーズ名の遷移(`initialized` -> `completed`)は概ね一貫 |
+| design.md | 全Roadmap, 全Inspector, Architect | OK | WHAT(仕様)とHOW(設計)の分離ルールは全エージェントで共有 |
+| tasks.yaml | Impl, TaskGen, Builder, Rulebase | OK | ステータス値(`pending`, `done`)および並列フラグ(`p: true`)は一貫 |
+| roadmap.md | Status, Roadmap, Reboot | OK | ウェーブ構造と依存関係グラフの表現は統一 |
+| session.md | Handover, Roadmap, Reboot | OK | `{{SDD_DIR}}/handover/` 配下の配置で一貫 |
+| decisions.md | Handover, Roadmap, Reboot | OK | 意思決定ログとしての役割は統一されているがパス指定に揺れあり |
+| steering/ | Steering, Reboot, Architect, Inspector | OK | プロジェクトメモリとしての役割と読み込み順序は一貫 |
+| rules/ | Roadmap, Architect, Rulebase | OK | `design-review.md` 等の基準ファイルへの参照は一貫 |
+| templates/ | Roadmap, Architect, Steering, Reboot | OK | 各フェーズでのテンプレート利用手順は一貫 |
+| 評決値 | 全Auditor, Roadmap | △ | `SPEC-UPDATE-NEEDED` の有無に非対称性あり |
+| 重要度 | 全Inspector, 全Auditor | OK | `C/H/M/L` の4段階コードで一貫 |
+| エージェント名 | CLAUDE.md, settings.json, 各Skill | OK | `sdd-` プレフィックスで統一 |
+| 変数 | 全ファイル | △ | `{{SDD_DIR}}` の利用が推奨されているが一部で直接参照あり |

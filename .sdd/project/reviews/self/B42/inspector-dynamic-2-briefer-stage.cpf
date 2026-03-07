@@ -1,0 +1,3 @@
+SCOPE:inspector-dynamic-2-briefer-stage
+RESULT:PASS
+SUMMARY:prepステージ残存は検出されず、brieferへの置換は設定・スキル引数・install更新経路・監査/ブリーファーテンプレートで整合している。

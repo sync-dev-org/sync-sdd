@@ -1,0 +1,4 @@
+SCOPE:agent-2-change
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:166|`sdd-review-self-ext` が pane title/channel を `sdd-ext-{SID}-{N}` と定義しており、`tmux-integration.md` の正式命名規則 `sdd-{SID}-{purpose}-{identifier}` から外れている。これにより `sdd-{SID}-` 前提の scoped pane lookup と `sdd-{SID}-...` 前提の Orphan Cleanup SID 抽出が self-ext の pane を認識できず、再利用・孤児検出・cleanup が破綻する。
+L|consistency|framework/claude/sdd/settings/rules/tmux-integration.md:71|One-Shot Command の例 `sdd-a3f7b2c1-ext-1` は、同ファイルで `SID` を pane ID 由来の数値 (`%5`→`5`) と定義している説明と矛盾している。実際に生成される SID 形式を誤認させるため、例は数値ベースに揃えるべき。

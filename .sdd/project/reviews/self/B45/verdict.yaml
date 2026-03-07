@@ -1,0 +1,33 @@
+verdict: "CONDITIONAL"
+scope: "self"
+review_type: "self"
+counts:
+  C: 0
+  H: 9
+  M: 17
+  L: 14
+  FP: 4
+lead_overrides:
+  - id: "A33"
+    action: "FP"
+    reason: "意図的な差異 — フレームワーク (prompt engineering) と一般プロジェクトでは LLM 要件が異なる"
+  - id: "A36"
+    action: "reclassify B→A"
+    reason: "修正が明確 (skip to Step 7)"
+disposition:
+  approved_a: 28
+  approved_b: 9
+  deferred: 1
+  fp: 4
+  no_action: 2
+deferred:
+  - id: "A3"
+    summary: "Wave dead-code NO-GO の Builder 修正方式"
+    reason: "開発側 Builder 未実装。sdd-builder はレガシー"
+no_action:
+  - id: "A34"
+    summary: "Briefer git diff range の SubAgent fallback ヒューリスティクス"
+    reason: "実害低、現状維持"
+  - id: "A38"
+    summary: "Hold-and-Release close signal の理論上 race condition"
+    reason: "実害なし、現状維持"

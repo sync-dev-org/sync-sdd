@@ -1,0 +1,52 @@
+- seq: 45
+  type: "self"
+  scope: "framework"
+  date: "2026-03-07T12:27:50+0900"
+  version: "2.5.0"
+  engines:
+    briefer: "gpt-5.3-codex-spark"
+    inspectors: "claude-opus-4-6 (subagent fallback)"
+    auditor: "claude-sonnet-4-6"
+    builder: "claude-opus-4-6 (subagent)"
+  agents:
+    fixed: 3
+    dynamic: 4
+    total: 7
+  counts:
+    C: 0
+    H: 9
+    M: 17
+    L: 14
+    FP: 4
+  verdict: "CONDITIONAL"
+  disposition: "35 fixed, 2 skipped, 1 deferred"
+  tracked:
+    - id: "A3"
+      summary: "Wave dead-code NO-GO の Builder 修正方式"
+      reason: "開発側 Builder 未実装"
+- seq: 44
+  type: "self"
+  scope: "framework"
+  date: "2026-03-07T04:28:25+0900"
+  version: "2.5.0"
+  engines:
+    briefer: "gpt-5.3-codex-spark"
+    inspectors: "gpt-5.4"
+    auditor: "gpt-5.4 + claude-opus-4-6"
+    builder: "gpt-5.4"
+  agents:
+    fixed: 3
+    dynamic: 3
+    total: 6
+  counts:
+    C: 0
+    H: 5
+    M: 3
+    L: 5
+    FP: 6
+  verdict: "CONDITIONAL"
+  disposition: "GO-FIXED"
+  tracked:
+    - id: "B1"
+      severity: "L"
+      description: "sdd-start self-review scope 分離 — review_type で区別可能、現状維持"

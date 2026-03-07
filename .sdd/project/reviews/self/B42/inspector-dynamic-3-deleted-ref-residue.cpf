@@ -1,0 +1,3 @@
+SCOPE:inspector-dynamic-3-deleted-ref-residue
+ISSUES:
+L|deleted-ref-residue|.sdd/project/reviews/self/B41/dynamic-manifest.md:2|アーカイブmanifestに旧prefix `agent-dynamic-*` が残存しており、現行の `inspector-dynamic-*` 命名前提で再利用すると参照不一致を誘発する可能性がある。

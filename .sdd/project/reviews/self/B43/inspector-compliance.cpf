@@ -1,0 +1,16 @@
+SCOPE:inspector-compliance
+COMPLIANT:
+agent-frontmatter-model|OK|https://code.claude.com/docs/en/subagents
+skills-frontmatter-description|OK|https://code.claude.com/docs/en/skills
+skills-frontmatter-allowed-tools|OK|https://code.claude.com/docs/en/skills
+agent-frontmatter-description|OK|https://code.claude.com/docs/en/subagents
+agent-frontmatter-tools|OK|https://code.claude.com/docs/en/subagents
+skills-frontmatter-argument-hint-format|OK|https://code.claude.com/docs/en/skills
+agent-tool-subagent-type-general-purpose|OK|https://platform.claude.com/docs/en/agent-sdk/subagents
+agent-tool-params-model-run_in_background|OK|https://platform.claude.com/docs/en/agent-sdk/typescript
+agent-tool-dispatch-subagent-type-matches-definitions|OK|https://code.claude.com/docs/en/permissions
+settings-permission-format|OK|https://code.claude.com/docs/en/settings
+settings-skill-permission-syntax|OK|https://code.claude.com/docs/en/permissions
+settings-agent-skill-entries-match-files|OK|https://code.claude.com/docs/en/settings
+agent-tool-availability|OK|https://code.claude.com/docs/en/subagents
+ISSUES:

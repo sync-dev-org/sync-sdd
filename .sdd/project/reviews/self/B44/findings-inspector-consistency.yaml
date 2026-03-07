@@ -1,0 +1,54 @@
+scope: "inspector-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "path-consistency"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:276"
+    description: "Wave レビューの verdict 保存先が `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml` になっており、正規スキーマの `{{SDD_DIR}}/project/reviews/wave-{N}/verdicts.yaml` と不一致です。run.md 内でも dead-code と cross-check の両方で同じ誤パスを使っています。"
+    impact: "Wave ごとの verdict が単一ディレクトリに混在するか、`verdict-format.md` と異なる場所に書かれて `sdd-status`/再開処理/監査時の参照が波番号単位で整合しなくなります。"
+    recommendation: "run.md の Wave QG 保存先を `project/reviews/wave-{N}/verdicts.yaml` に統一し、関連説明文も wave 単位ディレクトリ前提に揃えてください。"
+  - id: "F2"
+    severity: "M"
+    category: "protocol-consistency"
+    location: "framework/claude/skills/sdd-review/SKILL.md:3"
+    description: "`/sdd-review` の `argument-hint` と Usage が、実際に他ファイルから使われるモードを完全に表現していません。`refs/revise.md` は `impl --cross-cutting {specs} --id {cc_id}` を必須で呼び出しますが、Usage から `--id` が欠落しています。また `refs/run.md` は `dead-code --context wave` を使いますが、Usage には出てきません。"
+    impact: "ヘルプ表示や実装時の参照元として SKILL.md を見た Lead/保守者が不完全なコマンドを組み立て、cross-cutting review の ID 付与漏れや wave 文脈付き dead-code review の呼び出し漏れを起こし得ます。"
+    recommendation: "`argument-hint` と引数エラーの Usage 文字列を、`dead-code --context wave` と `impl --cross-cutting {specs} --id {id}` を含む実際の対応モードに更新してください。"
+  - id: "F3"
+    severity: "M"
+    category: "undefined-reference"
+    location: "framework/claude/skills/sdd-reboot/refs/reboot.md:120"
+    description: "`sdd-reboot` の手順が `refs/run.md` を参照していますが、`framework/claude/skills/sdd-reboot/refs/` 配下に `run.md` は存在しません。文脈上の実体は `framework/claude/skills/sdd-roadmap/refs/run.md` です。"
+    impact: "reboot 手順を相対参照として追うと設計パイプラインの実行規約に到達できず、Lead が誤った解決先を読むか、手順を途中で手作業補完する必要が出ます。"
+    recommendation: "参照を明示的に `sdd-roadmap` 側の `refs/run.md` と書くか、解決基準がぶれない完全パス/明確な相対パスに置き換えてください。reboot.md 内の同種参照もまとめて統一してください。"
+  - id: "F4"
+    severity: "L"
+    category: "scope-consistency"
+    location: "framework/claude/skills/sdd-start/SKILL.md:28"
+    description: "`/sdd-start` は project-level review state の読込として `{{SDD_DIR}}/project/reviews/*/verdicts.yaml` を走査していますが、このワイルドカードは `project/reviews/self/verdicts.yaml` も含みます。一方 `verdict-format.md` は self-review を別スコープとして定義しています。"
+    impact: "セッション再開時の review state 集約に self-review の履歴が混入し、wave/dead-code/cross-check の運用状態と自己レビュー履歴が同列に扱われる可能性があります。"
+    recommendation: "`self/` を明示的に除外するか、self-review を意図的に含めるなら Step 3 の説明文と後続処理をその前提に合わせて分離してください。"
+notes: |
+  クロスリファレンスマトリクス:
+  - Wave verdict 保存先:
+    verdict-format.md §4 -> `{{SDD_DIR}}/project/reviews/wave-{N}/verdicts.yaml`
+    refs/run.md Step 8a/8b -> `{{SDD_DIR}}/project/reviews/wave/verdicts.yaml`
+    sdd-start Step 3 -> `{{SDD_DIR}}/project/reviews/*/verdicts.yaml`
+  - Review 呼び出し系:
+    sdd-roadmap/SKILL.md -> `/sdd-review` に委譲
+    refs/revise.md Part B Step 9 -> `/sdd-review impl --cross-cutting {specs} --id {cc_id}`
+    refs/run.md Step 8a -> `/sdd-review dead-code --context wave`
+    sdd-review/SKILL.md parser -> 両モード対応、ただし argument-hint/Usage が不完全
+  - Reboot 参照系:
+    sdd-reboot/SKILL.md -> `refs/reboot.md`
+    reboot.md -> `sdd-roadmap` の run protocol を再利用すると説明
+    ただし `refs/run.md` という表記は reboot 配下では未定義
+  - Scope 定義:
+    verdict-format.md -> per-feature / wave-{N} / .cross-cutting / self を分離
+    sdd-start Step 3 の wildcard は self scope を巻き込み得る
+  - 存在確認:
+    settings.json の 10 skills / 5 agents は実ファイルと一致
+    具体的な template/rule/script 参照は概ね存在
+    明示的な未解決参照として確認できたのは reboot.md の `refs/run.md` 表記
+  - 循環参照:
+    読み込んだ範囲では、無限に相互依存する強い循環は確認できませんでした。問題は主に参照先の曖昧さと保存先パスの不統一です。

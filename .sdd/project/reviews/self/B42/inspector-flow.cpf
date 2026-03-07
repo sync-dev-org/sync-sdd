@@ -1,0 +1,7 @@
+SCOPE:inspector-flow
+ISSUES:
+H|router-dispatch|framework/claude/skills/sdd-roadmap/SKILL.md:15|Detect Mode の一覧に `review impl --cross-cutting {specs}` の明示ルートがなく、`sdd-review` 側のサブコマンド対応と不整合。Router 経由の直接実行可否が曖昧。
+M|auto-fix-loop|framework/claude/skills/sdd-roadmap/refs/run.md:255|Wave QG の Dead-Code 分岐は GO/CONDITIONAL/NO-GO のみを定義し、`SPEC-UPDATE-NEEDED` の扱いが未定義。Verdict 種別の網羅性が不足。
+M|verdict-persistence|framework/claude/skills/sdd-review-self/SKILL.md:343|`sdd-review-self` の verdicts.md 追記形式（集計行中心）が、`sdd-review`/Router Shared Protocol の Raw+Disposition+Tracked/Resolved 形式と一致せず、review type 間の永続化フォーマット一貫性が崩れる。
+L|protocol-clarity|framework/claude/skills/sdd-roadmap/SKILL.md:113|Shared Protocol の Verdict Persistence に Cross-Cutting のヘッダー書式（例: `[CC-B{seq}]`）が明記されず、実装参照先に依存するため可読性と決定性が低い。
+L|edge-case-retry-exhaustion|framework/claude/skills/sdd-roadmap/refs/run.md:260|Dead-Code NO-GO の retry 上限到達時は「escalate」のみで、Cross-Check 分岐のような具体的ユーザー選択肢（proceed/abort/manual fix 等）が規定されていない。

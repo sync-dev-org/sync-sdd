@@ -1,0 +1,16 @@
+SCOPE:agent-3-consistency
+MATRIX:
+OK|registry|framework/claude/settings.json<->framework/claude/agents/*.md|Agent定義27件が一致
+OK|registry|framework/claude/settings.json<->framework/claude/skills/*/SKILL.md|Skill定義9件が一致
+OK|phase|framework/claude/CLAUDE.md<->framework/claude/sdd/settings/templates/specs/init.yaml<->framework/claude/skills/sdd-roadmap/refs/*.md|phase値 initialized/design-generated/implementation-complete/blocked は整合
+OK|numeric|framework/claude/CLAUDE.md<->framework/claude/skills/sdd-roadmap/refs/run.md<->framework/claude/skills/sdd-roadmap/refs/revise.md|retry_count=5 spec_update_count=2 aggregate=6 dead-code=3 は整合
+NG|protocol|framework/claude/skills/sdd-roadmap/refs/review.md<->framework/claude/skills/sdd-roadmap/refs/run.md|cross-check/wave運用とStep2位相ゲート前提が不整合
+NG|value|framework/claude/agents/sdd-auditor-design.md<->framework/claude/skills/sdd-roadmap/refs/review.md|design監査の判定式がCONDITIONAL運用と不整合
+NG|protocol|framework/claude/skills/sdd-roadmap/refs/review.md<->framework/claude/agents/sdd-inspector-*.md|VERDICT:ERRORの契約定義が一貫していない
+NG|protocol|framework/claude/skills/sdd-roadmap/refs/run.md<->framework/claude/agents/sdd-auditor-impl.md|SPEC-UPDATE-NEEDED列挙の欠落
+ISSUES:
+H|unreachable-path|framework/claude/agents/sdd-auditor-impl.md:226|最終判定ロジックが`>3 High`のみCONDITIONALのため、Highが1-3件でCなし・テスト成功・spec欠陥なしのケースがどの分岐にも入らずVERDICT未定義になる。
+M|value-consistency|framework/claude/agents/sdd-auditor-design.md:168|design監査の判定式は`Highを含めNO-GO/それ以外GO`の2値だが、同ファイルの出力仕様は`GO|CONDITIONAL|NO-GO`で、reviewフロー側もCONDITIONALを前提としており整合しない。
+M|protocol-consistency|framework/claude/skills/sdd-roadmap/refs/review.md:22|Step2の位相ゲートがfeature単位の`design.md/tasks.yaml/spec.yaml`を前提に記述される一方、同ファイルは`--cross-check/--wave`(featureなし)を正式サポートし、run.mdはこのStep1-4実行を指示しているため適用規則が未定義。
+M|undefined-reference|framework/claude/skills/sdd-roadmap/refs/review.md:130|`VERDICT:ERROR`をInspector CPFの有効状態として扱うが、Inspector各定義のVERDICT列挙とCPF仕様側にERRORの共通契約がなく、値体系が分岐している。
+L|protocol-consistency|framework/claude/skills/sdd-roadmap/refs/run.md:148|Review Decompositionの説明が`GO/CONDITIONAL/NO-GO`のみを列挙し、Impl Auditorが返す`SPEC-UPDATE-NEEDED`の遷移がこの節では欠落していて同一プロトコル説明として不完全。

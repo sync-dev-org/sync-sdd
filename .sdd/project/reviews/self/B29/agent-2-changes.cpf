@@ -1,0 +1,5 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/sdd/settings/scripts/multiview-grid.sh:12|`multiview-grid.sh` は 12 スロットの 4 分割レイアウトへ変更された一方で、参照元の `tmux-integration.md` は 14 スロット前提のままです。`sdd-review-self-ext` は Step 5 で同ルールを正として参照するため、Lead 実装が文書どおりにスロット数・出力件数・Overflow 閾値を扱うと実スクリプトと食い違い、割り当て表や待機ロジックを誤構築します。
+M|split-loss|framework/claude/sdd/settings/scripts/multiview-grid.sh:1|旧スクリプトにあった「Lead が 2 つ以上存在したら grid 作成を中止する」ガードが削除されていますが、`tmux-integration.md` には `Max Lead: 2` と 3 Lead 時の fallback が残っています。仕様移行の追記がないため、3 本目の Lead が実際には grid を作れてしまい、文書化された多重 Lead 制限が失われています。
+L|template-integrity|framework/claude/sdd/settings/rules/tmux-integration.md:116|`検証済み寸法` と図表が旧 14 スロット・旧比率のままで、現行スクリプトの 50/50 分割・12 スロット構成を反映していません。運用者が手動確認やレイアウト回帰チェックをこの表に基づいて行うと、誤った期待値で正常/異常を判定します。

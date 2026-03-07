@@ -1,0 +1,12 @@
+SCOPE:agent-3-consistency
+XREF:CLAUDE.md->sdd-roadmap/SKILL.md,refs/{crud,design,impl,review,revise,run}.md,sdd-status/SKILL.md,sdd-reboot/refs/reboot.md,sdd-review-self/SKILL.md,sdd-review-self-ext/SKILL.md
+XREF:sdd-roadmap/SKILL.md->refs/{crud,design,impl,review,revise,run}.md
+XREF:refs/review.md->sdd-auditor-{design,impl,dead-code}.md,sdd-inspector-*.md,tmux-integration.md
+XREF:refs/revise.md->refs/{design,impl,review,run}.md,specs/.cross-cutting/{id}/
+XREF:sdd-review-self-ext/SKILL.md->engines.yaml,cpf-format.md,tmux-integration.md
+CYCLE_CHECK:none-detected-in-reviewed-doc-graph
+ISSUES:
+H|path-consistency|framework/claude/skills/sdd-roadmap/refs/review.md:84|cross-cutting review の scope-dir だけ `specs/.cross-cutting/{id}/reviews/` を指す一方、同ファイル 142 行・`framework/claude/skills/sdd-roadmap/SKILL.md:135`・`framework/claude/skills/sdd-roadmap/refs/revise.md:256` は `specs/.cross-cutting/{id}/verdicts.md` を前提にしている。active/B{seq}/verdicts.md の配置先が 2 系統に分裂し、resume/status/revise の参照先が一致しない。
+H|protocol-consistency|framework/claude/skills/sdd-review-self-ext/SKILL.md:144|external self-review の Agent 4 キャッシュは `agent-4-compliance.cpf` から `Confirmed OK` を抽出すると定義しているが、同スキル 98-105 行の shared CPF 指示は `ISSUES` しか定義せず、Agent 4 個別指示 325-339 行は表形式の compliance status table を要求している。保存形式・再読形式・再利用項目が噛み合わず、キャッシュが実質到達不能。
+M|error-handling|framework/claude/skills/sdd-roadmap/refs/review.md:132|review protocol は `VERDICT:ERROR` を「Inspector unavailable」として findings を無視するが、`framework/claude/agents/sdd-inspector-impl-rulebase.md:154` は Missing Spec を `VERDICT:ERROR` + `C|setup|...` で返す。定義どおり処理すると重大な setup failure が黙殺され、error path が dead end になる。
+L|path-clarity|framework/claude/CLAUDE.md:36|レビュー入出力の説明が `reviews/active/` と `reviews/B{seq}/` の抽象表現に留まっており、実装側の per-feature (`specs/{feature}/reviews/`)、project-level (`project/reviews/*/`)、cross-cutting (`specs/.cross-cutting/{id}/`) の 3 系統スコープと 1 対 1 に対応していない。上位原則としては読めるが、path consistency review の基準では曖昧さが残る。

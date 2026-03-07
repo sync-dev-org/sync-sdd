@@ -1,0 +1,6 @@
+SCOPE:inspector-dynamic-3-install-script-scope
+AGENT:inspector-dynamic-3
+ISSUES:
+H|engine-overwrite-policy|install.sh:524|`.sdd/settings/engines.yaml` を `cp` で無条件上書きしており、`--update/--force` 時のみ上書きとするヘルプ記載（install.sh:94）および設定ファイル注記（framework/claude/sdd/settings/engines.yaml:2）と矛盾する。通常インストール再実行でもローカル調整値が消える。
+M|stale-cleanup-scope|install.sh:572|`remove_stale` の scripts 対象が `"*"` になったため、`--update/--force` 時に `.sdd/settings/scripts/` 配下の非`.sh`（`.md`/設定断片/補助ファイル）も削除対象になる。skills ではユーザー作成物保護分岐がある一方、scripts には保護条件がなく運用上の誤削除リスクが残る。
+L|doc-role-alignment|README.md:5|README は「5 SubAgents」を前面表示するが、実運用の役割記述は `framework/claude/CLAUDE.md` で Auditor/Inspector/ConventionsScanner を含む多層構成になっており、`engines.yaml` の stage/role 設定（review-self の builder 追加含む）との対応関係が初見で追いにくい。

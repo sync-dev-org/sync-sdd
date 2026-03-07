@@ -1,0 +1,13 @@
+SCOPE:agent-3-compliance
+COMPLIANT:
+agent-frontmatter-model(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+agent-frontmatter-tools(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tools-available-to-claude
+agent-frontmatter-description(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+skills-frontmatter-description-and-allowed-tools|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+skills-frontmatter-argument-hint-format|OK|https://docs.anthropic.com/en/docs/claude-code/skills
+dispatch-subagent-type-to-existing-agents|OK|https://docs.anthropic.com/en/docs/claude-code/sub-agents
+settings-permission-format-skill-agent|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tool-specific-permission-rules
+settings-skill-agent-entries-vs-files|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tool-specific-permission-rules
+agent-tool-availability-vs-declared-tools(cached)|OK|https://docs.anthropic.com/en/docs/claude-code/settings#tools-available-to-claude
+ISSUES:
+UNCERTAIN|agent-tool-params|framework/claude/CLAUDE.md:84|公式公開ドキュメントではTask/Agent呼び出しで`subagent_type`は確認できた一方、`model`と`run_in_background`を同一パラメータ仕様として明示する一次情報を確認できず、`run_in_background: true`必須運用の仕様準拠性を断定できない（要追加一次情報確認）。参照: https://docs.claude.com/en/api/agent-sdk/python

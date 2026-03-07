@@ -1,0 +1,5 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|consensus-logic|framework/claude/skills/sdd-roadmap/refs/review.md|SKILL.mdのargument-hintで定義されたコンセンサス閾値(⌈N×0.6⌉)と異なり、refs/review.mdのStep 8における合成ロジックが「いずれかのパイプラインがNO-GOならNO-GO」という厳格な拒否権方式（Strict Veto）になっている。これにより多数決によるハルシネーション抑制というコンセンサスモードの意図が損なわれている。
+L|ac-coverage-redundancy|framework/claude/agents/sdd-inspector-impl-rulebase.md|sdd-inspector-test.mdのStep 5.GとACマーカーのチェック内容が重複している。どちらのInspectorも同様のトレース確認を行うため、実装レビューの結果が冗長になる可能性がある。
+L|verdict-synthesis-logic|framework/claude/skills/sdd-roadmap/refs/review.md|Step 8の合成ロジックにおいて、SPEC-UPDATE-NEEDEDがNO-GOより優先度が低いにもかかわらず、いずれか一つでも存在すればNO-GOを差し置いてそのVerdictになるような記述順序になっている（実際はNO-GOが最優先されるべき）。

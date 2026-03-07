@@ -1,0 +1,26 @@
+scope: "inspector-dynamic-3-task-notification"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "orphan-cleanup"
+    location: "framework/claude/sdd/settings/scripts/multiview-grid.sh:50"
+    description: "Grid 作成後の idle slot title が `slot-{N} idle` に変わっている一方で、fallback orphan 検出は `sdd-` prefix title しか拾わないため、`state.yaml` 不在時に旧 grid の idle pane を検出できません。"
+    impact: "`.sdd/state.yaml` を失った再開経路では前セッションの slot pane が取り残され、手動 cleanup 前提になります。title ベース検出が機能しないため、task-notification 方式へ寄せた後でも orphan pane の掃除だけ片落ちします。"
+    recommendation: "`multiview-grid.sh` の idle title を再び `sdd-{SID}-slot-{N}` 系に戻すか、`orphan-detect.sh fallback` 側で `slot-{N} idle` も旧 session pane として判定できるようにしてください。"
+  - id: "F2"
+    severity: "H"
+    category: "state-management"
+    location: "framework/claude/skills/sdd-start/SKILL.md:53"
+    description: "`/sdd-start` は Step 7d で既存 grid を再利用できる設計なのに、Step 7e の state.yaml 生成例は全 slot を `status: idle` で再初期化しています。busy slot の `agent`/`engine`/`channel` を保持する指示がありません。"
+    impact: "セッション再開を idempotent に実行しただけで実行中 Inspector/Auditor/Builder の占有情報が消えます。その後の `sdd-review-self` は occupied pane を idle と誤認して再利用でき、wait-for channel と slot 割り当てが壊れます。"
+    recommendation: "grid 再利用時は既存 state の slot metadata を保持し、fresh grid 作成時だけ idle 初期化するよう手順を分岐してください。少なくとも busy slot の `status`/`agent`/`engine`/`channel` は上書き禁止にするべきです。"
+  - id: "F3"
+    severity: "L"
+    category: "documentation"
+    location: "framework/claude/sdd/settings/rules/tmux-integration.md:95"
+    description: "`tmux-integration.md` は grid 作成時の slot title を `sdd-{SID}-slot-{N}` と説明していますが、実スクリプトと `sdd-review-self` の reset 手順は `slot-{N} idle` を使っています。"
+    impact: "実行時の正解が文書から読み取れず、fallback orphan 検出や slot 観測を別ファイルだけ更新したときに再び不整合を作りやすくなります。今回の title 判定漏れもこの仕様ズレに引っ張られています。"
+    recommendation: "title lifecycle を 1 か所に正規化し、`multiview-grid.sh`・`tmux-integration.md`・各 SKILL で同じ文字列規約を共有してください。fallback 判定が title に依存するなら、その依存も同じ節に明記してください。"
+notes: |
+  `wait-for` の `-B{seq}` 命名自体は `sdd-review-self` と `tmux-integration.md` で整合していました。
+  問題は channel 名よりも、slot の生存判定と state/title の更新規約が 3 箇所で分岐している点です。

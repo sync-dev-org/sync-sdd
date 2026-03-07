@@ -1,0 +1,132 @@
+scope: "inspector-flow"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "router-dispatch"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:104"
+    summary: "Review サブコマンドの dispatch が Skill 委譲と refs 直接参照の二重構造になっている"
+    detail: "Execution Reference セクションで Review は /sdd-review skill に委譲すると明記されているが、run.md の Review Decomposition では sdd-review の Steps を直接参照して分解実行する。standalone と dispatch-loop で Review の実行パスが異なることは意図的だが、SKILL.md の Execution Reference には「For pipeline context (auto-fix loops, Wave QG), see refs/run.md which references sdd-review steps」とだけ記載されており、dispatch-loop 内での Review Decomposition が sdd-review の full pipeline ではなく sub-phase 分解であることの説明が薄い。"
+    impact: "Lead が dispatch-loop 内で Review を実行する際、sdd-review を丸ごと Skill 呼び出しするのか、Review Decomposition に従って分解するのかが曖昧になりうる。"
+    recommendation: "SKILL.md の Execution Reference の Review 項目に「dispatch-loop 内では Review Decomposition (run.md §Review Decomposition) に従い sub-phase 分解で実行。standalone 呼び出し時のみ /sdd-review skill に委譲」と明記する。"
+
+  - id: "F2"
+    severity: "H"
+    category: "verdict-persistence"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:276-283"
+    summary: "Dead-Code / Cross-Check verdict の verdicts.yaml ヘッダー記法が旧フォーマット残留"
+    detail: "run.md Step 8a では dead-code review verdict を「(header: [W{wave}-DC-B{seq}])」で、Step 8b では cross-check verdict を「(header: [W{wave}-B{seq}])」で verdicts.yaml に永続化すると記載。しかし verdict-format.md §4 の verdicts.yaml スキーマは YAML リスト形式で seq, type, scope, wave フィールドを使用しており、角括弧ヘッダー記法は定義されていない。これは verdicts.md から verdicts.yaml への移行時の旧記法残留。"
+    impact: "run.md を読んだ Lead が角括弧ヘッダーを verdicts.yaml に書こうとし、verdict-format.md §4 スキーマとの不整合が発生する。永続化フォーマットの矛盾は verdict 読み取り・Wave QG 再実行時のトラッキングに直接影響する。"
+    recommendation: "run.md Step 8a の (header: [W{wave}-DC-B{seq}]) を verdict-format.md §4 スキーマの batch エントリ形式に更新する。例: type: dead-code, scope: wave-{N}, wave: {N}。Step 8b の [W{wave}-B{seq}] も同様に type: cross-check, scope: wave-{N}, wave: {N} に更新する。"
+
+  - id: "F3"
+    severity: "H"
+    category: "revise-escalation"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:43-49"
+    summary: "Single-Spec → Cross-Cutting エスカレーション時に Part B Step 1 の Steering update がスキップされるリスク"
+    detail: "revise.md Part A Step 3 で 2+ spec が影響を受ける場合に Cross-Cutting への切り替えを提案し、承認時は「join Part B Step 2 with revision intent and target spec pre-populated. Skip Part B Step 1 (REVISION_INITIATED already recorded in Part A Step 2)」と記載。しかし Part B Step 1 は REVISION_INITIATED の記録だけでなく Steering update (Step 1.3: If intent implies direction changes, update relevant steering files BEFORE proceeding) も含む。Part A Step 2.4 にも Steering update があるが、Cross-Cutting モードに切り替わった時点で影響範囲が拡大しており、追加の Steering update が必要になる可能性がある。Part B Step 1 を丸ごとスキップするとこの機会が失われる。"
+    impact: "Single-Spec から Cross-Cutting にエスカレーションした際、拡大した影響範囲に対する Steering update が実行されず、後続の Architect が古い Steering を参照して設計する可能性がある。"
+    recommendation: "revise.md のエスカレーション指示を「Skip Part B Step 1 の REVISION_INITIATED recording のみスキップ。Steering update (Part B Step 1.3) は必ず実行する」に変更する。"
+
+  - id: "F4"
+    severity: "M"
+    category: "edge-case"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:275-279"
+    summary: "wave dead-code review 呼び出しが wave 番号を渡す引数定義と不整合"
+    detail: "run.md Step 8a は /sdd-review dead-code --context wave を呼ぶと記載。しかし sdd-review の引数定義では dead-code に --wave N オプションがない。sdd-review Step 4 の Scope Directory テーブルでは dead-code (context=wave) の保存先が project/reviews/wave-{N}/ だが、{N} の決定源が不明。run.md 側の呼び出しコンテキストから wave 番号が推定されるべきだが、sdd-review の引数パーサーにはその受け渡し機構がない。"
+    impact: "wave 単位の dead-code verdict を正しい verdicts.yaml に保存できず、Wave QG の再実行時トラッキングや履歴参照が破綻する。"
+    recommendation: "/sdd-review dead-code --context wave --wave N のように wave 番号を明示引数化し、sdd-roadmap router・refs/run.md・sdd-review の3箇所を同じ記法に揃える。"
+
+  - id: "F5"
+    severity: "M"
+    category: "revise-mode-detection"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:33-39"
+    summary: "revise モード検出の word-prefix matching にエスケープハッチが不足"
+    detail: "SKILL.md の revise Detect Mode は「first word after revise is matched against spec directory names using word-prefix matching」と記載。Caveat として instructions が spec 名の prefix で始まる場合の誤検出を警告しているが、エスケープ手段は「Use the full spec name, or start instructions with a non-matching word」のみ。明示的なモード指定フラグ（例: --single / --cross）がないため、曖昧なケースでユーザーが意図しないモードに入る可能性がある。"
+    impact: "ユーザーが revise add authentication to all endpoints のように指示した場合、add が spec 名に prefix match すると Single-Spec として誤 dispatch される。SKILL.md の Naming rule で add 等の動詞を spec 名に使わないルールはあるが、既存プロジェクトでは保証できない。"
+    recommendation: "prefix match 後に AskUserQuestion で確認するか、--cross フラグを追加して明示的な Cross-Cutting 指定を可能にする。"
+
+  - id: "F6"
+    severity: "M"
+    category: "verdict-persistence"
+    location: "framework/claude/sdd/settings/rules/verdict-format.md:64"
+    summary: "Auditor verdict の review_type 列挙が cross-check と cross-cutting を含まず実運用モードとずれている"
+    detail: "verdict-format.md の Auditor verdict 例では review_type が design/impl/dead-code/self のみだが、sdd-review は cross-check と cross-cutting を正式な review scope/type として扱い、verdicts.yaml §4 にはその値を保存する前提。中間 verdict の型説明だけが更新されていない。"
+    impact: "review type の検証やテンプレート実装が verdict-auditor.yaml / verdict.yaml を誤って拒否・正規化し、波レベルレビューや cross-cutting review の永続化整合性を損ねる。"
+    recommendation: "verdict-auditor.yaml と verdict.yaml の review_type 説明・例を cross-check / cross-cutting まで含めて更新し、§4 Verdict Index と同じ列挙集合に統一する。"
+
+  - id: "F7"
+    severity: "M"
+    category: "read-clarity"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:100-108"
+    summary: "dispatch-loop 内での refs 再読込タイミングが不明"
+    detail: "SKILL.md の Execution Reference で「After mode detection and roadmap ensure, Read the reference file for the detected mode」と明記されている。しかし dispatch-loop (run.md) 内で Phase Handler が design.md や impl.md を参照する際、Lead がこれらの refs を毎回 Read するのか、最初の Read をコンテキストに保持しているのかが明示されていない。dispatch-loop は長時間実行されるため、context window からの揮発が起こりうる。"
+    impact: "Lead が長時間の dispatch-loop 実行中に refs の内容を忘れ、Phase Handler の手順を不正確に実行する可能性がある。"
+    recommendation: "run.md の Phase Handlers セクション冒頭に「Phase Handler 実行時、refs の内容が context window に残っていない場合は再度 Read する」旨のガイダンスを追加する。"
+
+  - id: "F8"
+    severity: "M"
+    category: "blocked-spec"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:259-264"
+    summary: "Blocking Protocol の skip オプションで downstream spec 個別確認結果に応じた counter reset タイミングが不明瞭"
+    detail: "run.md Step 7 の skip オプションで「Reset counters for affected downstream specs」と記載。しかし downstream spec に対して per-spec で「proceed / keep blocked / remove dependency」を確認した後、keep blocked を選択した spec に対しても counter が reset されるのか不明。CLAUDE.md の Counter reset triggers に「user escalation decision (including blocking protocol fix/skip)」とあるが、skip 内の per-spec 選択との関係が明確でない。"
+    impact: "keep blocked を選択した downstream spec に対して意図しない counter reset が発生するか、逆に proceed を選択した spec の counter が reset されないまま pipeline に復帰する可能性がある。"
+    recommendation: "run.md Step 7 の skip オプションに「counter reset は proceed を選択した downstream spec に対してのみ即座に実行。keep blocked の spec は counter を保持（unblock 時に fix オプションで reset）」と明記する。"
+
+  - id: "F9"
+    severity: "L"
+    category: "phase-gate-consistency"
+    location: "framework/claude/skills/sdd-roadmap/refs/design.md:19"
+    summary: "design.md の Phase Gate が CLAUDE.md の Phase Gate に対して追加条件を定義しているが注記なし"
+    detail: "CLAUDE.md の Phase Gate は汎用的に「phase が appropriate か確認」「blocked なら BLOCK」「unrecognized なら BLOCK」の 3 条件。design.md の Step 2 はこれを具体化して implementation-complete からの re-design 警告を追加している。この追加条件は CLAUDE.md に記載がなく、design.md 独自の拡張。整合性上の問題はないが、Phase Gate の仕様が分散している。"
+    impact: "Phase Gate 仕様の変更時に design.md の拡張条件を見落とす可能性がある。"
+    recommendation: "CLAUDE.md の Phase Gate セクションに「各 ref が追加の phase-specific gate を定義しうる」旨の注記を追加する。"
+
+  - id: "F10"
+    severity: "L"
+    category: "auto-fix-loop"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:190-191"
+    summary: "Design Review NO-GO 時の counter 非 reset が GO/CONDITIONAL 行にのみ記載"
+    detail: "run.md Phase Handlers の Design Review completion で「counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits」と記載されているが、これは GO/CONDITIONAL のハンドリング行にある。NO-GO 時の retry サイクル中に counter が reset されないことは CLAUDE.md で定義済みだが、run.md の記述だけ読むと NO-GO retry 中の counter 挙動が明示されていない。"
+    impact: "軽微。counter が中間 GO/CONDITIONAL で reset されないことは CLAUDE.md に明記済みだが、run.md の文脈だけ読むと NO-GO retry 中の counter 挙動が不明瞭。"
+    recommendation: "run.md の NO-GO ハンドリング行にも counter は retry 中 reset されない旨を追記する。"
+
+  - id: "F11"
+    severity: "L"
+    category: "revise-mode"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:8-10"
+    summary: "Revise Detect Mode の説明が Router 本文の prefix-match 仕様の詳細を省略"
+    detail: "sdd-roadmap/SKILL.md は revise の Single-Spec 判定を spec 名への word-prefix matching と明記し、誤判定 caveat も記載。一方 refs/revise.md は単に「feature matches known spec name」とだけ書かれており、prefix 判定と曖昧性の注意が抜けている。"
+    impact: "利用者や将来の保守者が refs/revise.md だけを読むと Cross-Cutting 呼び出しの誤ルーティング条件を把握できない。"
+    recommendation: "refs/revise.md の Mode Detection に prefix-match 仕様と曖昧性回避ルールを追記するか、Router の Detect Mode 記述を参照する旨を明記する。"
+
+  - id: "F12"
+    severity: "L"
+    category: "edge-case"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:8"
+    summary: "空 roadmap ガードのエラーメッセージが roadmap.md 存在ケースと不整合"
+    detail: "run.md Step 1 の empty roadmap guard は「No specs found in roadmap. Use /sdd-roadmap create to add specs.」と記載。roadmap.md が存在するが spec ディレクトリが 0 個というケースは通常発生しないが、手動で spec ディレクトリを削除した場合にこのガードに到達する。その場合、roadmap.md は存在するのに create を勧めるのは不正確。"
+    impact: "軽微。エッジケースのエラーメッセージの不正確さのみ。"
+    recommendation: "エラーメッセージを「No spec directories found. Use /sdd-roadmap update to sync or /sdd-roadmap delete to reset.」に変更する。"
+
+  - id: "F13"
+    severity: "H"
+    category: "wave-quality-gate"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:279"
+    summary: "Wave dead-code NO-GO の自動修正で Builder に渡す実行コンテキストが定義されていない"
+    detail: "refs/run.md は Wave QG の dead-code NO-GO で「dispatch Builder(s) directly with fix instructions (Builder scope = all files from Inspector findings)」と指示しているが、sdd-builder は feature 名、group ID、tasks.yaml、design.md、file scope を前提に動作する。dead-code 所見は wave 横断・タスク非依存で発生し得るため、この分岐だけでは Builder 入力を構成できない。"
+    impact: "dead-code NO-GO 時の auto-fix loop が sdd-builder の契約を満たせず、Wave QG が停止するか曖昧な修正に流れる恐れがある。"
+    recommendation: "dead-code 修正専用の fix-mode を明示するか、finding を feature/group/tasks に写像する手順を refs/run.md に追加する。あるいは dead-code fix は Lead が直接実行する（Builder 委譲しない）ことを明記する。"
+
+notes: |
+  全体的に Router → refs の dispatch フローは well-structured で、主要なサブコマンドすべてが正しい refs にルーティングされている。
+  重大度の高い懸念点:
+  1. verdict 永続化フォーマットの旧記法残留 (F2) — verdicts.md → verdicts.yaml 移行漏れ
+  2. Single-Spec → Cross-Cutting エスカレーション時の Steering update スキップリスク (F3)
+  3. Wave dead-code NO-GO の Builder 入力コンテキスト未定義 (F13)
+  中程度の懸念点:
+  4. Review の二重実行パス（standalone vs dispatch-loop）の明示性 (F1)
+  5. wave dead-code review の wave 番号受け渡し未定義 (F4)
+  6. revise モード検出の prefix matching の曖昧性 (F5)
+  7. Auditor verdict の review_type 列挙不足 (F6)
+  8. dispatch-loop 内での refs 再読込タイミング未定義 (F7)
+  9. Blocking Protocol skip の counter reset タイミング不明瞭 (F8)

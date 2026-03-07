@@ -1,0 +1,207 @@
+status: "complete"
+items:
+  - id: "A1"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Replaced legacy bracket header notation [W{wave}-DC-B{seq}] and [W{wave}-B{seq}] with verdicts.yaml field notation (type/scope/wave)"
+  - id: "A2"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+    note: "Changed escalation instruction to skip only REVISION_INITIATED recording while always executing Steering update (Part B Step 1.3)"
+  - id: "A4"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/templates/review-self/briefer.md"
+      - "framework/claude/sdd/settings/templates/review-self/auditor.md"
+      - "framework/claude/sdd/settings/templates/review-self/inspector-flow.md"
+      - "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md"
+      - "framework/claude/sdd/settings/templates/review-self/inspector-compliance.md"
+    note: "Separated summary and detail onto separate lines in all YAML examples across 5 template files"
+  - id: "A5"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Moved state.yaml migration outside the if [ -d .sdd/handover ] block as an independent check"
+  - id: "A6"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Added v2.5.x path (decisions.yaml) and changed pre-v2.5.0 decisions.md to archive as decisions-legacy.md"
+  - id: "A7"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Added v2.5.x path (knowledge.yaml with priority) and changed buffer.md to archive as knowledge-legacy.md"
+  - id: "A8-B2"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+      - "framework/claude/CLAUDE.md"
+    note: "Removed dead-code retry max 3 from run.md L279, removed Exception line and session resume counter reference from CLAUDE.md Auto-Fix Counter Limits, removed same from run.md Post-gate"
+  - id: "A9"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "Added cross-check type normalization note in Step 9 verdicts.yaml persistence"
+  - id: "A10-B3"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+    note: "Added dispatch-loop vs standalone explanation to Review entry in Execution Reference"
+  - id: "A11-B4"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+      - "framework/claude/skills/sdd-review/SKILL.md"
+    note: "Added dead-code --wave N to router argument list, updated run.md Step 8a to use --wave {N}, added dead-code --wave N to sdd-review argument parsing"
+  - id: "A12-B5"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/SKILL.md"
+    note: "Added AskUserQuestion confirmation instruction for ambiguous revise mode detection"
+  - id: "A13"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/rules/verdict-format.md"
+    note: "Extended review_type enumeration in Auditor verdict to include cross-check/cross-cutting"
+  - id: "A14"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Added refs reload guidance at Phase Handlers section head"
+  - id: "A15"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Clarified skip option counter reset applies only to proceed downstream specs; keep blocked specs retain counters"
+  - id: "A16-B6"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/CLAUDE.md"
+    note: "Changed decisions.yaml behavior to 'Append-only (consolidation rewrite at /sdd-handover only)' and added decisions/ archive directory to table"
+  - id: "A17"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "Renumbered steps: 6->5, 7->6, 8->7, 9->8. Updated internal references (Steps 6a-6e, skip to Step 6)"
+  - id: "A18"
+    result: "skipped"
+    files_modified: []
+    note: "inspector-brief.md reference not found in briefer.md or any review-self template — already absent"
+  - id: "A19"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/CLAUDE.md"
+    note: "Added 'Flush +' prefix and 'flush pending decisions/knowledge,' to consolidation description"
+  - id: "A20"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review-self/SKILL.md"
+    note: "Unified BATCH_SEQ determination to use batches[].seq instead of B{N} string"
+  - id: "A21"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Added handover.md migration from v2.5.x path (handover/handover.md -> session/handover.md) with priority over session.md"
+  - id: "A22"
+    result: "fixed"
+    files_modified:
+      - "install.sh"
+    note: "Added handovers/ directory migration from v2.5.x path (handover/handovers -> session/handovers)"
+  - id: "A23-B7"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Post-gate counter reset now only applies to specs that reached implementation-complete; blocked specs retain counters"
+  - id: "A24"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Changed AUDITOR-COMPLETE step reference from 'Step 8' to 'Steps 8-9 (Lead supervision, verdict persist to verdicts.yaml, archive active -> B{seq})'"
+  - id: "A25-B8"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "Relaxed grid reuse condition to require only all slots alive (not all idle). Busy slots are preserved and only idle slots are used"
+  - id: "A26-B9"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "Added window_id verification before grid reuse — mismatch triggers fresh grid creation"
+  - id: "A27"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/CLAUDE.md"
+    note: "Added note about refs defining additional phase-specific gate conditions to Phase Gate section"
+  - id: "A28"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Added counter non-reset note to Design Review NO-GO handling line"
+  - id: "A29"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+    note: "Added prefix-match specification reference to Mode Detection section"
+  - id: "A30"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Changed empty roadmap guard error message to reference /sdd-roadmap update and /sdd-roadmap delete"
+  - id: "A31"
+    result: "skipped"
+    files_modified: []
+    note: "No actual duplicate entries found in briefer.md Step 2 glob patterns — patterns target distinct directories/extensions"
+  - id: "A32"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/CLAUDE.md"
+    note: "Changed both instances of 'reviews/active/' and 'reviews/B{seq}/' to '{scope-dir}/active/' and '{scope-dir}/B{seq}/'"
+  - id: "A35"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/sdd/settings/templates/review-self/briefer.md"
+    note: "Updated compliance cache to use batches[].seq and batches[].date from verdicts.yaml type:self batch"
+  - id: "A36"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "Changed first session skip target from 'Step 8' to 'Step 6' (after renumbering)"
+  - id: "A37"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-roadmap/refs/run.md"
+    note: "Added type=\"design\" filter to verdicts.yaml check in Implementation readiness rule"
+  - id: "A39-B11"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-start/SKILL.md"
+    note: "Extended busy slot metadata preservation list to include url alongside agent/engine/channel"
+  - id: "A40"
+    result: "fixed"
+    files_modified:
+      - "framework/claude/skills/sdd-review-self/SKILL.md"
+    note: "Added agent/engine/channel/url removal and pane title reset to Builder slot release description"
+tests:
+  ran: false
+  passed: false
+  output: ""
+diff_summary: |
+  framework/claude/CLAUDE.md                         | 13 +++++++------
+  .../claude/sdd/settings/rules/verdict-format.md    |  2 +-
+  .../sdd/settings/templates/review-self/auditor.md  |  6 ++++--
+  .../sdd/settings/templates/review-self/briefer.md  | 10 ++++++----
+  .../templates/review-self/inspector-compliance.md  |  3 ++-
+  .../templates/review-self/inspector-consistency.md |  3 ++-
+  .../templates/review-self/inspector-flow.md        |  3 ++-
+  framework/claude/skills/sdd-review-self/SKILL.md   |  4 ++--
+  framework/claude/skills/sdd-review/SKILL.md        |  5 +++--
+  framework/claude/skills/sdd-roadmap/SKILL.md       |  5 +++--
+  framework/claude/skills/sdd-roadmap/refs/revise.md |  5 +++--
+  framework/claude/skills/sdd-roadmap/refs/run.md    | 22 ++++++++++++----------
+  framework/claude/skills/sdd-start/SKILL.md         | 16 ++++++++--------
+  install.sh                                         | 19 +++++++++++++------
+  14 files changed, 68 insertions(+), 48 deletions(-)

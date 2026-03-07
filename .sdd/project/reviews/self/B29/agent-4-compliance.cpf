@@ -1,0 +1,20 @@
+SCOPE:agent-4-compliance
+STATUS_TABLE:
+agent-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+skill-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/slash-commands
+settings-permission-format|OK|https://docs.claude.com/en/docs/claude-code/settings
+tool-availability-names|OK|https://docs.claude.com/en/docs/claude-code/settings
+general-purpose-built-in-agent|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-tool-parameter-signature|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/tasks-and-agents
+taskoutput-polling-signature|UNCERTAIN|https://docs.claude.com/en/docs/claude-code/tasks-and-agents
+COMPLIANT:
+agent-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+agent-model-values|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+skill-frontmatter-fields|OK|https://docs.claude.com/en/docs/claude-code/slash-commands
+settings-permission-format|OK|https://docs.claude.com/en/docs/claude-code/settings
+tool-availability-names|OK|https://docs.claude.com/en/docs/claude-code/settings
+general-purpose-built-in-agent|OK|https://docs.claude.com/en/docs/claude-code/sub-agents
+ISSUES:
+UNCERTAIN|medium-agent-tool-parameter-signature|framework/claude/CLAUDE.md:32; framework/claude/skills/sdd-review-self/SKILL.md:58; framework/claude/skills/sdd-roadmap/refs/design.md:39|`Agent(subagent_type=..., model=..., run_in_background=true)` という厳密な呼び出しシグネチャは公開ドキュメント上で確認できませんでした。Agent/Subagent の概念自体は公式 docs で確認できましたが、`subagent_type`・`model`・`run_in_background` の正確な引数名は公開仕様では判定不能です。
+UNCERTAIN|low-taskoutput-polling-signature|framework/claude/CLAUDE.md:84; framework/claude/skills/sdd-roadmap/refs/run.md:118; framework/claude/skills/sdd-reboot/refs/reboot.md:52|`TaskOutput` を `block=false` のようなポーリング前提で扱う具体的な呼び出し契約は、公開ドキュメント上で確認できませんでした。Task/Agent の結果取得という考え方は docs にありますが、ここで前提にしている細かな引数仕様は未確認です。

@@ -1,0 +1,16 @@
+SCOPE:agent-2-consistency
+TARGET_FILES:67
+XREF1:framework/claude/CLAUDE.md|framework/claude/sdd/settings/rules/cpf-format.md|OK
+XREF2:framework/claude/CLAUDE.md|framework/claude/sdd/settings/rules/tmux-integration.md|OK
+XREF3:framework/claude/agents/sdd-architect.md|framework/claude/sdd/settings/rules/design-discovery-full.md|OK
+XREF4:framework/claude/agents/sdd-architect.md|framework/claude/sdd/settings/rules/design-discovery-light.md|OK
+XREF5:framework/claude/agents/sdd-architect.md|framework/claude/sdd/settings/rules/design-principles.md|OK
+XREF6:framework/claude/agents/sdd-taskgenerator.md|framework/claude/sdd/settings/rules/tasks-generation.md|OK
+XREF7:framework/claude/sdd/settings/rules/tmux-integration.md|framework/claude/sdd/settings/scripts/multiview-grid.sh|OK
+XREF8:framework/claude/sdd/settings/rules/tmux-integration.md|framework/claude/sdd/settings/scripts/orphan-detect.sh|OK
+ISSUES:
+H|undefined-reference|framework/claude/CLAUDE.md:24|T2/T3の役割説明でAuditor/InspectorをSubAgentとして定義している一方、実体のAgent定義は`framework/claude/agents/`に存在せず、`framework/claude/settings.json`の許可リストにも未登録で、SubAgent定義原則（CLAUDE.md:32）と不整合。
+H|protocol-inconsistency|framework/claude/sdd/settings/templates/review/sdd-inspector-e2e.md:108|ツール未導入時の扱いが監査テンプレート間で矛盾。`sdd-inspector-e2e`は`command not found`をC扱いで失敗にするが、`sdd-inspector-web-e2e`(183)と`web-visual`(211)は同種の前提欠落を`VERDICT:GO`でスキップし、同一レビュー群で判定基準が分裂。
+M|format-inconsistency|framework/claude/sdd/settings/templates/review-self/agent-3-compliance.md:27|CPF基本仕様（`cpf-format.md:14`）はISSUESのSeverityをC/H/M/Lに統一しているが、complianceテンプレートは`OK/NG/UNCERTAIN`を導入し、`UNCERTAIN|...`をISSUES行として要求。共通パーサ前提と衝突しうる。
+M|unreachable-path|framework/claude/sdd/settings/templates/review-self/prep.md:38|`Step 3`で`.sdd/settings/engines.yaml`を必須読取するが、当該ファイル欠如時の生成/フォールバック手順がテンプレート内に無く、単体実行時に停止しうる到達不能経路（missing-config時のエラーハンドリング欠落）。
+L|terminology-inconsistency|framework/claude/sdd/settings/templates/review-self/agent-3-compliance.md:7|同一テンプレート内でソースパス（`framework/claude/agents/...`）と実行時仕様（`.claude/agents/*.md`）を併記しており、`CLAUDE.md`の実行時説明と文脈切替が明示されないため、運用者に「検査対象」と「配置先」の誤解を生みやすい。

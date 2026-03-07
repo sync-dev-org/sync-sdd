@@ -1,0 +1,124 @@
+scope: "inspector-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "yaml-format"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:57"
+    summary: "YAML 例示で summary と detail が同一行に記載 — 不正な YAML 構文"
+    detail: "shared-prompt.md の YAML Output Format 例および全自己レビューテンプレート (auditor.md:80,89, inspector-flow.md:27, inspector-consistency.md:30, inspector-compliance.md:52, briefer.md:57,146) で `summary: \"{one-line summary}\"    detail: \"{what}\"` が同一行に記載されている。これは YAML として不正であり、パーサーが detail フィールドを認識しない。verdict-format.md (正規スキーマ §1) では summary と detail は別行に定義されている。"
+    impact: "Inspector / Auditor が出力する findings YAML で detail フィールドが欠落する可能性がある。外部エンジン (Codex / Gemini) はこの例示をそのまま模倣するため、detail が summary に結合されるか無視される。SubAgent モードでも同様のリスクがある。"
+    recommendation: "全テンプレートおよび shared-prompt.md の YAML 例示で summary と detail を別行に分離する。verdict-format.md §1 Inspector Findings の記法に合わせる。"
+
+  - id: "F2"
+    severity: "M"
+    category: "protocol-consistency"
+    location: "framework/claude/CLAUDE.md:223"
+    summary: "decisions.yaml の扱いが CLAUDE.md では append-only、sdd-handover SKILL.md では controlled rewrite として矛盾"
+    detail: "CLAUDE.md line 223 では decisions.yaml を `Append-only (never overwrite)` と定義し、line 256-271 でも append-only として記述している。一方、sdd-handover SKILL.md Step 4b (line 75-81) では Consolidation 時に controlled rewrite を実行し、pruned entries を session/decisions/{YYYY-MM-DD-HHmm}.yaml にアーカイブする。CLAUDE.md の Session Persistence テーブルには session/decisions/ ディレクトリが記載されていない。decisions.yaml テンプレートには superseded_by フィールドが含まれており handover 側と整合するが、CLAUDE.md 本文の append-only 規定と矛盾する。"
+    impact: "Lead や他の実装者がどちらの規約に従うかで session persistence の挙動が分岐する。append-only 前提のツールが rewrite 後のファイルを処理する場合にデータ不整合が生じうる。"
+    recommendation: "CLAUDE.md の Session Persistence テーブルに session/decisions/ を追加し、decisions.yaml の controlled rewrite 例外 (sdd-handover Consolidation 時のみ) を明記する。または sdd-handover SKILL.md 側から rewrite を外して純粋な append-only に統一する。"
+
+  - id: "F3"
+    severity: "M"
+    category: "step-numbering"
+    location: "framework/claude/skills/sdd-start/SKILL.md:39"
+    summary: "sdd-start のステップ番号に欠番 (Step 5 が存在しない)"
+    detail: "sdd-start SKILL.md のステップ番号は Step 1, 2, 2b, 3, 4, 6, 7, 8, 9 と続いており、Step 5 が欠落している。リファクタリング時にステップが削除された痕跡と思われる。"
+    impact: "他のファイルから sdd-start のステップを参照する際に Step 5 を探しても見つからず混乱する。run.md では sdd-start のステップ番号を直接参照していないため実害は限定的だが、ドキュメントの信頼性が低下する。"
+    recommendation: "Step 6 以降を Step 5 から再ナンバリングする。"
+
+  - id: "F4"
+    severity: "M"
+    category: "undefined-reference"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:45"
+    summary: "Briefer のファイル収集パターンに存在しないファイルパスが含まれる"
+    detail: "briefer.md Step 2 の glob パターン結果として shared-prompt.md のターゲットファイル一覧に framework/claude/sdd/settings/templates/review-self/inspector-brief.md (line 45) が含まれるが、このファイルは存在しない。review-self ディレクトリには inspector-flow.md, inspector-consistency.md, inspector-compliance.md の 3 ファイルのみ存在する。inspector-brief.md は review/ ディレクトリ (sdd-review 用) には存在するが、review-self/ には不在。"
+    impact: "Inspector がこのファイルを読もうとしてエラーになるか、存在しないファイルが FILE_LIST に含まれることで Inspector の作業対象リストが不正確になる。"
+    recommendation: "briefer.md Step 2 の glob パターンが review-self/ 固有のファイルのみを収集するよう修正する。review-self/inspector-brief.md が必要であれば作成する。"
+
+  - id: "F5"
+    severity: "L"
+    category: "duplicate-entry"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:41"
+    summary: "Briefer が生成する shared-prompt.md にファイルの重複エントリがある"
+    detail: "shared-prompt.md のターゲットファイル一覧で以下の重複が確認された: (1) framework/claude/sdd/settings/templates/review-self/builder.md が 2 回 (line 41, 46), (2) framework/claude/sdd/settings/templates/wave-context/conventions-brief.md が 2 回 (line 85, 86)。これは briefer.md Step 2 の glob パターン展開で個別指定と ** パターンが競合した結果と思われる。"
+    impact: "Inspector が同一ファイルを 2 回リストに見るが Read は冪等なので実害なし。ファイルリストの信頼性が低下する程度。"
+    recommendation: "briefer.md Step 2 の glob パターンから重複を排除するか、Briefer の実装で dedup 処理を追加する。"
+
+  - id: "F6"
+    severity: "M"
+    category: "protocol-consistency"
+    location: "framework/claude/CLAUDE.md:316"
+    summary: "Knowledge Auto-Accumulation の Consolidation 記述で Flush ステップが欠落"
+    detail: "CLAUDE.md line 316 では Consolidation を `decisions.yaml superseded exclusion + SESSION pair condensation, knowledge.yaml duplicate detection + steering PROPOSE` と要約しているが、sdd-handover SKILL.md Step 4b の実際の手順は Flush (pending decisions/knowledge の書き出し) → decisions consolidate → knowledge consolidate の 3 ステップ構成。CLAUDE.md の要約から Flush ステップへの言及が欠落している。Write Triggers テーブル (line 298) では Flush に言及しているため、CLAUDE.md 内での記述が不統一。"
+    impact: "Lead が Consolidation セクションのみを参照した場合、Flush を実行し忘れる可能性がある。"
+    recommendation: "CLAUDE.md line 316 の Consolidation 説明に Flush ステップへの言及を追加する。"
+
+  - id: "F7"
+    severity: "L"
+    category: "path-consistency"
+    location: "framework/claude/CLAUDE.md:36"
+    summary: "レビュー成果物のアーカイブ先を CLAUDE.md が省略記法で記載"
+    detail: "CLAUDE.md line 36,110 では archive 先を `reviews/B{seq}/` と表現しているが、実際の手順は sdd-review SKILL.md Step 9 で `{scope-dir}/B{seq}/`、sdd-review-self SKILL.md Step 9a で `$SCOPE_DIR/B{seq}/` と scope-dir 起点で記述されている。CLAUDE.md の省略記法は per-feature / self / wave review のどの scope-dir 配下にアーカイブするかが曖昧。"
+    impact: "CLAUDE.md を単独で読んだ場合にアーカイブ先のパスが不明確。実際の skill 定義を参照すれば解決するため実害は限定的。"
+    recommendation: "CLAUDE.md でも `{scope-dir}/B{seq}/` の記法に統一するか、具体的な scope-dir の例を併記する。"
+
+  - id: "F8"
+    severity: "L"
+    category: "value-consistency"
+    location: "framework/claude/sdd/settings/engines.yaml:100"
+    summary: "review と review-self で auditor の start_level が異なる (L3 vs L4) が理由が未文書化"
+    detail: "engines.yaml で review の auditor は L3 (codex gpt-5.4 high)、review-self の auditor は L4 (claude claude-sonnet-4-6 high) に設定されている。これは意図的な差異と推測されるが、設定ファイルにもドキュメントにも差異の理由が記載されていない。"
+    impact: "低。設定自体は正しく動作する。メンテナンス時に意図がわからず不要な変更をするリスクがある程度。"
+    recommendation: "engines.yaml のコメントで差異の理由を追記する。"
+
+  - id: "F9"
+    severity: "L"
+    category: "naming-consistency"
+    location: "framework/claude/CLAUDE.md:27"
+    summary: "Inspector 数の記述が CLAUDE.md と sdd-review SKILL.md で微妙に異なる表現"
+    detail: "CLAUDE.md line 27 では Inspector を `sdd-review: 5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code, +1-4 dynamic (design/impl only)` と記述。sdd-review SKILL.md Step 3 では同じ情報をより構造化して記述しているが、CLAUDE.md の `5 impl` は fixed inspectors のみで conditional を含まない一方、total agent 数には conditional が含まれる場合がある。表現は正確だが読者によっては混乱しうる。"
+    impact: "低。文脈を読めば理解可能。"
+    recommendation: "現状維持で問題なし。必要であれば CLAUDE.md の記述を `5 fixed + 0-3 conditional + 1-4 dynamic` 形式に変更する。"
+
+  - id: "F10"
+    severity: "L"
+    category: "numeric-consistency"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:13"
+    summary: "Briefer の git diff range が SubAgent fallback 時のセキュリティヒューリスティクスに抵触する可能性"
+    detail: "briefer.md Step 1 で `git diff HEAD~{range}..HEAD` を使用しているが、{range} は動的値であり SubAgent (Claude Code Bash) 実行時にコマンド置換 $() が必要。CLAUDE.md Bash セキュリティヒューリスティクス回避ルールでは $() コマンド置換を避けると規定されている。Briefer は主に外部エンジンで実行されるため直接の問題はないが、SubAgent fallback 時にヒューリスティクスに抵触する可能性がある。"
+    impact: "低。SubAgent fallback 時に承認プロンプトが出る可能性がある程度。Briefer の SubAgent fallback は稀なケース。"
+    recommendation: "SubAgent fallback で Briefer が実行される場合を考慮し、git range を固定値 (例: HEAD~10) にするか、SubAgent 用に別のアプローチを文書化する。"
+
+notes: |
+  ## Cross-Reference Matrix
+
+  主要概念の複数ファイル間整合性確認:
+
+  | 概念 | 参照元 | 参照先 | 結果 |
+  |------|--------|--------|------|
+  | Phase 名 (initialized/design-generated/implementation-complete/blocked) | CLAUDE.md:162 | run.md, design.md, impl.md, sdd-start | OK |
+  | Verdict 値 (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED) | CLAUDE.md:24 | sdd-review, run.md, verdict-format.md | OK (self は意図的サブセット) |
+  | Severity コード (C/H/M/L) | verdict-format.md:55 | 全テンプレート | OK |
+  | Counter limits (retry:5, spec_update:2, aggregate:6) | CLAUDE.md:180 | run.md, revise.md | OK |
+  | Dead-code retry limit (max 3) | CLAUDE.md:181 | run.md Step 8a | OK |
+  | Agent 名 (5 agents) | CLAUDE.md:30-32 | agents/*.md, settings.json | OK |
+  | general-purpose (built-in) | dispatch patterns | ファイルなし | OK (意図的) |
+  | Session files | CLAUDE.md:220-226 | sdd-start, sdd-handover | OK (session/decisions/ 欠落 = F2) |
+  | Level chain (L0-L6) | CLAUDE.md:388-396 | engines.yaml, sdd-review, sdd-review-self | OK |
+  | Timeout defaults (review:1200, review-self:900) | sdd-review, sdd-review-self | engines.yaml | OK |
+  | Findings filename convention | verdict-format.md:9 | review templates | NG (review templates diverge) |
+  | decisions.yaml persistence | CLAUDE.md:223 | sdd-handover Step 4b | NG (F2 参照) |
+  | Archive path notation | CLAUDE.md:36 | sdd-review, sdd-review-self | Partial (F7 参照) |
+  | YAML output schema | verdict-format.md §1 | self-review templates, shared-prompt | NG (F1: summary/detail same line) |
+  | settings.json entries | settings.json | agents/*.md, skills/sdd-*/SKILL.md | OK (全 5 Agent + 10 Skill が一致) |
+  | install.sh path mapping | install.sh | CLAUDE.md Paths, template dirs | OK |
+  | Steering files (product/tech/structure) | CLAUDE.md:407 | sdd-steering, templates/steering/ | OK |
+  | Verdicts persistence schema | verdict-format.md §4 | sdd-review Step 9, sdd-review-self Step 9a | OK |
+  | Review scope directories | sdd-review Step 4 | verdict-format.md §4 | OK |
+  | Conventions brief path | run.md Step 3 | sdd-conventions-scanner, impl.md | OK |
+  | Builder report path | impl.md Step 4 | sdd-builder agent | OK |
+  | Analyst report path | CLAUDE.md:41 | sdd-analyst agent, reboot.md Phase 4 | OK |
+
+  循環参照: 検出されず。ファイル間参照は CLAUDE.md → Skills → refs → templates → rules の方向で健全。
+  未到達パス: Phase transitions は全パスが正常に遷移可能。blocked → unblock (run.md Step 7) も到達可能。

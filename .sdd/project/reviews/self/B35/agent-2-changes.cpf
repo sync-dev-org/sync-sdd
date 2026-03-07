@@ -1,0 +1,8 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self/SKILL.md:159|`{{FOCUS_TARGETS}}`/`{{CACHED_OK}}` の改行時は Prep Agent が `agent-{N}.md` を生成すると定義しているが、現行 Prep テンプレートは `focus-targets.txt`/`cached-ok.txt` しか生成しないため、デフォルトの agent pipeline で改行プレースホルダー処理手順が欠落している。
+M|protocol-completeness|framework/claude/skills/sdd-review-self/SKILL.md:96|lead pipeline 側だけ `git diff HEAD~10..HEAD` 固定のままで、コミット数が 10 未満のリポジトリで失敗し得る。Prep テンプレート側は `min(count,10)` に更新済みで手順が不一致。
+M|template-integrity|framework/claude/sdd/settings/templates/review-self/agent-4-compliance.md:40|`COMPLIANCE_TABLE` セクションへの出力を要求しているが、同一ファイルの CPF 仕様は `COMPLIANT` セクションを定義しており参照先が不整合。
+M|protocol-completeness|framework/claude/skills/sdd-review-self/SKILL.md:113|lead pipeline の Review Scope には `framework/claude/skills/sdd-*/refs/*.md` が含まれない一方、Prep テンプレートでは含まれるため、pipeline モードでレビュー対象範囲が変わり回帰検知が不安定になる。
+L|dangling-reference|framework/claude/skills/sdd-status/SKILL.md:47|Review history 出力項目に `runs` を要求しているが、`sdd-roadmap` の現行 Verdict Persistence ヘッダー定義には `runs` がなく、参照フィールドが古い。
+L|template-integrity|framework/claude/sdd/settings/templates/review-self/agent-1-flow.md:12|Review Criteria に Consensus mode 検証が残っているが、`sdd-roadmap` から `--consensus` 系仕様は削除済みで、テンプレートの検証観点が現行仕様とずれている。

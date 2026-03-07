@@ -1,0 +1,18 @@
+SCOPE:inspector-consistency
+TARGET_FILES:81
+XREF:framework/claude/skills/sdd-roadmap/SKILL.md|refs/run.md|OK
+XREF:framework/claude/skills/sdd-roadmap/SKILL.md|refs/revise.md|OK
+XREF:framework/claude/skills/sdd-roadmap/refs/run.md|{{SDD_DIR}}/settings/scripts/grid-check.sh|OK
+XREF:framework/claude/skills/sdd-review/SKILL.md|{{SDD_DIR}}/settings/templates/review/auditor.md|OK
+XREF:framework/claude/settings.json|Agent(sdd-architect)|OK
+XREF:framework/claude/CLAUDE.md|refs/run.md|MISSING_PATH_PREFIX
+XREF:framework/claude/skills/sdd-reboot/refs/reboot.md|refs/run.md|MISSING_RELATIVE_TARGET
+XREF:framework/claude/sdd/settings/templates/review-self/inspector-flow.md|refs/revise.md|UNDEFINED_REFERENCE
+ISSUES:
+H|undefined-reference|framework/claude/CLAUDE.md:88|`refs/run.md` を相対参照しているが `framework/claude/refs/run.md` は存在せず、実体は `skills/sdd-roadmap/refs/run.md` のため参照先が未定義。
+H|undefined-reference|framework/claude/skills/sdd-reboot/refs/reboot.md:120|`refs/run.md` 参照が `sdd-reboot/refs/refs/run.md` 解決となり到達不能。`sdd-roadmap/refs/run.md` への明示参照が必要。
+M|undefined-reference|framework/claude/sdd/settings/templates/review-self/inspector-flow.md:15|`refs/revise.md` がテンプレート位置基準では未定義で、レビュアが参照先を一意に解決できない。
+M|path-consistency|framework/claude/skills/sdd-review/SKILL.md:211|`steering/tech.md` のような `{{SDD_DIR}}/project/` なし表記が混在し、同ファイル内の絶対的SDDパス表記と不統一で誤読時に到達不能。
+M|value-consistency|framework/claude/skills/sdd-review/SKILL.md:420|レビュー履歴の `v{version}` 取得元を「VERSION ファイル」と定義しているが、インストール仕様は `.sdd/.version` 管理（install.sh:526-530）で取得元定義が不一致。
+L|protocol-ambiguity|framework/claude/CLAUDE.md:96|同文書で Spec Stagger（phase同時進行）を強調する一方、`refs/revise.md:206` は tier 内 phase 完了バリアを要求し、例外条件の明示が弱く運用解釈が分岐しうる。
+L|circular-reference|framework/claude/sdd/settings/scripts/ensure-playwright-cli.sh:4|Usage 文が自身のパスを参照する自己循環を形成（実害は小さいが「循環参照なし」基準上は例外扱いの注記が必要）。

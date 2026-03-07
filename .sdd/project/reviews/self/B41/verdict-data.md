@@ -1,0 +1,2 @@
+C:0 H:7 M:13 L:8 | FP:7 eliminated
+Files: framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/skills/sdd-review/SKILL.md,framework/claude/skills/sdd-roadmap/SKILL.md,framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-roadmap/refs/revise.md,framework/claude/skills/sdd-reboot/refs/reboot.md,framework/claude/sdd/settings/templates/review/impl-rulebase.md,framework/claude/CLAUDE.md,framework/claude/settings.json,install.sh

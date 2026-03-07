@@ -1,0 +1,6 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:141|既定の`lead`パイプラインでAgent 4用`${CACHED_OK}`置換をStep 2で要求していますが、`$CACHED_OK`はStep 3で初めて構築されます。現行手順のままだと既定経路で`agent-4-compliance.md`を完全に生成できず、キャッシュ済み検証の引き継ぎが壊れます。
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:160|`agent`パイプラインはPrep Agent dispatchをStep 4の前に置いているため、tmux実行時に必要な`{slot_pane_id}`と`{SID}`が未確定のままです。さらに記載されている手順は`tmux send-keys`/`tmux wait-for`のみで、説明しているbackground Bashフォールバックの具体手順もありません。`--pipeline agent`のPrep経路がtmux有無のどちらでも完結していません。
+M|review-coverage|framework/claude/skills/sdd-review-self-ext/SKILL.md:86|shared prompt用の`$FILE_LIST`に`framework/claude/sdd/settings/scripts/*.sh`が含まれていないため、新設された`multiview-grid.sh`を外部レビューワが読めません。今回のtmux/MultiView変更はこのスクリプト実装に依存しており、変更レビューが文書だけを見て通ってしまいます。
+L|consistency|framework/claude/CLAUDE.md:119|中央のPath一覧に`.sdd/settings/scripts/`が載っておらず、`install.sh`が新たに管理対象として導入した scripts ディレクトリと一致していません。実装は入るのにフレームワークの基準ドキュメントから発見できない状態です。

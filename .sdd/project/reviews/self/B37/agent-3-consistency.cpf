@@ -1,0 +1,15 @@
+SCOPE:agent-3-consistency
+MATRIX:
+framework/claude/skills/sdd-roadmap/SKILL.md:19-27|framework/claude/skills/sdd-roadmap/SKILL.md:70-72|CONTRADICTION|review例外条件の対象コマンド列挙が不一致
+framework/claude/skills/sdd-roadmap/refs/run.md:182-199|framework/claude/skills/sdd-roadmap/refs/design.md,review.md,impl.md|BROKEN_RELATIVE|refs配下からrefs/*.mdを再相対参照
+framework/claude/skills/sdd-roadmap/refs/revise.md:71-79|framework/claude/skills/sdd-roadmap/refs/design.md,review.md,impl.md|BROKEN_RELATIVE|run.mdと同じ参照問題が再発
+framework/claude/skills/sdd-reboot/refs/reboot.md:120,172,180|framework/claude/skills/sdd-roadmap/refs/run.md|PARTIAL|参照先意図は同一だが記法揺れ+flow流用不整合あり
+framework/claude/skills/sdd-review-self/SKILL.md:106-108,293-295|同ファイル手順全体|WEAK|手順番号の欠番で追跡性低下
+framework/claude/settings.json|framework/claude/agents/*.md,framework/claude/skills/*/SKILL.md|OK|Agent/Skill命名の定義・許可リストは整合
+ISSUES:
+H|protocol-consistency|framework/claude/skills/sdd-roadmap/SKILL.md:70|review例外条件の列挙が不完全（`review impl --cross-check` と `review design --wave N` が欠落）で、同ファイルのコマンド仕様（19-27行）と矛盾。
+H|path-consistency|framework/claude/skills/sdd-roadmap/refs/run.md:182|`refs/design.md`/`refs/review.md`/`refs/impl.md` を refs 配下から相対参照しており、字義どおり解決すると `refs/refs/*.md` となるため到達不能パスが発生。
+M|path-consistency|framework/claude/skills/sdd-roadmap/refs/revise.md:71|`refs/*.md` の参照記法が run.md と同様に曖昧で、実行位置依存の解決となる（同一プロトコル内でパス解決規則が不統一）。
+H|unreachable-path|framework/claude/skills/sdd-reboot/refs/reboot.md:180|Design-only reboot で `run.md` Step6 Blocking Protocol を流用しているが、同プロトコルの `implementation-complete` 前提を満たせず `fix` 分岐が実行不能。
+M|path-consistency|framework/claude/skills/sdd-reboot/refs/reboot.md:172|同ファイル120行は「sdd-roadmap の refs/run.md」を明示する一方、172行は `refs/run.md` とだけ記載しており参照先解決が不定（reboot/refs 直下には run.md が存在しない）。
+L|protocol-consistency|framework/claude/skills/sdd-review-self/SKILL.md:106|フォールバック手順番号が `1,3,4`（293行も同様）で欠番があり、手順監査時の追跡性を下げる軽微な不整合。

@@ -1,0 +1,4 @@
+SCOPE:inspector-dynamic-1-template-migration
+ISSUES:
+H|migration-compatibility|framework/claude/sdd/settings/templates/review-self/briefer.md:68|直近7日キャッシュ取得で参照するアーカイブCPF名が`inspector-compliance.cpf`固定のため、旧命名で保存されたB41（`agent-3-compliance.cpf`）を読めず、CACHED_OK生成が空振りして再検証負荷と判定ぶれを招く。
+L|terminology-drift|framework/claude/skills/sdd-review-self/SKILL.md:254|節名と説明に`Agent Prompts`/`固定 Agent`表記が残っており、実体が`inspector-*`中心の現行dispatch名とずれて運用手順の読み違いを誘発しうる。

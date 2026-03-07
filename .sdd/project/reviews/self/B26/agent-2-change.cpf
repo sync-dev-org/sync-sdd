@@ -1,0 +1,6 @@
+SCOPE:agent-2-change
+ISSUES:
+M|consistency|framework/claude/skills/sdd-review-self-ext/SKILL.md:160-163|Step 5 の tmux wait-for チャネル名が ch-1 となっており、同ファイル Step 5 冒頭および tmux-integration.md で推奨されている「チャネル名 = ペインタイトル (sdd-ext-review-N)」のパターンと不一致。
+L|consistency|framework/claude/skills/sdd-review-self-ext/SKILL.md:126|codex コマンドで stdin リダイレクト (- < $PROMPT_FILE) を使用しているが、tmux split-window 内で実行する場合のクォート処理に関する言及がなく、実装時にエスケープ漏れが発生する懸念がある。
+L|integrity|framework/claude/skills/sdd-roadmap/refs/review.md:14|Step 1 のエラーメッセージに新設された --cross-check や --wave N オプションが含まれておらず、ユーザーが誤った引数を入力した際のガイドとして不十分。
+L|consistency|framework/claude/sdd/settings/rules/tmux-integration.md:65|One-Shot Command パターンの例示と sdd-review-self-ext の実装例（ch-1）の間で命名規則の不一致があるため、将来的な拡張時に混乱を招く可能性がある。

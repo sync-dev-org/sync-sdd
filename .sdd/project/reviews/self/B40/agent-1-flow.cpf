@@ -1,0 +1,6 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|routing-scope|framework/claude/skills/sdd-roadmap/refs/revise.md:255|Cross-Cutting整合レビューで「ALL affected specs」を対象化するとあるが、/sdd-reviewの公開引数はfeature/cross-check/waveのみで、影響spec集合を明示的に渡す経路が定義されていない。未影響spec混入または対象漏れのリスクがある。
+M|edge-case-blocked-spec|framework/claude/skills/sdd-roadmap/refs/revise.md:122|Cross-Cutting Step 2でrevision対象をimplementation-completeのみとしており、blocked specの扱い（通知/除外理由/解除導線）が明記されないため、依存影響の可視化が欠ける。
+L|verdict-persistence-clarity|framework/claude/skills/sdd-review/SKILL.md:389|Verdict header規約にwave系は明記されているが、cross-cutting用の明示規約が未記載（router側Shared Protocolには記載あり）。実装可能でも運用時の解釈差が出やすい。
+L|read-dispatch-clarity|framework/claude/skills/sdd-roadmap/refs/revise.md:255|Step 9が「run.md Step 8aと同機構」とだけ記述し、Leadがどの引数で/sdd-reviewを呼ぶか（--cross-checkか--waveか、または別スコープ指定か）の読取手順が不足している。

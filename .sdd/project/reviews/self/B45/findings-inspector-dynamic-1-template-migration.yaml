@@ -1,0 +1,37 @@
+scope: "inspector-dynamic-1-template-migration"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "naming-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:78"
+    summary: "BATCH_SEQ 決定手順が同一ファイル内で二重定義 — B{N} 文字列探索 vs batches[].seq 数値参照"
+    detail: "Step 1c (L78) は 'find max B{N}' と記述し、ディレクトリ名風の文字列パターンマッチを示唆する。一方 Step 9a (L483) は 'verdicts.yaml の最大 seq + 1' と正しく YAML スキーマの数値フィールドを参照している。verdict-format.md §4 のスキーマでは batches[].seq は数値型であり、L78 の記述が不正確。"
+    impact: "実装者が L78 を字義通りに解釈すると verdicts.yaml 内に存在しない B{N} パターンを探索し、常に seq=1 にフォールバックする。結果として archive ディレクトリ名の衝突や tmux チャネル名の重複が発生しうる。"
+    recommendation: "L78 を 'Read $SCOPE_DIR/verdicts.yaml, find max batches[].seq → $BATCH_SEQ = max+1. If absent → 1.' に統一する。B{N} 表記は archive ディレクトリ名と tmux 表示用の派生表現としてのみ扱う。"
+  - id: "F2"
+    severity: "L"
+    category: "schema-mismatch"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:76"
+    summary: "compliance キャッシュ探索が verdicts.yaml に存在しない inspector 単位エントリを前提としている"
+    detail: "Briefer Step 5 は verdicts.yaml から 'most recent inspector-compliance entry' を探すよう指示しているが、verdict-format.md §4 のスキーマでは verdicts.yaml は batch 単位のエントリのみ保持し、inspector 個別エントリは存在しない。実際の compliance 詳細は archive 配下の findings-inspector-compliance.yaml にある。"
+    impact: "compliance キャッシュの検出が常に失敗し、前回 batch の findings を再利用できない。レビュー自体は継続可能だが、毎回フル再検証となり最適化が無効化される。"
+    recommendation: "verdicts.yaml では最新の type:self batch の seq と date を取得し、B{seq}/findings-inspector-compliance.yaml を参照する手順に修正する。'inspector-compliance entry' という存在しないエントリ型への言及を削除する。"
+notes: |
+  CPF/Markdown から YAML への移行状況を4観点で網羅的に検証した。
+
+  1. CLAUDE.md / settings.json / verdict-format.md 間の保存先・命名規則:
+     整合している。CLAUDE.md は findings-inspector-{name}.yaml / verdict-auditor.yaml / verdict.yaml を一貫使用。
+     settings.json に旧フォーマット参照なし。verdict-format.md の .cpf / verdicts.md 参照は
+     §Migration Notes の Before/After 対照表内に限定されており、実行パスへの影響なし。
+
+  2. self/通常 review の SKILL・テンプレートでの旧ファイル名残存:
+     .cpf / verdicts.md / verdict.cpf の実運用参照は全て除去済み。
+     sdd-review/SKILL.md, sdd-review-self/SKILL.md, 全テンプレート (review/, review-self/) で .yaml 形式に統一。
+     agent 定義 (sdd-analyst/architect/builder/conventions-scanner/taskgenerator) にも旧名なし。
+
+  3. install.sh の配布対象:
+     cpf-format.md は既に削除済み。install.sh 内に CPF 関連参照なし。配布内容と verdict-format.md 中心の運用に矛盾なし。
+
+  4. findings-inspector-{name}.yaml 読み取り実装パス:
+     sdd-review/SKILL.md (L339, L354) と review-self/auditor.md テンプレートの両方で
+     findings-inspector-*.yaml を glob 読み取りする手順が明記されており、保存先と一致。

@@ -1,0 +1,20 @@
+SCOPE:agent-4-compliance
+DATE:2026-03-04
+STATUS_TABLE:
+agent-frontmatter-fields|OK (cached)|https://code.claude.com/docs/en/sub-agents
+agent-model-values|OK (cached)|https://code.claude.com/docs/en/sub-agents
+skills-frontmatter|OK|https://code.claude.com/docs/en/skills
+agent-tool-parameters-subagent_type-model-run_in_background|UNCERTAIN|https://code.claude.com/docs/en/sub-agents
+settings-permission-format|OK (cached)|https://docs.anthropic.com/en/docs/claude-code/settings
+settings-agent-skill-entry-match|OK (cached)|https://docs.anthropic.com/en/docs/claude-code/settings
+tool-availability-names|OK (cached)|https://code.claude.com/docs/en/sub-agents
+COMPLIANT:
+agent-frontmatter-fields|OK|https://code.claude.com/docs/en/sub-agents
+agent-model-values|OK|https://code.claude.com/docs/en/sub-agents
+skills-frontmatter-description-allowed-tools-argument-hint|OK|https://code.claude.com/docs/en/skills
+settings-permission-format|OK|https://docs.anthropic.com/en/docs/claude-code/settings
+settings-agent-skill-entry-match|OK|https://docs.anthropic.com/en/docs/claude-code/settings
+tool-availability-names|OK|https://code.claude.com/docs/en/sub-agents
+ISSUES:
+UNCERTAIN|agent-tool-params|framework/claude/CLAUDE.md:32|`Agent(subagent_type=..., model=..., run_in_background=...)` の各パラメータ仕様を公式ドキュメントで明示確認できませんでした。`sub-agents` ページでは `Agent(agent_type)` の記載は確認できる一方、当該3パラメータの正式仕様は未確認です。
+L|dispatch-coverage|framework/claude/skills/sdd-roadmap/refs/review.md:88|`Agent(subagent_type=...)` がプレースホルダ記法のため、レビュー時に全 Inspector/Auditor 名の実体ファイル対応を静的に完全検証できません。明示列挙にすると検証可能性が上がります。

@@ -1,0 +1,6 @@
+SCOPE:agent-2-changes
+ISSUES:
+H|protocol-completeness|framework/claude/skills/sdd-review-self-ext/SKILL.md:186|Step 4 が SID を pane ID 由来で生成しており、Session Resume Step 5a の時刻ベース SID と衝突する。既存グリッド再利用判定と channel 命名が別 SID になり、同一セッションでスロット再利用に失敗する。
+H|protocol-completeness|framework/claude/sdd/settings/rules/tmux-integration.md:73|`Max Lead: 1` を定義しているが、framework/claude/CLAUDE.md:285 は常に Grid Creation を実行し、framework/claude/sdd/settings/scripts/multiview-grid.sh に他 Lead 検知ガードもない。2 Lead 時に run_in_background フォールバックへ切り替える規約が実行不能。
+M|template-integrity|framework/claude/skills/sdd-review-self-ext/refs/auditor.md:67|Auditor の report 出力テンプレートが旧形式（Pipeline 行なし）で、framework/claude/skills/sdd-review-self-ext/SKILL.md:367-401 の必須提示テンプレートと不一致。agent pipeline で生成される report.md が契約フォーマットを満たせない。
+L|template-integrity|framework/claude/skills/sdd-review-self-ext/refs/auditor.md:69|`False Positives Eliminated` と A/B セクションの表カラムが旧版のままで、SKILL.md 側の現行仕様（件数付き見出し、Location 列など）から逸脱している。Lead 監修時に都度再整形が必要になる。

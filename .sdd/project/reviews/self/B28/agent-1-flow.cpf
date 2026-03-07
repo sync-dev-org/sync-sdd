@@ -1,0 +1,8 @@
+SCOPE:agent-1-flow
+ISSUES:
+H|consensus-flow|framework/claude/skills/sdd-roadmap/refs/review.md:85|`--consensus N` では Router が `active-{p}` と各 pipeline の `verdict.cpf` を前提にしている一方、review.md の実行フローは Step 7/9 で単数の `active/verdict.cpf` 読み取りと `active -> B{seq}` アーカイブを維持しており、多重 pipeline の完了判定と保存先が両立していません。
+H|phase-gate|framework/claude/skills/sdd-roadmap/refs/review.md:22|Design Review の phase gate が `design.md` 存在と `blocked` のみを確認しており、`initialized` の skeleton design や未知 phase を弾けません。`create` は skeleton `design.md` を作るため、未設計 spec をレビュー可能にしてしまい、CLAUDE.md の「appropriate phase / unknown phase block」と不整合です。
+M|cross-cutting-review-path|framework/claude/skills/sdd-roadmap/refs/review.md:84|Cross-cutting review の scope は `specs/.cross-cutting/{id}/reviews/` と定義されているのに、revise.md Step 8 は `specs/.cross-cutting/{id}/verdicts.md` 直下へ保存するとしており、verdict persistence と archive 配置が 2 通りに分岐しています。
+M|blocked-spec-handling|framework/claude/skills/sdd-roadmap/refs/revise.md:27|Single-Spec revise の Validate は最初に `phase is implementation-complete` を要求し、その後で `blocked` を判定しています。`blocked` spec は CLAUDE.md どおりの blocked 専用エラーに到達せず、edge case の blocked spec 処理が phase gate 規約から外れます。
+M|empty-roadmap-edge-case|framework/claude/skills/sdd-roadmap/refs/run.md:7|Router も run.md も `roadmap.md` の存在だけで進行し、spec 件数 0 の空 roadmap を明示的に拒否しません。結果として `run` / auto-detect が「有効な roadmap」と誤認し、dispatch なしで完了扱いになる余地があります。
+L|dispatch-read-clarity|framework/claude/skills/sdd-roadmap/refs/review.md:5|review.md の Triggered by 一覧には cross-cutting consistency review の呼び出し形が書かれていないのに、本文後半では cross-cutting scope/destination を定義しています。revise.md Step 8 から review.md をどういう mode/scope で読むかが暗黙で、Router -> refs dispatch の読解性が落ちています。

@@ -1,0 +1,2 @@
+C:0 H:4 M:6 L:4 | FP:2 eliminated
+Files: framework/claude/CLAUDE.md,framework/claude/skills/sdd-roadmap/SKILL.md,framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/skills/sdd-reboot/refs/reboot.md,framework/claude/sdd/settings/templates/review-self/inspector-flow.md,framework/claude/skills/sdd-review/SKILL.md,framework/claude/sdd/settings/templates/review-self/briefer.md,framework/claude/sdd/settings/scripts/ensure-playwright-cli.sh

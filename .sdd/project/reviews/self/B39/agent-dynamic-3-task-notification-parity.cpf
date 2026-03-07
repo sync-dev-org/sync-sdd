@@ -1,0 +1,8 @@
+SCOPE:agent-dynamic-3-task-notification-parity
+TITLE:TaskOutput->task-notification移行と待機チャネル設計の整合性レビュー
+FILES:framework/claude/CLAUDE.md,framework/claude/sdd/settings/rules/tmux-integration.md,framework/claude/skills/sdd-review-self/SKILL.md,framework/claude/skills/sdd-roadmap/refs/run.md,framework/claude/skills/sdd-roadmap/SKILL.md
+ISSUES:
+H|completion-detection|framework/claude/skills/sdd-roadmap/refs/run.md:41|`run_in_background=true` で起動した ConventionsScanner に対し `WRITTEN:{path}` 応答待ちを明記しており、同ファイルの dispatch-loop が前提とする task-notification 待機と不整合。待機実装が Task result 依存に戻ると、並列進行停止や完了検知レースを再発させる。
+M|protocol-consistency|framework/claude/CLAUDE.md:34|同一文書内で「Lead は Task result を読む」(line 34) と「完了検知は task-notification」(line 84) が併記され、待機トリガーと成果物読取タイミングの規約境界が不明確。`/sdd-review` 系実装で待機手段の解釈が分岐する余地がある。
+L|channel-naming|framework/claude/sdd/settings/rules/tmux-integration.md:161|命名規則の一般形が `sdd-{SID}-{purpose}-{identifier}` に留まり、batch 分離キー `-B{seq}` の必須条件が規則本文で明文化されていない。`sdd-review-self` は `-B{seq}` を付与しているが、他フローで省略実装が入り込むと再実行時チャネル衝突を起こし得る。
+L|dispatch-example-drift|framework/claude/skills/sdd-review-self/SKILL.md:225|「wait-for を 0.5 秒刻み staggered parallel dispatch」と記述しつつ、直下の例示コマンドに `sleep` プレフィックスがない。実装者が例に従うと同時発行になり、tmux 詰まり回避の設計意図が弱まる。
