@@ -120,7 +120,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 - **SDD Root**: `{{SDD_DIR}}` = `.sdd`
 - Steering: `{{SDD_DIR}}/project/steering/`
 - Specs: `{{SDD_DIR}}/project/specs/` (cross-cutting briefs/verdicts: `specs/.cross-cutting/{id}/`)
-- Handover: `{{SDD_DIR}}/handover/`
+- Session: `{{SDD_DIR}}/session/`
 - Rules: `{{SDD_DIR}}/settings/rules/`
 - Templates: `{{SDD_DIR}}/settings/templates/`
 - Profiles: `{{SDD_DIR}}/settings/profiles/`
@@ -183,7 +183,7 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 - Counter reset triggers: wave completion, user escalation decision (including blocking protocol fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only; see `refs/run.md`).
 - Full auto-fix loop, wave quality gate, and blocking protocol details: see sdd-roadmap `refs/run.md`.
 
-### decisions.md Recording
+### decisions.yaml Recording
 
 Lead records the following decision types as a standard behavior:
 - `USER_DECISION`: when user makes an explicit choice
@@ -213,62 +213,95 @@ Auditor references User Intent during every review for:
 
 Auditor verdicts may include `STEERING:` entries: `CODIFY` (Lead applies directly) or `PROPOSE` (Lead presents to user for approval). Process **after** handling the verdict but **before** advancing to the next phase. Full processing rules: see `/sdd-review` SKILL.md Step 9 (STEERING entries 処理).
 
-## Handover (Session Persistence)
+## Session Persistence
 
-Session context is persisted to `{{SDD_DIR}}/handover/` for cross-session continuity.
+Session context is persisted to `{{SDD_DIR}}/session/` for cross-session continuity.
 
 | File | Behavior | Purpose |
 |------|----------|---------|
-| `session.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
-| `decisions.md` | Append-only (never overwrite) | Decisions with rationale, steering updates, steering exceptions |
-| `buffer.md` | Overwrite (auto) | Knowledge tags from Builder reports |
-| `sessions/` | Archive | Dated copies of session.md created by `/sdd-handover` |
+| `handover.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
+| `decisions.yaml` | Append-only (never overwrite) | Decisions with rationale, steering updates, steering exceptions |
+| `knowledge.yaml` | Append (auto) | Knowledge tags from Builder reports, verdicts, Lead |
+| `handovers/` | Archive | Dated copies of handover.md created by `/sdd-handover` |
+| `state.yaml` | Overwrite (auto) | tmux session state (SID, grid, slots) |
 
-Pipeline state is NOT stored in handover — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
+Pipeline state is NOT stored in session — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
 
-### session.md (Auto-Draft + Manual Polish)
+### handover.md (Auto-Draft + Manual Polish)
 
-session.md is written in two modes:
+handover.md is written in two modes:
 
 **Auto-draft** (after each command completion):
-1. Read current session.md (if exists)
+1. Read current handover.md (if exists)
 2. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
 3. Update: Immediate Next Action based on current state
 4. Append: latest work to Accomplished section
 5. Mark with `**Mode**: auto-draft`
-6. Overwrite session.md
+6. Overwrite handover.md
 
-**Exception — `run` pipeline dispatch loop**: Auto-draft only at Wave QG post-gate, user escalation, and pipeline completion. Skip at individual phase completions (Design, Impl, Review per spec). spec.yaml is ground truth for pipeline state; intermediate session.md freshness is unnecessary.
+**Exception — `run` pipeline dispatch loop**: Auto-draft only at Wave QG post-gate, user escalation, and pipeline completion. Skip at individual phase completions (Design, Impl, Review per spec). spec.yaml is ground truth for pipeline state; intermediate handover.md freshness is unnecessary.
 
 **Manual polish** (`/sdd-handover`):
-1. Archive current session.md to `sessions/{YYYY-MM-DD-HHmm}.md`
+1. Archive current handover.md to `handovers/{YYYY-MM-DD-HHmm}.md`
 2. Enrich via user interaction: Session Goal, Tone/Nuance, Steering Exceptions, Key Decisions refinement, Warnings, Resume Instructions
 3. Write without Mode marker (indicates manual polish)
 
-### session.md Format
+### handover.md Format
 
-Template: `{{SDD_DIR}}/settings/templates/handover/session.md`
+Template: `{{SDD_DIR}}/settings/templates/session/handover.md`
 
-### decisions.md Format
+### decisions.yaml Format
 
-Append-only structured log. Each entry: `[{ISO-8601}] D{seq}: {DECISION_TYPE} | {summary}` followed by fields: Context, Decision, Reason, Impact, Source, Steering-ref (if STEERING_EXCEPTION).
+Append-only YAML log. Each entry in `entries` list:
+
+```yaml
+- id: "D{seq}"
+  type: "{DECISION_TYPE}"
+  summary: "{one-line summary}"
+  context: "{context}"
+  detail: "{detailed description}"
+  reason: "{why}"
+  impact: "{what this affects}"
+  source: "user|lead|auditor"
+  steering_ref: "{ref}"  # STEERING_EXCEPTION only
+  created_at: "{ISO-8601}"
+```
 
 Decision types: `USER_DECISION` (user choice), `STEERING_UPDATE` (steering modified), `DIRECTION_CHANGE` (scope/wave change), `ESCALATION_RESOLVED` (escalation outcome), `REVISION_INITIATED` (user-initiated past-wave spec revision; append `(cross-cutting)` for multi-spec revisions), `STEERING_EXCEPTION` (intentional deviation — prevents review false-positives), `SESSION_START`/`SESSION_END` (session lifecycle; Reason/Impact optional).
 
-### buffer.md Format
+Template: `{{SDD_DIR}}/settings/templates/session/decisions.yaml`
 
-Template: `{{SDD_DIR}}/settings/templates/handover/buffer.md`
+### knowledge.yaml Format
+
+Append-only YAML log. Each entry in `entries` list:
+
+```yaml
+- id: "K{seq}"
+  type: "PATTERN|INCIDENT|REFERENCE"
+  severity: "H|M|L"
+  summary: "{one-line summary}"
+  detail: "{detailed description}"
+  impact: "{what this affects}"
+  recommendation: "{suggested action}"
+  source: "{spec} {role}, task {N}"
+  created_at: "{ISO-8601}"
+```
+
+Template: `{{SDD_DIR}}/settings/templates/session/knowledge.yaml`
 
 ### Write Triggers
 
 | Trigger | File | Notes |
 |---------|------|-------|
-| Command completion (design/impl/review/roadmap/steering) | session.md auto-draft | Carry forward + update Next Action/Accomplished |
-| `/sdd-handover` | session.md manual polish, decisions.md SESSION_END, sessions/ archive | Manual |
-| User decision | decisions.md | Auto-append with Reason |
-| STEERING change | decisions.md | Auto-append with Reason |
-| Direction change | decisions.md | Auto-append with Reason |
-| Session start | decisions.md | SESSION_START auto-append |
+| Command completion (design/impl/review/roadmap/steering) | handover.md auto-draft | Carry forward + update Next Action/Accomplished |
+| `/sdd-handover` | handover.md manual polish, decisions.yaml SESSION_END, handovers/ archive | Manual |
+| User decision | decisions.yaml | Auto-append with Reason |
+| STEERING change | decisions.yaml | Auto-append with Reason |
+| Direction change | decisions.yaml | Auto-append with Reason |
+| Session start | decisions.yaml | SESSION_START auto-append |
+| Builder completion (tags > 0) | knowledge.yaml | Auto-append from builder-report |
+| Verdict confirmed | knowledge.yaml | Auto-append significant findings |
+| Lead operational insight | knowledge.yaml | Auto-append |
 
 ### Session Start
 
@@ -277,13 +310,13 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 ## Knowledge Auto-Accumulation
 
 - Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
-- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/handover/buffer.md`
-- buffer.md persists across sessions via handover. No auto-flush to separate files.
+- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/session/knowledge.yaml`
+- knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 same type×similar summary triggers steering PROPOSE at consolidation).
 
 ## Pipeline Stop Protocol
 
 When user requests stop during pipeline execution:
-1. Lead auto-drafts `session.md` with current direction and progress
+1. Lead auto-drafts `handover.md` with current direction and progress
 2. Report to user: what was completed, what was in progress, how to resume
 
 Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state and resumes from interruption point. For 1-spec roadmaps, use the specific subcommand (e.g., `/sdd-roadmap impl {feature}`) to resume from the interrupted phase.
@@ -310,7 +343,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
   - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
   - `#{}` tmux フォーマット文字列 (`'#{pane_id}'` 等) → `${}` パラメータ置換と誤検出される。`printenv TMUX_PANE` 等の代替手段を使う
-- **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.md entries, spec.yaml `created_at`/`updated_at`, session.md `Generated`, buffer.md `Updated`, conventions-brief `Generated`, verdicts.yaml batch headers, archive filenames, branch names.
+- **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.yaml entries, spec.yaml `created_at`/`updated_at`, handover.md `Generated`, knowledge.yaml entries, conventions-brief `Generated`, verdicts.yaml batch headers, archive filenames, branch names.
 - **AskUserQuestion exclusion**: Skills の `allowed-tools` に `AskUserQuestion` を含めてはならない。自動承認パスに入ると UI が表示されず空回答で返るバグがある。Skills は main context で実行されるため `allowed-tools` になくても通常の承認フローで動作する。
 
 ## Git Workflow
@@ -357,7 +390,7 @@ Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stag
 
 - **Infrastructure escalation** (automatic): `install_check` failure → next level → ... → L0
 - **Quality escalation** (manual): NO-GO does NOT auto-escalate model. Same level retry → user escalate
-- **Sticky**: escalated level persists within session (`state.yaml`), reset on `sdd-start`
+- **Sticky**: escalated level persists within session (`session/state.yaml`), reset on `sdd-start`
 - **Effort**: codex via `-c model_reasoning_effort`, claude via `CLAUDE_CODE_EFFORT_LEVEL` env, subagents via prompt keyword (`ultrathink`), gemini not supported
 - **Override**: Skill arguments (`--{stage}-engine`, `--{stage}-model`, `--{stage}-effort`) override level chain
 

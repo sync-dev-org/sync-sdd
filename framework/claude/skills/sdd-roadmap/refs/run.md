@@ -33,7 +33,7 @@ Dispatch `sdd-conventions-scanner` SubAgent (mode: Generate) to scan the codebas
 Dispatch via `Agent(subagent_type="sdd-conventions-scanner", run_in_background=true)` with prompt:
 - Mode: Generate
 - Steering: `{{SDD_DIR}}/project/steering/`
-- Buffer: `{{SDD_DIR}}/handover/buffer.md`
+- Buffer: `{{SDD_DIR}}/session/knowledge.yaml`
 - Template: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
 - Output: `{{SDD_DIR}}/project/specs/.wave-context/{wave-N}/conventions-brief.md` (multi-spec roadmap) or `{{SDD_DIR}}/project/specs/{feature}/conventions-brief.md` (1-spec roadmap)
 - Wave/feature: {identifier}
@@ -178,7 +178,7 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 
 ### Phase Handlers
 
-**Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft session.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
+**Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft handover.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
 
 #### Design completion
 Dispatch Architect per `design.md` Step 4 (Mode Detection and Phase Gate already handled by dispatch loop). After Architect completes, update spec.yaml per design.md Step 4.
@@ -243,7 +243,7 @@ NO-GO does NOT trigger automatic model/effort escalation (D188 #12):
 ### Sticky Escalation (D188 #11)
 
 - Once a stage escalates (infra or user-initiated), it stays at the escalated level for the rest of the session
-- Record in `{{SDD_DIR}}/state.yaml` under `escalation` key:
+- Record in `{{SDD_DIR}}/session/state.yaml` under `escalation` key:
   ```yaml
   escalation:
     briefer: L1        # current level (unchanged = start_level)
@@ -284,7 +284,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:
-     - **Proceed**: Accept remaining issues, proceed to wave completion. Record `ESCALATION_RESOLVED` in decisions.md
+     - **Proceed**: Accept remaining issues, proceed to wave completion. Record `ESCALATION_RESOLVED` in decisions.yaml
      - **Abort wave**: Stop wave execution, leave specs as-is. Record `ESCALATION_RESOLVED` with abort reason
      - **Manual fix**: User fixes manually, then Lead re-runs Wave QG (counters reset for manual-fix cycle)
      - After `ESCALATION_RESOLVED` (any option): reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits)
@@ -293,7 +293,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 **c. Post-gate**:
 - **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`. Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only).
 - Commit: `Wave {N}: {summary}`
-- Auto-draft session.md
+- Auto-draft handover.md
 
 ## Step 9: Roadmap Completion
 

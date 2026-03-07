@@ -12,7 +12,7 @@
 
 ### Key Decisions
 **Continuing from previous sessions:**
-{numbered list — decision + brief rationale, ref decisions.md for details}
+{numbered list — decision + brief rationale, ref decisions.yaml for details}
 
 **Added this session:**
 {same format}
@@ -25,7 +25,7 @@
 {user's temperature, direction nuances — e.g., "experimental, proceed carefully", "user is enthusiastic about this direction"}
 
 ### Steering Exceptions
-{intentional deviations from steering best practices — reason + decisions.md ref}
+{intentional deviations from steering best practices — reason + decisions.yaml ref}
 
 ## Accomplished
 {work completed this session}

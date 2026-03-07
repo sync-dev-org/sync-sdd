@@ -33,7 +33,7 @@ Execute past-wave spec modifications through the standard pipeline.
 
 1. If instructions provided in arguments → use directly
 2. If not → AskUser: "What changes are needed for {feature}?"
-3. Record as `REVISION_INITIATED` in `decisions.md`
+3. Record as `REVISION_INITIATED` in `decisions.yaml`
 4. **Steering update**: If revision intent implies direction changes, update relevant steering files BEFORE spawning Architect (`product.md` for requirements/vision, `tech.md` for technical decisions, `structure.md` for structural changes, custom files as needed). This ensures Architect reads current steering context.
 
 ### Step 3: Impact Preview
@@ -45,7 +45,7 @@ Execute past-wave spec modifications through the standard pipeline.
    This change affects {N} specs ({list}).
    Switch to cross-cutting mode for coordinated revision? [Yes / No, single-spec only]
    ```
-   - User accepts → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification). Skip Part B Step 1 (REVISION_INITIATED already recorded in Part A Step 2).
+   - User accepts → record `DIRECTION_CHANGE` in decisions.yaml, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification). Skip Part B Step 1 (REVISION_INITIATED already recorded in Part A Step 2).
    - User declines → continue single-spec flow below
 4. Present to user:
    ```
@@ -57,7 +57,7 @@ Execute past-wave spec modifications through the standard pipeline.
    All tasks will be fully re-implemented (no differential).
    Proceed?
    ```
-5. On rejection → abort, record `USER_DECISION` in decisions.md
+5. On rejection → abort, record `USER_DECISION` in decisions.yaml
 
 ### Step 4: State Transition
 
@@ -92,14 +92,14 @@ After revision pipeline completes (spec returns to `implementation-complete`):
      b. **Re-implement**: Reset `phase=design-generated`, `last_phase_action=null`, full cascade (Architect re-designs against updated upstream → Design Review → TaskGenerator → Builder → Impl Review)
      c. **Skip**: Accept current state
      d. **Cross-cutting revision**: Switch to cross-cutting mode for coordinated downstream revision
-   - Record each decision in `decisions.md` as `USER_DECISION`
-2. If option (d) selected → record `DIRECTION_CHANGE` in decisions.md, join Part B Step 2 with completed target spec + affected dependents pre-populated
+   - Record each decision in `decisions.yaml` as `USER_DECISION`
+2. If option (d) selected → record `DIRECTION_CHANGE` in decisions.yaml, join Part B Step 2 with completed target spec + affected dependents pre-populated
 3. Otherwise: execute user's choices sequentially
-4. For transitive dependents: flag in session.md Warnings section only (user decides in future waves)
+4. For transitive dependents: flag in handover.md Warnings section only (user decides in future waves)
 
 ### Step 7: Post-Revision
 
-1. Auto-draft `{{SDD_DIR}}/handover/session.md`
+1. Auto-draft `{{SDD_DIR}}/session/handover.md`
 2. If roadmap run was in progress (any non-revised spec has phase != `implementation-complete`): resume via `refs/run.md` dispatch loop from current spec.yaml state
 3. Suggest: `/sdd-status` to verify state
 
@@ -113,7 +113,7 @@ Coordinated revision across multiple specs for changes that span Wave/Spec bound
 
 1. Receive change description from user (e.g., "position field: int → fractional indexing string")
    - If joining from Part A: use revision intent already collected
-2. Record `REVISION_INITIATED` in `decisions.md` with note: `(cross-cutting)`
+2. Record `REVISION_INITIATED` in `decisions.yaml` with note: `(cross-cutting)`
 3. **Steering update**: If intent implies direction changes, update relevant steering files BEFORE proceeding (`product.md`, `tech.md`, `structure.md`, custom files as needed)
 
 ### Step 2: Impact Analysis
@@ -143,7 +143,7 @@ Scan all specs to classify impact:
    Proceed? [Confirm / Modify / Abort]
    ```
 5. User may override classifications (promote AUDIT→FULL, demote FULL→AUDIT, etc.)
-6. On abort → record `USER_DECISION` in decisions.md, stop
+6. On abort → record `USER_DECISION` in decisions.yaml, stop
 
 ### Step 3: Restructuring Check
 
@@ -152,7 +152,7 @@ Determine if Wave/Spec structure changes are needed:
 1. **New Spec needed**: If the change introduces a new capability → propose spec creation, use crud.md Create logic for spec initialization + roadmap update
 2. **Spec split/merge**: If change makes existing spec scope inappropriate → apply crud.md Update Mode restructuring logic
 3. **Wave reorder**: If dependency changes alter topological order → recalculate wave assignments
-4. Record any structural changes as `DIRECTION_CHANGE` in decisions.md
+4. Record any structural changes as `DIRECTION_CHANGE` in decisions.yaml
 5. If no structural changes needed → proceed to Step 4
 
 ### Step 3.5: Cross-Cutting ID
@@ -177,13 +177,13 @@ For each AUDIT-classified spec, perform lightweight verification:
 
 1. Lead reads the design brief (Step 4) and the spec's `design.md`
 2. Determine:
-   - **Change not needed**: Contract/interface is unchanged → demote to SKIP. Record `USER_DECISION` in decisions.md with justification
+   - **Change not needed**: Contract/interface is unchanged → demote to SKIP. Record `USER_DECISION` in decisions.yaml with justification
    - **Change needed**: Interface or behavior is affected → promote to FULL
 3. Present triage results to user for confirmation
 
 ### Step 6: Auto-Demotion Check
 
-After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (state transition → pipeline execution) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.md: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
+After triage, if only 1 FULL spec remains (all others are SKIP): automatically demote to Single-Spec Mode. Resume from Part A Step 4 (state transition → pipeline execution) with the single FULL spec as the target. Record `DIRECTION_CHANGE` in decisions.yaml: "Cross-Cutting demoted to Single-Spec: only {spec} classified as FULL."
 
 ### Step 7: Execution Tier Planning
 
@@ -267,6 +267,6 @@ After all tiers complete, verify cross-spec consistency:
 ### Step 10: Post-Completion
 
 1. Cross-cutting brief and verdicts are retained in `specs/.cross-cutting/{CC_ID}/` for reference
-2. Auto-draft `{{SDD_DIR}}/handover/session.md`
+2. Auto-draft `{{SDD_DIR}}/session/handover.md`
 3. Commit: `cross-cutting: {summary}`
 4. Suggest: `/sdd-status` to verify state

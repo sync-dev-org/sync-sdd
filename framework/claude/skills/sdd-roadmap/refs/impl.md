@@ -88,13 +88,13 @@ When the execution plan has 2+ Builder groups, the first group acts as a **pilot
 **Builder incremental processing**: As each Builder completes, process its minimal summary (Task result):
 - Parse summary: extract Tasks (IDs), Files (count), Tests (pass/total), SelfCheck (status), Tags (count), WRITTEN (report path)
 - Update tasks.yaml: mark completed tasks as `done`
-- If Tags > 0 (and not BUILDER_BLOCKED): Grep builder-report file for `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]` lines → append to `{{SDD_DIR}}/handover/buffer.md` with source `(source: {feature} Builder, group {G})`
+- If Tags > 0 (and not BUILDER_BLOCKED): Read Knowledge section from builder-report file → append YAML entries to `{{SDD_DIR}}/session/knowledge.yaml` `entries` list (re-assign global K{seq} IDs, add `created_at`)
 - Process SelfCheck:
   - `PASS` → normal processing
   - `WARN({count})` → note count. Read SelfCheck section from builder-report when dispatching impl review (pass as attention points to Auditor)
   - `FAIL-RETRY-2({count})` → Read SelfCheck section from builder-report for details. Lead judgment: continue (if items are minor) or re-dispatch Builder with fix context
 - **sys.modules violation scan**: Grep all files in Builder's Files section for pattern `sys\.modules`. If found: re-dispatch Builder with instruction: "Remove sys.modules usage in {file}. If import fails because package is not installed, report BUILDER_BLOCKED instead." Max 1 re-dispatch per Builder group for sys.modules violation. If persists: escalate to user.
-- If BUILDER_BLOCKED: classify cause from inline blocker summary (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in buffer.md
+- If BUILDER_BLOCKED: classify cause from inline blocker summary (missing dependency → reorder tasks, re-dispatch; external blocker → escalate to user; design gap → escalate, suggest re-design). Record as `[INCIDENT]` in knowledge.yaml
 
 When dependent tasks are unblocked: spawn next-wave Builders immediately.
 
@@ -111,5 +111,5 @@ After ALL Builders complete:
 
 **Skip when called from `run` dispatch loop** (run.md auto-draft policy applies instead).
 
-1. Auto-draft `{{SDD_DIR}}/handover/session.md`
+1. Auto-draft `{{SDD_DIR}}/session/handover.md`
 2. Report to user: tasks executed, test results, next: `/sdd-roadmap review impl {feature}`

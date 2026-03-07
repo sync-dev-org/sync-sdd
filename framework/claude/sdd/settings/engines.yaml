@@ -46,7 +46,7 @@ deny_patterns:
 # L1-L6: ascending capability/cost. L0: infrastructure fallback (subagents).
 # Escalation: infra failure (install_check) → next level, ultimate → L0.
 # NO-GO → same level retry → user escalate (no auto model escalation).
-# Sticky per session (state.yaml), reset on sdd-start.
+# Sticky per session (session/state.yaml), reset on sdd-start.
 levels:
   L0:
     engine: subagents

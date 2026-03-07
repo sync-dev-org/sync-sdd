@@ -120,7 +120,7 @@ verdicts.yaml の永続化スキーマは `{{SDD_DIR}}/settings/rules/verdict-fo
 
 ## Post-Completion
 
-1. Auto-draft `{{SDD_DIR}}/handover/session.md`
+1. Auto-draft `{{SDD_DIR}}/session/handover.md`
 2. Report results to user
 
 </instructions>

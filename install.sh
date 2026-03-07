@@ -97,7 +97,7 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
 ${BOLD}USER FILES${RESET} (never touched by installer):
     .sdd/project/steering/       Project-specific steering
     .sdd/project/specs/          Feature specifications
-    .sdd/handover/               Session continuity (auto-persisted)
+    .sdd/session/                Session continuity (auto-persisted)
     .claude/settings.local.json  Local setting overrides
 
 ${BOLD}CHECK VERSION${RESET}:
@@ -407,6 +407,19 @@ if version_lt "$INSTALLED_VERSION" "1.2.0"; then
     # Clean up empty .claude/sdd/
     rmdir .claude/sdd 2>/dev/null || true
     info "SDD data root moved to .sdd/ (v1.2.0)"
+fi
+# v2.6.0: handover/ → session/ rename + state.yaml move
+if version_lt "$INSTALLED_VERSION" "2.6.0"; then
+    if [ -d ".sdd/handover" ]; then
+        mkdir -p .sdd/session
+        [ -f .sdd/handover/session.md ] && mv .sdd/handover/session.md .sdd/session/handover.md
+        [ -f .sdd/handover/decisions.md ] && mv .sdd/handover/decisions.md .sdd/session/decisions.md
+        [ -f .sdd/handover/buffer.md ] && mv .sdd/handover/buffer.md .sdd/session/knowledge.yaml
+        [ -d .sdd/handover/sessions ] && mv .sdd/handover/sessions .sdd/session/handovers
+        [ -f .sdd/state.yaml ] && mv .sdd/state.yaml .sdd/session/state.yaml
+        rmdir .sdd/handover 2>/dev/null || true
+        info "Migrated handover/ -> session/ (v2.6.0)"
+    fi
 fi
 
 # --- Install framework files ---

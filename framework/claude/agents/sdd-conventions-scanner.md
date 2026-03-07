@@ -18,7 +18,7 @@ Scan the existing codebase and generate a new conventions brief.
 
 **Input**:
 - Steering paths: `{{SDD_DIR}}/project/steering/` (tech.md, structure.md)
-- Buffer path: `{{SDD_DIR}}/handover/buffer.md` (if exists)
+- Buffer path: `{{SDD_DIR}}/session/knowledge.yaml` (if exists)
 - Template path: `{{SDD_DIR}}/settings/templates/wave-context/conventions-brief.md`
 - Output path: where to write the conventions brief
 - Wave/feature identifier for the brief header
@@ -32,7 +32,7 @@ Scan the existing codebase and generate a new conventions brief.
    - **Schema**: Grep for model/entity definitions → extract FK naming, field style
    - **Imports**: Read a few representative source files → extract ordering conventions
    - **Testing**: Glob for test files → extract placement, assert style, fixture patterns
-4. If buffer.md exists: read and extract `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` entries
+4. If knowledge.yaml exists: read and extract `[PATTERN]`/`[INCIDENT]`/`[REFERENCE]` entries
 5. Merge: steering context + observed patterns + buffer knowledge
 6. Write conventions brief to the specified output path
 7. Add header note: "Steering overrides this brief on conflict."

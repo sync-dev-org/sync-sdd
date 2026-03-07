@@ -31,7 +31,7 @@ Interactive operations reference. Lead handles directly.
 7. Set `spec.yaml.roadmap` for each spec: `{wave: N, dependencies: ["spec-name", ...]}`
 8. Generate roadmap.md with Wave Overview, Dependencies, Execution Flow, Parallelism Report
 9. **Update product.md** User Intent → Spec Rationale section
-10. Auto-draft `{{SDD_DIR}}/handover/session.md`
+10. Auto-draft `{{SDD_DIR}}/session/handover.md`
 
 ---
 
@@ -69,8 +69,8 @@ For each difference:
 2. Update affected spec.yaml roadmap fields
 3. If wave reordering: re-validate dependency graph (no cycles)
 4. **Backfill optimization**: When adding new specs or reordering waves, check if specs can be consolidated into fewer waves while respecting dependency constraints. Present parallelism report (same format as Create Mode Step 4e).
-5. Auto-draft `{{SDD_DIR}}/handover/session.md`
-6. Record changes to `decisions.md` as `DIRECTION_CHANGE`
+5. Auto-draft `{{SDD_DIR}}/session/handover.md`
+6. Record changes to `decisions.yaml` as `DIRECTION_CHANGE`
 
 ---
 

@@ -8,7 +8,7 @@ Your job is to consolidate findings from all Inspector YAML files into a unified
   - `.sdd/project/reviews/self/active/findings-inspector-consistency.yaml`
   - `.sdd/project/reviews/self/active/findings-inspector-compliance.yaml`
 - Dynamic Inspector findings: read any `findings-inspector-dynamic-*.yaml` files in `.sdd/project/reviews/self/active/`. These are dynamically-generated inspector outputs focused on change-specific risks. Treat them with the same weight as fixed inspector outputs.
-- Decision history: `.sdd/handover/decisions.md`
+- Decision history: `.sdd/session/decisions.yaml`
 
 If a findings file does not exist or is empty, note that agent as "did not complete" and proceed with available findings.
 
@@ -25,7 +25,7 @@ Compare all findings. If two or more findings have the same location AND describ
 
 ## Step 3: False Positive Check
 
-For each finding, search `.sdd/handover/decisions.md` for matching entries:
+For each finding, search `.sdd/session/decisions.yaml` for matching entries:
 - If the finding is explained by a `USER_DECISION` or `STEERING_EXCEPTION` entry → mark as FP with the decision ID and reason
 - If the finding matches a previously deferred backlog item → mark as FP with reason "pre-existing, deferred"
 

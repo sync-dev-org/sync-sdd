@@ -30,4 +30,4 @@
 - Mock boundary: {external-only | mixed | heavy-internal}
 
 ## Buffer Knowledge
-{Entries from buffer.md [PATTERN]/[INCIDENT]/[REFERENCE] tags, if any}
+{Entries from knowledge.yaml [PATTERN]/[INCIDENT]/[REFERENCE] tags, if any}

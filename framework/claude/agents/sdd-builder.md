@@ -107,18 +107,29 @@ After all assigned tasks are executed:
 
 ## Knowledge Reporting
 
-During implementation, if you encounter reusable learnings, include them in your completion report with tags:
+During implementation, if you encounter reusable learnings, include them in the Knowledge section of your report using YAML format (same schema as `knowledge.yaml`):
 
-- `[PATTERN]` — Recommended approach that worked well (replicate success)
-- `[INCIDENT]` — Problem encountered and how it was resolved (learn from failure)
-- `[REFERENCE]` — Useful technical reference discovered (quick lookup)
+- `PATTERN` — Recommended approach that worked well (replicate success)
+- `INCIDENT` — Problem encountered and how it was resolved (learn from failure)
+- `REFERENCE` — Useful technical reference discovered (quick lookup)
 
 Example:
+```yaml
+- id: "K1"
+  type: "PATTERN"
+  severity: "M"
+  summary: "SQLModel self-referential relationship requires lazy=\"selectin\""
+  detail: "Without lazy loading config, recursive queries cause N+1 problems"
+  source: "{feature} Builder, group {G}"
+- id: "K2"
+  type: "INCIDENT"
+  severity: "H"
+  summary: "Circular import in __init__.py resolved by reordering imports"
+  detail: "Module A imported B which imported A. Fixed by moving shared types to a separate module"
+  source: "{feature} Builder, group {G}"
 ```
-[PATTERN] SQLModel self-referential relationship requires lazy="selectin"
-[INCIDENT] Circular import in __init__.py resolved by reordering imports
-[REFERENCE] FastAPI dependency injection docs: https://...
-```
+
+ID assignment: use `K1`, `K2`, etc. within this report. Lead re-assigns global IDs when appending to `knowledge.yaml`.
 
 ## Completion Report
 
@@ -145,7 +156,7 @@ Write your detailed report to `{{SDD_DIR}}/project/specs/{feature}/builder-repor
 {PASS | WARN({items with details}) | FAIL-RETRY-{N}({items with details})}
 
 ## Knowledge
-{Tagged lines: [PATTERN], [INCIDENT], [REFERENCE] — or "None"}
+{YAML entries per Knowledge Reporting schema — or "None"}
 ```
 
 ### Step B: Output Minimal Summary

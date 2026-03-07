@@ -18,8 +18,8 @@ Gather in parallel:
 - Roadmap/spec progress (read all spec.yaml files)
 - Test results (if test commands available)
 - Steering changes (recent modifications)
-- Current `{{SDD_DIR}}/handover/session.md` (if exists — may be auto-draft or previous manual polish)
-- Recent entries from `{{SDD_DIR}}/handover/decisions.md` (if exists)
+- Current `{{SDD_DIR}}/session/handover.md` (if exists — may be auto-draft or previous manual polish)
+- Recent entries from `{{SDD_DIR}}/session/decisions.yaml` (if exists)
 
 ## Step 1b: Uncommitted Changes Check
 
@@ -41,17 +41,17 @@ Use `AskUserQuestion` tool to ask user:
 
 ## Step 3: Generate Handover Document
 
-Generate comprehensive session.md following the template at `{{SDD_DIR}}/settings/templates/handover/session.md`:
+Generate comprehensive handover.md following the template at `{{SDD_DIR}}/settings/templates/session/handover.md`:
 
 ### Direction (from Lead perspective + user input)
 - Immediate Next Action
 - Active Goals (from spec progress + user input)
-- Key Decisions: carry forward from previous session.md + add new from this session (each with brief rationale, reference decisions.md D{seq} for details)
+- Key Decisions: carry forward from previous handover.md + add new from this session (each with brief rationale, reference decisions.yaml D{seq} for details)
 - Warnings
 
 ### Session Context (from user interaction)
 - Tone and Nuance
-- Steering Exceptions (with decisions.md references)
+- Steering Exceptions (with decisions.yaml references)
 
 ### Accomplished (from auto-collected data + user input)
 - Work summary
@@ -64,19 +64,22 @@ Do NOT include a `**Mode**:` marker — absence of marker indicates manual polis
 
 ## Step 4: Timestamp
 
-Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Steps 3 and 5: session.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting), and SESSION_END entry. Do NOT call `date` again.
+Run `date +%Y-%m-%dT%H:%M:%S%z` once. Reuse this single value for all timestamps in Steps 3 and 5: handover.md `Generated`, archive filename (derive `YYYY-MM-DD-HHmm` by extracting and reformatting), and SESSION_END entry. Do NOT call `date` again.
 
 ## Step 5: Write Files
 
-1. If `{{SDD_DIR}}/handover/session.md` exists:
-   - Copy it to `{{SDD_DIR}}/handover/sessions/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
+1. If `{{SDD_DIR}}/session/handover.md` exists:
+   - Copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
    - If same-timestamp archive already exists, append `-2`, `-3`, etc.
-2. Write new session.md to `{{SDD_DIR}}/handover/session.md`
-3. Append `SESSION_END` to `{{SDD_DIR}}/handover/decisions.md` (append-only, NEVER overwrite):
-   ```
-   [{ISO-8601}] D{seq}: SESSION_END | {brief session summary}
-   - Context: /sdd-handover executed
-   - Decision: Session ended, handover archived
+2. Write new handover.md to `{{SDD_DIR}}/session/handover.md`
+3. Append `SESSION_END` entry to `{{SDD_DIR}}/session/decisions.yaml` `entries` list (append-only, NEVER overwrite):
+   ```yaml
+   - id: "D{seq}"
+     type: "SESSION_END"
+     summary: "{brief session summary}"
+     context: "/sdd-handover executed"
+     detail: "Session ended, handover archived"
+     created_at: "{ISO-8601}"
    ```
 
 ## Step 6: Post-Completion
@@ -85,7 +88,7 @@ Report to user:
 - Handover file location
 - Archive location (if created)
 - Key items captured
-- Reminder: next session will auto-load session.md on start
+- Reminder: next session will auto-load handover.md on start
 
 </instructions>
 
@@ -97,11 +100,11 @@ Report to user:
 | Content | Carry-forward + Next Action/Accomplished | Full user context + tone + steering exceptions |
 | Quality | Functional (machine-generated) | High (user-validated) |
 | Mode marker | `**Mode**: auto-draft` | No marker |
-| Archive | No archive | Archives previous session.md to sessions/ |
+| Archive | No archive | Archives previous handover.md to handovers/ |
 
 ## Error Handling
 
 - **No active specs**: Still generate handover with available context
 - **No git repo**: Skip git state section
-- **No existing session.md**: Generate from scratch (no archive step)
-- **No decisions.md**: Create with SESSION_END as first entry
+- **No existing handover.md**: Generate from scratch (no archive step)
+- **No decisions.yaml**: Create with SESSION_END as first entry

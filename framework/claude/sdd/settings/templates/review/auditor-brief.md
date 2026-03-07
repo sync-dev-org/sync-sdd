@@ -18,5 +18,5 @@ Write your verdict to this path.
 
 ## Additional Context
 
-Read `.sdd/handover/session.md`, apply the `### Steering Exceptions` section as review exemptions.
+Read `.sdd/session/handover.md`, apply the `### Steering Exceptions` section as review exemptions.
 {{SELFCHECK_CONTEXT}}
