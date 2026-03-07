@@ -34,7 +34,7 @@ Run from your project root. Requires `curl` and `tar`.
 curl -LsSf <url>/install.sh | sh -s -- --update
 
 # Install specific version
-curl -LsSf <url>/install.sh | sh -s -- --version v2.5.0
+curl -LsSf <url>/install.sh | sh -s -- --version v2.5.1
 
 # Force overwrite existing files
 curl -LsSf <url>/install.sh | sh -s -- --force
@@ -61,7 +61,7 @@ Your project files are never touched by `--update`:
 ```
 .sdd/project/steering/             # Project context and decisions
 .sdd/project/specs/                # Feature specifications
-.sdd/handover/                     # Session continuity
+.sdd/session/                      # Session continuity
 ```
 
 ## Architecture
@@ -133,11 +133,11 @@ steering → design → review → implement → review
 
 **Phase gates** enforce order: you can't implement without a design. Version tracking prevents stale implementations.
 
-**Auto-fix loop**: NO-GO reviews trigger automatic fixes (max 5 retries, dead-code max 3). SPEC-UPDATE-NEEDED cascades through the full pipeline — Architect re-designs, TaskGenerator re-plans, Builder re-implements.
+**Auto-fix loop**: NO-GO reviews trigger automatic fixes (max 5 retries). SPEC-UPDATE-NEEDED cascades through the full pipeline — Architect re-designs, TaskGenerator re-plans, Builder re-implements. Dead-code NO-GO uses inline fix without re-review — the subsequent cross-check serves as safety net.
 
 **Multi-agent review**: 5 fixed + 1-4 dynamic Inspectors examine the work from different angles (architecture, consistency, testability, quality, best practices + change-focused dynamic). An Auditor synthesizes findings into a single verdict.
 
-**Knowledge accumulation**: Builders report patterns, incidents, and references via tagged completion reports. Lead collects them into a handover buffer that persists across sessions.
+**Knowledge accumulation**: Builders report patterns, incidents, and references via tagged completion reports. Lead collects them into `knowledge.yaml` that persists across sessions. Natural language triggers ("覚えて", "ISSUE", "判断") allow quick capture during conversation.
 
 ## Commands
 
