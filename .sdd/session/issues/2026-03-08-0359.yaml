@@ -1,0 +1,13 @@
+# Archived from issues.yaml at 2026-03-08T03:59:12+0900
+# Entries: 1
+entries:
+  - id: "I41"
+    type: "ENHANCEMENT"
+    status: "resolved"
+    severity: "H"
+    summary: "resolved issue の知見が archive に埋もれ再発する — issue→knowledge 昇格フローが欠如"
+    detail: "問題報告 (例: Bash コマンド組み立ての誤り) が issue として記録され、解決策が見つかると resolved → consolidation で archive。次セッションの sdd-start は issue archive を読まないため、同じミスを繰り返す。解決策の知見を持つ resolved issue は、resolve 時に knowledge.yaml にも知見を残すべき。現行プロセスには issue→knowledge 昇格の仕組みがない"
+    source: "user"
+    resolution: "sdd-handover Step 4b に knowledge promotion 追加 (resolved issue → knowledge.yaml)。Step 4c に curation 追加 (FP 判定 + rules 昇格 + duplicate detection → steering PROPOSE)。CLAUDE.md にも反映"
+    created_at: "2026-03-08T03:44:12+0900"
+    resolved_at: "2026-03-08T03:44:12+0900"

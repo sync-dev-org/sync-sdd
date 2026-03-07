@@ -325,7 +325,7 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 - Builder reports learnings with tags: `[KNOWLEDGE]` (→ knowledge.yaml), `[ISSUE]` (→ issues.yaml)
 - Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to the appropriate session file
 - knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 similar summary triggers steering PROPOSE at consolidation).
-- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4b): flush pending decisions/knowledge/issues, then decisions.yaml `status: superseded` exclusion, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
+- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4): flush pending decisions/knowledge/issues, then decisions.yaml `status: superseded` exclusion, issues.yaml resolved/rejected archival with **knowledge promotion** (resolved issue の resolution に再利用可能な知見があれば knowledge.yaml に昇格), knowledge.yaml **curation** (FP 判定 + rules 昇格) + duplicate detection + steering PROPOSE. Pruned entries are archived.
 
 ## Pipeline Stop Protocol
 

@@ -63,3 +63,12 @@ entries:
     detail: "現行は「コミットする/コミットせず続行」の 2 択。「全てコミット / .sdd/session のみコミット / コミットせず終了」の 3 択にしたい。session データだけ先にコミットし実装変更は別途コミットしたいケースに対応"
     source: "user"
     created_at: "2026-03-08T00:51:52+0900"
+
+  - id: "I40"
+    type: "ENHANCEMENT"
+    status: "open"
+    severity: "H"
+    summary: "forge-skill の examples/ を廃止し、Anthropic スキル作成リファレンスに置き換える"
+    detail: "examples/ に外部スキル 5 件を配置する方式 (D217) は間違いだった。代わりに Anthropic 公式のスキル作成ベストプラクティス・仕様をリファレンスとしてまとめ、writer.md に渡す方式に変更する。外部スキルのコピーではなく、設計原則・パターンを参照させる"
+    source: "user"
+    created_at: "2026-03-08T03:44:12+0900"

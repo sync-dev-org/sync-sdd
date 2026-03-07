@@ -1,0 +1,10 @@
+# Archived from decisions.yaml at 2026-03-08T03:59:12+0900
+# Entries: 1
+entries:
+  - id: "D217"
+    status: "superseded"
+    severity: "H"
+    summary: "forge-skill writer は参考スキル (examples/) を読み、プロジェクト内スキルは読まない"
+    detail: "forge-skill の SubAgent がプロジェクト内の他スキルを参照していた (I36)。ポリッシュ前のスキルを参照実装にすると品質が下がる。Anthropic 公式・obra/superpowers・Trail of Bits の厳選 5 スキルを references/examples/ に配置し、writer.md の Step 2 で「examples/ を読め、.claude/skills/ は読むな」と指示。参考スキル: frontend-design, mcp-builder, second-opinion, test-driven-development, writing-skills"
+    source: "user"
+    created_at: "2026-03-08T03:20:48+0900"

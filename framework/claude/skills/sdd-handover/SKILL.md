@@ -85,6 +85,7 @@ Then process each file. If a file has no entries to archive, skip it entirely (n
 
 - **Keep**: `status: open` or `status: deferred`
 - **Archive**: `status: resolved` or `status: rejected`
+- **Knowledge promotion**: before archiving each resolved issue, check if its `resolution` contains a reusable insight (e.g., workaround, root cause pattern, tool usage tip). If so, append a knowledge.yaml entry with the insight. This prevents resolution knowledge from being lost when the issue is archived
 - Archive destination: `.sdd/session/issues/{ARCHIVE_SLUG}.yaml`
 - Rewrite `.sdd/session/issues.yaml` with kept entries only (preserve header comment)
 
@@ -92,7 +93,10 @@ Then process each file. If a file has no entries to archive, skip it entirely (n
 
 - **Keep**: `status: active`
 - **Archive**: `status: superseded`
-- **Duplicate detection**: if 3+ active entries share substantially similar summaries, flag them as a steering PROPOSE candidate — present to the user in Step 5
+- **Curation** (before duplicate detection): review active entries for quality and promotion:
+  1. **FP detection**: check if any entry is a false positive (incorrect conclusion, outdated, or disproven by later findings). If FP, set `status: superseded` with a note in `detail`
+  2. **Rules promotion**: check if any entry describes a Bash security heuristic pattern or workaround. If valid, update `.sdd/settings/rules/lead/bash-security-heuristics.md` with the finding, then set `status: superseded` (knowledge is now codified in rules)
+- **Duplicate detection**: if 3+ active entries share substantially similar summaries, flag them as a steering PROPOSE candidate — present to the user in Step 6
 - Archive destination: `.sdd/session/knowledge/{ARCHIVE_SLUG}.yaml`
 - Rewrite `.sdd/session/knowledge.yaml` with kept entries only (preserve header comment)
 
