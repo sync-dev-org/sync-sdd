@@ -50,7 +50,7 @@ your-project/
 ├── .claude/
 │   ├── CLAUDE.md                      # Framework instructions (auto-loaded)
 │   ├── settings.json                  # Default settings
-│   ├── skills/sdd-*/SKILL.md          # 10 skills
+│   ├── skills/sdd-*/SKILL.md          # 12 skills
 │   └── agents/sdd-*.md               # 5 SubAgent definitions
 └── .sdd/
     └── settings/                      # Rules, templates, profiles
@@ -150,6 +150,8 @@ steering → design → review → implement → review
 | `/sdd-status` | Check progress + impact analysis |
 | `/sdd-start` | Session start (invoke on "再開", "continue", "resume", or at session start) |
 | `/sdd-handover` | Generate session handover document |
+| `/sdd-log` | Record decisions, issues, and knowledge to session files |
+| `/sdd-skill-creator` | Create, improve, and optimize skills (manual invocation only) |
 | `/sdd-release` | Create a versioned release (branch, tag, push) |
 | `/sdd-publish-setup` | Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher) |
 | `/sdd-review-self` | Self-review via external engine (Codex/Claude/Gemini) |
