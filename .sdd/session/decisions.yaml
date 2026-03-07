@@ -392,3 +392,11 @@ entries:
     detail: "I1/I4/I13/I14 の教訓を handover Tone/Nuance に記録したが、Tone/Nuance はセッション間の一時的な引き継ぎ。永続的な行動ルールは knowledge.yaml (K6/K7) や CLAUDE.md Behavioral Rules に記載すべき。Tone/Nuance は次回 handover で自然に消えても問題ない状態にする"
     source: "user"
     created_at: "2026-03-07T16:33:02+0900"
+
+  - id: "D218"
+    status: "active"
+    severity: "M"
+    summary: "forge-skill reforge モード命名 — regenerate → reforge"
+    detail: "既存スキルをゼロから再生成する機能の名称を reforge に決定。regenerate より短く、forge-skill との一貫性がある。Backup (.bak{N}) → Requirements Extraction → External Interface Inventory → Dispatch Writer (create mode) → Lead Diff Analysis の 5 ステップ"
+    source: "user"
+    created_at: "2026-03-08T05:01:50+0900"

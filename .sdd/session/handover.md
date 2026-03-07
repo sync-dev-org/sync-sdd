@@ -1,19 +1,18 @@
 # Session Handover
-**Generated**: 2026-03-08T03:59:12+0900
+**Generated**: 2026-03-08T05:01:50+0900
 **Branch**: main
-**Session Goal**: sdd-handover v7 作成 + knowledge/issue 昇格フロー整備
+**Session Goal**: forge-skill reforge モード追加 + skill-reference 手引書 + sdd-handover reforge
 
 ## Direction
 
 ### Immediate Next Action
-1. .bak ファイル整理: `rm framework/claude/skills/sdd-handover/SKILL.md.bak*`
-2. I40 (H): forge-skill examples/ 廃止 → Anthropic スキル作成リファレンスに置き換え
-3. I20 (M): 残りスキルに name フィールド追加
-4. I15 (M): NL trigger と sdd-log の統一計画
+1. I20 (M): 残りスキルに name フィールド追加
+2. I15 (M): NL trigger と sdd-log の統一計画
+3. I18 (M): session データの SQLite 化検討
 
 ### Active Goals
-- **sdd-handover 完成**: v7 完成。knowledge promotion + curation 追加。.bak 整理のみ残
-- **forge-skill 方針転換**: examples/ 廃止 (D217 superseded) → Anthropic リファレンスまとめ (I40)
+- **forge-skill 拡充**: reforge モード追加済み (D218)。skill-reference.md 手引書で 3 プラットフォーム (Claude Code / Codex / Gemini) カバー
+- **sdd-handover 完成**: reforge 出力 + Lead 改善 7 項目適用済み。.bak1/.bak2 はバージョン履歴として保持
 - **Skills 品質向上**: name フィールド標準準拠 (I20)
 - **session データ改善**: SQLite 化検討 (I18)
 
@@ -28,15 +27,11 @@
 - handover Tone/Nuance はセッション一時的 (D216)
 
 **Added this session:**
-- I39 resolved: sdd-handover に AskUserQuestion 明示追加
-- sdd-handover v7: v1-v6 全版分析 → 良いとこどり + 新規最適化
-- I41 resolved: handover Step 4b に knowledge promotion、Step 4c に curation (FP 判定 + rules 昇格) 追加
-- D217 superseded: forge-skill examples/ 方式は間違い → Anthropic リファレンスに置き換え (I40)
-- I34 実装済み: 3 択コミットが v7 に含まれる
+- D218: forge-skill reforge モード命名 — regenerate → reforge
 
 ### Warnings
-- **sdd-handover .bak 群**: framework/claude/skills/sdd-handover/ に .bak/.bak2/.bak3/.bak4 が残存。削除必要
-- **D217 superseded**: examples/ に配置した 5 スキルは次セッションで削除予定
+- **sdd-handover .bak1/.bak2**: reforge バージョン履歴として意図的に残存。不要になったら手動削除
+- **skill-reference.md 鮮度**: 2026-03-08 時点の情報。1ヶ月経過したら skill-reference-sources.md の手順で更新推奨
 
 ## Session Context
 
@@ -49,17 +44,23 @@
 ## Accomplished
 
 ### Work Summary (this session)
-1. **I39 修正 + テスト**: v6 の Step 5/8 に AskUserQuestion 明示追加。テストで正常発火確認
-2. **sdd-handover v7 作成**: v1-v6 全版分析 → 良いとこどり。新規最適化: 1 Bash call (timestamp+branch), Read→Flush順, mkdir一括, Archive前倒し。description トリガーワード K8 準拠
-3. **v7 実運用テスト**: 3 回の handover 実行 (AskUserQuestion テスト, v7 初回テスト, 本番)。全ステップ正常動作
-4. **knowledge/issue 昇格フロー整備 (I41)**:
-   - Step 4b: resolved issue → knowledge.yaml に昇格 (knowledge promotion)
-   - Step 4c: knowledge curation — FP 判定 + rules 昇格 (bash-security-heuristics.md) + duplicate detection → steering PROPOSE
-   - CLAUDE.md にも反映
-5. **I40 起票**: forge-skill examples/ 廃止 → Anthropic リファレンスに置き換え
-6. **Curation 実施**: K2/K3 (obsolete) + K10 (rules 反映済み) を superseded。D217 を superseded
+1. **.bak ファイル整理**: sdd-handover の .bak/.bak2/.bak3/.bak4 を削除
+2. **I40 解決 — skill-reference 手引書作成**:
+   - 5 エージェント並列リサーチ (Claude Code / Codex CLI / Gemini CLI / 最新ベストプラクティス / クロスプラットフォーム互換性)
+   - `skill-reference.md` (418行): agentskills.io 標準仕様 + 3 プラットフォーム差分 + 互換スキルの書き方 + ベストプラクティス + ポータビリティマトリクス
+   - `skill-reference-sources.md` (134行): 情報源 + 更新手順 + 検索クエリ
+   - `examples/` 5 ファイル (1598行) 削除、`writer.md` 参照先更新
+3. **I42 解決 — forge-skill reforge モード追加** (D218):
+   - 5 ステップ: Backup (mv) → Requirements Extraction → External Interface Inventory → Dispatch Writer → Lead Diff Analysis
+   - .bak{N} バージョン管理、繰り返し reforge 対応
+4. **sdd-handover reforge 実行**:
+   - Writer SubAgent が要求定義ベースで新版生成 (233行)
+   - Lead diff 分析: 7 項目の改善適用 (Step 順修正, Open Issues 復活, 1 Bash call パターン, mkdir 一括, archive ヘッダー, Previous Sessions, コミット prefix)
+   - 最終版 254 行
+5. **v2.6.0 リリース**: forge-skill reforge + skill-reference + sdd-handover reforge
 
 ### Previous Sessions (carry forward)
+- v2.5.2 (session 8): sdd-handover v7 + knowledge promotion/curation + I39/I41 resolved
 - v2.5.2 (session 7): forge-skill 参考スキル導入 + rules 分類 + sdd-handover v6 生成テスト
 - v2.5.2 (session 6): forge-skill リネーム + 動作テスト + sdd-handover v4 再生成テスト
 - v2.5.2 (session 5): skill-creator SubAgent 委任型改造
@@ -71,16 +72,14 @@
 ## Open Issues
 | ID | Sev | Summary |
 |----|-----|---------|
-| I40 | H | forge-skill examples/ 廃止 → Anthropic リファレンスに置き換え |
 | I15 | M | NL trigger と sdd-log の統一計画 |
 | I16 | M | roadmap/review からの sdd-log 参照計画 |
 | I17 | M | コンソリデーションと handover の責務整合性確認 |
 | I18 | M | session データの SQLite 化検討 |
 | I20 | M | 残りスキルに name フィールド追加 |
-| I34 | M | sdd-handover 3 択コミット (v7 で実装済み) |
 | I10 | L | ConventionsScanner が issues.yaml を参照しない (deferred) |
 
 ## Resume Instructions
 1. `/sdd-start` でセッション開始
-2. .bak ファイル整理: `rm framework/claude/skills/sdd-handover/SKILL.md.bak*`
-3. I40 (forge-skill Anthropic リファレンス) に着手
+2. I20 (name フィールド追加) から着手
+3. I15/I16/I17 は関連するため一括検討を推奨
