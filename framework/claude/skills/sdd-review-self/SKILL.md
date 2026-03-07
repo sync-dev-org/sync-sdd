@@ -142,7 +142,7 @@ Briefer の SubAgent dispatch:
 
 ## Step 4: Parallel Dispatch (3 Fixed + N Dynamic Inspectors)
 
-Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/tmux-integration.md`.
+Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/lead/tmux-integration.md`.
 
 3 固定 + N 動的 (N=1-4) = 4-7 Inspector を並行起動する (外部エンジンまたは SubAgent)。
 

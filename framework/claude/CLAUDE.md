@@ -357,8 +357,8 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Use steering Common Commands**: When running project tools (install, test, build, e2e, lint, format, dev, run), use the exact command patterns from `steering/tech.md` Common Commands. Do not substitute alternative invocations (e.g., if tech.md says `uv run pytest`, do not use bare `pytest` or `python3 -m pytest`).
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
-- **tmux Integration**: Lead uses tmux for pane-based orchestration when `$TMUX` is set. Patterns: Server Lifecycle (long-running server), One-Shot Command (external CLI with progress display). Falls back to `Bash(run_in_background=true)` when not in tmux. Full patterns: `{{SDD_DIR}}/settings/rules/tmux-integration.md`
-- **Bash セキュリティヒューリスティクス回避**: Claude Code のセキュリティ検出は settings.json allow リストより優先される。詳細ガイド: `{{SDD_DIR}}/settings/rules/bash-security-heuristics.md`。主要な回避パターン:
+- **tmux Integration**: Lead uses tmux for pane-based orchestration when `$TMUX` is set. Patterns: Server Lifecycle (long-running server), One-Shot Command (external CLI with progress display). Falls back to `Bash(run_in_background=true)` when not in tmux. Full patterns: `{{SDD_DIR}}/settings/rules/lead/tmux-integration.md`
+- **Bash セキュリティヒューリスティクス回避**: Claude Code のセキュリティ検出は settings.json allow リストより優先される。詳細ガイド: `{{SDD_DIR}}/settings/rules/lead/bash-security-heuristics.md`。主要な回避パターン:
   - `$()` コマンド置換・`${}` パラメータ置換 → `$VAR` (ブレースなし) や `printenv VAR` で代替。バッククォートは OK
   - `#{}` tmux フォーマット文字列 → `${}` と誤検出。ヘルパースクリプトに隔離する
   - `2>` stderr リダイレクト → 専用ツール (Glob/Grep/Read) で代替。Bash が必須ならエラーを許容する
@@ -395,7 +395,7 @@ main continues to advance; release branch is a snapshot, not merged back.
 
 ## Review Output Format (YAML)
 
-Unified YAML schema for all review pipeline outputs. Full specification: `{{SDD_DIR}}/settings/rules/verdict-format.md`
+Unified YAML schema for all review pipeline outputs. Full specification: `{{SDD_DIR}}/settings/rules/agent/verdict-format.md`
 
 ## Review Engine Level Chain
 

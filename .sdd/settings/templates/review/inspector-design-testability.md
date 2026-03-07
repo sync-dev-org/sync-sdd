@@ -33,7 +33,7 @@ You will receive a prompt containing:
    - Read `{{SDD_DIR}}/project/steering/structure.md` - Project structure
 
 3. **Review Rules** (optional):
-   - Read `{{SDD_DIR}}/settings/rules/design-review.md` for review criteria
+   - Read `{{SDD_DIR}}/settings/rules/agent/design-review.md` for review criteria
 
 ### Cross-Check Mode
 

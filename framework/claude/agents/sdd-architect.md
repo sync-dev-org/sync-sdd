@@ -27,7 +27,7 @@ Read all necessary context:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md` (if exists)
 - **Entire `{{SDD_DIR}}/project/steering/` directory** for complete project memory
 - `{{SDD_DIR}}/settings/templates/specs/design.md` for document structure
-- `{{SDD_DIR}}/settings/rules/design-principles.md` for design principles
+- `{{SDD_DIR}}/settings/rules/agent/design-principles.md` for design principles
 - `{{SDD_DIR}}/settings/templates/specs/research.md` for discovery log structure
 - **Conventions brief** (if path provided in prompt): observed codebase patterns for naming, error handling, schema, etc.
 - **Shared research** (if path provided in prompt): common technology decisions and prior-wave findings to avoid redundant discovery
@@ -47,7 +47,7 @@ Version consistency check (skip if `version_refs` not present):
 2. **Execute Appropriate Discovery Process** (reference shared research and conventions brief to avoid re-discovering known patterns — focus discovery on spec-specific aspects):
 
    **For Complex/New Features**:
-   - Read and execute `{{SDD_DIR}}/settings/rules/design-discovery-full.md`
+   - Read and execute `{{SDD_DIR}}/settings/rules/agent/design-discovery-full.md`
    - Conduct thorough research using WebSearch/WebFetch:
      - Latest architectural patterns and best practices
      - External dependency verification (APIs, libraries, versions, compatibility)
@@ -55,7 +55,7 @@ Version consistency check (skip if `version_refs` not present):
      - Performance benchmarks and security considerations
 
    **For Extensions**:
-   - Read and execute `{{SDD_DIR}}/settings/rules/design-discovery-light.md`
+   - Read and execute `{{SDD_DIR}}/settings/rules/agent/design-discovery-light.md`
    - Focus on integration points, existing patterns, compatibility
    - Use Grep to analyze existing codebase patterns
 

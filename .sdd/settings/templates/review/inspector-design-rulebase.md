@@ -29,7 +29,7 @@ You will receive a prompt containing:
 
 2. **Load Templates and Rules**:
    - Read `{{SDD_DIR}}/settings/templates/specs/design.md` (template)
-   - Read `{{SDD_DIR}}/settings/rules/design-review.md`
+   - Read `{{SDD_DIR}}/settings/rules/agent/design-review.md`
 
 3. **Execute Review** (three perspectives):
 
@@ -114,7 +114,7 @@ You will receive a prompt containing:
 
 2. **Load Templates and Rules**:
    - Read `{{SDD_DIR}}/settings/templates/specs/design.md`
-   - Read `{{SDD_DIR}}/settings/rules/design-review.md`
+   - Read `{{SDD_DIR}}/settings/rules/agent/design-review.md`
 
 3. **Execute Cross-Check**:
    - Template conformance across all specs

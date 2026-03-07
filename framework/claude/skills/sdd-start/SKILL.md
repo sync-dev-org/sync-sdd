@@ -40,6 +40,10 @@ Read `{{SDD_DIR}}/session/decisions.yaml` → recent decision history (last ~20 
 
 If roadmap active: scan all `{{SDD_DIR}}/project/specs/*/spec.yaml` files → build pipeline state dynamically.
 
+## Step 5b: Load Lead Rules
+
+Read all files in `{{SDD_DIR}}/settings/rules/lead/` directory. These are operational rules that Lead must keep in context throughout the session (Bash security heuristics, tmux integration patterns, etc.).
+
 ## Step 6: tmux Initialization
 
 **MANDATORY when `$TMUX` is set. Do NOT skip.**

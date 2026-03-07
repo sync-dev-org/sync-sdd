@@ -12,7 +12,7 @@ argument-hint: [-y] [custom]
 
 Manage project steering documents. Lead handles directly (no SubAgent dispatch needed) since it requires user interaction.
 
-**Before any steering operation**, read `{{SDD_DIR}}/settings/rules/steering-principles.md` and apply its principles (content granularity, security, quality standards, preservation rules) throughout.
+**Before any steering operation**, read `{{SDD_DIR}}/settings/rules/agent/steering-principles.md` and apply its principles (content granularity, security, quality standards, preservation rules) throughout.
 
 ## Step 1: Detect Mode
 

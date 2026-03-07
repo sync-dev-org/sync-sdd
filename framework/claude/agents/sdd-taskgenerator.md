@@ -29,7 +29,7 @@ Context from Lead:
 Read:
 - `{{SDD_DIR}}/project/specs/{feature}/spec.yaml`, `design.md`, `research.md` (if exists)
 - `{{SDD_DIR}}/project/steering/` (entire directory)
-- `{{SDD_DIR}}/settings/rules/tasks-generation.md`
+- `{{SDD_DIR}}/settings/rules/agent/tasks-generation.md`
 - **Conventions brief** (if path provided in prompt): observed codebase patterns
 
 ### Step 2: Generate Tasks

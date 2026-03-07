@@ -1,0 +1,13 @@
+# Archived from issues.yaml at 2026-03-08T03:20:48+0900
+# Entries: 1
+entries:
+  - id: "I38"
+    type: "ENHANCEMENT"
+    status: "resolved"
+    severity: "M"
+    summary: "rules/ を lead/ と agent/ にサブフォルダ分類 + sdd-start で lead rules 読み込み"
+    detail: "Lead 向けルール (bash-security-heuristics, tmux-integration) がセッション開始時に読まれず、存在を忘れる問題。rules/ を lead/ と agent/ に分類し、sdd-start Step 5b で lead/ を全読みする。全参照パス更新 + install 確認済み"
+    source: "user"
+    resolution: "rules/lead/ (2files), rules/agent/ (7files) に分類。sdd-start Step 5b 追加。全参照パス更新 (CLAUDE.md, agents 2, skills 4, templates 2)"
+    created_at: "2026-03-08T02:58:07+0900"
+    resolved_at: "2026-03-08T02:58:07+0900"

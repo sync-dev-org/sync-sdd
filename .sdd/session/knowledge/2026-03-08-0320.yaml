@@ -1,0 +1,10 @@
+# Archived from knowledge.yaml at 2026-03-08T03:20:48+0900
+# Entries: 1
+entries:
+  - id: "K18"
+    status: "superseded"
+    severity: "M"
+    summary: "訂正: > リダイレクト自体はセキュリティヒューリスティクスに引っかからない"
+    detail: "bash-security-heuristics.md に明記: > stdout redirect (project-internal) は OK。gh api ... | base64 -d > file の警告は > ではなくパイプ構成の allow pattern miss が原因の可能性。誤って Write 必須と結論づけたが、ルール上 > は許容される"
+    source: "user"
+    created_at: "2026-03-08T02:50:46+0900"

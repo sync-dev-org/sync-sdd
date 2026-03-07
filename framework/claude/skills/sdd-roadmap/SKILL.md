@@ -115,7 +115,7 @@ Then follow the instructions in the loaded file.
 
 ### Verdict Persistence Format
 
-verdicts.yaml の永続化スキーマは `{{SDD_DIR}}/settings/rules/verdict-format.md` §4 Verdict Index に準拠する。
+verdicts.yaml の永続化スキーマは `{{SDD_DIR}}/settings/rules/agent/verdict-format.md` §4 Verdict Index に準拠する。
 
 ---
 

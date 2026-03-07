@@ -212,7 +212,7 @@ sed "s|{{REVIEW_TYPE}}|{value}|g; s|{{FEATURE}}|{value}|g; s|{{SCOPE}}|{value}|g
 
 Web inspectors (`inspector-impl-web-e2e`, `inspector-impl-web-visual`) を含む場合、Inspector dispatch **前に** dev server を起動。
 
-**Server Lifecycle pattern** (from `{{SDD_DIR}}/settings/rules/tmux-integration.md`):
+**Server Lifecycle pattern** (from `{{SDD_DIR}}/settings/rules/lead/tmux-integration.md`):
 1. `steering/tech.md` Common Commands の `Dev:` entry からコマンド取得
 2. Dev server command がない → skip (web inspectors は "Server URL not accessible" で graceful termination)
 3. Server 起動 (tmux pane or background Bash)
