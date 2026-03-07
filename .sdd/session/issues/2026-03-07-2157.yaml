@@ -1,0 +1,23 @@
+# Archived resolved/rejected issues from consolidation 2026-03-07T21:57:58+0900
+entries:
+  - id: "I3"
+    type: "ENHANCEMENT"
+    status: "resolved"
+    severity: "H"
+    summary: "session データ記録の指示追従性が低い — sdd-log スキルで解決"
+    detail: "ユーザーが issue/decision/knowledge 登録を指示しても Lead が即座に従わない。NL trigger は気づき依存。/sdd-log スキル (D214) で統一的に解決する。roadmap/review の自動記録もポインタ化して最適化"
+    source: "user"
+    resolution: "/sdd-log スキルを実装 (framework/claude/skills/sdd-log/SKILL.md)"
+    created_at: "2026-03-07T14:59:13+0900"
+    resolved_at: "2026-03-07T17:13:07+0900"
+
+  - id: "I19"
+    type: "BUG"
+    status: "resolved"
+    severity: "H"
+    summary: "sdd-log スキルが settings.json で許可されていない"
+    detail: "新規作成した /sdd-log スキルに対応する settings.json の許可設定が未追加。スキル実行時に承認プロンプトが出る可能性がある"
+    source: "user"
+    resolution: "framework/claude/settings.json に Skill(sdd-log) を追加し install --local --force で同期"
+    created_at: "2026-03-07T17:19:45+0900"
+    resolved_at: "2026-03-07T17:20:29+0900"

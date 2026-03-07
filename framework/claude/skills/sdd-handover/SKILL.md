@@ -21,14 +21,10 @@ Gather in parallel:
 - Current `{{SDD_DIR}}/session/handover.md` (if exists — may be auto-draft or previous manual polish)
 - Recent entries from `{{SDD_DIR}}/session/decisions.yaml` (if exists)
 
-## Step 1b: Uncommitted Changes Check
+## Step 1b: Note Uncommitted Changes
 
 If Step 1 detected uncommitted changes (untracked files or modifications):
-- Report the list of uncommitted files to the user
-- Use `AskUserQuestion` to ask: "未コミットの変更があります。コミットしてからハンドオーバーしますか？"
-  - Options: "コミットする (推奨)" / "コミットせずに続行"
-- If user chooses to commit: create a commit following the project's git workflow conventions, then proceed
-- If user chooses to skip: proceed without committing
+- Note the list for later. Commit check is deferred to Step 5b (after all files are written).
 
 ## Step 2: Collect Session Context (Interactive)
 
@@ -44,7 +40,7 @@ Use `AskUserQuestion` tool to ask user:
 Generate comprehensive handover.md following the template at `{{SDD_DIR}}/settings/templates/session/handover.md`:
 
 ### Direction (from Lead perspective + user input)
-- Immediate Next Action
+- Immediate Next Action: list open issues from `issues.yaml` sorted by severity (H→M→L), then user-specified next actions
 - Active Goals (from spec progress + user input)
 - Key Decisions: carry forward from previous handover.md + add new from this session (each with brief rationale, reference decisions.yaml D{seq} for details)
 - Warnings
@@ -75,9 +71,10 @@ Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and kn
 ### Consolidate decisions.yaml
 
 1. Read all entries from `decisions.yaml`
-2. **Superseded exclusion**: Remove entries with `status: superseded`
-3. **Archive pruned entries**: If any entries were removed, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
-4. **Rewrite decisions.yaml**: Write the header comment + remaining entries (this is the one exception to append-only — consolidation is a controlled rewrite)
+2. **Conflict detection**: Scan active entries for conflicting decisions on the same topic. If found, mark the older entry `status: superseded`
+3. **Superseded exclusion**: Separate entries with `status: superseded` from active entries
+4. **Archive pruned entries**: If any superseded entries exist, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
+5. **Rewrite decisions.yaml**: Write the header comment + remaining active entries (this is the one exception to append-only — consolidation is a controlled rewrite)
 
 ### Consolidate issues.yaml
 
@@ -94,8 +91,9 @@ Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and kn
    - For each group, propose a steering entry: `STEERING: PROPOSE — consolidate {count} repeated {type} findings into steering rule: "{summary}"`
    - Use `AskUserQuestion` to ask: "以下の knowledge パターンを steering に昇格しますか？" with options per group: "Approve (steering に追加)" / "Skip (そのまま維持)"
    - For approved groups: append the rule to the appropriate steering file, set the knowledge entries to `status: superseded`
-3. **Superseded exclusion**: Remove entries with `status: superseded`
-4. **Rewrite knowledge.yaml**: Write the header comment + remaining entries
+3. **Superseded exclusion**: Separate entries with `status: superseded` from active entries
+4. **Archive pruned entries**: If any superseded entries exist, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/knowledge/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
+5. **Rewrite knowledge.yaml**: Write the header comment + remaining active entries
 
 ## Step 5: Write Files
 
@@ -103,6 +101,15 @@ Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and kn
    - Ensure directory exists (`mkdir -p` via Bash) then copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
    - If same-timestamp archive already exists, append `-2`, `-3`, etc.
 2. Write new handover.md to `{{SDD_DIR}}/session/handover.md`
+
+## Step 5b: Uncommitted Changes Commit
+
+If Step 1b noted uncommitted changes:
+- Report the list of uncommitted files to the user (including newly written handover.md, archives, and consolidated session files)
+- Use `AskUserQuestion` to ask: "未コミットの変更があります。コミットしますか？"
+  - Options: "コミットする (推奨)" / "コミットせずに続行"
+- If user chooses to commit: create a commit following the project's git workflow conventions, then proceed
+- If user chooses to skip: proceed without committing
 
 ## Step 6: Post-Completion
 

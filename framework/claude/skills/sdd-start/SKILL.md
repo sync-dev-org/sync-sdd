@@ -83,6 +83,7 @@ Report to user:
 - Branch and working tree status
 - Latest release version (from VERSION file if exists)
 - Active pipeline status (if any)
+- Open issues summary (from issues.yaml, status: open, grouped by severity)
 - Immediate next action (from handover.md)
 - Key warnings (from handover.md)
 

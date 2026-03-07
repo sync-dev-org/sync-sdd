@@ -1,0 +1,9 @@
+# Archived superseded knowledge from consolidation 2026-03-07T23:54:57+0900
+entries:
+  - id: "K9"
+    status: "superseded"
+    severity: "H"
+    summary: "記録系スキルは description-based triggering に向かない"
+    detail: "sdd-log の description optimization テストで trigger 率 0%。テスト条件が不適切だったため K12 で訂正"
+    source: "sdd-skill-creator description optimization test"
+    created_at: "2026-03-07T22:52:03+0900"

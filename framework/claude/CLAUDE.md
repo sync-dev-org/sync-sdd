@@ -358,13 +358,14 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Inline scripts use project runtime**: For inline scripting (`-c` flags, heredocs), prefix with the project's runtime from `steering/tech.md` (e.g., `uv run python -c "..."` not bare `python -c "..."`).
 - **Playwright**: The SDD framework uses `@playwright/cli` (npm package, command: `playwright-cli`) for browser automation (E2E Inspector, etc.). Do NOT install Python Playwright for framework purposes — neither via `pip install playwright`, `uv add playwright`, nor any other Python package manager. If the project itself lists Python Playwright as an existing dependency, treat it as a project-specific dependency entirely separate from the SDD framework tooling. If `playwright-cli` is not available, install it: `npm install -g @playwright/cli@latest && playwright-cli install`.
 - **tmux Integration**: Lead uses tmux for pane-based orchestration when `$TMUX` is set. Patterns: Server Lifecycle (long-running server), One-Shot Command (external CLI with progress display). Falls back to `Bash(run_in_background=true)` when not in tmux. Full patterns: `{{SDD_DIR}}/settings/rules/tmux-integration.md`
-- **Bash セキュリティヒューリスティクス回避**: Claude Code のセキュリティ検出は settings.json allow リストより優先される。以下のパターンは承認プロンプトを誘発するため避ける:
-  - `$()` コマンド置換・`${}` パラメータ置換 → コミットメッセージは `git commit -m "メッセージ"` で直接渡す。`${VAR:-default}` は `echo "$VAR"` や `printenv VAR` で代替
-  - `--count` 等の一部フラグ名 → "quoted characters in flag names" 誤検出。`git rev-list --count` は避け、代替手段を使う
-  - `&&` によるコマンド連結 → 引用符とフラグの組み合わせが誤検出を悪化させる。独立したコマンドは並列 Bash 呼び出しで実行する
-  - 空クォート+ダッシュ (`-p ''`, `-p ""`) → "empty quotes before dash" 検出。非空文字列にする
-  - `2>/dev/null` 等のリダイレクト → "quoted characters" 誤検出。エラー出力の抑制が目的なら、まず専用ツール (Glob/Grep/Read) で代替できないか検討する。Bash が必須なら `2>/dev/null` を付けずにエラーを許容する
-  - `#{}` tmux フォーマット文字列 (`'#{pane_id}'` 等) → `${}` パラメータ置換と誤検出される。`printenv TMUX_PANE` 等の代替手段を使う
+- **Bash セキュリティヒューリスティクス回避**: Claude Code のセキュリティ検出は settings.json allow リストより優先される。詳細ガイド: `{{SDD_DIR}}/settings/rules/bash-security-heuristics.md`。主要な回避パターン:
+  - `$()` コマンド置換・`${}` パラメータ置換 → `$VAR` (ブレースなし) や `printenv VAR` で代替。バッククォートは OK
+  - `#{}` tmux フォーマット文字列 → `${}` と誤検出。ヘルパースクリプトに隔離する
+  - `2>` stderr リダイレクト → 専用ツール (Glob/Grep/Read) で代替。Bash が必須ならエラーを許容する
+  - `<` stdin リダイレクト・`<()` プロセス置換・`()` サブシェル・`&` バックグラウンド → 各代替手段を使う
+  - `<<EOF` ヒアドク (クォートなし) → Write ツールで代替。`<<'EOF'` (クォート付き) は allow パターン未マッチになる
+  - `&&` / `;` + クォート内にダッシュ → "quoted characters in flag names" 誤検出。独立したコマンドは並列 Bash 呼び出しで実行するか、クォート内のダッシュを除去する
+  - パイプ `|` 内の全コマンドが個別に allow チェックされる → 後続コマンドも settings.json に登録が必要
 - **Timestamps via `date` command**: All timestamps written to files MUST be obtained via `date` command and used verbatim (no manual conversion). Do NOT use `-u` flag — always use local timezone. Formats: ISO-8601 `date +%Y-%m-%dT%H:%M:%S%z`, date-time `date +%Y-%m-%d-%H%M`, date-only `date +%Y-%m-%d`. This applies to: decisions.yaml entries, spec.yaml `created_at`/`updated_at`, handover.md `Generated`, knowledge.yaml entries, conventions-brief `Generated`, verdicts.yaml batch headers, archive filenames, branch names.
 - **AskUserQuestion exclusion**: Skills の `allowed-tools` に `AskUserQuestion` を含めてはならない。自動承認パスに入ると UI が表示されず空回答で返るバグがある。Skills は main context で実行されるため `allowed-tools` になくても通常の承認フローで動作する。
 
