@@ -61,7 +61,7 @@ Auditor reads all `findings-inspector-*.yaml` from `active/`, synthesizes, and w
 ```yaml
 verdict: "CONDITIONAL"          # GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED
 scope: "{feature-or-scope}"
-review_type: "{type}"           # design/impl/dead-code/self
+review_type: "{type}"           # design/impl/dead-code/self/cross-check/cross-cutting
 counts:
   C: 0
   H: 1

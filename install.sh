@@ -410,13 +410,20 @@ if version_lt "$INSTALLED_VERSION" "1.2.0"; then
 fi
 # v2.6.0: handover/ → session/ rename + state.yaml move
 if version_lt "$INSTALLED_VERSION" "2.6.0"; then
+    mkdir -p .sdd/session
+    # state.yaml move (independent of handover/ existence)
+    [ -f .sdd/state.yaml ] && mv .sdd/state.yaml .sdd/session/state.yaml
     if [ -d ".sdd/handover" ]; then
-        mkdir -p .sdd/session
-        [ -f .sdd/handover/session.md ] && mv .sdd/handover/session.md .sdd/session/handover.md
-        [ -f .sdd/handover/decisions.md ] && mv .sdd/handover/decisions.md .sdd/session/decisions.md
-        [ -f .sdd/handover/buffer.md ] && mv .sdd/handover/buffer.md .sdd/session/knowledge.yaml
-        [ -d .sdd/handover/sessions ] && mv .sdd/handover/sessions .sdd/session/handovers
-        [ -f .sdd/state.yaml ] && mv .sdd/state.yaml .sdd/session/state.yaml
+        # v2.5.x path (handover/ with YAML files): handover.md, decisions.yaml, knowledge.yaml
+        [ -f .sdd/handover/handover.md ] && mv .sdd/handover/handover.md .sdd/session/handover.md
+        [ -f .sdd/handover/decisions.yaml ] && mv .sdd/handover/decisions.yaml .sdd/session/decisions.yaml
+        [ -f .sdd/handover/knowledge.yaml ] && mv .sdd/handover/knowledge.yaml .sdd/session/knowledge.yaml
+        [ -d .sdd/handover/handovers ] && mv .sdd/handover/handovers .sdd/session/handovers
+        # pre-v2.5.0 path (legacy .md files): session.md, decisions.md, buffer.md, sessions/
+        [ -f .sdd/handover/session.md ] && [ ! -f .sdd/session/handover.md ] && mv .sdd/handover/session.md .sdd/session/handover.md
+        [ -f .sdd/handover/decisions.md ] && mv .sdd/handover/decisions.md .sdd/session/decisions-legacy.md
+        [ -f .sdd/handover/buffer.md ] && mv .sdd/handover/buffer.md .sdd/session/knowledge-legacy.md
+        [ -d .sdd/handover/sessions ] && [ ! -d .sdd/session/handovers ] && mv .sdd/handover/sessions .sdd/session/handovers
         rmdir .sdd/handover 2>/dev/null || true
         info "Migrated handover/ -> session/ (v2.6.0)"
     fi

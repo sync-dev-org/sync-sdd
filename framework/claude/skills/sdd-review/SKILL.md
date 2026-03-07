@@ -23,6 +23,7 @@ $ARGUMENTS = "design {feature}"              → REVIEW_TYPE=design, FEATURE={fe
 $ARGUMENTS = "impl {feature}"                → REVIEW_TYPE=impl, FEATURE={feature}
 $ARGUMENTS = "dead-code"                      → REVIEW_TYPE=dead-code, FEATURE=none, CONTEXT=standalone
 $ARGUMENTS = "dead-code --context wave"       → REVIEW_TYPE=dead-code, FEATURE=none, CONTEXT=wave
+$ARGUMENTS = "dead-code --wave N"             → REVIEW_TYPE=dead-code, FEATURE=none, CONTEXT=wave, WAVE=N
 $ARGUMENTS = "design --cross-check"          → REVIEW_TYPE=design, SCOPE=cross-check
 $ARGUMENTS = "impl --cross-check"            → REVIEW_TYPE=impl, SCOPE=cross-check
 $ARGUMENTS = "design --wave N"               → REVIEW_TYPE=design, SCOPE=wave-N
@@ -491,10 +492,10 @@ verdict.yaml の `user_decision` フィールドを更新。
 1. Verdict を `{scope-dir}/verdicts.yaml` に永続化 (verdict-format.md §4 Verdict Index スキーマ準拠):
    a. 既存ファイル Read (なければ `batches: []` で作成)
    b. `date +%Y-%m-%dT%H:%M:%S%z` で timestamp 取得、`.sdd/.version` から version 取得
-   c. 新規 batch エントリを `batches` リストに append:
+   c. 新規 batch エントリを `batches` リストに append. `impl --wave N` の場合は `type: "cross-check"` に正規化する:
       ```yaml
       - seq: {N}
-        type: "{review-type}"          # design/impl/dead-code/cross-check/cross-cutting
+        type: "{review-type}"          # design/impl/dead-code/cross-check/cross-cutting (impl --wave N → cross-check)
         scope: "{feature or scope}"
         wave: {N}                      # wave/cross-check only
         date: "{ISO-8601}"

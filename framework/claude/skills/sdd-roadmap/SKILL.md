@@ -22,6 +22,7 @@ $ARGUMENTS = "review design {feature}"              → Review Subcommand
 $ARGUMENTS = "review impl {feature}"                → Review Subcommand
 $ARGUMENTS = "review impl --cross-cutting {specs}"   → Review Subcommand
 $ARGUMENTS = "review dead-code"                      → Review Subcommand
+$ARGUMENTS = "review dead-code --wave N"             → Review Subcommand
 $ARGUMENTS = "review design --cross-check"          → Review Subcommand
 $ARGUMENTS = "review impl --cross-check"            → Review Subcommand
 $ARGUMENTS = "review design --wave N"               → Review Subcommand
@@ -36,7 +37,7 @@ $ARGUMENTS = "revise [instructions]"             → Revise Mode (Cross-Cutting)
 # word-prefix matching (e.g., "auth" matches "auth-service"). Caveat: if instructions begin
 # with a word that prefix-matches a spec name, it will be misidentified as Single-Spec.
 # Use the full spec name, or start instructions with a non-matching word for unambiguous
-# Cross-Cutting invocation.
+# Cross-Cutting invocation. 曖昧な場合は AskUserQuestion で Single-Spec か Cross-Cutting かを確認する。
 $ARGUMENTS = "create" or "create -y" → Create Mode
 $ARGUMENTS = "update"           → Update Mode
 $ARGUMENTS = "delete"           → Delete Mode
@@ -101,7 +102,7 @@ After mode detection and roadmap ensure, Read the reference file for the detecte
 
 - **Design** → Read `refs/design.md`
 - **Impl** → Read `refs/impl.md`
-- **Review** (design, impl, dead-code, --cross-check, --wave) → Delegate to `/sdd-review` skill. Pass the review arguments directly (e.g., `Skill(skill="sdd-review", args="design {feature}")`). The `/sdd-review` skill handles engine resolution, Inspector dispatch, Auditor synthesis, and verdict persistence. For pipeline context (auto-fix loops, Wave QG), see `refs/run.md` which references sdd-review steps.
+- **Review** (design, impl, dead-code, --cross-check, --wave) → Standalone invocation: delegate to `/sdd-review` skill. Pass the review arguments directly (e.g., `Skill(skill="sdd-review", args="design {feature}")`). The `/sdd-review` skill handles engine resolution, Inspector dispatch, Auditor synthesis, and verdict persistence. Dispatch-loop context (`run`): reviews are decomposed into sub-phases per `refs/run.md` §Review Decomposition — Lead executes sdd-review steps directly within the dispatch loop for Spec Stagger. For auto-fix loops and Wave QG, see `refs/run.md`.
 - **Run** → Read `refs/run.md`
 - **Revise** → Read `refs/revise.md`
 - **Create / Update / Delete** → Read `refs/crud.md`

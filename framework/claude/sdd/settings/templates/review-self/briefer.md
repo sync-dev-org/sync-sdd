@@ -54,7 +54,8 @@ issues:
     severity: "H"
     category: "{category}"
     location: "{file}:{line}"
-    summary: "{one-line summary}"    detail: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
 notes: |
@@ -73,9 +74,9 @@ Report findings in Japanese.
 ## Step 5: Build Compliance Cache
 
 1. Read `.sdd/project/reviews/self/verdicts.yaml`
-2. Find the most recent inspector-compliance (Platform Compliance) entry within the last 7 days
+2. Find the latest batch with `type: "self"` within the last 7 days — use `batches[].seq` and `batches[].date` fields
 3. If found:
-   a. Read the archived findings: `.sdd/project/reviews/self/B{seq}/findings-inspector-compliance.yaml`
+   a. Read the archived findings: `.sdd/project/reviews/self/B{seq}/findings-inspector-compliance.yaml` (using the `seq` from step 2)
    b. Extract items from the `compliance:` section
    c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes
    d. Items with no file changes since review → keep as cached. Format each as: `{item}: OK (cached from B{seq})`
@@ -143,7 +144,8 @@ issues:
     severity: "H"
     category: "{category}"
     location: "{file}:{line}"
-    summary: "{one-line summary}"    detail: "{what}"
+    summary: "{one-line summary}"
+    detail: "{what}"
     impact: "{why}"
     recommendation: "{how}"
 notes: |

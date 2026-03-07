@@ -5,7 +5,7 @@ Orchestration reference. Lead handles pipeline execution directly. References ph
 ## Step 1: Load State
 
 1. Read `roadmap.md` and all `spec.yaml` files
-2. **Empty roadmap guard**: If no `spec.yaml` files exist, BLOCK with: "No specs found in roadmap. Use `/sdd-roadmap create` to add specs."
+2. **Empty roadmap guard**: If no `spec.yaml` files exist, BLOCK with: "No spec directories found. Use `/sdd-roadmap update` to sync or `/sdd-roadmap delete` to reset."
 3. Scan all `spec.yaml` files → rebuild pipeline state from phase/status fields
 4. Build dependency graph from `spec.yaml.roadmap` fields
 5. **DAG validation**: Topological sort the dependency graph. If a cycle is detected, BLOCK with: "Circular dependency detected: {cycle_path}. Fix spec.yaml.roadmap.dependencies before proceeding."
@@ -145,7 +145,7 @@ Review execution follows `/sdd-review` skill (SKILL.md). Step references below a
    - Set `review_state[spec].phase = auditing`
 
 3. **AUDITOR-COMPLETE** (triggered from PROCESS when Auditor finishes):
-   - Execute sdd-review Step 8 (read verdict, persist to verdicts.yaml, archive active → B{seq})
+   - Execute sdd-review Steps 8-9 (Lead supervision, verdict persist to verdicts.yaml, archive active → B{seq})
    - Remove from `active` and `review_state`
    - Proceed to Phase Handler verdict handling (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED → Architect cascade)
    - ADVANCE runs next → may dispatch Implementation for this spec while other specs are still in review
@@ -160,7 +160,7 @@ A spec can advance to its next phase when ALL conditions are met:
 |-----------|------------|
 | **Design** | Phase is `initialized`. Intra-wave dependencies (if any) have reached `design-generated`. **Note**: Session resume always starts with `/sdd-start`, not `/sdd-roadmap run` directly. |
 | **Design Review** | Phase is `design-generated`. Latest design batch verdict is absent or NO-GO (review not yet passed). |
-| **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.yaml` latest batch on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
+| **Implementation** | Phase is `design-generated` AND Design Review verdict is GO/CONDITIONAL (check `verdicts.yaml` latest batch where `type="design"` on resume). No file overlap with any spec currently in Implementation (Cross-Spec File Ownership Layer 2). Inter-wave dependencies `implementation-complete` (intra-wave deps do NOT block impl — only inter-wave deps matter). |
 | **Impl Review** | Phase is `implementation-complete`. All Builders for this spec have completed. Latest impl batch verdict is absent or NO-GO (review not yet passed). |
 
 **Design Fan-Out**: Multiple specs at `initialized` that satisfy the Design readiness rule are dispatched in parallel via `Agent(subagent_type="sdd-architect", run_in_background=true)`. Each Architect prompt includes conventions brief path and shared research path (if generated in Step 3). Lead continues the dispatch loop immediately.
@@ -178,6 +178,8 @@ During the dispatch loop, check if next-wave specs can begin Design early:
 
 ### Phase Handlers
 
+**Refs reload**: Phase Handler 実行時、refs の内容が context window に残っていない場合は再度 Read する。
+
 **Auto-draft policy (dispatch loop)**: During `run` pipeline execution, auto-draft handover.md only at: Wave QG post-gate, user escalation, pipeline completion. Skip auto-draft at individual phase completions (Design, Impl, Review) — spec.yaml is the ground truth for pipeline state.
 
 #### Design completion
@@ -188,7 +190,7 @@ In dispatch loop: decomposed per §Review Decomposition (verdict handling below 
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
-- **NO-GO** → increment `retry_count`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 7 Blocking Protocol).
+- **NO-GO** → increment `retry_count` (counters are NOT reset during retry loop). Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 7 Blocking Protocol).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
@@ -260,7 +262,7 @@ When a spec fails after exhausting retries:
 3. Report cascading impact to user
 4. Present options:
    - **fix**: Verify upstream `implementation-complete` → unblock downstream (restore phases, clear blocked_info, reset `retry_count=0` and `spec_update_count=0` for unblocked specs) → resume pipeline
-   - **skip**: Exclude upstream. Reset counters (`retry_count=0`, `spec_update_count=0`) for affected downstream specs. Warn downstream per-spec: "depends on skipped {upstream}". User confirms each: proceed / keep blocked / remove dependency
+   - **skip**: Exclude upstream. Counter reset は proceed を選択した downstream spec に対してのみ即座に実行 (`retry_count=0`, `spec_update_count=0`)。keep blocked の spec は counter を保持（unblock 時に fix オプションで reset）。Warn downstream per-spec: "depends on skipped {upstream}". User confirms each: proceed / keep blocked / remove dependency
    - **abort**: Stop pipeline, leave all specs as-is
 
 ## Step 8: Wave Quality Gate
@@ -272,15 +274,15 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
 **All specs blocked**: If no spec in the wave reached `implementation-complete` (all blocked), skip Cross-Check and Dead-Code reviews. Report blocked status to user and proceed directly to Post-gate.
 
 **a. Dead Code Review** (wave-scoped, runs BEFORE cross-check):
-1. Execute dead-code review via `/sdd-review dead-code --context wave`
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (header: `[W{wave}-DC-B{seq}]`)
+1. Execute dead-code review via `/sdd-review dead-code --wave {N}`
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (type: "dead-code", scope: "wave-{wave}", wave: {wave})
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to cross-check
-   - **NO-GO** → **inline fix**: dispatch Builder(s) directly with fix instructions (Builder scope = all files from Inspector findings). No re-review loop — Builder fixes once, then proceed to cross-check (cross-check serves as safety net). Max 3 retries (tracked in-memory, not persisted; restarts at 0 on session resume). On retry exhaustion: escalate to user with choices: (a) manually fix remaining dead-code and continue, (b) skip dead-code review and proceed to cross-check, (c) abort pipeline. If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
+   - **NO-GO** → **inline fix**: dispatch Builder(s) directly with fix instructions (Builder scope = all files from Inspector findings). No re-review loop — Builder fixes once, then proceed to cross-check (cross-check serves as safety net). If findings reference files not owned by any wave spec: escalate those findings to user (cannot auto-fix unowned files)
 
 **b. Impl Cross-Check Review** (wave-scoped):
 1. Execute impl review via `/sdd-review impl --wave {N}` (wave-scoped context: Waves 1..N, previously-resolved tracking)
-2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (header: `[W{wave}-B{seq}]`)
+2. Persist verdict to `{{SDD_DIR}}/project/reviews/wave-{wave}/verdicts.yaml` (type: "cross-check", scope: "wave-{wave}", wave: {wave})
 3. Handle verdict:
    - **GO/CONDITIONAL** → Wave complete
    - **NO-GO** → map to target spec(s), increment target spec's `retry_count`, re-dispatch Builder(s) (update `implementation.files_created` after fix), re-run cross-check. Max 5 retries per spec (aggregate cap 6 per spec). On exhaustion: escalate to user with options:
@@ -291,7 +293,7 @@ Wave completion condition: all specs `implementation-complete` or `blocked`. `bl
    - **SPEC-UPDATE-NEEDED** → identify target spec(s), increment `spec_update_count`. Check limits: `spec_update_count >= 2` or `(retry_count + spec_update_count) >= 6` → escalate to user (same options as NO-GO exhaustion). After `ESCALATION_RESOLVED`: reset `retry_count` and `spec_update_count` to 0 for affected specs (see CLAUDE.md §Auto-Fix Counter Limits). Otherwise, cascade per spec: Architect → Design Review → TaskGenerator → Builder → individual Impl Review. After ALL target spec cascades complete → re-run cross-check
 
 **c. Post-gate**:
-- **Reset counters**: For each spec in wave: `retry_count=0`, `spec_update_count=0`. Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only).
+- **Reset counters**: For each spec that reached `implementation-complete` in this wave: `retry_count=0`, `spec_update_count=0`. `blocked` specs retain their counters (resolved via Blocking Protocol user decision). Other reset triggers (see CLAUDE.md §Auto-Fix Counter Limits): user escalation decision (fix/skip), `/sdd-roadmap revise` start.
 - Commit: `Wave {N}: {summary}`
 - Auto-draft handover.md
 

@@ -14,7 +14,7 @@ Execute session start protocol. All steps are idempotent and safe to re-execute.
 ## Step 1: Detect
 
 Check if `{{SDD_DIR}}/session/handover.md` exists.
-- Absent → first session: skip to Step 8
+- Absent → first session: skip to Step 6
 - Present → resume session: proceed
 
 ## Step 2: Read Session Context
@@ -36,21 +36,21 @@ Check for active review verdicts (read if found):
 
 Read `{{SDD_DIR}}/session/decisions.yaml` → recent decision history (last ~20 entries from `entries` list).
 
-## Step 6: Reconstruct Pipeline State
+## Step 5: Reconstruct Pipeline State
 
 If roadmap active: scan all `{{SDD_DIR}}/project/specs/*/spec.yaml` files → build pipeline state dynamically.
 
-## Step 7: tmux Initialization
+## Step 6: tmux Initialization
 
 **MANDATORY when `$TMUX` is set. Do NOT skip.**
 
-Check `$TMUX` environment variable. If set, execute Steps 7a–7e:
+Check `$TMUX` environment variable. If set, execute Steps 6a–6e:
 
 a. **SID Generation**: Run `date +%H%M%S` and capture output as `$SID` (session-unique ID)
 b. **Lead Pane Title**: Run `tmux select-pane -T 'sdd-{SID}-lead'` (best-effort — Claude Code overwrites this, but set it anyway for tmux UX)
 c. **Orphan Cleanup**: Get current pane ID with `printenv TMUX_PANE` → `$MY_PANE`. Read `{{SDD_DIR}}/session/state.yaml` if it exists. Extract `grid.window_id` and all pane_ids (lead + slots). Run `bash .sdd/settings/scripts/orphan-detect.sh primary {window_id} {MY_PANE} {pane_id1} {pane_id2} ...` — outputs live orphan pane_ids (one per line; excludes MY_PANE; exits silently if window no longer exists). If orphans found, report to user (include window_id and count) and use `AskUserQuestion` tool to confirm before killing them. On confirmation, kill all orphans in one call: `bash .sdd/settings/scripts/orphan-kill.sh {pane_id1} {pane_id2} ...`. If state.yaml does not exist, fall back to title-based detection: `bash .sdd/settings/scripts/orphan-detect.sh fallback {MY_PANE} {SID}` — outputs `{pane_id} {title}` for panes with `sdd-` prefix titles whose SID does not match current `$SID` (current window only). On confirmation, extract pane_ids and pass to `orphan-kill.sh`.
-d. **Grid Setup**: If state.yaml was found in Step 7c: run `bash .sdd/settings/scripts/grid-check.sh {grid.window_id} {slot_pane_id1} {slot_pane_id2} ...` (exit 0 = all alive, exit 1 = dead or window gone). If all alive AND all slots are `status: idle` in state.yaml → reuse existing grid, get `$WINDOW_ID` from state.yaml's `grid.window_id`. If any dead, any slot is busy, or state.yaml not found → run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output: first line is `window_id:{id}` → `$WINDOW_ID`, remaining lines are `slot-{N}:{pane_id}` → slot management table.
-e. **state.yaml Generation**: Write `{{SDD_DIR}}/session/state.yaml` with session metadata, window_id, and grid slot mappings. Note: `lead.window_id` and `grid.window_id` are always identical (Lead and Grid coexist in the same window). grid 再利用時: 既存 state.yaml の `grid` セクションから busy slot の metadata (`agent`, `engine`, `channel`) を保持し、`lead` と `sid` のみ更新する。fresh grid 作成時: 全 slot を `idle` で初期化する。
+d. **Grid Setup**: If state.yaml was found in Step 6c: first verify `grid.window_id` matches current Lead pane's window (get current window_id via `bash .sdd/settings/scripts/window-id.sh` or equivalent helper). If window_id mismatch → fresh grid. If match: run `bash .sdd/settings/scripts/grid-check.sh {grid.window_id} {slot_pane_id1} {slot_pane_id2} ...` (exit 0 = all alive, exit 1 = dead or window gone). If all alive → reuse existing grid, get `$WINDOW_ID` from state.yaml's `grid.window_id`. busy slot がある場合も再利用可能とし、idle slot のみ使用対象にする。If any dead or state.yaml not found → run `bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE`. Parse output: first line is `window_id:{id}` → `$WINDOW_ID`, remaining lines are `slot-{N}:{pane_id}` → slot management table.
+e. **state.yaml Generation**: Write `{{SDD_DIR}}/session/state.yaml` with session metadata, window_id, and grid slot mappings. Note: `lead.window_id` and `grid.window_id` are always identical (Lead and Grid coexist in the same window). grid 再利用時: 既存 state.yaml の `grid` セクションから busy slot の metadata (`agent`, `engine`, `channel`, `url`) を保持し、`lead` と `sid` のみ更新する。fresh grid 作成時: 全 slot を `idle` で初期化する。
    ```yaml
    sid: "{SID}"
    created_at: "{ISO-8601 timestamp}"
@@ -68,7 +68,7 @@ e. **state.yaml Generation**: Write `{{SDD_DIR}}/session/state.yaml` with sessio
      # ... slot-3 through slot-12
    ```
 
-## Step 8: Record SESSION_START
+## Step 7: Record SESSION_START
 
 Run `date +%Y-%m-%dT%H:%M:%S%z` for timestamp. Append `SESSION_START` entry to `{{SDD_DIR}}/session/decisions.yaml` `entries` list:
 ```yaml
@@ -80,7 +80,7 @@ Run `date +%Y-%m-%dT%H:%M:%S%z` for timestamp. Append `SESSION_START` entry to `
   created_at: "{timestamp}"
 ```
 
-## Step 9: Pipeline Continuation
+## Step 8: Pipeline Continuation
 
 If roadmap pipeline was active (handover.md indicates run/revise in progress):
 - Continue pipeline from spec.yaml state. Treat spec.yaml as ground truth.

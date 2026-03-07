@@ -5,7 +5,8 @@ Orchestration reference. Two modes: **Single-Spec** (targeted revision of one sp
 ## Mode Detection
 
 ```
-Arguments parsing (Lead checks first word after "revise" against existing spec names):
+Arguments parsing (Lead checks first word after "revise" against existing spec names via
+word-prefix matching — see Router §Detect Mode for full prefix-match rules):
   "revise <feature> [instructions]"  → feature matches known spec name → Single-Spec Mode (Part A)
   "revise [instructions]"            → no feature name match           → Cross-Cutting Mode (Part B)
 
@@ -45,7 +46,7 @@ Execute past-wave spec modifications through the standard pipeline.
    This change affects {N} specs ({list}).
    Switch to cross-cutting mode for coordinated revision? [Yes / No, single-spec only]
    ```
-   - User accepts → record `DIRECTION_CHANGE` in decisions.yaml, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification). Skip Part B Step 1 (REVISION_INITIATED already recorded in Part A Step 2).
+   - User accepts → record `DIRECTION_CHANGE` in decisions.yaml, join Part B Step 2 with revision intent and target spec pre-populated (Step 4 has NOT executed — target spec's phase is still `implementation-complete`, eligible for Part B classification). Skip Part B Step 1 の REVISION_INITIATED recording のみスキップ。Steering update (Part B Step 1.3) は必ず実行する。
    - User declines → continue single-spec flow below
 4. Present to user:
    ```

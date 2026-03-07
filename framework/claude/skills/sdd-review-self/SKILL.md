@@ -75,7 +75,7 @@ $SCOPE_DIR = .sdd/project/reviews/self
 $TPL = .sdd/settings/templates/review-self
 ```
 
-6. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.yaml`, find max `B{N}` → `$BATCH_SEQ` = N+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
+6. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.yaml`, find max `batches[].seq` → `$BATCH_SEQ` = max+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
 
 6. Report resolved config:
 ```
@@ -446,7 +446,7 @@ idle slot を選択し、`{{SDD_DIR}}/session/state.yaml` の該当 slot を `st
 ```
 tmux send-keys -t {slot_pane_id} 'cat {展開済みプロンプトファイル} | {$BUILDER_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-builder-B{seq}' Enter
 ```
-`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-builder-B{seq}` を実行。task-notification で完了を検知。完了後、slot を idle に戻す。
+`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-builder-B{seq}` を実行。task-notification で完了を検知。完了後、slot を idle に戻し、`agent`/`engine`/`channel`/`url` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
 
 **background mode** (上記以外):
 `Bash(run_in_background=true)` で `cat {展開済みプロンプトファイル} | $BUILDER_ENGINE_CMD` を実行。

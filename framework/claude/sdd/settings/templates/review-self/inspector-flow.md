@@ -24,7 +24,8 @@ Read ALL files listed in the shared prompt.
        severity: "M"
        category: "{category}"
        location: "{file}:{line}"
-       summary: "{one-line summary}"       detail: "{what}"
+       summary: "{one-line summary}"
+       detail: "{what}"
        impact: "{why}"
        recommendation: "{how}"
    notes: |

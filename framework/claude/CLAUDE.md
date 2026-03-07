@@ -33,7 +33,7 @@ Lead dispatches T2/T3 SubAgents using `Agent` tool with `subagent_type` paramete
 SubAgents execute their work autonomously and return a structured completion report as their Task result.
 Lead reads the Task result and determines next actions.
 
-Review pipelines use **file-based communication**: Inspectors write `findings-inspector-{name}.yaml` files to `reviews/active/` directory, Auditor reads them and writes `verdict-auditor.yaml`. Lead supervises and writes `verdict.yaml`. After verdict is persisted, the directory is renamed to `reviews/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
+Review pipelines use **file-based communication**: Inspectors write `findings-inspector-{name}.yaml` files to `{scope-dir}/active/` directory, Auditor reads them and writes `verdict-auditor.yaml`. Lead supervises and writes `verdict.yaml`. After verdict is persisted, the directory is renamed to `{scope-dir}/B{seq}/` for archival. No inter-agent messaging needed for review data transfer.
 
 All SubAgents MUST keep their Task result output minimal to preserve Lead's context budget (token efficiency). File-heavy outputs (reports, analysis, file lists) → write to file, return `WRITTEN:{path}`. Lead reads files on-demand via targeted Read/Grep. Specifically:
 - **Review SubAgents** (Inspector/Auditor): return ONLY `WRITTEN:{path}`. All analysis goes into YAML output files.
@@ -78,6 +78,7 @@ Before dispatching any SubAgent, Lead MUST verify:
 - If `spec.yaml.phase` is `blocked`: BLOCK with "{feature} is blocked by {blocked_info.blocked_by}"
 - If `spec.yaml.phase` is unrecognized: BLOCK with "Unknown phase '{phase}'"
 - On failure: report error to user (do NOT dispatch SubAgents unnecessarily)
+- Note: Each ref (design.md, impl.md, etc.) may define additional phase-specific gate conditions beyond these base checks
 
 ### SubAgent Lifecycle
 
@@ -107,7 +108,7 @@ See sdd-roadmap `refs/run.md` Step 4-5 for dispatch loop details.
 
 - **No shared memory**: SubAgents do not share conversation context. All context must be passed via the Task prompt.
 - **Result-based communication**: SubAgents return their result as the Task return value. Lead reads this directly in its context window — keep results concise.
-- **Framework convention — file-based review**: Inspectors write `findings-inspector-{name}.yaml` files to `reviews/active/` directory, Auditor reads them. Completed reviews are archived to `reviews/B{seq}/`. No inter-agent messaging needed for review data transfer.
+- **Framework convention — file-based review**: Inspectors write `findings-inspector-{name}.yaml` files to `{scope-dir}/active/` directory, Auditor reads them. Completed reviews are archived to `{scope-dir}/B{seq}/`. No inter-agent messaging needed for review data transfer.
 - **Concurrency**: No framework-imposed SubAgent limit. Platform manages concurrent execution.
 
 ### SubAgent Failure Handling
@@ -178,9 +179,8 @@ File-based output protocol makes SubAgent outputs idempotent. If a SubAgent fail
 ### Auto-Fix Counter Limits
 
 - `retry_count`: max 5 (NO-GO only). `spec_update_count`: max 2 (SPEC-UPDATE-NEEDED only). Aggregate cap: 6.
-- **Exception**: Dead-Code Review NO-GO: max 3 retries (dead-code findings are simpler scope; exhaustion → escalate).
 - CONDITIONAL = GO (proceed). Counters are NOT reset on intermediate GO/CONDITIONAL.
-- Counter reset triggers: wave completion, user escalation decision (including blocking protocol fix/skip), `/sdd-roadmap revise` start, session resume (dead-code counters are in-memory only; see `refs/run.md`).
+- Counter reset triggers: wave completion, user escalation decision (including blocking protocol fix/skip), `/sdd-roadmap revise` start.
 - Full auto-fix loop, wave quality gate, and blocking protocol details: see sdd-roadmap `refs/run.md`.
 
 ### decisions.yaml Recording
@@ -220,9 +220,10 @@ Session context is persisted to `{{SDD_DIR}}/session/` for cross-session continu
 | File | Behavior | Purpose |
 |------|----------|---------|
 | `handover.md` | Auto-draft + manual polish (overwrite) | Lead/User dialogue context: direction, decisions, warnings, nuance |
-| `decisions.yaml` | Append-only (never overwrite) | Decisions with rationale, steering updates, steering exceptions |
+| `decisions.yaml` | Append-only (consolidation rewrite at /sdd-handover only) | Decisions with rationale, steering updates, steering exceptions |
 | `knowledge.yaml` | Append (auto) | Knowledge tags from Builder reports, verdicts, Lead |
 | `handovers/` | Archive | Dated copies of handover.md created by `/sdd-handover` |
+| `decisions/` | Archive | Dated archives of pruned decisions.yaml entries from consolidation |
 | `state.yaml` | Overwrite (auto) | tmux session state (SID, grid, slots) |
 
 Pipeline state is NOT stored in session — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
@@ -313,7 +314,7 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 - Builder reports learnings with tags: `[PATTERN]`, `[INCIDENT]`, `[REFERENCE]`
 - Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to `{{SDD_DIR}}/session/knowledge.yaml`
 - knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 same type×similar summary triggers steering PROPOSE at consolidation).
-- **Consolidation** occurs at `/sdd-handover` time (Step 4b): decisions.yaml superseded exclusion + SESSION pair condensation, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
+- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4b): flush pending decisions/knowledge, then decisions.yaml superseded exclusion + SESSION pair condensation, knowledge.yaml duplicate detection + steering PROPOSE. Pruned entries are archived.
 
 ## Pipeline Stop Protocol
 
