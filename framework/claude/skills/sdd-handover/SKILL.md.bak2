@@ -1,0 +1,158 @@
+---
+name: sdd-handover
+description: Generate a high-quality session handover document through interactive user input. This is the "manual polish" counterpart to the auto-draft that runs after each command. Make sure to use this skill whenever the user says "handover", "引き継ぎ", "セッション終了", "session end", "wrap up", "/sdd-handover", or wants to close out a work session, save session state, prepare for the next session, or generate a handover document.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+---
+
+# SDD Handover
+
+<instructions>
+
+## Core Task
+
+Generate a high-quality session handover document through interactive user input. This enriches the functional auto-draft with user context, tone, nuance, and steering exceptions that cannot be captured automatically. The skill also consolidates session data files (decisions, issues, knowledge) and archives the previous handover.
+
+## Step 1: Timestamp
+
+Run `date +%Y-%m-%dT%H:%M:%S%z` once via Bash. Store this value — it is the single source of truth for all timestamps throughout this skill: handover.md `Generated`, archive filenames (derive `YYYY-MM-DD-HHmm` by extracting date and hour-minute components), consolidation archive filenames. Do not call `date` again after this step.
+
+## Step 2: Auto-Collect Project State
+
+Gather the following in parallel (use parallel tool calls for independent reads):
+
+1. **Git state**: Run `git branch --show-current` and `git log --oneline -5` and `git status --short` via Bash (three parallel calls)
+2. **Spec progress**: Glob for `{{SDD_DIR}}/project/specs/*/spec.yaml` and read any found files
+3. **Steering changes**: Run `git diff --name-only HEAD -- .sdd/project/steering/` via Bash to detect recent modifications
+4. **Current handover**: Read `{{SDD_DIR}}/session/handover.md` if it exists (may be auto-draft or previous manual polish)
+5. **Session data**: Read `{{SDD_DIR}}/session/decisions.yaml`, `{{SDD_DIR}}/session/issues.yaml`, and `{{SDD_DIR}}/session/knowledge.yaml` if they exist
+6. **Test results**: If steering `tech.md` defines test commands, consider running them (skip if no test infrastructure or if tests are slow)
+
+Note any uncommitted changes from git status for use in Step 7.
+
+## Step 3: User Input
+
+Ask the user one question via `AskUserQuestion`:
+
+- **Question**: "追加したい判断や、次セッションへの引き継ぎ要素はありますか？"
+- **Options**: "特にない" / "自由記述"
+
+If "特にない": proceed with auto-collected data only.
+If "自由記述": the user's free-text input may contain decisions, next actions, tone/nuance, caveats, or steering exceptions. Extract and classify these into the appropriate handover sections.
+
+## Step 4: Flush Pending Data
+
+Before consolidation, write any pending decisions, issues, or knowledge noted during the current session but not yet persisted to their respective YAML files. This ensures all session data is captured before archival.
+
+Use the same entry format and ID sequencing as `/sdd-log`: read the target file, find the max ID number, increment by 1.
+
+## Step 5: Consolidate Session Data
+
+### 5a. Consolidate decisions.yaml
+
+1. Read all entries from `{{SDD_DIR}}/session/decisions.yaml`
+2. **Conflict detection**: Scan active entries for conflicting decisions on the same topic. If found, mark the older entry `status: superseded`
+3. Separate `status: superseded` entries from active entries
+4. If any superseded entries exist: ensure archive directory via Bash (`mkdir -p .sdd/session/decisions`), then write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (timestamp from Step 1) with the `entries: [...]` schema
+5. Rewrite `decisions.yaml` with the header comment + remaining active entries only (this is the controlled rewrite exception to the append-only rule)
+
+### 5b. Consolidate issues.yaml
+
+1. Read all entries from `{{SDD_DIR}}/session/issues.yaml`
+2. Separate entries with `status: resolved` or `status: rejected` (terminal status)
+3. If any terminal entries exist: ensure archive directory via Bash (`mkdir -p .sdd/session/issues`), then write them to `{{SDD_DIR}}/session/issues/{YYYY-MM-DD-HHmm}.yaml`
+4. Rewrite `issues.yaml` with the header comment + remaining entries (`open` and `deferred` only)
+
+### 5c. Consolidate knowledge.yaml
+
+1. Read all entries from `{{SDD_DIR}}/session/knowledge.yaml`
+2. **Duplicate detection**: Group entries by `summary` similarity. If any group has 3 or more entries:
+   - Report the duplicate groups to the user
+   - For each group, propose: "STEERING: PROPOSE -- consolidate {count} repeated findings into steering rule: \"{summary}\""
+   - Ask the user via `AskUserQuestion`: "以下の knowledge パターンを steering に昇格しますか？" with per-group options (approve adds to steering and marks entries superseded; skip keeps them as-is)
+   - For approved groups: append the rule to the appropriate steering file, set entries to `status: superseded`
+3. Separate `status: superseded` entries from active entries
+4. If any superseded entries exist: ensure archive directory via Bash (`mkdir -p .sdd/session/knowledge`), then write them to `{{SDD_DIR}}/session/knowledge/{YYYY-MM-DD-HHmm}.yaml`
+5. Rewrite `knowledge.yaml` with the header comment + remaining active entries
+
+If any session data file does not exist, create it from the template at `{{SDD_DIR}}/settings/templates/session/{filename}`.
+
+## Step 6: Generate and Write handover.md
+
+### 6a. Archive existing handover
+
+If `{{SDD_DIR}}/session/handover.md` exists:
+1. Ensure archive directory via Bash (`mkdir -p .sdd/session/handovers`)
+2. Read the current handover.md content
+3. Write it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md`
+4. If same-timestamp archive already exists, append `-2`, `-3` suffix (e.g., `2026-03-08-1430-2.md`)
+
+### 6b. Generate new handover.md
+
+Follow the template at `{{SDD_DIR}}/settings/templates/session/handover.md`. Compose each section from the collected data:
+
+**Header:**
+- `Generated`: ISO-8601 timestamp from Step 1
+- `Branch`: current git branch
+- `Session Goal`: derived from user's answers
+
+**Direction:**
+- **Immediate Next Action**: List open issues from `issues.yaml` sorted by severity (H first, then M, then L), followed by user-specified next actions from Step 3
+- **Active Goals**: from spec progress + user input
+- **Key Decisions**: carry forward from previous handover.md + add new from this session. Each with brief rationale, referencing `D{seq}` IDs from decisions.yaml
+- **Warnings**: constraints, risks, caveats for the next Lead
+
+**Session Context:**
+- **Tone and Nuance**: from user's answer in Step 3
+- **Steering Exceptions**: intentional deviations with decisions.yaml references
+
+**Accomplished:**
+- Work summary from user's answer + auto-collected data
+- **Modified Files**: from git status/diff
+
+**Resume Instructions:**
+- 1-3 concrete steps for the next session startup
+
+Do not include a `**Mode**:` marker. The absence of a Mode marker signals this is a manual polish (as opposed to auto-draft which includes `**Mode**: auto-draft`).
+
+Write the new handover.md to `{{SDD_DIR}}/session/handover.md`.
+
+## Step 7: Commit Proposal
+
+If Step 2 detected uncommitted changes (including the newly written handover.md, archives, and consolidated session files):
+
+1. Report the list of uncommitted files to the user
+2. Ask via `AskUserQuestion` with three choices:
+   - "全てコミット" -- commit all uncommitted changes
+   - ".sdd/session のみコミット" -- commit only files under `.sdd/session/`
+   - "コミットせず終了" -- skip commit entirely
+3. Execute the chosen action. For commits, follow the project's git workflow conventions (Co-Authored-By trailer, etc.)
+
+## Step 8: Post-Completion Report
+
+Report to user:
+- Handover file location (`{{SDD_DIR}}/session/handover.md`)
+- Archive location (if created)
+- Consolidation summary (superseded/archived counts per file)
+- Key items captured (decisions carried forward, warnings, next action)
+- Reminder: next session's `/sdd-start` will auto-load handover.md
+
+</instructions>
+
+## Auto-Draft vs Manual Polish
+
+| Aspect | Auto-Draft (Automatic) | Manual Polish (/sdd-handover) |
+|--------|------------------------|-------------------------------|
+| Trigger | Each command completion | User invokes skill |
+| Content | Carry-forward + Next Action/Accomplished | Full user context + tone + steering exceptions |
+| Quality | Functional (machine-generated) | High (user-validated) |
+| Mode marker | `**Mode**: auto-draft` | No marker |
+| Consolidation | No | Yes (decisions, issues, knowledge) |
+| Archive | No archive | Archives previous handover.md to handovers/ |
+
+## Error Handling
+
+- **No active specs**: Generate handover with available context (git, session data, user input)
+- **No git repo**: Skip git state section, omit Modified Files
+- **No existing handover.md**: Generate from scratch (skip archive step)
+- **No decisions.yaml / issues.yaml / knowledge.yaml**: Create from template at `{{SDD_DIR}}/settings/templates/session/`
+- **Duplicate archive timestamp**: Append `-2`, `-3` suffix to avoid overwriting

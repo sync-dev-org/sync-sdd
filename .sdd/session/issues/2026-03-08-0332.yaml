@@ -1,0 +1,20 @@
+# Archived from issues.yaml at 2026-03-08T03:32:28+0900
+# Entries: 2
+entries:
+  - id: "I31"
+    type: "ENHANCEMENT"
+    status: "resolved"
+    severity: "H"
+    summary: "skill-creator を SubAgent 委任型に改造 — コンテキスト分離で高品質スキル生成"
+    detail: "検証成功ケース (K11) を元に改造。(1) disable-model-invocation 削除 (2) 現行 skill-creator の中身を SubAgent (Agent ツール, Opus, background) で立ち上げる形に変更。コンテキスト分離で詳細度の高いスキルを生成できる (3) Lead が前段でリクエストプロンプトを構築し、SubAgent に system prompt (skill-creator 本体) + user prompt (リクエスト) として渡す (4) decisions.yaml と knowledge.yaml のパスを渡し SubAgent 自身に読ませてプロジェクト文脈を取得させる (5) SubAgent 完了後に Lead が監修 — コンテキスト履歴なしのドラフトを話の流れに合わせて軌道修正"
+    source: "user"
+    created_at: "2026-03-07T23:52:03+0900"
+
+  - id: "I36"
+    type: "ENHANCEMENT"
+    status: "resolved"
+    severity: "H"
+    summary: "forge-skill がプロジェクト内スキルを参照する — ポリッシュ前のものを参考にされると品質が下がる"
+    detail: "forge-skill の SubAgent がプロジェクト内の他スキルを読みに行く。スキルのポリッシュを計画中であり、ポリッシュ前のスキルを参照実装として使われると意味がない。Anthropic 公式や高品質コミュニティスキルを参考実装として手元に配置し、それを参照させるべき"
+    source: "user"
+    created_at: "2026-03-08T02:39:00+0900"
