@@ -190,7 +190,7 @@ In dispatch loop: decomposed per §Review Decomposition (verdict handling below 
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec becomes eligible for Implementation (counters NOT reset — see CLAUDE.md §Auto-Fix Counter Limits)
-- **NO-GO** → increment `retry_count` (counters are NOT reset during retry loop). Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 7 Blocking Protocol).
+- **NO-GO** → increment `retry_count` (counters are NOT reset during retry loop). Update `verdict.yaml`: set per-item `user_decision`, `resolution`, `resolution_note`; set `disposition` (e.g., `NO-GO-FIXED`). Archive `active/` → `B{seq}/`. Dispatch Architect with fix instructions. If Architect fails: escalate to user. After fix: reset `orchestration.last_phase_action = null`, phase remains `design-generated`. Re-run Design Review (max 5 retries, aggregate cap 6). On exhaustion: escalate to user (same options as Step 7 Blocking Protocol).
 - **SPEC-UPDATE-NEEDED** → not expected for design review. If received, escalate immediately.
 - In **gate mode**: pause for user approval before advancing
 
@@ -204,8 +204,8 @@ In dispatch loop: decomposed per §Review Decomposition (verdict handling below 
 
 Handle verdict:
 - **GO/CONDITIONAL** → Spec pipeline complete (counters NOT reset)
-- **NO-GO** → increment `retry_count`. Dispatch Builder(s) with fix instructions. After Builder completes: phase remains `implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries, aggregate cap 6)
-- **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: Architect (with SPEC_FEEDBACK) → TaskGenerator → Builder → re-run Impl Review. All tasks fully re-implemented.
+- **NO-GO** → increment `retry_count`. Update `verdict.yaml`: set per-item `user_decision`, `resolution`, `resolution_note`; set `disposition` (e.g., `NO-GO-FIXED`). Archive `active/` → `B{seq}/`. Dispatch Builder(s) with fix instructions. After Builder completes: phase remains `implementation-complete`, update `implementation.files_created`. Re-run Impl Review (max 5 retries, aggregate cap 6)
+- **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Update `verdict.yaml`: set `disposition` to `SPEC-UPDATE-CASCADED`; archive `active/` → `B{seq}/`. Reset `orchestration.last_phase_action = null`, set `phase = design-generated`. Cascade: Architect (with SPEC_FEEDBACK) → TaskGenerator → Builder → re-run Impl Review. All tasks fully re-implemented.
 - **Aggregate cap**: Total cycles (retry_count + spec_update_count) MUST NOT exceed 6. Escalate at 6.
 - In **gate mode**: pause for user approval
 
@@ -249,8 +249,8 @@ NO-GO does NOT trigger automatic model/effort escalation (D188 #12):
   ```yaml
   escalation:
     briefer: L1        # current level (unchanged = start_level)
-    inspectors: L3     # escalated from L2
-    auditor: L3        # unchanged
+    inspectors: L5     # escalated from L4 (ENGINE_FAILURE codex→claude)
+    auditor: L5        # unchanged
   ```
 - Reset trigger: `sdd-start` (new session) clears the `escalation` section from state.yaml
 

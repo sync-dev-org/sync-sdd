@@ -46,7 +46,8 @@
       "Bash(printenv *)",
       "Bash(jq *)",
       "Bash(env *)",
-      "Bash(kill *)"
+      "Bash(kill *)",
+      "Bash(chmod *)"
     ]
   }
 }

@@ -76,8 +76,15 @@ Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and kn
 
 1. Read all entries from `decisions.yaml`
 2. **Superseded exclusion**: Remove entries with `status: superseded`
-3. **Archive pruned entries**: If any entries were removed, write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
+3. **Archive pruned entries**: If any entries were removed, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/decisions/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
 4. **Rewrite decisions.yaml**: Write the header comment + remaining entries (this is the one exception to append-only — consolidation is a controlled rewrite)
+
+### Consolidate issues.yaml
+
+1. Read all entries from `issues.yaml`
+2. **Terminal status exclusion**: Remove entries with `status: resolved` or `status: rejected`
+3. **Archive pruned entries**: If any entries were removed, ensure directory exists (`mkdir -p` via Bash) then write them to `{{SDD_DIR}}/session/issues/{YYYY-MM-DD-HHmm}.yaml` (use timestamp from Step 4) with the same schema (`entries: [...]`)
+4. **Rewrite issues.yaml**: Write the header comment + remaining entries (`open` and `deferred` only)
 
 ### Consolidate knowledge.yaml
 
@@ -93,7 +100,7 @@ Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and kn
 ## Step 5: Write Files
 
 1. If `{{SDD_DIR}}/session/handover.md` exists:
-   - Copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
+   - Ensure directory exists (`mkdir -p` via Bash) then copy it to `{{SDD_DIR}}/session/handovers/{YYYY-MM-DD-HHmm}.md` (archive, e.g. `2026-03-03-1430.md`)
    - If same-timestamp archive already exists, append `-2`, `-3`, etc.
 2. Write new handover.md to `{{SDD_DIR}}/session/handover.md`
 

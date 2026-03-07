@@ -4,7 +4,7 @@ entries: []
 # Entry schema:
 # - id: "I{N}"
 #   type: "BUG|FEATURE|ENHANCEMENT"
-#   status: "open|resolved|deferred"
+#   status: "open|resolved|deferred|rejected"
 #   severity: "H|M|L"
 #   summary: "{one-line}"
 #   detail: "{詳細}"

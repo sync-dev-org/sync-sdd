@@ -186,7 +186,7 @@ Lead classifies (A/B) → User approves/rejects/defers → Builder fixes approve
 - `user_decision`: `approved` (fix it), `rejected` (not a real issue), `deferred` (track for later)
 - `resolution`: `fixed` (Builder successfully fixed), `deferred` (tracked for future batch), `rejected` (user rejected)
 - Items with `user_decision: rejected` are moved to `fp_eliminated` (user-confirmed FP)
-- Items with `user_decision: deferred` are added to `tracked`
+- Items with `user_decision: deferred` are added to `tracked` AND auto-appended to `issues.yaml` as `type: ENHANCEMENT, status: deferred, source: "{review_type} B{seq}"`
 - Only `user_decision: approved` items are sent to Builder
 
 ### Lead Override Rules

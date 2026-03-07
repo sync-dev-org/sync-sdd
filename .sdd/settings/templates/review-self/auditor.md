@@ -60,7 +60,7 @@ Write the consolidated verdict to: `.sdd/project/reviews/self/active/verdict-aud
 
 ```yaml
 verdict: "CONDITIONAL"
-scope: "self"
+scope: "framework"
 review_type: "self"
 counts:
   C: 0

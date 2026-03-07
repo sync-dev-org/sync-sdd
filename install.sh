@@ -589,7 +589,7 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".sdd/settings/rules"     "$SRC/framework/claude/sdd/settings/rules"     "*.md"
     remove_stale ".sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
-    remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*.sh"
+    remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*"
     remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal

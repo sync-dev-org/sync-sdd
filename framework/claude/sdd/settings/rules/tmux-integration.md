@@ -11,7 +11,7 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 同一 tmux サーバー内で複数の sync-sdd セッション（別リポジトリ or 同一リポジトリ）が並行する場合にチャネル名の衝突を防止する。
 
-**生成**: `/sdd-start` Step 7 で `date +%H%M%S` を実行し、出力をそのまま `$SID` とする (例: `104817`)。セッション（プロセス）ごとに一意な値となる。pane ID ベースだと同一 pane での再起動時に前セッションと衝突するため、時刻ベースを使用する。
+**生成**: `/sdd-start` Step 6 で `date +%H%M%S` を実行し、出力をそのまま `$SID` とする (例: `104817`)。セッション（プロセス）ごとに一意な値となる。pane ID ベースだと同一 pane での再起動時に前セッションと衝突するため、時刻ベースを使用する。
 
 **永続化**: SID、window_id、全 pane ID は `{{SDD_DIR}}/session/state.yaml` に記録される。`window_id` は grid が存在するウィンドウを特定するために使用する（orphan 検出・grid 再利用のスコープ制御）。pane タイトルは装飾用 (best-effort) であり、ロジックの依存先ではない。Claude Code は TUI/print 両モードで pane タイトルを上書きするため、タイトルに依存してはならない。
 

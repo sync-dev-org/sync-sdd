@@ -262,8 +262,8 @@ After all tiers complete, verify cross-spec consistency:
 2. Persist verdict to `specs/.cross-cutting/{CC_ID}/verdicts.yaml` (NOT `reviews/wave-{N}/verdicts.yaml` — cross-cutting uses its own scope directory)
 3. Handle verdict:
    - **GO/CONDITIONAL** → proceed to post-completion
-   - **NO-GO** → identify target spec(s), dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5 (NO-GO), spec_update_count max 2 (SPEC-UPDATE-NEEDED), aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user
-   - **SPEC-UPDATE-NEEDED** → update affected spec design, re-implement, re-run cross-check review (counts toward spec_update_count and aggregate cap)
+   - **NO-GO** → increment `retry_count`. Update `verdict.yaml` (resolution fields, disposition `NO-GO-FIXED`), archive `active/` → `B{seq}/`. Dispatch Builder(s) with fix instructions, re-run cross-check review. Counter limits: retry_count max 5, aggregate cap 6 (per CLAUDE.md). On exhaustion: escalate to user with options: fix (user provides guidance, counter reset), skip (remove spec from scope), abort (halt entire revision), manual-fix (user fixes, counter reset)
+   - **SPEC-UPDATE-NEEDED** → increment `spec_update_count` (max 2). Update `verdict.yaml` (disposition `SPEC-UPDATE-CASCADED`), archive `active/` → `B{seq}/`. Update affected spec design, re-implement, re-run cross-check review (counts toward aggregate cap). On exhaustion: same escalation options as NO-GO
 
 ### Step 10: Post-Completion
 

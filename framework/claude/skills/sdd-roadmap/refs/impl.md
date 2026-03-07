@@ -88,7 +88,7 @@ When the execution plan has 2+ Builder groups, the first group acts as a **pilot
 **Builder incremental processing**: As each Builder completes, process its minimal summary (Task result):
 - Parse summary: extract Tasks (IDs), Files (count), Tests (pass/total), SelfCheck (status), Tags (count), WRITTEN (report path)
 - Update tasks.yaml: mark completed tasks as `done`
-- If Tags > 0 (and not BUILDER_BLOCKED): Read Knowledge section from builder-report file → append `[KNOWLEDGE]` entries to `knowledge.yaml` and `[ISSUE]` entries to `issues.yaml` (re-assign global IDs, add `created_at`)
+- If Tags > 0 (and not BUILDER_BLOCKED): Read Knowledge section from builder-report file → append `[KNOWLEDGE]` entries to `knowledge.yaml` and `[ISSUE]` entries to `issues.yaml` (re-assign global IDs, add `created_at`). If `issues.yaml` does not exist, create it from template `{{SDD_DIR}}/settings/templates/session/issues.yaml` before appending
 - Process SelfCheck:
   - `PASS` → normal processing
   - `WARN({count})` → note count. Read SelfCheck section from builder-report when dispatching impl review (pass as attention points to Auditor)

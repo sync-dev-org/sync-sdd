@@ -193,6 +193,11 @@ Lead records decisions to `decisions.yaml` whenever:
 - Revision is initiated (append `(cross-cutting)` for multi-spec revisions)
 - Intentional deviation from steering (prevents review false-positives)
 
+**Superseded transition**: When recording a new decision that replaces an existing one, set the old decision's `status: superseded`. Triggers:
+- New decision explicitly contradicts or replaces a previous decision
+- User says "変更", "撤回", "取り消し" referencing a prior decision
+- Consolidation at `/sdd-handover` detects conflicting active decisions on the same topic
+
 ## Product Intent
 
 Lead MUST update `steering/product.md` User Intent section whenever:
@@ -258,38 +263,41 @@ Three session data files share a common base: `id`, `status`, `severity`, `summa
 
 **decisions.yaml** — Append-only (consolidation rewrite at /sdd-handover only):
 ```yaml
-- id: "D{seq}"
-  status: "active|superseded"
-  severity: "H|M|L"
-  summary: "{one-line}"
-  detail: "{背景・詳細・理由・影響を含む}"
-  source: "user|lead|auditor"
-  created_at: "{ISO-8601}"
+entries:
+  - id: "D{seq}"
+    status: "active|superseded"
+    severity: "H|M|L"
+    summary: "{one-line}"
+    detail: "{背景・詳細・理由・影響を含む}"
+    source: "user|lead|auditor"
+    created_at: "{ISO-8601}"
 ```
 
 **issues.yaml** — Append + status update:
 ```yaml
-- id: "I{seq}"
-  type: "BUG|FEATURE|ENHANCEMENT"
-  status: "open|resolved|deferred"
-  severity: "H|M|L"
-  summary: "{one-line}"
-  detail: "{詳細}"
-  source: "{出所}"
-  resolution: "{解決方法}"      # resolved 時に記入
-  created_at: "{ISO-8601}"
-  resolved_at: "{ISO-8601}"    # optional
+entries:
+  - id: "I{seq}"
+    type: "BUG|FEATURE|ENHANCEMENT"
+    status: "open|resolved|deferred|rejected"
+    severity: "H|M|L"
+    summary: "{one-line}"
+    detail: "{詳細}"
+    source: "{出所}"
+    resolution: "{解決方法}"      # resolved 時に記入
+    created_at: "{ISO-8601}"
+    resolved_at: "{ISO-8601}"    # optional
 ```
 
 **knowledge.yaml** — Append-only:
 ```yaml
-- id: "K{seq}"
-  status: "active|superseded"
-  severity: "H|M|L"
-  summary: "{one-line}"
-  detail: "{詳細・影響・推奨を含む}"
-  source: "{出所}"
-  created_at: "{ISO-8601}"
+entries:
+  - id: "K{seq}"
+    status: "active|superseded"
+    severity: "H|M|L"
+    summary: "{one-line}"
+    detail: "{詳細・影響・推奨を含む}"
+    source: "{出所}"
+    created_at: "{ISO-8601}"
 ```
 
 Templates: `{{SDD_DIR}}/settings/templates/session/{decisions,issues,knowledge}.yaml`
@@ -336,6 +344,9 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
   - 「ISSUE」「問題」「インシデント」→ issues.yaml にエントリを追記 (severity: `H`, status: `open`)
   - 「判断」「decision」「決定」→ decisions.yaml にエントリを追記
   - Lead はユーザーの発言から summary/detail を抽出してフォーマットする。不足情報があれば簡潔に確認する
+  - **記録が第一**: NL trigger では issues.yaml/decisions.yaml/knowledge.yaml への記録を最優先する。修正や実装は記録完了後に別ステップで行う。記録をスキップして即実装してはならない
+- **Review 中のファイル編集禁止**: レビューパイプライン実行中 (Inspector/Auditor が動作中) はレビュー対象ファイルを編集しない。変更指示を受けた場合はレビュー完了後に実行する
+- **Bash パス規則**: settings.json の auto-approve パターンは相対パスで登録されている。Bash コマンドでプロジェクト内のスクリプトを実行する際は常に相対パスを使用する (例: `bash install.sh --local --force`、`bash .sdd/settings/scripts/orphan-detect.sh`)。絶対パスはパターン不一致で承認プロンプトを誘発する
 
 ## Execution Conventions
 
@@ -399,7 +410,7 @@ Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stag
 | L0 | subagents | claude-opus-4-6 | medium |
 
 - **Infrastructure escalation** (automatic): `install_check` failure → next level → ... → L0
-- **Runtime escalation** (automatic): agent 成果物未生成時、failure log をキャプチャし障害タイプを判定。ENGINE_FAILURE (API 5xx, rate limit, connection error) → 同一エンジンをスキップし次のエンジンへ (codex→claude L4, claude→L0)。LEVEL_FAILURE (空出力, YAML 構文エラー) → 同一チェーン内で次レベルへ。詳細は各 Skill の Runtime Escalation Protocol 参照
+- **Runtime escalation** (automatic): agent 成果物未生成時、failure log をキャプチャし障害タイプを判定。ENGINE_FAILURE (API 5xx, rate limit, connection error) → 同一エンジンをスキップし次のエンジンへ (codex→claude L5, claude→L0)。LEVEL_FAILURE (空出力, YAML 構文エラー) → 同一チェーン内で次レベルへ。詳細は各 Skill の Runtime Escalation Protocol 参照
 - **Quality escalation** (manual): NO-GO does NOT auto-escalate model. Same level retry → user escalate
 - **Sticky**: escalated level persists within session (`session/state.yaml`), reset on `sdd-start`
 - **Effort**: codex via `-c model_reasoning_effort`, claude via `CLAUDE_CODE_EFFORT_LEVEL` env, subagents via prompt keyword (`ultrathink`), gemini not supported

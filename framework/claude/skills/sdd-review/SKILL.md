@@ -411,7 +411,7 @@ Effort mapping (subagents): effort=`high` → プロンプト先頭に `ultrathi
 成果物不在を検出した時点で、直ちに diagnostic log を保存:
 
 - **ファイル名**: `{scope-dir}/active/failure-{role}-{name}-{engine}-L{level}.log`
-  - 例: `failure-inspector-impl-test-codex-L2.log`, `failure-auditor-claude-L4.log`
+  - 例: `failure-inspector-impl-test-codex-L3.log`, `failure-auditor-claude-L5.log`
   - エスカレーション先も失敗した場合にログが上書きされないよう、engine + level をファイル名に含める
 - **tmux mode**: `tmux capture-pane -t {pane_id} -p -S -100` の出力を Write
 - **background mode**: TaskOutput ファイルを Read して Write
@@ -440,8 +440,8 @@ Failure log の内容から障害タイプを **Lead が判定** する:
 
 ```
 ENGINE_FAILURE:
-  codex  (L1/L2/L3) → claude L4     (エンジン変更)
-  claude (L5/L6/L7) → subagents L0  (エンジン変更)
+  codex  (L1/L3/L4) → claude L5     (エンジン変更)
+  claude (L2/L5/L6/L7) → subagents L0  (エンジン変更)
   subagents (L0)    → 最終失敗
 
 LEVEL_FAILURE:
@@ -461,6 +461,19 @@ Runtime escalation: {agent-name}
   Reason: {ENGINE_FAILURE|LEVEL_FAILURE} — {key error from log}
   Log: {failure log path}
 ```
+
+Also append to `issues.yaml` (auto-issue):
+```yaml
+- id: "I{next}"
+  type: "BUG"
+  status: "open"
+  severity: "M"
+  summary: "Runtime escalation: {agent-name} L{from}→L{to} ({ENGINE_FAILURE|LEVEL_FAILURE})"
+  detail: "{key error from log}"
+  source: "sdd-review"
+  created_at: "{ISO-8601}"
+```
+If escalation resolves (agent succeeds at new level), update the issue to `status: resolved` with `resolution: "Resolved at L{to}"`.
 
 ### Inspector Runtime Escalation
 
@@ -491,8 +504,8 @@ Runtime escalation: {agent-name}
 
 Read `{scope-dir}/active/verdict-auditor.yaml` and apply Lead oversight:
 
-1. **FP 判定**: `decisions.yaml` の全エントリと突合。意図的決定で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
-2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.yaml の該当エントリを引用して確認
+1. **FP 判定**: `decisions.yaml` の `status: active` エントリと突合。意図的決定で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
+2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.yaml の該当エントリおよび `verdicts.yaml` の `tracked` items を引用して確認
 3. **最終分類 (A/B)**: Auditor の classification を検証し、必要に応じて修正
 
 #### 分類基準
@@ -586,7 +599,7 @@ verdict.yaml の `user_decision` フィールドを更新。
         tracked: [...]                 # optional
         resolved: [...]                # optional
       ```
-   d. `tracked`: verdict.yaml から M/L の deferred items を転記
+   d. `tracked`: verdict.yaml から M/L の deferred items を転記。同時に deferred items を `issues.yaml` に auto-append (`type: ENHANCEMENT, status: deferred, source: "{review_type} B{seq}"`)
    e. `resolved`: 前 batch の tracked と突合し解決済み items を記載
 2. Archive: rename `{scope-dir}/active/` → `{scope-dir}/B{seq}/`
 
