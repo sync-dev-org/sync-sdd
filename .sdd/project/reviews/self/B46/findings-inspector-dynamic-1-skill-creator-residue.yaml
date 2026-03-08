@@ -1,0 +1,18 @@
+scope: "inspector-dynamic-1-skill-creator-residue"
+issues: []
+notes: |
+  調査対象ファイル:
+  - framework/claude/CLAUDE.md
+  - framework/claude/settings.json
+  - framework/claude/skills/sdd-*/SKILL.md (全スキル)
+  - framework/claude/skills/sdd-review-self/SKILL.md.bak1 (残存バックアップ確認)
+  - install.sh
+  - framework/claude/sdd/settings/templates/ 配下
+
+  調査結果:
+  - `sdd-skill-creator` への言及はフレームワーク全体で検出されなかった。
+  - framework/claude/ 配下の全ファイルおよび install.sh に対して ripgrep 検索を実施。マッチなし。
+  - `framework/claude/skills/sdd-review-self/SKILL.md.bak1` が残存しているが、内容に `sdd-skill-creator` への言及なし。
+  - `framework/claude/skills/sdd-skill-creator/` ディレクトリは存在しない（削除済み確認）。
+
+  結論: sdd-skill-creator の残存参照はゼロ。移行は完全。

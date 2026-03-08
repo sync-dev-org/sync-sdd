@@ -1,2 +1,0 @@
-timestamp: 2026-03-07T14:49:08+0900  engine: codex  model: gpt-5.3-codex-spark  effort: high  level: L1  agent: briefer
-LEVEL_FAILURE: Briefer executed commands (read templates, read cached findings) but did not write output files to active/ directory. Pane shows codex reading inspector templates and cached B45 findings but no shared-prompt.md, inspector-*.md, or dynamic-manifest.md were generated.

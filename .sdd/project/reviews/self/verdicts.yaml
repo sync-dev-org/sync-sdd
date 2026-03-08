@@ -1,3 +1,33 @@
+- seq: 46
+  type: "self"
+  scope: "framework"
+  date: "2026-03-08T17:09:34+0900"
+  version: "2.6.0"
+  engines:
+    briefer: "claude-sonnet-4-6 (L5 escalation from codex L1)"
+    inspectors: "claude-sonnet-4-6 (L5 escalation from codex L4)"
+    auditor: "claude-sonnet-4-6 (L5)"
+    builder: "lead (D223)"
+  agents:
+    fixed: 3
+    dynamic: 4
+    total: 7
+  counts:
+    C: 0
+    H: 3
+    M: 10
+    L: 13
+    FP: 6
+  verdict: "CONDITIONAL"
+  disposition: "CONDITIONAL-TRACKED"
+  notes: "テスト実行 (修正なし)。codex ENGINE_FAILURE (I34) により全ステージ claude L5。"
+  tracked:
+    - id: "A2"
+      severity: "H"
+      summary: "revise Part B Step 3 で新規 spec が FULL 分類に含まれず tier 実行から漏れる"
+    - id: "A8"
+      severity: "M"
+      summary: "Auditor classification フィールドが verdict-format.md §2 に未定義"
 - seq: 45
   type: "self"
   scope: "framework"

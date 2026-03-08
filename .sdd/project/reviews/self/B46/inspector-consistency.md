@@ -15,7 +15,7 @@ Read ALL files listed in the shared prompt.
 
 Note: general-purpose is referenced in dispatch patterns but has no corresponding file in framework/claude/agents/ -- this is intentional. Do not flag it as an undefined reference.
 
-Include a cross-reference matrix.
+Include a cross-reference matrix in the `xrefs` section of your output.
 
 ## Output Instructions
 1. Write YAML findings to: `.sdd/project/reviews/self/active/findings-inspector-consistency.yaml`
@@ -31,6 +31,10 @@ Include a cross-reference matrix.
        detail: "{what}"
        impact: "{why}"
        recommendation: "{how}"
+   xrefs:
+     - source: "{file}"
+       target: "{file}"
+       status: "OK"
    notes: |
      Additional context
    ```
@@ -39,6 +43,7 @@ Include a cross-reference matrix.
    - `id`: Sequential (F1, F2, ...)
    - `severity`: C/H/M/L
    - `issues`: empty list `[]` if no findings
+   - `xrefs`: cross-reference verification results. Status: OK/MISSING_PATH_PREFIX/MISSING_RELATIVE_TARGET/UNDEFINED_REFERENCE
 
 2. After writing, print to stdout:
    EXT_REVIEW_COMPLETE

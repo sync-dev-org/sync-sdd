@@ -1,0 +1,78 @@
+scope: "inspector-dynamic-2-forge-skill-refs"
+issues:
+  - id: "F1"
+    severity: "L"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:202"
+    summary: "evals.json テンプレートに schemas.md 未定義の `skill_name` フィールドが含まれる"
+    detail: |
+      SKILL.md Step 1 (Eval mode) の evals.json サンプルに `"skill_name": "example-skill"` がトップレベルで存在するが、
+      references/schemas.md の evals.json スキーマ定義にはこのフィールドが含まれない。
+      `aggregate_benchmark.py` は `--skill-name` コマンドライン引数でスキル名を受け取るため、
+      evals.json からは読み取らない。このフィールドは冗長または意図不明。
+    impact: "WriterまたはユーザーがSKILL.mdのサンプルをそのまま使うとschemas.mdとの乖離が生じ、
+      将来スクリプトがevals.jsonを解析する際に混乱を招く可能性がある。"
+    recommendation: "SKILL.md の evals.json サンプルから `skill_name` を削除するか、
+      schemas.md の evals.json スキーマに optional フィールドとして追記して用途を明示する。"
+
+  - id: "F2"
+    severity: "L"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:205"
+    summary: "evals.json の `id` 型が SKILL.md (integer) と schemas.md (string) で不一致"
+    detail: |
+      SKILL.md のサンプルでは `"id": 1` (integer) を示しているが、
+      references/schemas.md では `"id": "string (unique identifier, e.g. eval-001)"` と定義されている。
+      benchmark.json スキーマの `eval_id: "integer or string"` 記述から両者とも機能上は許容されるが、
+      サンプルの型と定義が食い違っており、混乱を招く。
+    impact: "両型が許容されるため実害は低いが、ドキュメント間の不整合がユーザーやWriterの判断を揺らがせる。
+      スキーマを文字列で統一している意図が伝わらない。"
+    recommendation: "SKILL.md のサンプルを `\"id\": \"eval-001\"` (string) に変更して
+      schemas.md の定義と統一する。あわせて schemas.md に integer も許容と補足するか、
+      string のみに統一する方針を明記する。"
+
+  - id: "F3"
+    severity: "L"
+    category: "documentation-ambiguity"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:270,312"
+    summary: "Analyzer のロール (Role 1 vs Role 2) が呼び出し文脈で明示されていない"
+    detail: |
+      references/analyzer.md は Role 1 (Comparison Analysis) と Role 2 (Benchmark Analysis) の 2 ロールを持つ。
+      SKILL.md Eval mode Step 5 (line 270) では「analyst pass — surface patterns the aggregate stats hide」と説明し、
+      Compare mode Step 3 (line 312) では「dispatch the analyzer with full context (both skills revealed)」と説明するが、
+      いずれも analyzer.md のどのロールを実行するか明示していない。
+      文脈から Eval → Role 2、Compare → Role 1 と推察できるが、明示されていない。
+    impact: "Analyzer を初めて使うユーザーやWriterがどちらのロールを呼ぶべきか迷う可能性がある。
+      正しいロールで呼ばないと analysis.json/benchmark-analysis.json の出力が入れ替わる。"
+    recommendation: "SKILL.md の各呼び出し箇所に
+      '(Role 2: Benchmark Analysis)' / '(Role 1: Comparison Analysis)' を括弧書きで補記する。"
+
+notes: |
+  ## 全体評価
+
+  **参照ファイル存在確認**: 全 7 ファイル実在確認済み（スペルミス・パス誤りなし）
+  - references/writer.md ✅
+  - references/comparator.md ✅
+  - references/analyzer.md ✅
+  - references/grader.md ✅
+  - references/schemas.md ✅
+  - references/skill-reference.md ✅
+  - references/skill-reference-sources.md ✅
+
+  **スクリプト存在確認**: SKILL.md が参照する全スクリプト実在確認済み
+  - scripts/run_loop.py (python -m scripts.run_loop) ✅
+  - scripts/aggregate_benchmark.py ✅
+  - scripts/package_skill.py ✅
+  - eval-viewer/generate_review.py ✅
+  - assets/eval_review.html ✅
+
+  **サブロール整合性**: Writer/Grader/Comparator/Analyzer の記述は各 references/*.md と整合している ✅
+
+  **skill-reference.md vs skill-reference-sources.md 使い分け**:
+  - skill-reference.md = Writer SubAgent の主参照（スキル構造・プラットフォーム実装・記述ベストプラクティス）
+  - skill-reference-sources.md = ガイドが陳腐化した際の更新手順・情報源一覧
+  SKILL.md の説明と実態が一致している ✅
+
+  **残存バックアップファイル**: .bak* ファイルなし ✅
+
+  重大・高優先度の問題はなし。発見された問題は全て Low severity の軽微なドキュメント不整合のみ。

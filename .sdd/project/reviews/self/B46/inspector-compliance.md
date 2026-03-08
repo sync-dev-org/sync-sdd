@@ -27,18 +27,12 @@ Use web search to verify Claude Code official specs for:
 Use this tri-state system for each compliance item:
 - **OK**: verified present in official docs. Cite the source URL.
 - **NG**: verified absent AND explicitly contradicted by official docs. You MUST cite the specific documentation URL that contradicts it.
-- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as: `UNCERTAIN|category|location|description`. Lead will make final determination.
+- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as UNCERTAIN. Lead will make final determination.
 
 CRITICAL: "Not found in web search" does not mean "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
 
 ## Cached Verifications (skip web search for these -- already verified recently)
-agent-frontmatter-model: OK (cached from B45)
-agent-frontmatter-tools: OK (cached from B45)
-agent-frontmatter-description: OK (cached from B45)
-dispatch-subagent-target-existence: OK (cached from B45)
-settings-permission-format: OK (cached from B45)
-settings-skill-agent-entry-match: OK (cached from B45)
-agent-tool-availability: OK (cached from B45)
+No cached items.
 
 For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
 For non-cached items: perform full web search verification.

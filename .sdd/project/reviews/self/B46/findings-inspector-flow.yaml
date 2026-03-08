@@ -1,0 +1,231 @@
+scope: "inspector-flow"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:49"
+    summary: "Part A→B エスカレーション時のステアリング更新実行順序が不明瞭"
+    detail: |
+      revise.md Part A Step 3 でユーザーが Cross-Cutting エスカレーションを承認した場合、
+      「join Part B Step 2」と指示しているが、同時に「Steering update (Part B Step 1.3) は必ず実行する」と
+      注記している。実際の実行順序は「Step 1.3 を実行してから Step 2 へ進む」であるが、
+      指示文が「Step 2 へ join」を先に述べてステアリング更新を補足として記載しているため、
+      Lead が Step 1.3 をスキップして Step 2 から始める誤解を招くリスクがある。
+    impact: |
+      ステアリング更新がスキップされると、Architect が古いステアリングコンテキストで設計を行い、
+      revision intent と乖離した design.md が生成される可能性がある。
+      特にユーザーが要件変更を伴う revise を行った場合に影響大。
+    recommendation: |
+      Step 3 の Cross-Cutting 承認フローを以下のように明記する:
+      「User accepts → (1) Execute Part B Step 1.3 (steering update), then (2) proceed to Part B Step 2
+      with revision intent and target spec pre-populated. Skip only Part B Step 1 item 2 (decisions.yaml recording).」
+      実行順序を番号付きステップとして明示すること。
+
+  - id: "F2"
+    severity: "M"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:153"
+    summary: "Part B Step 3 で作成した新規 spec が FULL 分類に含まれない"
+    detail: |
+      revise.md Part B Step 2 (Impact Analysis) は「implementation-complete phase のみを revision 対象」とし、
+      FULL/AUDIT/SKIP 分類を行う。しかし Step 3 (Restructuring Check) で新たに spec が作成された場合、
+      その spec は `initialized` フェーズであり Step 2 の分類対象外となる。
+      Step 7 (Execution Tier Planning) は「FULL specs のみ」からティア計画を構築するため、
+      新規 spec が Step 3 で作成されても Step 7 には含まれず tier 実行から漏れる。
+    impact: |
+      cross-cutting revision が必要として作成した新規 spec が tier 実行に含まれず、
+      設計・実装が行われないまま revision が完了してしまう可能性がある。
+      変更内容の完全性が損なわれる。
+    recommendation: |
+      Step 3 の最後に明示的に「Create した新規 spec を FULL リストに追加する」ステップを追加する:
+      「After spec creation/restructuring: add newly created specs to FULL classification
+      (they require design + impl pipeline, not revision of existing specs).
+      Update tier plan in Step 7 to include these specs at the appropriate tier based on dependencies.」
+
+  - id: "F3"
+    severity: "M"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:163"
+    summary: "Readiness Rules の Implementation 条件に誤った Layer 番号が記載されている"
+    detail: |
+      Readiness Rules の Implementation 条件に「No file overlap with any spec currently in Implementation
+      (Cross-Spec File Ownership Layer 2)」と記載されている。しかし run.md では:
+      - Layer 1 = Step 2 の global analysis (dispatch 前、design.md ベース)
+      - Layer 2 = Phase Handler 内の post-TaskGenerator 再チェック (dispatch 後)
+
+      Readiness Rules のチェックは dispatch ループ内の動的チェックであり、Step 2 (Layer 1) 結果を
+      反映している。Post-TaskGenerator の Layer 2 チェックは readiness gate の後に発生する。
+      「Layer 2」という注記が「post-TaskGenerator チェック」を指すのか「ループ内動的チェック」を
+      指すのか不明確。
+    impact: |
+      Lead が Readiness Rule の参照先を Layer 2 (Phase Handler post-TaskGenerator) と解釈した場合、
+      TaskGenerator 完了前には readiness を評価できないと誤解し、dispatch が遅延または
+      シリアライズされる可能性がある。
+    recommendation: |
+      Readiness Rule の Implementation 条件を次のように改訂:
+      「No file overlap with any spec currently in Implementation (enforced by Layer 1 pre-dispatch
+      analysis in Step 2; refined by Layer 2 post-TaskGenerator check in Phase Handler).」
+      または単純に「(Cross-Spec File Ownership Layer 1 result)」に変更して Layer 2 参照を削除する。
+
+  - id: "F4"
+    severity: "M"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:97"
+    summary: "Part A Step 6 option (d) の Cross-Cutting join に Part B Step 1 スキップ仕様が未記載"
+    detail: |
+      revise.md Part A Step 6 option (d) は「join Part B Step 2 with completed target spec + affected
+      dependents pre-populated」と指示するが、Part B Step 1 の扱いが未記載。
+      Part A Step 3 のエスカレーション経路には「Skip Part B Step 1 の recording のみスキップ。
+      Steering update (Part B Step 1.3) は必ず実行する」という注記があるが、
+      option (d) にはこれに相当する説明がない。
+
+      Step 6 option (d) の文脈では:
+      - Part B Step 1.1 (change description 収集) は不要 (メイン spec の revision intent 収集済み)
+      - Part B Step 1.2 (decisions.yaml 記録) は必要かどうか不明
+      - Part B Step 1.3 (steering update) は downstream spec の変更のために必要な可能性がある
+    impact: |
+      Lead が Part B Step 1 を全てスキップすると、downstream revision に必要なステアリング更新が
+      行われない可能性がある。逆に全て実行すると、既に収集済みの intent を再度 AskUserQuestion する
+      不要なユーザー対話が発生する。
+    recommendation: |
+      Step 6 option (d) に Part A Step 3 と同様の注記を追加:
+      「join Part B Step 2 with pre-populated context. Note: Part B Step 1.1 is N/A (intent known);
+      Step 1.2 recording should be done if this downstream revision constitutes a new decision;
+      Step 1.3 steering update should be executed if downstream revision implies direction changes.」
+
+  - id: "F5"
+    severity: "M"
+    category: "verdict-format"
+    location: "framework/claude/sdd/settings/rules/agent/verdict-format.md:165"
+    summary: "disposition コード NO-GO-FIXED の説明が「fixed by Builder」のみで Architect 修正ケースをカバーしない"
+    detail: |
+      verdict-format.md の Disposition Codes テーブルで `NO-GO-FIXED` の説明が「Issues fixed by Builder」
+      となっている。しかし run.md Phase Handler §Design Review completion では NO-GO 時に
+      Architect (Builder ではなく) で修正し、同じ `NO-GO-FIXED` disposition を使用するよう指示している。
+
+      Design Review NO-GO → Architect fix → disposition: NO-GO-FIXED (run.md:193)
+      Impl Review NO-GO → Builder fix → disposition: NO-GO-FIXED (run.md:207)
+
+      同一 disposition コードが Architect 修正と Builder 修正の両方を表すが、説明は
+      Builder ケースのみを記載している。
+    impact: |
+      Lead または外部ツールが verdicts.yaml の `NO-GO-FIXED` を「Builder が修正した」と解釈する場合、
+      Design Review での Architect 修正が誤分類されることがある。
+      審査証跡の正確性に影響する。
+    recommendation: |
+      disposition コードの説明を更新:
+      `NO-GO-FIXED: "NO-GO issues addressed (fixed by Architect for design review, Builder for impl review)"`
+      または `NO-GO-FIXED-ARCH` / `NO-GO-FIXED-BUILDER` に分割することを検討する。
+
+  - id: "F6"
+    severity: "L"
+    category: "counter-management"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:74"
+    summary: "fast-track spec のパイプライン完了時にカウンタリセットが定義されていない"
+    detail: |
+      run.md Step 4 の Island Spec (Wave Bypass) は「1-Spec Roadmap Optimizations apply: skip Wave QG」
+      と記載されており、Wave QG の post-gate (Step 8c) でのカウンタリセット (`retry_count=0,
+      spec_update_count=0`) を受けない。
+
+      CLAUDE.md §Auto-Fix Counter Limits のリセットトリガーは:
+      - wave completion
+      - user escalation decision (including blocking protocol fix/skip)
+      - /sdd-roadmap revise start
+
+      Fast-track spec の「パイプライン完了 + individual commit」は上記いずれにも該当せず、
+      カウンタが非ゼロのまま残る可能性がある。
+    impact: |
+      Fast-track spec のパイプライン完了後にカウンタが残存すると、
+      後続の状態表示や `/sdd-status` で不正確な retry 回数が表示される可能性がある。
+      実害は限定的 (`/sdd-roadmap revise` 開始時にリセットされる)。
+    recommendation: |
+      run.md Step 4 の Fast-track execution に追記:
+      「After full pipeline completion and individual commit: reset retry_count=0 and
+      spec_update_count=0 for the fast-track spec (equivalent to wave post-gate reset).」
+
+  - id: "F7"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-roadmap/refs/impl.md:75"
+    summary: "Pilot Stagger の pilot dispatch 指示に「normally」が残存し foreground 誤解を招く"
+    detail: |
+      impl.md Step 4 §Pilot Stagger Protocol Step 2 の指示:
+      「Dispatch pilot Builder group normally (with conventions brief). Wait for completion.」
+
+      「normally」は曖昧で、CLAUDE.md §SubAgent Lifecycle の「run_in_background: true always.
+      No exceptions — even when only one SubAgent is active, foreground dispatch is prohibited」
+      という強制ルールと衝突するように見える。
+    impact: |
+      Lead が「normally = foreground dispatch OK」と解釈した場合、
+      ユーザーのターミナルをブロックする規約違反が発生する可能性がある。
+      CLAUDE.md のルールが優先されるため実害は少ないが、規約との齟齬が混乱を招く。
+    recommendation: |
+      「normally」を明示的な指示に置き換える:
+      「Dispatch pilot Builder group via Agent tool with run_in_background: true.
+      Wait for completion via task-notification before proceeding.」
+
+  - id: "F8"
+    severity: "L"
+    category: "auto-draft"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:124"
+    summary: "run モード完了時に handover.md が二重 auto-draft される"
+    detail: |
+      `run` モード完了時の auto-draft フロー:
+      1. run.md Step 8c Post-gate: 「Auto-draft handover.md」(最終 wave の Wave QG 後)
+      2. SKILL.md §Post-Completion: 「Auto-draft handover.md」(run.md が返った後)
+
+      SKILL.md §Post-Completion は全モード共通で実行されるため、
+      run.md Step 8c でドラフト済みの handover.md を上書きする二重ドラフトが発生する。
+      run.md Step 9 (Roadmap Completion) に SKILL.md Post-Completion の抑制指示がない。
+    impact: |
+      二重ドラフトは idempotent (上書き) のため機能的な問題はない。
+      しかし余分な処理とトークン消費が発生する。
+    recommendation: |
+      run.md Step 9 (Roadmap Completion) または SKILL.md §Post-Completion に注記を追加:
+      「Note: auto-draft in Post-Completion is skipped if run mode already drafted at Step 8c
+      (i.e., all waves completed normally). Only run if pipeline was stopped mid-wave.」
+      または SKILL.md §Post-Completion に「Skip if run mode completed all waves」の条件を追加。
+
+  - id: "F9"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:236"
+    summary: "Part B Step 8.4 でのパラレル Design Review 実行メカニズムが未定義"
+    detail: |
+      revise.md Part B Step 8.4:
+      「Dispatch per spec (parallel) via /sdd-review design {feature}」
+
+      しかし `/sdd-review` は Skill 呼び出し (Skill tool) であり、Skill 呼び出しは
+      シーケンシャルに実行される。複数 spec の parallel dispatch を実現するには、
+      各 spec の Inspector SubAgent を Agent tool (run_in_background: true) で
+      同時に dispatch する必要があるが、その具体的な手順が記載されていない。
+
+      run.md §Review Decomposition では「dispatch loop context では Lead が sdd-review の
+      ステップを直接実行する」と明記されているが、revise.md Part B は dispatch loop を
+      使用せず /sdd-review Skill を呼び出す方式を指示している。
+    impact: |
+      Lead が /sdd-review Skill 呼び出しをシーケンシャルに実行すると、
+      parallel 設計の spec review がシリアル化され、tier 実行が遅くなる。
+      機能的な誤りではないが、設計意図のパフォーマンスが得られない。
+    recommendation: |
+      Step 8.4 を以下のように明確化:
+      「Dispatch per spec in parallel: for each spec, follow /sdd-review SKILL.md Steps 1-6
+      (briefer, inspector dispatch via Agent run_in_background: true). Collect all Inspector
+      task handles, wait for all to complete, then run Auditor per spec (sequentially or in parallel).
+      Alternatively, invoke /sdd-review Skill per spec sequentially if parallelism is not critical.」
+notes: |
+  レビュー対象: sdd-roadmap Router → refs dispatch flow の整合性。
+
+  全体的な評価:
+  - Router の Detect Mode → 各 ref への dispatch は正確に定義されており、
+    design/impl/run/revise/create/update/delete の全サブコマンドが適切なルーティングを持つ。
+  - Review サブコマンドは standalone で /sdd-review Skill に delegate し、
+    dispatch loop 内では run.md §Review Decomposition で直接実行するという
+    二重構造は run.md で明確に説明されており、整合性がある。
+  - Phase gate 定義は CLAUDE.md の基底定義と各 ref の追加ゲート条件が整合している。
+  - Auto-fix counter の max/reset ルールは CLAUDE.md と run.md/revise.md 間で一貫している。
+  - Wave Quality Gate フロー (Dead Code → Cross-Check → Post-gate → Commit) は完全。
+  - Verdict persistence パスは verdict-format.md §4 Locations と各 ref の記載が一致している。
+  - Revise mode の Single-Spec → Cross-Cutting エスカレーション経路 (Part A Step 3, Step 6 option d)
+    の一部に実行順序の不明瞭さがある (F1, F4 参照)。
+  - 最も重大な gap は revise.md Part B Step 3 での新規 spec 作成後の FULL 分類漏れ (F2)。

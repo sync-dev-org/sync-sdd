@@ -1,0 +1,444 @@
+scope: "inspector-consistency"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "path-inconsistency"
+    location: "framework/claude/sdd/settings/rules/lead/tmux-integration.md:82-83"
+    summary: "tmux-integration.md が sdd-start の Step 番号を誤って参照している"
+    detail: |
+      tmux-integration.md の「Grid Creation」セクションに
+      「/sdd-start Step 7 で $SID 生成・Lead pane タイトル設定後に実行」と記述されている。
+      同じく「Orphan Cleanup」セクションにも「/sdd-start Step 7 で、SID 生成・Lead タイトル設定の後、
+      Grid Creation の前に実行する」と記述されている。
+      しかし sdd-start.md では SID 生成 (6a)、Lead Pane Title (6b)、Orphan Cleanup (6c)、Grid Setup (6d)、
+      state.yaml Generation (6e) は全て Step 6 に含まれており、Step 7 は「Pipeline Continuation」である。
+    impact: |
+      両ファイルを参照して作業する際にステップ番号の不一致で混乱が生じる。
+      sdd-start の将来の構造変更時に誤った参照が残り続けるリスクがある。
+    recommendation: |
+      tmux-integration.md の「Step 7」参照を「Step 6 (6a-6e)」に修正する。
+      Grid Creation: 「/sdd-start Step 6d で...」
+      Orphan Cleanup: 「/sdd-start Step 6c で...」
+
+  - id: "F2"
+    severity: "H"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:76-77"
+    summary: "sdd-review-self の codex コマンドが stdin 読み取りインジケータ (-) を欠いている"
+    detail: |
+      sdd-review-self の Engine Command Construction テーブルで codex コマンドは:
+        `npx -y @openai/codex exec --full-auto -m {model} -c model_reasoning_effort='"{effort}"' -q`
+      と定義されている。`-q` (quiet mode) フラグがあるが stdin 読み取りを指示する `-` がない。
+      一方 sdd-review では:
+        `npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] [-c model_reasoning_effort='"${STAGE}_EFFORT"'] -`
+      と末尾に `-` があり、stdin からプロンプトを読む。
+      sdd-review-self も tmux/background モードで `cat {header}.md {template}.md | {engine_cmd}` として
+      stdin パイプを使用するため、`-` がないと codex がプロンプトを受け取れない可能性がある。
+    impact: |
+      codex エンジン使用時にプロンプトが渡されずサイレント失敗し、findings ファイルが
+      生成されない可能性がある。Runtime Escalation が発動し意図しない level への昇格が起きる。
+    recommendation: |
+      sdd-review-self の codex コマンドを sdd-review と一致させる:
+        `npx -y @openai/codex exec --full-auto --model {model} -c model_reasoning_effort='"{effort}"' -`
+      `-q` を削除し、末尾に `-` を追加する。フラグ名も `-m` から `--model` に統一する。
+
+  - id: "F3"
+    severity: "M"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/references/auditor.md:86-88"
+    summary: "self-review Auditor が classification フィールドを verdict-auditor.yaml に含めているが、verdict-format.md では Lead 専任フィールド"
+    detail: |
+      auditor.md (self-review) の Step 7 では verdict-auditor.yaml の issues スキーマに
+      `classification: "A"` または `classification: "B"` が含まれる。
+      しかし verdict-format.md §2「Auditor Verdict」スキーマには classification フィールドは存在せず、
+      §3「Lead Final Verdict」でのみ定義されている。
+      verdict-format.md §4 の Per-Item Lifecycle では「classification: Lead が設定」と明記されている。
+      sdd-review の Auditor テンプレート (framework/.../templates/review/auditor.md) も
+      classification は含まない設計のため、self-review Auditor のみが逸脱している。
+    impact: |
+      verdict-format.md の仕様と self-review の実装が乖離している。
+      Lead 監修ステップ (Step 7) での A/B 判定が Auditor の draft に引きずられ、
+      Lead の独立した判断が弱まる可能性がある。
+      また将来的に verdict-format.md を更新した際に self-review auditor.md も更新が必要になる
+      依存関係が不明示のまま残る。
+    recommendation: |
+      auditor.md から classification フィールドを削除し、verdict-format.md §2 に準拠する。
+      sdd-review-self Step 7 (Lead Supervision) の A/B Classification Verification セクションで
+      Lead が classification を決定する、という現行フローを明示的に記述する。
+
+  - id: "F4"
+    severity: "M"
+    category: "path-inconsistency"
+    location: "framework/claude/skills/sdd-publish-setup/SKILL.md:1-4"
+    summary: "sdd-publish-setup SKILL.md の YAML frontmatter に name フィールドが欠落"
+    detail: |
+      sdd-publish-setup/SKILL.md の frontmatter は:
+        ---
+        description: Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher)
+        allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+        ---
+      他の全スキル (sdd-roadmap, sdd-review, sdd-handover, sdd-log 等) は
+      `name: sdd-xxx` フィールドを持つ。settings.json では `Skill(sdd-publish-setup)` として
+      登録されているが、frontmatter の name が欠落している。
+    impact: |
+      スキル名の正式定義が frontmatter に存在せず、ディレクトリ名から推定するしかない。
+      スキル一覧表示やメタデータ確認時に不整合が生じる可能性がある。
+    recommendation: |
+      frontmatter に `name: sdd-publish-setup` を追加する:
+        ---
+        name: sdd-publish-setup
+        description: Set up CI/CD publish pipeline (GitHub Actions + Trusted Publisher)
+        allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+        ---
+
+  - id: "F5"
+    severity: "M"
+    category: "path-inconsistency"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:1-4"
+    summary: "sdd-forge-skill SKILL.md の YAML frontmatter に allowed-tools フィールドが欠落"
+    detail: |
+      sdd-forge-skill/SKILL.md の frontmatter は:
+        ---
+        name: sdd-forge-skill
+        description: "Create, rebuild, improve, ..."
+        ---
+      allowed-tools フィールドが存在しない。他の全スキルは allowed-tools を明示的に定義している
+      (例: `allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit, Skill`)。
+      スキル本体の Constraints セクションには
+      「Never include `AskUserQuestion` in allowed-tools」と記述があり、
+      allowed-tools の存在を前提としているが frontmatter には設定されていない。
+    impact: |
+      allowed-tools が未定義の場合、スキル実行時のツール権限がデフォルト設定に依存する。
+      意図したツール制限が適用されない可能性がある。
+    recommendation: |
+      sdd-forge-skill が使用するツール (Agent, Bash, Glob, Grep, Read, Write, Edit 等) を
+      明示的に frontmatter に追加する。AskUserQuestion は含めない。
+
+  - id: "F6"
+    severity: "M"
+    category: "path-inconsistency"
+    location: "framework/claude/settings.json:1-60"
+    summary: "settings.json に Agent(general-purpose) が登録されておらず、L0 フォールバック時に承認プロンプトが発生する可能性がある"
+    detail: |
+      sdd-review は L0 (subagents) フォールバック時に Inspector/Auditor/Briefer を
+      `Agent(subagent_type="general-purpose", ...)` として dispatch する。
+      しかし settings.json の allow リストには `Agent(sdd-analyst)`, `Agent(sdd-architect)` 等は
+      あるが `Agent(general-purpose)` は存在しない。
+      defaultMode が "acceptEdits" の場合、allow リストに未登録の Agent tool 呼び出しは
+      承認プロンプトを表示する可能性がある。
+      sdd-review-self も SubAgent mode で general-purpose を使用する。
+    impact: |
+      Runtime Escalation でL0 にフォールバックした際、自動承認が得られず
+      パイプラインが手動操作待ちでブロックされる可能性がある。
+    recommendation: |
+      settings.json の allow リストに `"Agent(general-purpose)"` を追加する。
+      または Claude Code プラットフォームが built-in エージェントを自動承認する仕様を
+      確認し、不要であればドキュメントに明記する。
+
+  - id: "F7"
+    severity: "L"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:76"
+    summary: "sdd-review-self の codex フラグ名 (-m) が sdd-review (--model) と不一致"
+    detail: |
+      sdd-review-self: `npx -y @openai/codex exec --full-auto -m {model} ...`
+      sdd-review: `npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] ...`
+      短縮形 `-m` と長形式 `--model` の違い。機能的には同等だが、
+      フレームワーク内でのコマンド記述の一貫性が損なわれている。
+    impact: |
+      コードレビュー時に意図的な差異か誤りかが判断しにくい。将来の codex CLI 変更時に
+      両ファイルで別々の対応が必要になる可能性がある。
+    recommendation: |
+      sdd-review-self の `-m` を `--model` に統一する。
+
+  - id: "F8"
+    severity: "L"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:77"
+    summary: "sdd-review-self の claude コマンドに --include-partial-messages フラグが欠落"
+    detail: |
+      sdd-review の claude コマンド:
+        `env -u CLAUDECODE CLAUDE_CODE_EFFORT_LEVEL=... claude -p - --dangerously-skip-permissions
+         --output-format stream-json --verbose --include-partial-messages [--model ...] | jq ...`
+      sdd-review-self の claude コマンド:
+        `env -u CLAUDECODE claude -p - --model {model} --output-format stream-json --verbose
+         --dangerously-skip-permissions | jq ...`
+      `--include-partial-messages` が欠落している。このフラグはストリーミング中の
+      部分的なメッセージを出力に含めるかどうかを制御する。
+    impact: |
+      self-review の claude エンジン実行時にストリーミング出力の完全性が異なる。
+      長時間の Inspector 処理で部分メッセージが欠落する可能性がある。
+    recommendation: |
+      sdd-review-self の claude コマンドに `--include-partial-messages` を追加する。
+
+  - id: "F9"
+    severity: "L"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:78"
+    summary: "sdd-review-self の gemini コマンドで -p フラグにプロンプト引数がない"
+    detail: |
+      sdd-review の gemini コマンド:
+        `npx -y @google/gemini-cli -p "Review the project files per the instructions below." --yolo [--model ...]`
+      sdd-review-self の gemini コマンド:
+        `npx -y @google/gemini-cli -p --model {model} --yolo`
+      sdd-review では `-p` の直後にプロンプト文字列が渡されるが、
+      sdd-review-self では `-p` の後が `--model` になっており、
+      `-p` の引数として `--model` が解釈される可能性がある。
+      "For gemini: prompt is passed as the last positional argument" という注記があるが、
+      コマンド例でその引数位置が不明確である。
+    impact: |
+      gemini エンジン使用時にプロンプトが正しく渡されず、エンジンがエラーになる、
+      または誤動作する可能性がある。
+    recommendation: |
+      sdd-review-self の gemini コマンドを明確化する:
+        `npx -y @google/gemini-cli -p "Read the following instructions and review the framework." --model {model} --yolo`
+      または prompt を stdin 経由で渡す方式に統一する。
+
+  - id: "F10"
+    severity: "L"
+    category: "numeric-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:219-225"
+    summary: "sdd-review-self の verdicts.yaml スキーマに conditional エージェント数フィールドが欠落"
+    detail: |
+      sdd-review-self Step 9 の verdicts.yaml スキーマ:
+        agents:
+          fixed: 3
+          dynamic: {N}
+          total: {3 + N}
+      verdict-format.md §4 のスキーマ:
+        agents:
+          fixed: 5
+          conditional: 0    # Optional, default 0
+          dynamic: 2        # Optional, default 0
+          total: 7
+      self-review では conditional Inspector が存在しないため省略は妥当だが、
+      "Optional, default 0" と明記することで明示的なドキュメント一貫性が保たれる。
+    impact: |
+      verdicts.yaml を参照するツールが conditional フィールドを期待する場合に
+      KeyError や default 0 処理が必要になる。コードの一貫性が損なわれる。
+    recommendation: |
+      sdd-review-self Step 9 のスキーマに `conditional: 0  # self-review: always 0` を追加する。
+
+xrefs:
+  - source: "framework/claude/CLAUDE.md"
+    target: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    status: "OK"
+  - source: "framework/claude/CLAUDE.md"
+    target: "framework/claude/sdd/settings/rules/agent/verdict-format.md"
+    status: "OK"
+  - source: "framework/claude/CLAUDE.md"
+    target: "framework/claude/sdd/settings/templates/session/handover.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-roadmap/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/specs/init.yaml"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/rules/agent/verdict-format.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/claude-stream-progress.jq"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/SKILL.md"
+    target: "framework/claude/skills/sdd-review-self/references/briefer.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/SKILL.md"
+    target: "framework/claude/skills/sdd-review-self/references/auditor.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/claude-stream-progress.jq"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/references/briefer.md"
+    target: "framework/claude/skills/sdd-review-self/references/shared-prompt-structure.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/references/briefer.md"
+    target: "framework/claude/skills/sdd-review-self/references/inspector-flow.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/references/briefer.md"
+    target: "framework/claude/skills/sdd-review-self/references/inspector-consistency.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/references/briefer.md"
+    target: "framework/claude/skills/sdd-review-self/references/inspector-compliance.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review-self/references/auditor.md"
+    target: "framework/claude/sdd/settings/rules/agent/verdict-format.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/orphan-detect.sh"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/orphan-kill.sh"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/multiview-grid.sh"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/grid-check.sh"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-start/SKILL.md"
+    target: "framework/claude/sdd/settings/scripts/window-id.sh"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-handover/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/session/handover.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-handover/SKILL.md"
+    target: "framework/claude/sdd/settings/rules/lead/bash-security-heuristics.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-log/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/session/decisions.yaml"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-log/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/session/issues.yaml"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-log/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/session/knowledge.yaml"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-steering/SKILL.md"
+    target: "framework/claude/sdd/settings/rules/agent/steering-principles.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-steering/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/steering/product.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-steering/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/steering/tech.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-steering/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/steering/structure.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-steering/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/steering-custom/api-standards.md"
+    status: "OK"
+  - source: "framework/claude/agents/sdd-builder.md"
+    target: "framework/claude/sdd/settings/rules/agent/tasks-generation.md"
+    status: "MISSING_RELATIVE_TARGET"
+  - source: "framework/claude/agents/sdd-architect.md"
+    target: "framework/claude/sdd/settings/rules/agent/design-principles.md"
+    status: "OK"
+  - source: "framework/claude/agents/sdd-architect.md"
+    target: "framework/claude/sdd/settings/rules/agent/design-discovery-full.md"
+    status: "OK"
+  - source: "framework/claude/agents/sdd-architect.md"
+    target: "framework/claude/sdd/settings/rules/agent/design-discovery-light.md"
+    status: "OK"
+  - source: "framework/claude/agents/sdd-taskgenerator.md"
+    target: "framework/claude/sdd/settings/rules/agent/tasks-generation.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-release/SKILL.md"
+    target: "framework/claude/CLAUDE.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/writer.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/comparator.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/analyzer.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/grader.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/schemas.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    target: "framework/claude/skills/sdd-forge-skill/references/skill-reference.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/review/briefer.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/review/inspector-brief.md"
+    status: "OK"
+  - source: "framework/claude/skills/sdd-review/SKILL.md"
+    target: "framework/claude/sdd/settings/templates/review/auditor-brief.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/agents/sdd-analyst.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/agents/sdd-architect.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/agents/sdd-builder.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/agents/sdd-conventions-scanner.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/agents/sdd-taskgenerator.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-roadmap/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-steering/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-status/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-handover/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-reboot/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-release/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-review-self/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-start/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-publish-setup/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-review/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-log/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/settings.json"
+    target: "framework/claude/skills/sdd-forge-skill/SKILL.md"
+    status: "OK"
+  - source: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    target: "framework/claude/sdd/settings/scripts/orphan-detect.sh"
+    status: "OK"
+  - source: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    target: "framework/claude/sdd/settings/scripts/multiview-grid.sh"
+    status: "OK"
+  - source: "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+    target: "framework/claude/sdd/settings/scripts/grid-check.sh"
+    status: "OK"
+
+notes: |
+  レビュー対象: framework/ 以下の全 SKILL.md, agent .md, rules, templates, settings.json, install.sh。
+
+  全体的な整合性は良好。phase 名 (initialized/design-generated/implementation-complete/blocked)、
+  verdict 値 (GO/CONDITIONAL/NO-GO/SPEC-UPDATE-NEEDED)、severity コード (C/H/M/L) は
+  全ファイル間で統一されている。
+
+  主要な問題点は以下:
+  1. tmux-integration.md の step 番号参照が sdd-start.md の実際の構造と乖離 (Step 7 → Step 6)
+  2. sdd-review-self の codex コマンドが stdin indicator (-) を欠く (sdd-review との不一致)
+  3. self-review Auditor が classification フィールドを verdict-auditor.yaml に含める
+     (verdict-format.md では Lead 専任フィールド)
+  4. sdd-publish-setup の name フィールド欠落と sdd-forge-skill の allowed-tools 欠落
+  5. settings.json に Agent(general-purpose) が未登録
+
+  Auto-Fix Counter Limits (retry_count:5, spec_update_count:2, aggregate:6)、
+  SubAgent の run_in_background:true 原則、file-based communication プロトコルは
+  CLAUDE.md と各 SKILL.md/agent .md で一貫して記述されている。
+
+  sdd-builder.md の tasks-generation.md 参照は xrefs で MISSING_RELATIVE_TARGET とマークしたが、
+  これはビルダーが `{{SDD_DIR}}/settings/rules/agent/tasks-generation.md` (インストール先) を
+  参照しているため。framework/ パスではなくインストール後のパスを使うのは仕様通りであり、
+  実運用上の問題ではない。

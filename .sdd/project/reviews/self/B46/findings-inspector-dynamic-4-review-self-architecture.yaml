@@ -1,0 +1,150 @@
+scope: "inspector-dynamic-4-review-self-architecture"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "instruction-completeness"
+    location: "framework/claude/skills/sdd-review-self/references/briefer.md:73-76"
+    summary: "briefer.md Step 4 の fill-in 指示に {HEURISTICS_CONTENT} プレースホルダーが未記載"
+    detail: |
+      briefer.md Step 4 は「Follow that structure exactly, filling in FILE_LIST and deny_patterns from the preceding steps」と記述しているが、
+      shared-prompt-structure.md には3つのプレースホルダー（{FILE_LIST}、{deny_patterns}、{HEURISTICS_CONTENT}）が存在する。
+      Step 3b で HEURISTICS_CONTENT を収集しているにもかかわらず、Step 4 の fill-in 指示には FILE_LIST と deny_patterns の2つしか列挙されていない。
+      リテラルに解釈するエンジンは HEURISTICS_CONTENT を未展開のままにする可能性がある。
+    impact: |
+      shared-prompt.md に「{HEURISTICS_CONTENT — from .sdd/settings/rules/lead/bash-security-heuristics.md}」
+      というリテラル文字列が残った場合、Inspector への Bash セキュリティヒューリスティクス情報の伝達が失敗し、
+      フレームワーク意図的パターンが誤って issues としてレポートされるリスクがある。
+    recommendation: |
+      briefer.md Step 4 を以下のように更新する:
+      「Read the shared-prompt structure definition from {TEMPLATE_DIR}/shared-prompt-structure.md.
+      Follow that structure exactly, filling in:
+      - {FILE_LIST} from Step 2
+      - {HEURISTICS_CONTENT} from Step 3b
+      - {deny_patterns} from Step 3
+      Write the result to {ACTIVE_DIR}/shared-prompt.md.」
+
+  - id: "F2"
+    severity: "M"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:206-227"
+    summary: "SKILL.md Step 9 の verdicts.yaml サンプルに batches: ラッパーキーが欠落"
+    detail: |
+      SKILL.md Step 9 は verdicts.yaml のバッチエントリを以下の形式で示している:
+        - seq: {B_SEQ}
+          type: "self"
+          ...
+      これはリストアイテムのみで、トップレベルの batches: キーが示されていない。
+      一方、verdict-format.md Section 4 は正しく batches: をトップレベルキーとして定義している。
+      SKILL.md Step 3 と briefer.md Step 5 は batches[].seq と参照しており一致するが、Step 9 のサンプルが矛盾する。
+    impact: |
+      Lead が Step 9 の形式をそのまま適用すると、verdicts.yaml を batches: ラッパーなしのベアリストとして
+      作成・更新する可能性がある。その場合、Step 3 の max(batches[].seq) + 1 計算が失敗し、
+      以降の実行で B_SEQ が常に 1 になる（シーケンス重複）。
+    recommendation: |
+      SKILL.md Step 9 の verdicts.yaml フォーマットサンプルを以下のように修正する:
+        batches:
+          - seq: {B_SEQ}
+            type: "self"
+            scope: "framework"
+            date: "{ISO-8601 timestamp via date command}"
+            ...
+      または「verdict-format.md Section 4 のスキーマに準拠して batches: キー下に追記する」と明示する。
+
+  - id: "F3"
+    severity: "M"
+    category: "install-artifact-leak"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1:1"
+    summary: "SKILL.md.bak1 が install.sh によってユーザー環境にコピーされる"
+    detail: |
+      install.sh の install_dir 関数（line 454-457）は `find "$src_dir" -type f` で対象ファイルを列挙する。
+      これは拡張子を問わずすべてのファイルを含むため、
+      framework/claude/skills/sdd-review-self/SKILL.md.bak1 も対象となり、
+      .claude/skills/sdd-review-self/SKILL.md.bak1 としてユーザー環境にインストールされる。
+    impact: |
+      バックアップファイルがユーザー環境に配布・インストールされる。
+      直接の機能障害はないが、.claude/skills/ ディレクトリが汚染され、
+      ユーザーが混乱する可能性がある（特に skills ディレクトリを走査するツールが誤ってロードするリスク）。
+    recommendation: |
+      以下のいずれかを実施する:
+      (a) framework/claude/skills/sdd-review-self/SKILL.md.bak1 を削除する（推奨）。
+      (b) install.sh の install_dir を `find "$src_dir" -type f -not -name "*.bak*"` に変更して
+          バックアップファイルを除外する。
+
+  - id: "F4"
+    severity: "L"
+    category: "design-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/references/auditor.md:8-12"
+    summary: "auditor.md が findings / decisions パスをハードコードしており、SKILL.md が渡す auditor-header.md の情報が実質無視される"
+    detail: |
+      SKILL.md Step 6 は「Build a prompt header listing the available findings file paths and the decisions.yaml path」
+      として auditor-header.md を作成し、Auditor に渡すと記述している。
+      しかし auditor.md は以下のようにパスをハードコードしている:
+        - .sdd/project/reviews/self/active/findings-inspector-flow.yaml
+        - .sdd/project/reviews/self/active/findings-inspector-consistency.yaml
+        - .sdd/project/reviews/self/active/findings-inspector-compliance.yaml
+        - .sdd/session/decisions.yaml
+      外部エンジン（codex/claude/gemini）は auditor.md のハードコードパスを使用するため、
+      auditor-header.md に記載されたパス情報は事実上無視される。
+    impact: |
+      現在は ACTIVE = .sdd/project/reviews/self/active/ と固定のため機能的問題はない。
+      しかし設計意図（ヘッダーでパスを動的に渡す）と実装（ハードコード）が乖離しており、
+      将来のパス変更時に SKILL.md だけ修正して auditor.md を修正し忘れるリスクがある。
+    recommendation: |
+      設計を統一する:
+      (a) auditor.md のパスを「In the provided header, find the findings paths and decisions.yaml path」のように
+          ヘッダー参照に変更する（動的設計を採用する場合）。
+      (b) または SKILL.md Step 6 から「decisions.yaml path をヘッダーに含める」記述を削除し、
+          auditor.md のハードコード設計を正式化する（静的設計を採用する場合）。
+
+  - id: "F5"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:45-48"
+    summary: "briefer-header.md のラベル名と briefer.md の変数名が対応関係なしに使用されている"
+    detail: |
+      SKILL.md Step 4 が briefer-header.md に書き込むラベル:
+        - "Output directory: {ACTIVE}"
+        - "Template directory: {SKILL_DIR}/references/"
+        - "Verdicts file: {SCOPE_DIR}/verdicts.yaml"
+      briefer.md が参照する変数名:
+        - ACTIVE_DIR
+        - TEMPLATE_DIR
+        - VERDICTS_PATH
+      両者の対応関係を明示するパース仕様がなく、LLM の推論に依存している。
+    impact: |
+      LLM は文脈から正しく推論するため通常は問題にならないが、
+      パース仕様の欠如により、将来ヘッダー形式を変更する際に briefer.md との同期が保証されない。
+    recommendation: |
+      SKILL.md Step 4 の briefer-header.md 内容に変数名を一致させる:
+        "ACTIVE_DIR: {ACTIVE}"
+        "TEMPLATE_DIR: {SKILL_DIR}/references/"
+        "VERDICTS_PATH: {SCOPE_DIR}/verdicts.yaml"
+      または briefer.md に「各フィールドの読み取り方法」のパース指示を追加する。
+
+notes: |
+  調査対象: sdd-review-self の新アーキテクチャ（Briefer → Inspector × N → Auditor 委譲モデル）における
+  SKILL.md / references/ / CLAUDE.md 間の整合性。
+
+  CLAUDE.md 記述との整合性 (Focus 1):
+  CLAUDE.md は「sdd-review-self: 3 fixed (flow/consistency/compliance) +1-4 dynamic」と記述。
+  SKILL.md Step 5 は「3 fixed + N dynamic (from manifest)」と記述。一致している。
+
+  Briefer dispatch 整合性 (Focus 2):
+  SKILL.md Step 4 の briefer-header.md 書き込みロジックと briefer.md の手順は概ね整合しているが、
+  F1（HEURISTICS_CONTENT fill-in 未記載）と F5（ラベル名不一致）の軽微な問題がある。
+  briefer.md の NO_CHANGES → briefer-status.md 書き込み、成功時の EXT_BRIEFER_COMPLETE 出力は
+  SKILL.md Step 4 Briefer Completion の検証ロジックと整合している。
+
+  Auditor dispatch 整合性 (Focus 3):
+  auditor.md のパスハードコードは F4 として指摘。機能的には ACTIVE パスが固定のため問題なし。
+
+  shared-prompt-structure.md Template 整合性 (Focus 4):
+  Template の3つのプレースホルダーのうち2つは briefer.md Step 4 に明示されている。
+  F1 として指摘済み。構造自体は briefer.md Step 1-3b の収集ステップと対応している。
+
+  SKILL.md.bak1 問題 (Focus 5):
+  install.sh の find -type f パターンがすべてのファイルを対象とするため、
+  バックアップファイルがユーザー環境に配布される（F3）。削除が推奨される。
+
+  重大度なし（C=Critical）の所見はなし。機能的ブロッカーなし。
+  最優先対応: F3（SKILL.md.bak1 削除）はリリース前に実施が必要。

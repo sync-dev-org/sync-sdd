@@ -1,0 +1,153 @@
+scope: "inspector-compliance"
+issues: []
+compliance:
+  - target: "agent-frontmatter-required-fields"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields"
+    notes: >
+      All 5 agents (sdd-analyst, sdd-architect, sdd-builder, sdd-taskgenerator,
+      sdd-conventions-scanner) have valid `name` and `description` fields.
+      Official docs list name and description as the only required fields.
+
+  - target: "agent-frontmatter-model-values"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#choose-a-model"
+    notes: >
+      All agents use `model: sonnet` or `model: opus`. Official docs specify
+      valid aliases are sonnet, opus, haiku, and inherit. Both values in use
+      are valid.
+
+  - target: "agent-frontmatter-background-field"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields"
+    notes: >
+      All 5 agents set `background: true`. Official docs confirm `background`
+      is a valid optional frontmatter field. When true, the agent always runs
+      as a background task — consistent with SDD framework design.
+
+  - target: "agent-frontmatter-tools-field"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#available-tools"
+    notes: >
+      All agents specify tools. All referenced tool names (Read, Glob, Grep,
+      Write, Edit, Bash, WebSearch, WebFetch) are valid Claude Code internal
+      tools per official documentation.
+
+  - target: "skills-frontmatter-format"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/skills#frontmatter-reference"
+    notes: >
+      All 12 skills have valid description fields. Official docs state `name`
+      is optional (defaults to directory name if omitted). sdd-publish-setup
+      omits `name` — valid, directory name sdd-publish-setup is used.
+      sdd-forge-skill omits `allowed-tools` and `argument-hint` — both
+      optional per docs. All other frontmatter fields used (argument-hint,
+      allowed-tools, disable-model-invocation) are documented valid fields.
+
+  - target: "skills-allowed-tools-format"
+    status: "UNCERTAIN"
+    citation: ""
+    notes: >
+      Skills use two formats for allowed-tools: comma-separated (e.g.,
+      "Bash, Read, Write") and space-separated (e.g., "Read Write Edit Glob
+      Grep Bash"). Official documentation examples consistently show
+      comma-separated format. Space-separated format (used by sdd-review-self,
+      sdd-handover, sdd-log) is valid YAML string but whether Claude Code
+      parser treats both equivalently is not documented. Both formats parse
+      as a single YAML string — behavior depends on Claude Code's internal
+      parsing. Lead should verify space-separated format works in practice.
+
+  - target: "agent-tool-dispatch-subagent-type"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#built-in-subagents"
+    notes: >
+      sdd-roadmap and sdd-reboot use Agent(subagent_type="sdd-analyst|sdd-architect|
+      sdd-taskgenerator|sdd-builder|sdd-conventions-scanner") — all match
+      existing agent files in framework/claude/agents/. sdd-review uses
+      Agent(subagent_type="general-purpose") — valid built-in. sdd-forge-skill
+      uses Agent() without subagent_type, defaulting to general-purpose per
+      platform behavior. sdd-review-self instructs dispatching via "Agent tool
+      with run_in_background: true" without specifying subagent_type —
+      effectively defaults to general-purpose. No invalid subagent_type values
+      found.
+
+  - target: "agent-tool-run-in-background"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#run-subagents-in-foreground-or-background"
+    notes: >
+      All SubAgent dispatches in skills use run_in_background: true. Official
+      docs confirm this is a valid Agent tool parameter. CLAUDE.md mandates
+      run_in_background: true for all dispatches — consistent with documented
+      platform capability.
+
+  - target: "settings-permission-format-agent"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/permissions#agent-subagents"
+    notes: >
+      settings.json allow list uses Agent(sdd-analyst), Agent(sdd-architect),
+      Agent(sdd-builder), Agent(sdd-conventions-scanner), Agent(sdd-taskgenerator).
+      All 5 match existing agent file names. Official docs confirm Agent(name)
+      format for permission rules. Note: docs show this format primarily in
+      deny context, but allow list follows the same Tool(specifier) syntax —
+      format is valid.
+
+  - target: "settings-permission-format-skill"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/skills#restrict-claudes-skill-access"
+    notes: >
+      settings.json allow list uses Skill(sdd-roadmap), Skill(sdd-steering),
+      etc. for all 12 skills. Official docs confirm Skill(name) format for
+      permission rules. All skill names match actual skill directories. Valid.
+
+  - target: "settings-permission-default-mode"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/permissions#permission-modes"
+    notes: >
+      settings.json uses defaultMode: "acceptEdits". Official docs list
+      acceptEdits as a valid permission mode that auto-accepts file edits.
+
+  - target: "askuserquestion-excluded-from-allowed-tools"
+    status: "OK"
+    citation: ""
+    notes: >
+      No skill's allowed-tools list includes AskUserQuestion. This matches
+      the framework's design rule (CLAUDE.md and MEMORY.md) that AskUserQuestion
+      must not appear in allowed-tools due to auto-approval UI bug. Consistent
+      across all 12 skills.
+
+  - target: "subagent-nesting-constraint"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#note-subagents-cannot-spawn-other-subagents"
+    notes: >
+      Official docs state subagents cannot spawn other subagents. The SDD
+      framework's agent definitions (sdd-builder, sdd-architect, etc.) do not
+      include Agent tool in their tools lists, correctly preventing subagent
+      nesting. sdd-analyst and sdd-architect use WebSearch/WebFetch but not
+      Agent. Constraint is respected.
+
+  - target: "general-purpose-agent-no-file-needed"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents#built-in-subagents"
+    notes: >
+      general-purpose is a Claude Code built-in subagent. No agent definition
+      file is needed or expected for it. sdd-review correctly uses
+      subagent_type="general-purpose" without a corresponding custom agent file.
+      settings.json does not list Agent(general-purpose) in allow rules —
+      correct, as built-in agents do not require explicit permission entries.
+
+notes: |
+  Review covered: 5 agent definition files, 12 skill SKILL.md files,
+  framework/claude/settings.json, and SubAgent dispatch patterns in
+  framework/claude/CLAUDE.md and skill ref files.
+
+  Web sources consulted:
+    - https://code.claude.com/docs/en/sub-agents (agent frontmatter, model values, background field, tools)
+    - https://code.claude.com/docs/en/skills (skills frontmatter, allowed-tools, argument-hint)
+    - https://code.claude.com/docs/en/permissions (settings.json permission syntax)
+
+  One UNCERTAIN item: space-separated vs comma-separated allowed-tools format.
+  Affects sdd-review-self, sdd-handover, sdd-log. Functionally likely equivalent
+  since both are YAML strings, but not explicitly documented. Lead should verify.
+
+  No NG (non-compliant) items found. All checked items are either clearly
+  compliant with official documentation or UNCERTAIN due to documentation gaps.

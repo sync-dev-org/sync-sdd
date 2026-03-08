@@ -1,0 +1,89 @@
+scope: "inspector-dynamic-3-rules-path-migration"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "migration-completeness"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:29"
+    summary: "rules/*.md グロブがサブディレクトリを収集しない（移行後に破損）"
+    detail: |
+      `settings/templates/review-self/briefer.md` Step 2 のファイルリスト収集に
+      `framework/claude/sdd/settings/rules/*.md` が使われている。
+      単一アスタリスクは直下ファイルのみマッチするため、`rules/agent/` と `rules/lead/`
+      配下の全ファイル（9ファイル）を収集できない。
+      移行前は rules/ 直下に `.md` が存在したためこのパターンで問題なかったが、
+      `agent/` / `lead/` サブディレクトリへの移行後にこのグロブが機能しなくなった。
+      （なお現在の SKILL.md はこのテンプレートを参照せず `references/briefer.md` を使用するため
+      実行時への直接影響はないが、テンプレートの状態が不整合である）
+    impact: |
+      このテンプレートを使った外部エンジン実行（将来的な参照復帰や別経路での利用）では
+      rules 配下の全ファイル（design-principles.md, verdict-format.md など）が
+      TARGET_FILES に含まれず、Inspector が見落とすリスクがある。
+    recommendation: |
+      `framework/claude/sdd/settings/rules/*.md` を
+      `framework/claude/sdd/settings/rules/**/*.md` に変更する。
+      参照元の `skills/sdd-review-self/references/briefer.md:32` が既に `**/*.md` を使っており、
+      テンプレート側をそれに合わせる。
+
+  - id: "F2"
+    severity: "M"
+    category: "migration-completeness"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:26"
+    summary: "skills サブディレクトリ名が旧式 refs → references に未更新"
+    detail: |
+      同ファイル Step 2 のグロブに `framework/claude/skills/sdd-*/refs/*.md` が残っている。
+      現在のフレームワークでは `refs/` は `references/` にリネームされており、
+      `refs/` というディレクトリは存在しない。
+      参照元の `skills/sdd-review-self/references/briefer.md:29` は既に
+      `framework/claude/skills/sdd-*/references/*.md` を使っている。
+    impact: |
+      このテンプレートが使われた場合、sdd-forge-skill/references/ や
+      sdd-review-self/references/ 配下の参照ドキュメントが
+      FILE_LIST に含まれない。Inspector が重要なドキュメントを見落とす。
+    recommendation: |
+      `framework/claude/skills/sdd-*/refs/*.md` を
+      `framework/claude/skills/sdd-*/references/*.md` に変更する。
+
+  - id: "F3"
+    severity: "L"
+    category: "stale-artifact"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1"
+    summary: "バックアップファイル SKILL.md.bak1 がリポジトリに残留"
+    detail: |
+      `SKILL.md.bak1` は旧バージョンのバックアップファイルで、
+      `.sdd/settings/templates/review-self/briefer.md` への旧式参照（F1/F2 の破損パス）を含む。
+      このファイル自体はビルドやインストールに影響しないが、
+      stale な情報源として混乱を招く可能性がある。
+    impact: |
+      開発者が誤ってバックアップから旧参照を復帰させるリスク。
+      また install.sh の `install_dir` がこのファイルを `.claude/skills/sdd-review-self/SKILL.md.bak1`
+      にコピーする可能性があり、ユーザー環境を汚染する。
+    recommendation: |
+      `framework/claude/skills/sdd-review-self/SKILL.md.bak1` を削除する。
+      バックアップが必要な場合は git 履歴を利用する。
+
+notes: |
+  ## 調査サマリー
+
+  ### 確認済み（問題なし）
+  - `framework/claude/CLAUDE.md`: `rules/agent/` および `rules/lead/` パスを正しく使用 ✓
+  - `framework/claude/agents/sdd-architect.md`: `rules/agent/` パスを正しく使用 ✓
+  - `framework/claude/agents/sdd-taskgenerator.md`: `rules/agent/` パスを正しく使用 ✓
+  - `framework/claude/agents/sdd-builder.md`: rules 参照なし（問題なし） ✓
+  - `framework/claude/skills/sdd-roadmap/SKILL.md`: `rules/agent/verdict-format.md` を正しく参照 ✓
+  - `framework/claude/skills/sdd-review/SKILL.md`: `rules/lead/tmux-integration.md` を正しく参照 ✓
+  - `framework/claude/skills/sdd-review-self/SKILL.md`: `rules/agent/verdict-format.md` を正しく参照 ✓
+  - `framework/claude/skills/sdd-review-self/references/briefer.md`: `rules/**/*.md` を正しく使用 ✓
+  - `install.sh`: `install_dir` が再帰コピーのため新サブディレクトリ構造を自動対応 ✓
+  - `remove_stale` 関数: `find -name "*.md"` で再帰的にファイルを発見するため新構造に対応 ✓
+
+  ### rules/ 配下のソースファイル構成（確認済み）
+  - `rules/agent/`: tasks-generation.md, steering-principles.md, design-principles.md,
+    design-discovery-full.md, design-discovery-light.md, design-review.md, verdict-format.md
+  - `rules/lead/`: tmux-integration.md, bash-security-heuristics.md
+
+  ### アクティブな briefer パスの状態
+  現在の SKILL.md は `{SKILL_DIR}/references/briefer.md` を直接使用しており、
+  `settings/templates/review-self/briefer.md` は参照されていない。
+  `references/briefer.md` は `rules/**/*.md` を使用しており正常。
+  今回の実行で生成された `shared-prompt.md` の Target Files にも
+  `rules/agent/` および `rules/lead/` 配下の全9ファイルが正しく収録されている。

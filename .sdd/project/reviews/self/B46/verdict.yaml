@@ -1,0 +1,361 @@
+verdict: "CONDITIONAL"
+scope: "framework"
+review_type: "self"
+counts:
+  C: 0
+  H: 3
+  M: 10
+  L: 13
+  FP: 6
+files:
+  - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+  - "framework/claude/skills/sdd-roadmap/refs/run.md"
+  - "framework/claude/skills/sdd-roadmap/refs/impl.md"
+  - "framework/claude/sdd/settings/rules/agent/verdict-format.md"
+  - "framework/claude/sdd/settings/rules/lead/tmux-integration.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md"
+  - "framework/claude/skills/sdd-review-self/references/auditor.md"
+  - "framework/claude/skills/sdd-review-self/references/briefer.md"
+  - "framework/claude/sdd/settings/templates/review-self/briefer.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md.bak1"
+  - "framework/claude/skills/sdd-forge-skill/SKILL.md"
+  - "framework/claude/skills/sdd-forge-skill/references/schemas.md"
+issues:
+  # ── HIGH ──────────────────────────────────────────────────────────────────
+  - id: "A1"
+    source: "inspector-flow"
+    severity: "H"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:49"
+    summary: "Part A→B エスカレーション時のステアリング更新実行順序が不明瞭"
+    detail: |
+      Part A Step 3 Cross-Cutting 承認後の指示が「join Part B Step 2」を先に述べ、
+      ステアリング更新（Part B Step 1.3）を補足として記載しているため、
+      Lead が Step 1.3 をスキップして Step 2 から開始する誤解を招くリスクがある。
+    impact: |
+      ステアリング更新がスキップされると Architect が古いコンテキストで設計を行い、
+      revision intent と乖離した design.md が生成される。
+    recommendation: |
+      Step 3 Cross-Cutting 承認フローを番号付きステップで明示:
+      「User accepts → (1) Execute Part B Step 1.3 (steering update), then (2) proceed
+      to Part B Step 2 with revision intent pre-populated. Skip only Part B Step 1.2.」
+    classification: "A"
+
+  - id: "A2"
+    source: "inspector-flow"
+    severity: "H"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:153"
+    summary: "Part B Step 3 で作成した新規 spec が FULL 分類に含まれず tier 実行から漏れる"
+    detail: |
+      Step 2 Impact Analysis は「implementation-complete フェーズのみ」を対象とするため、
+      Step 3 Restructuring Check で新規作成された spec（initialized フェーズ）は
+      FULL リストに入らない。Step 7 は FULL specs のみからティア計画を構築するため、
+      新規 spec が tier 実行から漏れる。
+    impact: |
+      cross-cutting revision で作成した新規 spec が設計・実装されないまま
+      revision が完了してしまう可能性がある。
+    recommendation: |
+      Step 3 末尾に追加:「After spec creation/restructuring: add newly created specs to
+      FULL classification (they require full design + impl pipeline). Update tier plan
+      in Step 7 to include these specs at the appropriate tier based on dependencies.」
+    classification: "B"
+
+  - id: "A3"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "path-inconsistency"
+    location: "framework/claude/sdd/settings/rules/lead/tmux-integration.md:82-83"
+    summary: "tmux-integration.md が sdd-start の Step 番号を誤参照（Step 7 → Step 6）"
+    detail: |
+      Grid Creation セクション「/sdd-start Step 7 で $SID 生成・Lead pane タイトル設定後に実行」
+      および Orphan Cleanup セクションも「Step 7」と記述。しかし sdd-start では
+      SID 生成(6a)/Lead Pane Title(6b)/Orphan Cleanup(6c)/Grid Setup(6d)/state.yaml(6e)
+      は全て Step 6 に含まれ、Step 7 は Pipeline Continuation。
+    impact: "両ファイルを参照して作業する際に混乱が生じる。"
+    recommendation: |
+      tmux-integration.md の「Step 7」参照を「Step 6 (6a-6e)」に修正:
+      Grid Creation → 「Step 6d で」、Orphan Cleanup → 「Step 6c で」
+    classification: "A"
+
+  - id: "A4"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:76-77"
+    summary: "sdd-review-self の codex コマンドが stdin indicator (-) を欠き、-q/-m フラグも不一致"
+    detail: |
+      sdd-review-self の codex コマンドに `-` (stdin 読み取り) がなく、`-q` は廃止済み (I34)、
+      `-m` は sdd-review の `--model` と不一致。codex エンジン使用時にプロンプトが渡されない。
+    impact: "codex エンジン使用時にサイレント失敗し Runtime Escalation が発動する。"
+    recommendation: |
+      codex コマンドを修正:
+      `npx -y @openai/codex exec --full-auto --model {model} -c model_reasoning_effort='"{effort}"' -`
+    classification: "A"
+
+  # ── MEDIUM ────────────────────────────────────────────────────────────────
+  - id: "A5"
+    source: "inspector-flow"
+    severity: "M"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:163"
+    summary: "Readiness Rules の Implementation 条件に誤った Layer 番号が記載"
+    detail: "Layer 2 → Layer 1 の誤記。readiness チェックは Layer 1 の結果を反映する。"
+    impact: "Lead が readiness 評価を遅延させるリスク。"
+    recommendation: "「(Cross-Spec File Ownership Layer 1 result)」に変更。"
+    classification: "A"
+
+  - id: "A6"
+    source: "inspector-flow"
+    severity: "M"
+    category: "flow-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:97"
+    summary: "Part A Step 6 option (d) の Cross-Cutting join に Part B Step 1 スキップ仕様が未記載"
+    detail: "option (d) は「join Part B Step 2」と指示するが、Part B Step 1 の扱いが未記載。"
+    impact: "Lead が Step 1 を全スキップするとステアリング更新が行われない。"
+    recommendation: "option (d) に Step 1.1/1.2/1.3 の扱いを明記。"
+    classification: "A"
+
+  - id: "A7"
+    source: "inspector-flow"
+    severity: "M"
+    category: "verdict-format"
+    location: "framework/claude/sdd/settings/rules/agent/verdict-format.md:165"
+    summary: "disposition コード NO-GO-FIXED の説明が Builder 修正ケースのみをカバー"
+    detail: "Design Review での Architect 修正も同じ disposition を使うが説明に含まれない。"
+    impact: "審査証跡で Design Review の Architect 修正が誤分類される可能性。"
+    recommendation: "「Issues fixed by Builder」→「Issues addressed (Architect for design, Builder for impl)」"
+    classification: "A"
+
+  - id: "A8"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/references/auditor.md:86-88"
+    summary: "self-review Auditor が classification を含めるが verdict-format.md §2 では Lead 専任"
+    detail: |
+      auditor.md は classification: A/B を出力するが verdict-format.md §2 には未定義。
+      §3 Lead Final Verdict でのみ定義。D192 の意図は Auditor draft → Lead confirm だが spec 不整合。
+    impact: "Lead の独立判定が Auditor draft に引きずられる可能性。"
+    recommendation: |
+      選択 A: auditor.md から classification を削除。
+      選択 B: verdict-format.md §2 に「Auditor-suggested, Lead confirms」として追加。
+    classification: "B"
+
+  - id: "A10"
+    source: "inspector-dynamic-3"
+    severity: "M"
+    category: "stale-artifact"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:29"
+    summary: "テンプレート briefer.md の rules/*.md グロブがサブディレクトリを収集しない"
+    detail: "D222 で references/ に自己完結化済み。このテンプレートは SKILL.md から未参照。"
+    impact: "将来参照復帰された場合に rules 配下が見落とされる。"
+    recommendation: "D222 方針に従いテンプレートファイル自体を削除 (dead artifact)。"
+    classification: "A"
+
+  - id: "A11"
+    source: "inspector-dynamic-3"
+    severity: "M"
+    category: "stale-artifact"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:26"
+    summary: "テンプレート briefer.md のスキルサブディレクトリ名が refs → references に未更新"
+    detail: "D222 で依存排除済み。テンプレート自体が dead artifact。"
+    impact: "テンプレートが使われた場合に references/ 配下が欠落。"
+    recommendation: "A10 と同時にテンプレートファイルを削除。"
+    classification: "A"
+
+  - id: "A12"
+    source: "inspector-dynamic-3+inspector-dynamic-4"
+    severity: "M"
+    category: "install-artifact-leak"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1"
+    summary: "SKILL.md.bak1 がリポジトリに残留し install.sh でユーザー環境にコピーされる"
+    detail: |
+      install.sh の install_dir は全ファイルを列挙するため .bak1 もインストール対象になる。
+      handover.md で「修正確定後に削除」として追跡中だが、install leak は即時対応が必要。
+    impact: "バックアップファイルがユーザー環境に配布される。"
+    recommendation: "SKILL.md.bak1 を削除。バックアップが必要な場合は git 履歴を利用。"
+    classification: "A"
+
+  - id: "A13"
+    source: "inspector-dynamic-4"
+    severity: "M"
+    category: "instruction-completeness"
+    location: "framework/claude/skills/sdd-review-self/references/briefer.md:73-76"
+    summary: "briefer.md Step 4 の fill-in 指示に {HEURISTICS_CONTENT} プレースホルダーが未記載"
+    detail: |
+      Step 4 は FILE_LIST と deny_patterns のみ列挙。Step 3b で収集した HEURISTICS_CONTENT が
+      fill-in 指示に含まれていない。D224 のヒューリスティクス配布が機能しない可能性。
+    impact: "Inspector へのヒューリスティクス情報伝達が失敗し FP が多発する。"
+    recommendation: "Step 4 に HEURISTICS_CONTENT を追加。3 項目を明示。"
+    classification: "A"
+
+  - id: "A14"
+    source: "inspector-dynamic-4"
+    severity: "M"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:206-227"
+    summary: "SKILL.md Step 9 の verdicts.yaml サンプルに batches: ラッパーキーが欠落"
+    detail: |
+      Step 9 のサンプルはリストアイテムのみで batches: トップレベルキーが未記載。
+      verdict-format.md §4 は batches: を必須として定義。
+    impact: "B_SEQ が常に 1 になり verdicts.yaml が壊れる可能性。"
+    recommendation: "Step 9 のサンプルに batches: ラッパーキーを追加。"
+    classification: "A"
+
+  # ── LOW ───────────────────────────────────────────────────────────────────
+  - id: "A15"
+    source: "inspector-flow"
+    severity: "L"
+    category: "counter-management"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:74"
+    summary: "fast-track spec のパイプライン完了時にカウンタリセットが未定義"
+    detail: "Island Spec は Wave QG を経由しないためカウンタリセットを受けない。"
+    impact: "実害は限定的。sdd-status 表示が不正確になる可能性。"
+    recommendation: "run.md Step 4 Fast-track にカウンタリセットを追記。"
+    classification: "A"
+
+  - id: "A16"
+    source: "inspector-flow"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-roadmap/refs/impl.md:75"
+    summary: "Pilot Stagger の dispatch 指示に「normally」が残存し foreground 誤解を招く"
+    detail: "「normally」は CLAUDE.md の「run_in_background: true always」と齟齬。"
+    impact: "foreground dispatch 規約違反が発生する可能性。"
+    recommendation: "「normally」を「via Agent tool with run_in_background: true」に置換。"
+    classification: "A"
+
+  - id: "A17"
+    source: "inspector-flow"
+    severity: "L"
+    category: "auto-draft"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:124"
+    summary: "run モード完了時に handover.md が二重 auto-draft される"
+    detail: "run.md Step 8c と SKILL.md §Post-Completion の両方に auto-draft 指示あり。"
+    impact: "機能的影響なし。余分なトークン消費。"
+    recommendation: "SKILL.md §Post-Completion に条件追加。"
+    classification: "B"
+
+  - id: "A18"
+    source: "inspector-flow"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:236"
+    summary: "Part B Step 8.4 のパラレル Design Review 実行メカニズムが未定義"
+    detail: "Skill 呼び出しはシーケンシャルだが並列実行を指示。実行方法が不明確。"
+    impact: "tier 実行が遅くなる可能性。機能的誤りではない。"
+    recommendation: "Agent(run_in_background: true) での並列実行を明記。"
+    classification: "B"
+
+  - id: "A9"
+    source: "inspector-compliance"
+    severity: "L"
+    category: "documentation-uncertainty"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:1-4"
+    summary: "space-separated allowed-tools フォーマットの動作が公式ドキュメント未確認"
+    detail: "sdd-review-self 等がスペース区切り、他スキルはカンマ区切り。実運用では動作中。"
+    impact: "パーサー仕様変更時にツール権限が意図通り設定されないリスク。"
+    recommendation: "カンマ区切りに統一するか動作検証を記録。"
+    classification: "B"
+
+  - id: "A19"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:77"
+    summary: "claude コマンドに --include-partial-messages フラグが欠落"
+    detail: "sdd-review には含まれるが sdd-review-self にはない。"
+    impact: "長時間処理で部分メッセージが欠落する可能性。"
+    recommendation: "--include-partial-messages を追加。"
+    classification: "A"
+
+  - id: "A20"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "protocol-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:78"
+    summary: "gemini コマンドで -p フラグにプロンプト引数がない"
+    detail: "-p の後が --model になり、--model が -p の引数として解釈される可能性。"
+    impact: "gemini エンジン使用時にプロンプトが正しく渡されない可能性。"
+    recommendation: "-p にプロンプト文字列を明示。"
+    classification: "A"
+
+  - id: "A21"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "numeric-inconsistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:219-225"
+    summary: "verdicts.yaml スキーマに conditional エージェント数フィールドが欠落"
+    detail: "verdict-format.md §4 は conditional: を定義するが Step 9 に未記載。"
+    impact: "verdicts.yaml を参照するツールが conditional を期待する場合に対処が必要。"
+    recommendation: "conditional: 0 を Step 9 スキーマに追加。"
+    classification: "A"
+
+  - id: "A22"
+    source: "inspector-dynamic-2"
+    severity: "L"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:202"
+    summary: "evals.json テンプレートに schemas.md 未定義の skill_name フィールド"
+    detail: "SKILL.md サンプルにあるが schemas.md に未定義。"
+    impact: "SKILL.md サンプルとスキーマの乖離。"
+    recommendation: "サンプルから skill_name を削除するか schemas.md に追記。"
+    classification: "A"
+
+  - id: "A23"
+    source: "inspector-dynamic-2"
+    severity: "L"
+    category: "schema-inconsistency"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:205"
+    summary: "evals.json の id 型が SKILL.md (integer) と schemas.md (string) で不一致"
+    detail: "サンプル: id: 1 (integer)、定義: id: string。"
+    impact: "型の不統一。実害は低い。"
+    recommendation: "SKILL.md サンプルを string に統一。"
+    classification: "A"
+
+  - id: "A24"
+    source: "inspector-dynamic-2"
+    severity: "L"
+    category: "documentation-ambiguity"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:270,312"
+    summary: "Analyzer のロール (Role 1 vs Role 2) が呼び出し文脈で未明示"
+    detail: "文脈から推察可能だが明示されていない。"
+    impact: "初回ユーザーが正しいロールを選べない可能性。"
+    recommendation: "各呼び出し箇所にロール番号を括弧書きで補記。"
+    classification: "A"
+
+  - id: "A26"
+    source: "inspector-dynamic-4"
+    severity: "L"
+    category: "documentation-clarity"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:45-48"
+    summary: "briefer-header.md のラベル名と briefer.md の変数名の対応関係が未定義"
+    detail: "Output directory: vs ACTIVE_DIR 等。LLM 推論に依存。"
+    impact: "ヘッダー形式変更時に同期保証なし。"
+    recommendation: "ラベルを変数名に一致させる。"
+    classification: "A"
+
+lead_overrides:
+  - id: "A25"
+    action: "eliminate"
+    rationale: "設計意図通り。外部エンジンは具体的ファイルパスが必要で auditor.md のハードコードは正しい。auditor-header.md はスコープメタデータ提供が目的。D222 の自己完結化方針と整合。"
+  - id: "A9"
+    action: "reclassify"
+    original_severity: "M"
+    new_severity: "L"
+    rationale: "実運用でエラー報告なし。スペース区切りは動作している。仕様未保証だが実害なし。"
+
+disposition: "CONDITIONAL-TRACKED"
+notes: |
+  B46 self-review: 7 Inspector (3 fixed + 4 dynamic) 全完了。
+  codex L1 ENGINE_FAILURE (I34: -q フラグ廃止) により全ステージ claude/sonnet L5 にエスカレーション。
+
+  最重要: A4 (codex コマンド不整合) は I34 と同一根本原因で、-q 削除 + - 追加 + --model 統一が必要。
+  A12 (bak1 install leak) は handover で追跡中だが install 経由のユーザー環境漏洩は即対応推奨。
+  A13 (HEURISTICS_CONTENT 指示漏れ) は D224 の実効性に直結。
+
+  A2 (B): 新規 spec の tier 漏れは cross-cutting revision 時のみ発生するが、
+  発生すると spec が無視されるため影響は大きい。
+
+  テスト実行のため修正は行わない。
