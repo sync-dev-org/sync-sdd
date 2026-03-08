@@ -1,13 +1,13 @@
 ---
 name: sdd-review-self
 description: "Framework self-review for sync-sdd development repo. Runs automated code quality review using external engines (Codex CLI, Claude Code headless, Gemini CLI) or SubAgents against framework/ directory. Use this skill for self-review, framework review, review-self, quality check on framework files, code review of SDD framework, verify framework consistency, check framework compliance, audit framework changes, run self-review pipeline."
-argument-hint: "[--briefer-engine E] [--inspector-engine E] [--auditor-engine E] [--builder-engine E] [--briefer-model M] [--inspector-model M] [--auditor-model M] [--builder-model M] [--briefer-effort low|medium|high] [--inspector-effort low|medium|high] [--auditor-effort low|medium|high] [--builder-effort low|medium|high]"
+argument-hint: "[--briefer-engine E] [--inspector-engine E] [--auditor-engine E] [--briefer-model M] [--inspector-model M] [--auditor-model M] [--briefer-effort low|medium|high] [--inspector-effort low|medium|high] [--auditor-effort low|medium|high] [--timeout N]"
 allowed-tools: Read Write Edit Glob Grep Bash Agent Skill
 ---
 
 # sdd-review-self
 
-Self-review pipeline for the sync-sdd framework development repository. Dispatches external engines or SubAgents to review `framework/` for flow integrity, cross-file consistency, and platform compliance.
+Self-review pipeline for the sync-sdd framework development repository. Dispatches external engines or SubAgents to review `framework/` for flow integrity, cross-file consistency, and platform compliance. Lead acts as supervisor — it does not read Inspector findings directly (context preservation) but reviews the Auditor's synthesized verdict, applying FP judgment and severity corrections that require session context (D121).
 
 ## Gate Check
 
@@ -15,14 +15,15 @@ Self-review pipeline for the sync-sdd framework development repository. Dispatch
 
 ## Step 1: Parse Arguments
 
-Parse `$ARGUMENTS` for per-stage overrides. Each stage (briefer, inspectors, auditor, builder) accepts `--{stage}-engine`, `--{stage}-model`, `--{stage}-effort`. Unspecified stages use the level chain from engines.yaml.
+Parse `$ARGUMENTS` for per-stage overrides. Each stage (briefer, inspectors, auditor) accepts `--{stage}-engine`, `--{stage}-model`, `--{stage}-effort`. Also parse `--timeout <seconds>`. Unspecified stages use the level chain from engines.yaml.
 
 ## Step 2: Resolve Engine Levels
 
-Read `.sdd/settings/engines.yaml`. For each stage (briefer, inspectors, auditor, builder):
+Read `.sdd/settings/engines.yaml`. For each stage (briefer, inspectors, auditor):
 1. If argument override provided, use that engine/model/effort directly.
 2. Otherwise, check `session/state.yaml` for sticky escalated level. If present, use it.
 3. Otherwise, use `roles.review-self.stages.{stage}.start_level` to look up engine/model/effort from `levels`.
+4. Resolve timeout: `--timeout` argument > engines.yaml `roles.review-self.timeout` > 900 (hardcoded default).
 
 For each resolved engine (codex/claude/gemini), run `install_check` from engines.yaml. On failure, escalate to the next level in the chain. If all external levels fail, fall back to L0 (subagents). Record escalated level in `session/state.yaml` (sticky for session).
 
@@ -39,16 +40,17 @@ Determine `B_SEQ`: read `$SCOPE_DIR/verdicts.yaml`. If it exists, next seq = max
 
 ## Step 4: Dispatch Briefer
 
-Read `${CLAUDE_SKILL_DIR}/references/briefer.md` for the full Briefer instructions.
+Lead does NOT read the Briefer template — it is delivered directly to the engine to preserve Lead's context.
 
-Build the Briefer prompt by prepending the scope paths:
-```
-Output directory: {ACTIVE}
-Template directory: ${CLAUDE_SKILL_DIR}/references/
-Verdicts file: {SCOPE_DIR}/verdicts.yaml
-```
+1. Write a scope-header file to `{ACTIVE}/briefer-header.md` containing:
+   - `Output directory: {ACTIVE}`
+   - `Template directory: {SKILL_DIR}/references/`
+   - `Verdicts file: {SCOPE_DIR}/verdicts.yaml`
+   Where `{SKILL_DIR}` is the resolved `${CLAUDE_SKILL_DIR}` path.
 
-Dispatch the Briefer using the resolved engine for the `briefer` stage.
+2. Dispatch the Briefer using the resolved engine for the `briefer` stage:
+   - **SubAgent mode**: Pass scope paths inline in the prompt + instruct it to Read `{SKILL_DIR}/references/briefer.md`.
+   - **tmux/background mode**: `cat {ACTIVE}/briefer-header.md {SKILL_DIR}/references/briefer.md | {engine_cmd}`
 
 ### Dispatch Modes (applies to all stages)
 
@@ -61,6 +63,7 @@ Determine dispatch mode from engine type and environment:
 - Build engine command (see Engine Command Construction below).
 - `tmux send-keys -t {pane_id} '{prompt_delivery} | {engine_cmd}; tmux wait-for -S {channel}' Enter`
 - Update state.yaml slot: status -> busy, agent -> "briefer", engine -> "{engine}", channel -> "{channel}".
+- After send-keys, verify delivery: `pgrep -fl "tmux send-keys"` (exit 1 = normal). If residual process detected: report PID and kill — it indicates the target pane did not accept the command.
 - Wait via `Bash(run_in_background=true)`: `tmux wait-for {channel}`
 - On completion: update state.yaml slot back to idle.
 
@@ -76,7 +79,7 @@ Determine dispatch mode from engine type and environment:
 
 For codex/claude: prompt is delivered via stdin pipe (`cat {prompt_file} | {engine_cmd}`).
 For gemini: prompt is passed as the last positional argument (read prompt file content and pass inline).
-For subagents with effort=high: include "ultrathink" keyword in prompt.
+For subagents: map model name to Agent `model` parameter — names containing "spark" or "haiku" → `"haiku"`, "opus" → `"opus"`, otherwise → `"sonnet"`. With effort=high: include "ultrathink" keyword in prompt.
 
 ### Briefer Completion
 
@@ -107,8 +110,9 @@ For background mode: dispatch all via `Bash(run_in_background=true)`.
 After a stage completes, check for the expected output file. If missing:
 1. Capture failure output (tmux: capture-pane; background: task output).
 2. Classify failure:
-   - **ENGINE_FAILURE**: API 5xx, rate limit (429), connection error, timeout. Skip same engine, jump to next engine type (codex -> claude L5, claude -> L0).
+   - **ENGINE_FAILURE**: API 5xx, rate limit (429), connection error. Skip same engine, jump to next engine type (codex -> claude L5, claude -> L0).
    - **LEVEL_FAILURE**: empty output, YAML syntax error, agent produced no findings file. Advance to next level in chain.
+   - **Timeout**: Agent exceeds resolved timeout. Treat as ENGINE_FAILURE — escalate to a different engine, not just a higher level in the same engine. For tmux: send C-c to terminate before re-dispatch.
    - Ambiguous -> treat as ENGINE_FAILURE (conservative).
 3. Re-dispatch the failed Inspector with the escalated engine.
 4. Record escalation via `/sdd-log issue` (type: BUG, summary: "Runtime escalation: {inspector} {failure_type} at {level}").
@@ -126,11 +130,13 @@ For tmux mode: release all slots by sending the close channel signal (`tmux wait
 
 ## Step 6: Dispatch Auditor
 
-Read `${CLAUDE_SKILL_DIR}/references/auditor.md` for the full Auditor instructions.
+Lead does NOT read the Auditor template.
 
-Build the Auditor prompt listing the available findings files and the decisions.yaml path.
+Build a prompt header listing the available findings file paths and the `decisions.yaml` path. Write to `{ACTIVE}/auditor-header.md`.
 
-Dispatch using the resolved engine for the `auditor` stage. Same dispatch mode logic as Step 4.
+Dispatch the Auditor using the resolved engine for the `auditor` stage:
+- **SubAgent mode**: Pass the header content inline + instruct it to Read `{SKILL_DIR}/references/auditor.md`.
+- **tmux/background mode**: `cat {ACTIVE}/auditor-header.md {SKILL_DIR}/references/auditor.md | {engine_cmd}`
 
 ### Auditor Completion
 
@@ -175,33 +181,22 @@ Present the full verdict to the user with ALL fields expanded. Do not compress i
 For **B items**: include `impact`, `options` (if applicable), and `recommendation` for each.
 
 User approves, rejects, or defers each item:
-- `approved` -> will be fixed by Builder
+- `approved` -> will be fixed by Lead in Step 8
 - `rejected` -> move to `fp_eliminated` (user-confirmed FP)
 - `deferred` -> add to `tracked`, record via `/sdd-log issue` (type: ENHANCEMENT, status: deferred)
 
 Update `verdict.yaml` with `user_decision` for each item.
 
-For **A items**: auto-approved (present for visibility, proceed to Builder without waiting).
+For **A items**: auto-approved (present for visibility, proceed to Lead Fix).
 
-## Step 8: Dispatch Builder
+## Step 8: Lead Fix
 
-Collect all items with `user_decision: approved` (A items auto-approved + user-approved B items). If none, skip to Step 9.
+Collect all items with `user_decision: approved` (A + B approved). If none, skip to Step 9.
 
-Read `${CLAUDE_SKILL_DIR}/references/builder.md`. Build the Builder prompt by expanding placeholders:
-- `{{DENY_PATTERNS}}`: from engines.yaml
-- `{{FINDINGS}}`: YAML list of approved items (id, location, detail, recommendation)
-- `{{TEST_CMD}}`: empty (framework has no test suite)
-- `{{OUTPUT_PATH}}`: `active/builder-report.yaml`
-
-Dispatch using the resolved engine for the `builder` stage. Same dispatch mode logic.
-
-### Builder Completion
-
-Read `active/builder-report.yaml`. For each item:
-- `result: fixed` -> set `resolution: fixed` in verdict.yaml
-- `result: skipped` -> set `resolution: deferred` in verdict.yaml, record reason
-
-Update verdict.yaml with resolution fields.
+Lead directly applies fixes to the codebase:
+1. For each approved item, read the target file and apply the fix per the recommendation. Set `resolution: fixed` in verdict.yaml.
+2. After all fixes, verify with `git diff` and report: `Fixed {N}/{total} items. Files modified: {list}`
+3. Items that cannot be fixed (insufficient context, wide impact): set `resolution: deferred` in verdict.yaml and report reason.
 
 ## Step 9: Verdict Persistence
 
@@ -219,7 +214,7 @@ Append a new batch entry to `$SCOPE_DIR/verdicts.yaml` following verdict-format.
     briefer: "{actual model used}"
     inspectors: "{actual model used}"
     auditor: "{actual model used}"
-    builder: "{actual model used, or omit if no Builder}"
+    builder: "lead"
   agents:
     fixed: 3
     dynamic: {N from manifest}

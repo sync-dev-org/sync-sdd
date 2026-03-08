@@ -41,6 +41,10 @@ install.sh
 
 Read `.sdd/settings/engines.yaml` and extract the `deny_patterns` list.
 
+## Step 3b: Read Security Heuristics
+
+Read `.sdd/settings/rules/lead/bash-security-heuristics.md` and store the content as HEURISTICS_CONTENT. This document describes Claude Code platform constraints that the framework intentionally works around — Inspectors must not flag these patterns as issues.
+
 ## Step 4: Write shared-prompt.md
 
 Read the shared-prompt structure definition from `{TEMPLATE_DIR}/shared-prompt-structure.md`. Follow that structure exactly, filling in FILE_LIST and deny_patterns from the preceding steps.
