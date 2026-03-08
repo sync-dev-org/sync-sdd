@@ -62,6 +62,11 @@ suppression.
 
 This flush ensures nothing is lost before consolidation rewrites the files.
 
+**CRITICAL**: After flush completes, immediately proceed to Step 4 in the
+same response. Do NOT stop or wait for user input between Step 3 and Step 4.
+The Skill tool invocation creates a turn boundary — you must explicitly
+continue the handover flow after the flush result is returned.
+
 ### Step 4: Consolidate Session Data
 
 This is the core maintenance step. First, create all archive directories in one call:

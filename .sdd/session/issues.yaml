@@ -45,3 +45,12 @@ entries:
     detail: "現在は sdd-review-self の engine resolution 中に claude engine 使用時のみ jq チェックしている。sdd-review も同じ依存がある。sdd-start で一括チェック + 自動インストールすればセッション中の全スキルで保証される。クロスプラットフォーム対応: macOS (brew install jq)、Windows (winget install jq)、Linux/WSL2/Docker (apt install jq をデフォルトとし、ディストリ違いは Lead に自律判断させる)。sdd-review-self reforge (I28) からは jq チェックを除去し sdd-start に委譲"
     source: "user"
     created_at: "2026-03-08T14:16:30+0900"
+
+  - id: "I31"
+    type: "BUG"
+    status: "open"
+    severity: "H"
+    summary: "sdd-handover Step 3 の Skill ネスト (/sdd-log flush) 後に Lead が停止 — フロー継続性の欠如"
+    detail: "sdd-handover 実行中、Step 3 で /sdd-log flush を Skill ツールで呼び出した後、Lead のレスポンスが flush 結果報告で終了し Step 4 に進まなかった。ユーザーが「止まってませんか？」と介入するまでフローが中断。原因: (1) Skill 展開が Human メッセージとして注入されるためターン境界が発生 (2) SKILL.md に Step 3→4 の即時継続指示がない。I30 (AskUserQuestion 消失) とは別の問題だが、同じく handover 未完了を引き起こす。修正案: Step 3 に「flush 完了後、ユーザー入力を待たず即座に Step 4 に進むこと」を明記"
+    source: "user"
+    created_at: "2026-03-08T14:51:52+0900"

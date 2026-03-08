@@ -1,7 +1,7 @@
 # Session Handover
 **Generated**: 2026-03-08T14:46:58+0900
 **Branch**: main
-**Session Goal**: sdd-handover I30 修正 + 前セッション文脈復元
+**Session Goal**: sdd-handover I30/I31 修正 + 前セッション文脈復元
 
 ## Direction
 
@@ -11,7 +11,7 @@
 
 ### Active Goals
 - **sdd-review-self reforge 修正** (I28): Concerns 6項目の判定完了、修正実装待ち
-- **sdd-handover 修正済み**: I30 resolved — AskUserQuestion 明示指定を Step 6/8 に復元
+- **sdd-handover 修正済み**: I30 resolved (AskUserQuestion 明示指定復元) + I31 (Skill ネスト後のフロー継続指示追加)
 
 ### Key Decisions
 **Continuing from previous sessions:**
@@ -43,9 +43,10 @@
 ## Accomplished
 
 ### Work Summary (this session)
-1. **I30 検出・調査・修正**: sdd-handover の reforge で AskUserQuestion 明示指定が消失していた。Step 6/8 に CRITICAL コメント付きで復元。install.sh --local --force で反映確認
-2. **前セッション文脈復元**: ユーザーがログを発掘。sdd-review-self reforge Diff Analysis の全 Concerns 判定テーブルを復元
-3. **K23 記録**: reforge の構造的弱点 (具体的ツール名の消失) を knowledge に記録
+1. **I30 検出・調査・修正**: sdd-handover の reforge で AskUserQuestion 明示指定が消失していた。Step 6/8 に CRITICAL コメント付きで復元
+2. **I31 検出・修正**: Step 3 の Skill ネスト (/sdd-log flush) 後に Lead が停止。Step 3→4 間に即時継続の CRITICAL 指示を追加
+3. **前セッション文脈復元**: ユーザーがログを発掘。sdd-review-self reforge Diff Analysis の全 Concerns 判定テーブルを復元
+4. **K23 記録**: reforge の構造的弱点 (具体的ツール名の消失) を knowledge に記録
 
 ### sdd-review-self reforge Concerns 判定テーブル (前セッションから復元)
 
@@ -76,8 +77,8 @@
 - v2.5.2 (session 6): forge-skill リネーム + 動作テスト
 
 ### Modified Files
-- `framework/claude/skills/sdd-handover/SKILL.md` — AskUserQuestion 明示指定復元
-- `.sdd/session/issues.yaml` — I30 追加・resolved
+- `framework/claude/skills/sdd-handover/SKILL.md` — AskUserQuestion 明示指定復元 + Skill ネスト後の継続指示追加
+- `.sdd/session/issues.yaml` — I30 resolved, I31 追加
 - `.sdd/session/knowledge.yaml` — K23 追加
 
 ## Open Issues
