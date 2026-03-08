@@ -1,4 +1,5 @@
 ---
+name: sdd-review
 description: "Unified review pipeline for design, impl, and dead-code reviews"
 argument-hint: "design|impl <feature> [--cross-check] [--wave N] [--cross-cutting <specs> --id <cc_id>] | dead-code [--context standalone|wave] [--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--timeout <seconds>]"
 allowed-tools: Agent, Bash, Glob, Grep, Read, Write

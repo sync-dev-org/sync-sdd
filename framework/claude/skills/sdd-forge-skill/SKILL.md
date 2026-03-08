@@ -1,232 +1,202 @@
 ---
 name: sdd-forge-skill
-description: Creates new skills, modifies and improves existing skills, and measures skill performance. Modes - create (draft a new skill from scratch), reforge (rebuild an existing skill from scratch by extracting requirements and generating fresh), improve (iterate on an existing skill with feedback), eval (run test cases and benchmark), compare (blind A/B comparison), optimize-description (improve triggering accuracy). Use when users want to create a skill, edit or optimize an existing skill, reforge or rebuild a skill from scratch, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering.
+description: "Create, rebuild, improve, evaluate, compare, and optimize AI agent skills. Use this skill whenever the user wants to make a skill, create a skill, turn something into a skill, improve a skill, edit a skill, fix a skill, reforge a skill, rebuild a skill from scratch, regenerate a skill, test a skill, run evals, benchmark a skill, compare skill versions, check if a new version is better, optimize a skill description, or improve skill triggering. Covers the full skill lifecycle from idea to polished, tested, well-triggering skill."
 ---
 
 # Skill Forge
 
 Adapted from [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0). See LICENSE.txt.
 
-A skill for creating new skills and iteratively improving them.
+Create, rebuild, improve, evaluate, compare, and optimize AI agent skills through iterative development.
 
 ## Modes
 
-| Mode | Trigger | What happens |
-|------|---------|-------------|
-| `create` | "make a skill", "create a skill", "turn this into a skill" | Interview → SubAgent drafts → Review → Eval → Iterate |
-| `reforge` | "reforge skill", "rebuild skill from scratch", "regenerate skill" | Backup → Extract requirements → SubAgent creates fresh → Lead diff analysis → Iterate |
-| `improve` | "improve skill", "edit skill", "fix skill" | Read existing → Eval → SubAgent improves → Iterate |
-| `eval` | "test skill", "run evals", "benchmark" | Run test cases → Grade → Aggregate → Viewer |
-| `compare` | "compare versions", "is the new version better?" | Blind A/B comparison → Analysis |
-| `optimize-description` | "optimize description", "improve triggering" | Generate eval queries → Run optimization loop → Apply |
+| Mode | Purpose | Entry |
+|------|---------|-------|
+| `create` | Interview user, draft skill, eval, iterate | "make a skill", "create a skill", "turn this into a skill" |
+| `reforge` | Rebuild existing skill from scratch via requirements extraction | "reforge skill", "rebuild skill", "regenerate skill" |
+| `improve` | Iterate on existing skill with feedback | "improve skill", "edit skill", "fix skill" |
+| `eval` | Run test cases, grade, benchmark, review | "test skill", "run evals", "benchmark" |
+| `compare` | Blind A/B comparison of two skill versions | "compare versions", "is the new version better?" |
+| `optimize-description` | Automated description optimization loop | "optimize description", "improve triggering" |
 
-At a high level, the process of creating a skill goes like this:
+The core loop, regardless of mode:
 
-- Decide what you want the skill to do and roughly how it should do it
-- Write a draft of the skill
-- Create a few test prompts and run claude-with-access-to-the-skill on them
-- Help the user evaluate the results both qualitatively and quantitatively
-  - While the runs happen in the background, draft some quantitative evals if there aren't any (if there are some, you can either use as is or modify if you feel something needs to change about them). Then explain them to the user (or if they already existed, explain the ones that already exist)
-  - Use the `eval-viewer/generate_review.py` script to show the user the results for them to look at, and also let them look at the quantitative metrics
-- Rewrite the skill based on feedback from the user's evaluation of the results (and also if there are any glaring flaws that become apparent from the quantitative benchmarks)
-- Repeat until you're satisfied
-- Expand the test set and try again at larger scale
+- Figure out what the skill should do
+- Draft or edit the skill (via SubAgent)
+- Run claude-with-access-to-the-skill on test prompts
+- Evaluate the outputs with the user (quantitative benchmarks + qualitative review via HTML viewer)
+- Iterate until satisfied
+- Optionally optimize the description for better triggering
 
-Your job when using this skill is to figure out where the user is in this process and then jump in and help them progress through these stages. So for instance, maybe they're like "I want to make a skill for X". You can help narrow down what they mean, write a draft, write the test cases, figure out how they want to evaluate, run all the prompts, and repeat.
+Figure out where the user is in this process and help them progress. Be flexible — if the user says "just vibe with me", skip the formal eval/benchmark loop.
 
-On the other hand, maybe they already have a draft of the skill. In this case you can go straight to the eval/iterate part of the loop.
+## Communicating with the User
 
-Of course, you should always be flexible and if the user is like "I don't need to run a bunch of evaluations, just vibe with me", you can do that instead.
+The skill forge is used by people across a wide range of technical familiarity. Pay attention to context cues:
 
-Then after the skill is done (but again, the order is flexible), you can also run the skill description improver, which we have a whole separate script for, to optimize the triggering of the skill.
+- "evaluation" and "benchmark" are borderline but OK for most users
+- "JSON" and "assertion" — look for cues that the user knows what these mean before using them without a brief explanation
+- When in doubt, briefly explain a term inline
 
-Cool? Cool.
+## Script Execution
 
-## Script execution
-
-All Python scripts bundled with this skill are located at `${CLAUDE_SKILL_DIR}/scripts/` and `${CLAUDE_SKILL_DIR}/eval-viewer/`. When running scripts, use `PYTHONPATH` to ensure module imports resolve correctly:
+All Python scripts are at `${CLAUDE_SKILL_DIR}/scripts/` and `${CLAUDE_SKILL_DIR}/eval-viewer/`. Use `env` prefix with `PYTHONPATH` — bare `PYTHONPATH=... python` triggers Claude Code's environment variable prefix heuristic:
 
 ```bash
-PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.<module_name> <args>
+env PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.<module_name> <args>
 ```
 
-For example:
+Example:
 ```bash
-PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.run_loop --eval-set eval.json --skill-path ./my-skill --model claude-sonnet-4-6 --verbose
+env PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.run_loop --eval-set eval.json --skill-path ./my-skill --model claude-sonnet-4-6 --verbose
 ```
 
-## Communicating with the user
-
-The skill forge is liable to be used by people across a wide range of familiarity with coding jargon. If you haven't heard (and how could you, it's only very recently that it started), there's a trend now where the power of Claude is inspiring plumbers to open up their terminals, parents and grandparents to google "how to install npm". On the other hand, the bulk of users are probably fairly computer-literate.
-
-So please pay attention to context cues to understand how to phrase your communication! In the default case, just to give you some idea:
-
-- "evaluation" and "benchmark" are borderline, but OK
-- for "JSON" and "assertion" you want to see serious cues from the user that they know what those things are before using them without explaining them
-
-It's OK to briefly explain terms if you're in doubt, and feel free to clarify terms with a short definition if you're unsure if the user will get it.
+For non-module scripts (eval-viewer), use the full path:
+```bash
+env PYTHONPATH=${CLAUDE_SKILL_DIR} python ${CLAUDE_SKILL_DIR}/eval-viewer/generate_review.py <args>
+```
 
 ---
 
-## Reforge Mode
+## Mode: Create
 
-Reforge rebuilds an existing skill from scratch. Unlike `improve` (which patches incrementally), reforge extracts the core requirements from the existing skill, then generates a completely fresh SKILL.md via the writer SubAgent. This produces a clean design free from accumulated cruft, while preserving the original intent.
+### Step 1: Interview
 
-Reforge is designed for repeated iteration. Each attempt is versioned as `.bak{N}`, enabling comparison across versions.
-
-### Step 1: Backup
-
-Determine the next backup number by scanning existing `.bak*` files:
-- If no `.bak` files exist → **move** `SKILL.md` to `SKILL.md.bak1`
-- If `.bak1` through `.bak{N}` exist → **move** current `SKILL.md` to `SKILL.md.bak{N+1}`
-
-Use `mv` (not `cp`) — this physically removes the original so the writer SubAgent cannot accidentally read it. The current SKILL.md (about to be replaced) is always the one being backed up.
-
-### Step 2: Requirements Extraction
-
-Read the existing SKILL.md thoroughly. Extract a **requirements summary** — what the skill needs to accomplish, not how it currently does it. This is intentionally high-level ("requirements", not "specifications" or "design").
-
-Extract:
-1. **Purpose**: What does this skill enable? What problem does it solve?
-2. **Trigger contexts**: When should this skill activate? What user phrases/situations?
-3. **Core capabilities**: What are the essential things this skill must do? (numbered list)
-4. **Output expectations**: What does the user expect to see when the skill completes?
-5. **Constraints**: Any hard constraints (line limits, format requirements, security rules)?
-
-Do NOT extract:
-- Implementation details (step-by-step procedures, specific variable names)
-- Internal structure (section headings, reference file organization)
-- Accumulated patches or workarounds
-
-The goal is to give the writer SubAgent a clean brief that communicates *what* is needed without biasing *how* to implement it (K14: requirements-only prompts produce higher-quality output than detailed specifications).
-
-### Step 3: External Interface Inventory
-
-Scan the existing SKILL.md and its bundled resources for external dependencies:
-
-1. **File references**: What files does the skill read or write? (e.g., `references/writer.md`, `scripts/run_loop.py`, `.sdd/session/decisions.yaml`)
-2. **MCP dependencies**: Does the skill use any MCP servers or tools?
-3. **Other skill interactions**: Does the skill trigger or reference other skills?
-4. **Tool dependencies**: What tools does the skill require? (listed in `allowed-tools` or mentioned in the body)
-5. **Environment expectations**: Variables, CLI tools, runtime requirements.
-
-Present the inventory to the user for confirmation. Ask: "Are there any interfaces to add or remove?"
-
-### Step 4: Dispatch Writer
-
-Dispatch the writer SubAgent in `create` mode (not `improve`) with:
-
-1. **Read instruction**: "Read `{CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
-2. **Mode**: `create`
-3. **Skill name and path**: same as the existing skill
-4. **Requirements summary**: from Step 2 (purpose, triggers, capabilities, outputs, constraints)
-5. **External interface inventory**: from Step 3 (file refs, MCP, skill interactions, tools, env)
-6. **Project context paths**: `.sdd/session/decisions.yaml`, `.sdd/session/knowledge.yaml` (if they exist)
-7. **Skill forge resources path**: `${CLAUDE_SKILL_DIR}` value
-8. **Explicit instruction**: "Generate a completely fresh SKILL.md. Do NOT read the existing skill — work only from the requirements and interfaces provided."
-
-### Step 5: Lead Diff Analysis
-
-After the writer SubAgent completes:
-
-1. **Read the new SKILL.md** and the latest backup (`.bak{N}`)
-2. **Diff analysis** — compare the two versions and produce a structured report:
-
-   **Improvements** (things the new version does better):
-   - New structure, clearer organization
-   - Better description (more pushy, better keywords)
-   - Removed cruft or accumulated workarounds
-   - Fresh design decisions
-
-   **Concerns** (things that may have been lost or degraded):
-   - Missing capabilities that were in the original
-   - External interface references that were dropped
-   - Edge cases the original handled that the new version doesn't mention
-   - Regressions in specificity or precision
-
-   **Lead improvement proposals** (further changes Lead recommends):
-   - Specific additions or corrections based on Lead's project knowledge
-   - Alignment with project conventions (decisions.yaml, knowledge.yaml insights)
-   - Description optimization suggestions
-
-3. **Present to user**: Show the analysis with the key diff highlights. Let the user decide:
-   - **Accept**: Keep the new version as-is
-   - **Iterate**: Reforge again (go back to Step 1 — the new version becomes the next `.bak{N+1}`)
-   - **Improve**: Switch to `improve` mode to patch specific issues in the new version
-   - **Revert**: Restore from a specific `.bak{N}` version
-
-### Version Management
-
-The `.bak{N}` files form a version history within the skill directory:
-
-```
-skill-name/
-├── SKILL.md          # Current (latest reforge output)
-├── SKILL.md.bak1     # Original before first reforge
-├── SKILL.md.bak2     # After first reforge (input to second)
-├── SKILL.md.bak3     # After second reforge
-└── ...
-```
-
-To compare any two versions, use the `compare` mode (blind A/B comparison) or ask Lead for a targeted diff analysis. For example: "Compare bak1 and bak3" or "What changed between the original and the latest?"
-
-To clean up old backups: the user can manually delete `.bak{N}` files when they're no longer needed, or ask Lead to prune them.
-
----
-
-## Phase 1: Capture Intent (create / improve)
-
-### Capture Intent
-
-Start by understanding the user's intent. The current conversation might already contain a workflow the user wants to capture (e.g., they say "turn this into a skill"). If so, extract answers from the conversation history first — the tools used, the sequence of steps, corrections the user made, input/output formats observed. The user may need to fill the gaps, and should confirm before proceeding to the next step.
+Gather from the user (extract from conversation history first if context already exists):
 
 1. What should this skill enable Claude to do?
-2. When should this skill trigger? (what user phrases/contexts)
+2. When should this skill trigger? (concrete phrases/contexts)
 3. What's the expected output format?
-4. Should we set up test cases to verify the skill works? Skills with objectively verifiable outputs (file transforms, data extraction, code generation, fixed workflow steps) benefit from test cases. Skills with subjective outputs (writing style, art) often don't need them. Suggest the appropriate default based on the skill type, but let the user decide.
+4. Should we set up test cases? (suggest based on skill type — objective outputs benefit from evals, subjective ones often don't)
 
-### Interview and Research
+Proactively ask about edge cases, dependencies, and example files. Keep it conversational — don't over-interview.
 
-Proactively ask questions about edge cases, input/output formats, example files, success criteria, and dependencies. Wait to write test prompts until you've got this part ironed out.
-
-Check available MCPs - if useful for research (searching docs, finding similar skills, looking up best practices), gather relevant context to reduce burden on the user.
-
----
-
-## Phase 2: Skill Generation (create / improve)
-
-After capturing intent (create mode) or collecting feedback (improve mode), dispatch a SubAgent to draft the skill.
-
-### Dispatch
+### Step 2: Dispatch Writer
 
 Spawn a generic `Agent()` with `run_in_background: true`. The prompt should include:
 
-1. **Read instruction**: "Read `{CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
-2. **Mode**: `create` or `improve`
+1. **Read instruction**: "Read `${CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
+2. **Mode**: `create`
 3. **Skill name and path**: where to write the output
 4. **Intent summary**: structured from the interview — purpose, trigger contexts, output format, edge cases, dependencies
 5. **Project context paths**: `.sdd/session/decisions.yaml`, `.sdd/session/knowledge.yaml` (if they exist)
 6. **Skill forge resources path**: `${CLAUDE_SKILL_DIR}` value
-7. **Feedback** (improve mode): user feedback from previous eval, benchmark data, specific complaints
 
-### Post-Generation Review
+### Step 3: Review Draft
 
-After the SubAgent completes:
+Read the writer's output. Check:
+- Description has 5-10 keyword phrases and pushy tone
+- Body is under 500 lines
+- No `AskUserQuestion` in allowed-tools
+- Instructions explain the why, not just rules
 
-1. Read the generated SKILL.md
-2. Check description: is it pushy with concrete keyword phrases? (K8 best practices)
-3. Check body: under 500 lines?
-4. Check: no `AskUserQuestion` in allowed-tools?
-5. Present the draft to the user for initial feedback
-6. If user wants changes: re-dispatch SubAgent in improve mode with the feedback
+Present the draft to the user. If they want changes, re-dispatch in improve mode.
+
+### Step 4: Eval (optional)
+
+If the user wants to test, switch to Eval mode. Otherwise iterate on feedback.
 
 ---
 
-## Phase 3: Test Cases
+## Mode: Reforge
 
-After writing the skill draft, come up with 2-3 realistic test prompts — the kind of thing a real user would actually say. Share them with the user: "Here are a few test cases I'd like to try. Do these look right, or do you want to add more?" Then run them.
+Rebuild an existing skill from scratch. The key insight: requirements-only prompts produce higher quality than detailed specifications. Strip away implementation details and let the writer rediscover the best approach.
 
-Save test cases to `evals/evals.json`. Don't write assertions yet — just the prompts. You'll draft assertions in the next step while the runs are in progress.
+### Step 1: Backup
+
+Use `mv` (not `cp`) for each file being reforged. Physical removal prevents the writer SubAgent from reading the old version — filesystem constraints are more reliable than prompt constraints.
+
+```
+mv {file} {file}.bak{N}
+```
+
+Increment N from 1. Check existing `.bak*` files to find the next available number. When multiple files are being reforged, issue all `mv` commands as parallel Bash calls in a single turn.
+
+Reforge scope can include SKILL.md and any reference `.md` files the user specifies — not just SKILL.md alone. Scripts, assets, and other non-target files are excluded.
+
+### Step 2: Extract Requirements
+
+From the backed-up files, extract **what** the skill does, not **how**:
+
+1. **Purpose**: What problem does this skill solve?
+2. **Trigger contexts**: When should it activate? What user phrases?
+3. **Core capabilities**: Essential things it must do (numbered list)
+4. **Output expectations**: What the user expects when the skill completes
+5. **Constraints**: Hard limits (line counts, format requirements, security rules)
+
+Do NOT extract implementation details (step procedures, variable names, section headings). The goal is a clean brief that communicates intent without biasing the writer's design.
+
+### Step 3: Scan External Interfaces
+
+Catalog everything the skill touches:
+
+1. **File references**: files the skill reads or writes (scripts, templates, session data)
+2. **MCP dependencies**: any MCP servers
+3. **Other skill interactions**: cross-skill triggers or references
+4. **Tool dependencies**: required tools (Agent, Read, Bash, etc.)
+5. **Environment expectations**: variables, CLI tools, runtime requirements
+
+Present the inventory to the user for confirmation.
+
+### Step 4: Dispatch Writer in Create Mode
+
+Send requirements + interfaces only. No old implementation details. Include the explicit instruction: "Generate a completely fresh SKILL.md. Do NOT read the existing skill."
+
+### Step 5: Diff Analysis
+
+Compare old (.bak{N}) and new versions. Report:
+- **Improvements**: cleaner structure, better description, removed cruft, fresh design decisions
+- **Concerns**: missing capabilities, dropped interfaces, unhandled edge cases
+- **Proposals**: suggested adjustments based on Lead's project knowledge
+
+### Step 6: User Decision
+
+- **Accept**: finalize the new version
+- **Iterate**: re-reforge with adjusted requirements (new version becomes next .bak{N+1})
+- **Improve**: switch to improve mode with the new version as base
+- **Revert**: restore from a specific `.bak{N}`
+
+---
+
+## Mode: Improve
+
+### Step 1: Collect Feedback
+
+Read the existing skill. Ask the user what needs to change — specific complaints, eval results showing problems, benchmark regressions.
+
+### Step 2: Dispatch Writer
+
+Spawn `Agent()` with `run_in_background: true`:
+
+1. **Read instruction**: "Read `${CLAUDE_SKILL_DIR}/references/writer.md` and follow its instructions."
+2. **Mode**: `improve`
+3. **Skill name and path**
+4. **Feedback**: structured user complaints, benchmark data
+5. **Project context paths** and **Skill forge resources path**
+
+### Step 3: Iterate
+
+How to think about improvements:
+
+1. **Generalize from the feedback.** The user iterates on a few examples because it's fast, but the skill must work across many prompts. Avoid fiddly overfitty changes — try different metaphors or patterns instead.
+2. **Keep the prompt lean.** Read the transcripts, not just outputs. If the skill wastes tokens on unproductive work, cut those parts.
+3. **Explain the why.** Transmit understanding, not rules. A model that grasps the goal makes better decisions than one following rigid instructions.
+4. **Look for repeated work.** If all test cases had the subagent writing the same helper script, bundle it in `scripts/`.
+
+Re-eval if test cases exist. Present results. Keep going until the user is satisfied or feedback is all empty.
+
+---
+
+## Mode: Eval
+
+Run test cases against a skill, grade assertions, aggregate into benchmark statistics, and present results in an HTML viewer for qualitative and quantitative review. This section is one continuous sequence — don't stop partway through.
+
+### Step 1: Test Cases
+
+Check for `evals/evals.json` in the skill directory. If absent, create 2-3 realistic test prompts — the kind of thing a real user would say. Share with the user for review.
+
+Save to `evals/evals.json`. Don't write assertions yet — you'll draft them while runs are in progress.
 
 ```json
 {
@@ -242,57 +212,38 @@ Save test cases to `evals/evals.json`. Don't write assertions yet — just the p
 }
 ```
 
-See `references/schemas.md` for the full schema (including the `assertions` field, which you'll add later).
+See `${CLAUDE_SKILL_DIR}/references/schemas.md` for the full schema.
 
----
+### Step 2: Spawn All Runs
 
-## Phase 4: Running and evaluating test cases (eval)
+Put results in `<skill-name>-workspace/` as a sibling to the skill directory. Within the workspace, organize by iteration (`iteration-1/`, `iteration-2/`, etc.) and by test case (`eval-0/`, `eval-1/`, etc.).
 
-This section is one continuous sequence — don't stop partway through. Do NOT use `/skill-test` or any other testing skill.
-
-Put results in `<skill-name>-workspace/` as a sibling to the skill directory. Within the workspace, organize results by iteration (`iteration-1/`, `iteration-2/`, etc.) and within that, each test case gets a directory (`eval-0/`, `eval-1/`, etc.). Don't create all of this upfront — just create directories as you go.
-
-### Step 1: Spawn all runs (with-skill AND baseline) in the same turn
-
-For each test case, spawn two subagents in the same turn — one with the skill, one without. This is important: don't spawn the with-skill runs first and then come back for baselines later. Launch everything at once so it all finishes around the same time.
-
-**With-skill run:**
-
-```
-Execute this task:
-- Skill path: <path-to-skill>
-- Task: <eval prompt>
-- Input files: <eval files if any, or "none">
-- Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
-- Outputs to save: <what the user cares about — e.g., "the .docx file", "the final CSV">
+Create all workspace directories in one Bash call upfront:
+```bash
+mkdir -p <workspace>/iteration-N/eval-0/{with_skill,without_skill}/outputs <workspace>/iteration-N/eval-1/{with_skill,without_skill}/outputs
 ```
 
-**Baseline run** (same prompt, but the baseline depends on context):
-- **Creating a new skill**: no skill at all. Same prompt, no skill path, save to `without_skill/outputs/`.
-- **Improving an existing skill**: the old version. Before editing, snapshot the skill (`cp -r <skill-path> <workspace>/skill-snapshot/`), then point the baseline subagent at the snapshot. Save to `old_skill/outputs/`.
+For each test case, spawn **two** subagents **in the same turn** — with-skill and baseline. Don't do all with-skill first; launch everything at once so it all finishes around the same time.
 
-Write an `eval_metadata.json` for each test case (assertions can be empty for now). Give each eval a descriptive name based on what it's testing — not just "eval-0". Use this name for the directory too. If this iteration uses new or modified eval prompts, create these files for each new eval directory — don't assume they carry over from previous iterations.
+**With-skill run**: Same prompt, with the skill loaded, save outputs to `<workspace>/iteration-N/eval-ID/with_skill/outputs/`.
 
-```json
-{
-  "eval_id": 0,
-  "eval_name": "descriptive-name-here",
-  "prompt": "The user's task prompt",
-  "assertions": []
-}
-```
+**Baseline run** (depends on context):
+- Creating a new skill → no skill at all, save to `without_skill/outputs/`
+- Improving → the old version (snapshot to `<workspace>/skill-snapshot/` first), save to `old_skill/outputs/`
 
-### Step 2: While runs are in progress, draft assertions
+Write `eval_metadata.json` for each test case. Give descriptive names, not just "eval-0".
 
-Don't just wait for the runs to finish — you can use this time productively. Draft quantitative assertions for each test case and explain them to the user. If assertions already exist in `evals/evals.json`, review them and explain what they check.
+### Step 3: Draft Assertions While Runs Execute
 
-Good assertions are objectively verifiable and have descriptive names — they should read clearly in the benchmark viewer so someone glancing at the results immediately understands what each one checks. Subjective skills (writing style, design quality) are better evaluated qualitatively — don't force assertions onto things that need human judgment.
+Use the time productively. Draft quantitative assertions for each test case and explain them to the user. Good assertions are objectively verifiable with descriptive names that read clearly in the benchmark viewer.
 
-Update the `eval_metadata.json` files and `evals/evals.json` with the assertions once drafted. Also explain to the user what they'll see in the viewer — both the qualitative outputs and the quantitative benchmark.
+Don't force assertions onto subjective skills (writing style, design quality) — those are better evaluated qualitatively.
 
-### Step 3: As runs complete, capture timing data
+Update `eval_metadata.json` and `evals/evals.json` with assertions once drafted.
 
-When each subagent task completes, you receive a notification containing `total_tokens` and `duration_ms`. Save this data immediately to `timing.json` in the run directory:
+### Step 4: Capture Timing Data
+
+When each subagent completes, the task notification includes `total_tokens` and `duration_ms`. Save immediately to `timing.json` in the run directory — this data isn't persisted elsewhere.
 
 ```json
 {
@@ -302,230 +253,146 @@ When each subagent task completes, you receive a notification containing `total_
 }
 ```
 
-This is the only opportunity to capture this data — it comes through the task notification and isn't persisted elsewhere. Process each notification as it arrives rather than trying to batch them.
+### Step 5: Grade, Aggregate, and Launch Viewer
 
-### Step 4: Grade, aggregate, and launch the viewer
+Once all runs complete:
 
-Once all runs are done:
+1. **Grade** — dispatch all grader subagents in a single turn (one `Agent()` per run, all with `run_in_background: true`). Each grader follows `${CLAUDE_SKILL_DIR}/references/grader.md` and saves `grading.json` in its run directory. The grading.json expectations array must use fields `text`, `passed`, and `evidence` — the viewer depends on these exact names. Wait for all grader notifications before proceeding.
 
-1. **Grade each run** — spawn a grader subagent (or grade inline) that reads `references/grader.md` and evaluates each assertion against the outputs. Save results to `grading.json` in each run directory. The grading.json expectations array must use the fields `text`, `passed`, and `evidence` (not `name`/`met`/`details` or other variants) — the viewer depends on these exact field names. For assertions that can be checked programmatically, write and run a script rather than eyeballing it — scripts are faster, more reliable, and can be reused across iterations.
+2. **Aggregate + Analyze + Launch** — after all grading completes, do these in one turn:
 
-2. **Aggregate into benchmark** — run the aggregation script:
+   First, aggregate:
    ```bash
-   PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
+   env PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
    ```
-   This produces `benchmark.json` and `benchmark.md` with pass_rate, time, and tokens for each configuration, with mean +/- stddev and the delta. If generating benchmark.json manually, see `references/schemas.md` for the exact schema the viewer expects.
-Put each with_skill version before its baseline counterpart.
+   Produces `benchmark.json` and `benchmark.md`. Put each with_skill version before its baseline counterpart.
 
-3. **Do an analyst pass** — read the benchmark data and surface patterns the aggregate stats might hide. See `references/analyzer.md` (the "Analyzing Benchmark Results" section) for what to look for — things like assertions that always pass regardless of skill (non-discriminating), high-variance evals (possibly flaky), and time/token tradeoffs.
-
-4. **Launch the viewer** with both qualitative outputs and quantitative data:
+   Then read `benchmark.json`, do an analyst pass (surface patterns the aggregate stats hide — see `${CLAUDE_SKILL_DIR}/references/analyzer.md`), and launch the viewer:
    ```bash
-   nohup python ${CLAUDE_SKILL_DIR}/eval-viewer/generate_review.py \
-     <workspace>/iteration-N \
-     --skill-name "my-skill" \
-     --benchmark <workspace>/iteration-N/benchmark.json \
-     > /dev/null 2>&1 &
-   VIEWER_PID=$!
+   env PYTHONPATH=${CLAUDE_SKILL_DIR} python ${CLAUDE_SKILL_DIR}/eval-viewer/generate_review.py <workspace>/iteration-N --skill-name "my-skill" --benchmark <workspace>/iteration-N/benchmark.json
    ```
-   For iteration 2+, also pass `--previous-workspace <workspace>/iteration-<N-1>`.
+   Run the viewer via `Bash(run_in_background=true)` — do not use `nohup ... &` (triggers `&` and `2>` security heuristics).
 
-   **Headless environments:** If `webbrowser.open()` is not available or the environment has no display, use `--static <output_path>` to write a standalone HTML file instead of starting a server. Feedback will be downloaded as a `feedback.json` file when the user clicks "Submit All Reviews". After download, copy `feedback.json` into the workspace directory for the next iteration to pick up.
+   For iteration 2+, pass `--previous-workspace <workspace>/iteration-<N-1>`.
 
-Note: please use generate_review.py to create the viewer; there's no need to write custom HTML.
+   **Headless environments**: use `--static <output_path>` for a standalone HTML file. Feedback downloads as `feedback.json` when the user clicks "Submit All Reviews".
 
-5. **Tell the user** something like: "I've opened the results in your browser. There are two tabs — 'Outputs' lets you click through each test case and leave feedback, 'Benchmark' shows the quantitative comparison. When you're done, come back here and let me know."
+### What the User Sees
 
-### What the user sees in the viewer
+The **Outputs** tab shows one test case at a time: prompt, output files, previous output (iteration 2+), formal grades (if grading ran), and a feedback textbox.
 
-The "Outputs" tab shows one test case at a time:
-- **Prompt**: the task that was given
-- **Output**: the files the skill produced, rendered inline where possible
-- **Previous Output** (iteration 2+): collapsed section showing last iteration's output
-- **Formal Grades** (if grading was run): collapsed section showing assertion pass/fail
-- **Feedback**: a textbox that auto-saves as they type
-- **Previous Feedback** (iteration 2+): their comments from last time, shown below the textbox
+The **Benchmark** tab shows stats: pass rates, timing, token usage for each configuration, with per-eval breakdowns and analyst observations.
 
-The "Benchmark" tab shows the stats summary: pass rates, timing, and token usage for each configuration, with per-eval breakdowns and analyst observations.
+Navigation via prev/next buttons or arrow keys. "Submit All Reviews" saves all feedback to `feedback.json`.
 
-Navigation is via prev/next buttons or arrow keys. When done, they click "Submit All Reviews" which saves all feedback to `feedback.json`.
+### Step 6: Read Feedback and Iterate
 
-### Step 5: Read the feedback
+Read `feedback.json`. Empty feedback means the user thought it was fine. Focus improvements on test cases with specific complaints.
 
-When the user tells you they're done, read `feedback.json`:
+Kill the viewer when done: `kill $VIEWER_PID` (omit `2>/dev/null` — the `2>` redirect triggers security heuristics; tolerate stderr).
 
-```json
-{
-  "reviews": [
-    {"run_id": "eval-0-with_skill", "feedback": "the chart is missing axis labels", "timestamp": "..."},
-    {"run_id": "eval-1-with_skill", "feedback": "", "timestamp": "..."},
-    {"run_id": "eval-2-with_skill", "feedback": "perfect, love this", "timestamp": "..."}
-  ],
-  "status": "complete"
-}
-```
+If improvements needed, switch to Improve mode, then rerun evals into `iteration-<N+1>/`.
 
-Empty feedback means the user thought it was fine. Focus your improvements on the test cases where the user had specific complaints.
+---
 
-Kill the viewer server when you're done with it:
+## Mode: Compare
+
+Blind A/B comparison for rigorous version comparison.
+
+### Step 1: Run Evals for Both Versions
+
+Execute the same eval set against both skill versions. Collect transcripts and outputs.
+
+### Step 2: Blind Comparison
+
+For each eval, dispatch a comparator subagent (`Agent()` with `run_in_background: true`). It receives outputs labeled A and B without knowing which version produced which. See `${CLAUDE_SKILL_DIR}/references/comparator.md`.
+
+### Step 3: Post-Hoc Analysis
+
+After blind comparison, dispatch the analyzer with full context (both skills revealed). It explains why the winner won and generates improvement suggestions. See `${CLAUDE_SKILL_DIR}/references/analyzer.md`.
+
+### Step 4: Report
+
+Present: winner, rubric scores, quality assessment, improvement suggestions. Let the user decide next steps.
+
+---
+
+## Mode: Optimize-Description
+
+The description field is the primary mechanism that determines whether Claude invokes a skill. This mode automates optimization for better triggering.
+
+### Step 1: Generate Trigger Eval Queries
+
+Create 20 eval queries — a mix of should-trigger (8-10) and should-not-trigger (8-10). Save as JSON.
+
+Queries must be realistic — concrete, specific, with detail (file paths, context about the user's situation, column names). Use varied lengths, some casual, some formal. Focus on edge cases, not clear-cut examples.
+
+For **should-trigger**: different phrasings of the same intent, cases where the user doesn't name the skill explicitly but clearly needs it, uncommon use cases, competitive cases where this skill should win.
+
+For **should-not-trigger**: near-misses that share keywords but need something different. "Write a fibonacci function" as a negative for a PDF skill is too easy. The negative cases should be genuinely tricky.
+
+### Step 2: Review with User
+
+Present queries via the HTML template:
+
+1. Read `${CLAUDE_SKILL_DIR}/assets/eval_review.html`
+2. Replace `__EVAL_DATA_PLACEHOLDER__` with the JSON array, `__SKILL_NAME_PLACEHOLDER__` and `__SKILL_DESCRIPTION_PLACEHOLDER__` with the skill's values
+3. Write to temp file and open: `open /tmp/eval_review_<skill-name>.html`
+4. User edits queries, toggles should-trigger, adds/removes entries, clicks "Export Eval Set"
+5. Check `~/Downloads/` for the exported `eval_set.json`
+
+### Step 3: Run Optimization Loop
 
 ```bash
-kill $VIEWER_PID 2>/dev/null
+env PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.run_loop --eval-set <path-to-eval-set.json> --skill-path <path-to-skill> --model <model-id-powering-this-session> --max-iterations 5 --verbose
 ```
 
----
+Run via `Bash(run_in_background=true)` — this is a long-running process.
 
-## Phase 5: Improving the skill
+Use the model ID from the system prompt so triggering tests match the user's actual experience.
 
-This is the heart of the loop. You've run the test cases, the user has reviewed the results, and now you need to make the skill better based on their feedback.
+The loop splits queries into 60% train / 40% test, runs each query 3x for reliability, generates improved descriptions, and selects by test score (not train) to avoid overfitting. Up to 5 iterations.
 
-### How to think about improvements
+### How Skill Triggering Works
 
-1. **Generalize from the feedback.** We're trying to create skills that can be used many times across many different prompts. The user is iterating on a few examples because it moves faster. But if the skill works only for those examples, it's useless. Rather than fiddly overfitty changes or oppressively constrictive MUSTs, try branching out and using different metaphors or patterns.
+Skills appear in Claude's `available_skills` list with name + description. Claude decides whether to consult a skill based on that. The key: Claude only consults skills for tasks it can't easily handle alone — simple one-step queries may not trigger even if the description matches. Complex, multi-step, or specialized queries reliably trigger when the description matches.
 
-2. **Keep the prompt lean.** Remove things that aren't pulling their weight. Read the transcripts, not just the final outputs — if the skill makes the model waste time on unproductive things, get rid of those parts.
+This means eval queries should be substantive enough that Claude would benefit from a skill. Simple queries like "read file X" are poor test cases.
 
-3. **Explain the why.** Try hard to explain the **why** behind everything. Today's LLMs are *smart*. They have good theory of mind and when given a good harness can go beyond rote instructions. Even if the feedback is terse, try to understand the task and transmit this understanding into the instructions. That's a more humane, powerful, and effective approach.
+### Step 4: Apply Results
 
-4. **Look for repeated work across test cases.** Read the transcripts and notice if the subagents all independently wrote similar helper scripts. If all 3 test cases resulted in the subagent writing a `create_docx.py`, that's a strong signal the skill should bundle that script.
-
-### The iteration loop
-
-Re-dispatch the SubAgent in `improve` mode (Phase 2) with:
-- Current SKILL.md path
-- User feedback from the viewer
-- Benchmark data
-- Improvement guidance from above
-
-Then rerun all test cases into a new `iteration-<N+1>/` directory, including baseline runs. Launch the reviewer with `--previous-workspace` pointing at the previous iteration. Wait for the user to review.
-
-Keep going until:
-- The user says they're happy
-- The feedback is all empty (everything looks good)
-- You're not making meaningful progress
+Take `best_description` from the output and update the skill's frontmatter. Show before/after and report scores.
 
 ---
 
-## Advanced: Blind comparison (compare)
+## Package and Present
 
-For situations where you want a more rigorous comparison between two versions of a skill (e.g., the user asks "is the new version actually better?"), there's a blind comparison system. Read `references/comparator.md` and `references/analyzer.md` for the details. The basic idea is: give two outputs to an independent agent without telling it which is which, and let it judge quality. Then analyze why the winner won.
-
-This is optional, requires subagents, and most users won't need it. The human review loop is usually sufficient.
-
----
-
-## Description Optimization (optimize-description)
-
-The description field in SKILL.md frontmatter is the primary mechanism that determines whether Claude invokes a skill. After creating or improving a skill, offer to optimize the description for better triggering accuracy.
-
-### Step 1: Generate trigger eval queries
-
-Create 20 eval queries — a mix of should-trigger and should-not-trigger. Save as JSON:
-
-```json
-[
-  {"query": "the user prompt", "should_trigger": true},
-  {"query": "another prompt", "should_trigger": false}
-]
-```
-
-The queries must be realistic and something a Claude Code or Claude.ai user would actually type. Not abstract requests, but requests that are concrete and specific and have a good amount of detail. For instance, file paths, personal context about the user's job or situation, column names and values, company names, URLs. A little bit of backstory. Some might be in lowercase or contain abbreviations or typos or casual speech. Use a mix of different lengths, and focus on edge cases rather than making them clear-cut (the user will get a chance to sign off on them).
-
-Bad: `"Format this data"`, `"Extract text from PDF"`, `"Create a chart"`
-
-Good: `"ok so my boss just sent me this xlsx file (its in my downloads, called something like 'Q4 sales final FINAL v2.xlsx') and she wants me to add a column that shows the profit margin as a percentage. The revenue is in column C and costs are in column D i think"`
-
-For the **should-trigger** queries (8-10), think about coverage. You want different phrasings of the same intent — some formal, some casual. Include cases where the user doesn't explicitly name the skill or file type but clearly needs it. Throw in some uncommon use cases and cases where this skill competes with another but should win.
-
-For the **should-not-trigger** queries (8-10), the most valuable ones are the near-misses — queries that share keywords or concepts with the skill but actually need something different. Think adjacent domains, ambiguous phrasing where a naive keyword match would trigger but shouldn't, and cases where the query touches on something the skill does but in a context where another tool is more appropriate.
-
-The key thing to avoid: don't make should-not-trigger queries obviously irrelevant. "Write a fibonacci function" as a negative test for a PDF skill is too easy — it doesn't test anything. The negative cases should be genuinely tricky.
-
-### Step 2: Review with user
-
-Present the eval set to the user for review using the HTML template:
-
-1. Read the template from `${CLAUDE_SKILL_DIR}/assets/eval_review.html`
-2. Replace the placeholders:
-   - `__EVAL_DATA_PLACEHOLDER__` → the JSON array of eval items (no quotes around it — it's a JS variable assignment)
-   - `__SKILL_NAME_PLACEHOLDER__` → the skill's name
-   - `__SKILL_DESCRIPTION_PLACEHOLDER__` → the skill's current description
-3. Write to a temp file (e.g., `/tmp/eval_review_<skill-name>.html`) and open it: `open /tmp/eval_review_<skill-name>.html`
-4. The user can edit queries, toggle should-trigger, add/remove entries, then click "Export Eval Set"
-5. The file downloads to `~/Downloads/eval_set.json` — check the Downloads folder for the most recent version in case there are multiple (e.g., `eval_set (1).json`)
-
-This step matters — bad eval queries lead to bad descriptions.
-
-### Step 3: Run the optimization loop
-
-Tell the user: "This will take some time — I'll run the optimization loop in the background and check on it periodically."
-
-Save the eval set to the workspace, then run in the background:
+If you have access to the `present_files` tool (check first — skip if not available):
 
 ```bash
-PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.run_loop \
-  --eval-set <path-to-trigger-eval.json> \
-  --skill-path <path-to-skill> \
-  --model <model-id-powering-this-session> \
-  --max-iterations 5 \
-  --verbose
+env PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.package_skill <path/to/skill-folder>
 ```
 
-Use the model ID from your system prompt (the one powering the current session) so the triggering test matches what the user actually experiences.
+Direct the user to the resulting `.skill` file.
 
-While it runs, periodically tail the output to give the user updates on which iteration it's on and what the scores look like.
+## Reference Files
 
-This handles the full optimization loop automatically. It splits the eval set into 60% train and 40% held-out test, evaluates the current description (running each query 3 times to get a reliable trigger rate), then calls Claude to propose improvements based on what failed. It re-evaluates each new description on both train and test, iterating up to 5 times. When it's done, it opens an HTML report in the browser showing the results per iteration and returns JSON with `best_description` — selected by test score rather than train score to avoid overfitting.
+- `${CLAUDE_SKILL_DIR}/references/writer.md` — writer SubAgent instructions (create/improve modes)
+- `${CLAUDE_SKILL_DIR}/references/comparator.md` — blind A/B comparator instructions
+- `${CLAUDE_SKILL_DIR}/references/analyzer.md` — post-hoc analysis + benchmark analysis instructions
+- `${CLAUDE_SKILL_DIR}/references/grader.md` — assertion grading instructions
+- `${CLAUDE_SKILL_DIR}/references/schemas.md` — JSON schema definitions for the eval pipeline
+- `${CLAUDE_SKILL_DIR}/references/skill-reference.md` — comprehensive skill authoring guide
+- `${CLAUDE_SKILL_DIR}/references/skill-reference-sources.md` — reference guide update procedure
 
-### How skill triggering works
+## Constraints
 
-Understanding the triggering mechanism helps design better eval queries. Skills appear in Claude's `available_skills` list with their name + description, and Claude decides whether to consult a skill based on that description. The important thing to know is that Claude only consults skills for tasks it can't easily handle on its own — simple, one-step queries like "read this PDF" may not trigger a skill even if the description matches perfectly, because Claude can handle them directly with basic tools. Complex, multi-step, or specialized queries reliably trigger skills when the description matches.
-
-This means your eval queries should be substantive enough that Claude would actually benefit from consulting a skill. Simple queries like "read file X" are poor test cases — they won't trigger skills regardless of description quality.
-
-### Step 4: Apply the result
-
-Take `best_description` from the JSON output and update the skill's SKILL.md frontmatter. Show the user before/after and report the scores.
-
----
-
-### Package and Present (only if `present_files` tool is available)
-
-Check whether you have access to the `present_files` tool. If you don't, skip this step. If you do, package the skill and present the .skill file to the user:
-
-```bash
-PYTHONPATH=${CLAUDE_SKILL_DIR} python -m scripts.package_skill <path/to/skill-folder>
-```
-
-After packaging, direct the user to the resulting `.skill` file path so they can install it.
-
----
-
-## Reference files
-
-The references/ directory contains documentation for specialized tasks. Read them when you need to spawn a subagent or perform the relevant task.
-
-- `references/writer.md` — Instructions for the skill drafting/improving SubAgent (dispatched in Phase 2 and Reforge Step 4)
-- `references/skill-reference.md` — Comprehensive Agent Skills reference guide (agentskills.io spec, platform differences, cross-platform compatibility, best practices)
-- `references/grader.md` — How to evaluate assertions against outputs
-- `references/comparator.md` — How to do blind A/B comparison between two outputs
-- `references/analyzer.md` — How to analyze why one version beat another and benchmark patterns
-
-The references/ directory also has:
-- `references/schemas.md` — JSON structures for evals.json, grading.json, etc.
-- `references/skill-reference-sources.md` — Information sources and update procedure for the skill reference guide
-
----
-
-Repeating one more time the core loop here for emphasis:
-
-- Figure out what the skill is about
-- Draft or edit the skill (via SubAgent)
-- Run claude-with-access-to-the-skill on test prompts
-- With the user, evaluate the outputs:
-  - Create benchmark.json and run `eval-viewer/generate_review.py` to help the user review them
-  - Run quantitative evals
-- Repeat until you and the user are satisfied
-- Package the final skill and return it to the user.
-
-Good luck!
+- SKILL.md body must be under 500 lines; use references/ for overflow
+- Description must be pushy with 5-10 concrete keyword phrases
+- Never include `AskUserQuestion` in allowed-tools (auto-approve bug causes empty responses)
+- All SubAgent dispatches use `Agent()` with `run_in_background: true`
+- Python scripts require `env PYTHONPATH=... python` (not bare `PYTHONPATH=...`) to avoid security heuristic
+- Long-running scripts (`run_loop`, viewer) use `Bash(run_in_background=true)` — not `nohup ... &`
+- Avoid `2>` stderr redirects — tolerate error output instead
+- Adapt communication to user's technical level
+- No project-specific IDs (D{seq}, K{seq}) in skill output — use the insight, not the reference

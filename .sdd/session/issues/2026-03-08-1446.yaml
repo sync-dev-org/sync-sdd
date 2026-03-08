@@ -1,0 +1,13 @@
+# Archived from issues.yaml at 2026-03-08T14:46:58+0900
+# Entries: 1
+entries:
+  - id: "I30"
+    type: "BUG"
+    status: "resolved"
+    severity: "H"
+    summary: "sdd-handover 実行後に handover.md が更新されていない — デグレの疑い"
+    detail: "前セッション (2026-03-08 ~14:24) で /sdd-handover を実行したとユーザーが証言。しかし handover.md は v2.6.0 リリース時 (05:01) のまま。issues アーカイブ (2026-03-08-1424.yaml) は正常に生成されており、コンソリデーション (Step 4) は動作した模様。handover.md の上書き (Step 5以降) が失敗またはスキップされた可能性。検証項目: (1) sdd-handover SKILL.md の reforge 後の handover.md 書き出しロジック確認 (2) handovers/2026-03-08-1424.md がアーカイブだが内容が旧版のまま — archive が write 前に実行されている可能性 (3) .bak1 との差分で reforge による変更箇所を特定"
+    source: "user"
+    resolution: "reforge で Step 6/8 の AskUserQuestion 明示指定が消失していた。Lead がテキスト出力のみで質問 → AskUserQuestion 未発火 → ユーザーが完了と誤認し /clear → Step 7 (Write handover.md) 未実行。修正: Step 6 に CRITICAL コメント付きで AskUserQuestion 使用を明示、Step 8 にも同様に追加。allowed-tools には含めない (空回答バグ回避)"
+    created_at: "2026-03-08T14:35:30+0900"
+    resolved_at: "2026-03-08T14:43:08+0900"

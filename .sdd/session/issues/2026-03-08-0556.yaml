@@ -1,0 +1,11 @@
+# Archived from issues.yaml at 2026-03-08T05:56:11+0900
+# Entries: 1
+entries:
+  - id: "I21"
+    type: "BUG"
+    status: "rejected"
+    severity: "M"
+    summary: "「mprobeして」指示で sdd-forge-skill が発火せず Lead が直接作業した"
+    detail: "reforge 完了後に「新版でmprobe回すよ」と指示された際、sdd-forge-skill の eval/improve モードが発火すべきだったが、Lead が直接 Bash heuristic 改善作業を実行した。description に mprobe/probe/review 等のキーワードがないか、指示文脈がスキルのトリガー条件に合致しなかった可能性がある。description の改善または Lead の判断ロジックの問題"
+    source: "user"
+    created_at: "2026-03-08T05:49:12+0900"

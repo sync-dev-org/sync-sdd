@@ -1,617 +1,254 @@
 ---
-description: "Self-review for SDD framework development (framework-internal use only)"
-argument-hint: "[--briefer-engine <name>] [--briefer-model <name>] [--briefer-effort <level>] [--inspector-engine <name>] [--inspector-model <name>] [--inspector-effort <level>] [--auditor-engine <name>] [--auditor-model <name>] [--auditor-effort <level>] [--builder-engine <name>] [--builder-model <name>] [--builder-effort <level>] [--timeout <seconds>]"
-allowed-tools: Bash, Read, Glob, Grep, Write, Agent
+name: sdd-review-self
+description: "Framework self-review for sync-sdd development repo. Runs automated code quality review using external engines (Codex CLI, Claude Code headless, Gemini CLI) or SubAgents against framework/ directory. Use this skill for self-review, framework review, review-self, quality check on framework files, code review of SDD framework, verify framework consistency, check framework compliance, audit framework changes, run self-review pipeline."
+argument-hint: "[--briefer-engine E] [--inspector-engine E] [--auditor-engine E] [--builder-engine E] [--briefer-model M] [--inspector-model M] [--auditor-model M] [--builder-model M] [--briefer-effort low|medium|high] [--inspector-effort low|medium|high] [--auditor-effort low|medium|high] [--builder-effort low|medium|high]"
+allowed-tools: Read Write Edit Glob Grep Bash Agent Skill
 ---
 
-# SDD Framework Self-Review
+# sdd-review-self
 
-<instructions>
+Self-review pipeline for the sync-sdd framework development repository. Dispatches external engines or SubAgents to review `framework/` for flow integrity, cross-file consistency, and platform compliance.
 
-## Purpose
+## Gate Check
 
-**sync-sdd フレームワーク開発リポ専用。** 通常リポでは実行不可（`framework/` ディレクトリが存在しないため NO_CHANGES で停止する）。
+1. Verify `framework/` directory exists. If absent, report "This skill targets the sync-sdd framework repo only. framework/ not found." and stop.
 
-外部エンジン (Codex CLI / Claude Code headless / Gemini CLI) または SubAgent (Claude Code Agent tool) を使った self-review スキル。3 固定 Inspector + 1-4 動的 Inspector を並行実行し、Auditor が統合する。Lead は Inspector findings を読まない — Auditor の verdict-auditor.yaml のみを監修する。承認された修正は Builder (外部 CLI / SubAgent) が実行し、Lead はコンテキスト保全と監修に専念する。
+## Step 1: Parse Arguments
 
-動的 Inspector は Briefer が変更内容を分析し、固定 Inspector ではカバーしきれないリスク軸に対して焦点プロンプトを生成する。
+Parse `$ARGUMENTS` for per-stage overrides. Each stage (briefer, inspectors, auditor, builder) accepts `--{stage}-engine`, `--{stage}-model`, `--{stage}-effort`. Unspecified stages use the level chain from engines.yaml.
 
-## Step 1: Load Engine Config
+## Step 2: Resolve Engine Levels
 
-### 1a Parse Arguments
+Read `.sdd/settings/engines.yaml`. For each stage (briefer, inspectors, auditor, builder):
+1. If argument override provided, use that engine/model/effort directly.
+2. Otherwise, check `session/state.yaml` for sticky escalated level. If present, use it.
+3. Otherwise, use `roles.review-self.stages.{stage}.start_level` to look up engine/model/effort from `levels`.
 
-引数からオーバーライドを抽出:
+For each resolved engine (codex/claude/gemini), run `install_check` from engines.yaml. On failure, escalate to the next level in the chain. If all external levels fail, fall back to L0 (subagents). Record escalated level in `session/state.yaml` (sticky for session).
 
-- `--briefer-engine <name>` / `--briefer-model <name>` / `--briefer-effort <level>`: Briefer
-- `--inspector-engine <name>` / `--inspector-model <name>` / `--inspector-effort <level>`: Inspector ×3
-- `--auditor-engine <name>` / `--auditor-model <name>` / `--auditor-effort <level>`: Auditor
-- `--builder-engine <name>` / `--builder-model <name>` / `--builder-effort <level>`: Builder (A items fix)
-- `--timeout <seconds>`: タイムアウト秒数
-
-引数なし → engines.yaml の level chain デフォルトを使用。引数あり → デフォルト値を上書き。
-
-例:
-- Auditor のみ変更: `/sdd-review-self --auditor-engine claude --auditor-model claude-opus-4-6`
-- 全ステージ SubAgent: `/sdd-review-self --briefer-engine subagents --inspector-engine subagents --auditor-engine subagents`
-- Inspector の effort のみ変更: `/sdd-review-self --inspector-effort high`
-
-### 1b Load engines.yaml
-
-1. Read `.sdd/settings/engines.yaml`
-   - If absent: all stages fallback to `subagents`, `$DENY_PATTERNS` = empty
-2. Load `deny_patterns` → `$DENY_PATTERNS`
-
-### 1c Resolve Final Config
-
-**Level chain 解決** (各ステージ独立):
-
-1. 各ステージの `start_level` を `roles.review-self.stages.{stage}.start_level` から取得
-2. `levels.{start_level}` から `engine`, `model`, `effort` を取得 → ステージのデフォルト値
-3. Skill 引数でオーバーライド (引数 > level chain):
-
-| Stage Variable | Resolution (高→低) |
-|---------------|-----------|
-| `$BRIEFER_ENGINE` / `$BRIEFER_MODEL` / `$BRIEFER_EFFORT` | `--briefer-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
-| `$INSPECTOR_ENGINE` / `$INSPECTOR_MODEL` / `$INSPECTOR_EFFORT` | `--inspector-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
-| `$AUDITOR_ENGINE` / `$AUDITOR_MODEL` / `$AUDITOR_EFFORT` | `--auditor-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
-| `$BUILDER_ENGINE` / `$BUILDER_MODEL` / `$BUILDER_EFFORT` | `--builder-{engine,model,effort}` → `levels.{start_level}.{engine,model,effort}` |
-
-**共通設定**:
-
-| Variable | Resolution |
-|----------|-----------|
-| `$TIMEOUT` | `--timeout` → `roles.review-self.timeout` → 900 (hardcoded) |
-| `$TOOLS` | `roles.review-self.tools` → null (full permission) |
-
-4. 各ステージの engine について `engines.{engine}.install_check` を実行して可用性を確認
-   - `install_check` 失敗 → level chain で次の level へ自動エスカレート。最終的に L0 (subagents) にフォールバック。Report: `{stage}: {engine} not available, escalating to L{N}`
-   - claude エンジン使用時: `jq --version` で jq の可用性も確認。不在 → Report: `jq not available (required for claude engine streaming). Install: brew install jq / apt install jq` → 次 level へ
-5. Build per-stage `$ENGINE_CMD` using Engine-Specific Command Construction (Step 4) with the resolved engine/model/effort
-
-5. Set scope and template directories:
+## Step 3: Prepare Scope Directory
 
 ```
-$SCOPE_DIR = .sdd/project/reviews/self
-$TPL = .sdd/settings/templates/review-self
+SCOPE_DIR = .sdd/project/reviews/self
+ACTIVE = $SCOPE_DIR/active/
 ```
 
-6. Determine `$BATCH_SEQ`: Read `$SCOPE_DIR/verdicts.yaml`, find max `batches[].seq` → `$BATCH_SEQ` = max+1. If absent → 1. This is used for tmux channel names to prevent cross-batch collisions.
+If `active/` exists and contains files, remove all files in it (stale from interrupted run). Create `active/` if it does not exist.
 
-6. Report resolved config:
+Determine `B_SEQ`: read `$SCOPE_DIR/verdicts.yaml`. If it exists, next seq = max(batches[].seq) + 1. Otherwise, seq = 1.
+
+## Step 4: Dispatch Briefer
+
+Read `${CLAUDE_SKILL_DIR}/references/briefer.md` for the full Briefer instructions.
+
+Build the Briefer prompt by prepending the scope paths:
 ```
-Timeout: {$TIMEOUT}s
-  Briefer: {$BRIEFER_ENGINE} [{$BRIEFER_MODEL}] effort:{$BRIEFER_EFFORT}
-  Inspectors: {$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL}] effort:{$INSPECTOR_EFFORT}
-  Auditor: {$AUDITOR_ENGINE} [{$AUDITOR_MODEL}] effort:{$AUDITOR_EFFORT}
-  Builder: {$BUILDER_ENGINE} [{$BUILDER_MODEL}] effort:{$BUILDER_EFFORT}
-```
-全ステージが同一 engine/model/effort の場合、1 行にまとめてもよい。
-
-## Step 2: Prompt Construction (Briefer)
-
-Prompt Construction は Briefer に委譲する。Lead は dispatch と成否確認のみ。
-
-### Briefer Dispatch
-
-1. `rm -rf $SCOPE_DIR/active; mkdir -p $SCOPE_DIR/active`
-2. Briefer を dispatch:
-   **SubAgent mode** (`$BRIEFER_ENGINE == "subagents"`):
-   `Agent(subagent_type="general-purpose", description="Briefer for self-review", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/briefer.md and execute the instructions.")`
-   task-notification で完了を検知。
-   **tmux mode** (`$TMUX` 設定あり):
-   idle slot を選択し、`{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: busy` + `agent: briefer`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/briefer | {$BRIEFER_MODEL}"`。完了後は `status: idle` に戻し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
-   ```
-   tmux send-keys -t {slot_pane_id} 'cat {$TPL}/briefer.md | {$BRIEFER_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-briefer-B{seq}' Enter
-   ```
-   ユーザーに報告: `Briefer dispatched to slot-{N} ({pane_id})`
-   send-keys ゾンビ確認: `pgrep -fl "tmux send-keys"` → 検出時はユーザーに報告し kill (exit code 1 = ゾンビなし、正常)
-   `Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-briefer-B{seq}` を実行。task-notification で完了を検知。
-   **background mode** (上記以外):
-   `Bash(run_in_background=true)` で `cat $TPL/briefer.md | $BRIEFER_ENGINE_CMD` を実行。task-notification で完了を検知。
-3. 完了後の検証:
-   - `$SCOPE_DIR/active/briefer-status.md` が `NO_CHANGES` → "No changes since last review." を報告して停止
-   - 固定 Inspector: `$SCOPE_DIR/active/shared-prompt.md` と `$SCOPE_DIR/active/inspector-{flow,consistency,compliance}.md` (3ファイル) の存在を確認
-   - 動的 Inspector: `$SCOPE_DIR/active/dynamic-manifest.md` を Read し `DYNAMIC_COUNT:{N}` を取得。N >= 1 を確認。各 `$SCOPE_DIR/active/inspector-dynamic-{N}-{slug}.md` の存在を確認
-   - いずれか欠損 → Briefer 失敗。SubAgent フォールバック (下記) を試行
-4. `$DYNAMIC_COUNT` と動的 Inspector 名リスト (manifest から) を保持
-5. **ユーザーに dispatch 一覧を報告**: fixed + dynamic 全 Inspector の名前と focus をテーブル形式で表示してから Step 3 へ進む
-
-### Briefer Failure Handling
-
-Briefer (外部エンジン) が失敗した場合 (出力ファイル不在):
-1. **Failure Log Capture** (Runtime Escalation Protocol 参照) を実行
-2. Runtime Escalation Protocol に従いエスカレーション dispatch
-3. 最終 fallback (L0 subagents) も失敗 → "Briefer failed. Cannot proceed." を報告して停止
-
-Briefer の SubAgent dispatch:
-`Agent(subagent_type="general-purpose", description="Briefer fallback", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/briefer.md and execute the instructions.")`
-
-`$BRIEFER_ENGINE == "subagents"` (L0) の場合はフォールバック先がないため、失敗時は即停止。
-
-## Step 3: Grid Setup (tmux mode only)
-
-全ステージが subagents の場合はこのステップをスキップ（Agent ツール dispatch に tmux 不要）。
-判定: `$BRIEFER_ENGINE == "subagents" && $INSPECTOR_ENGINE == "subagents" && $AUDITOR_ENGINE == "subagents"`
-
-`$TMUX` が設定されている場合のみ実行:
-1. `printenv TMUX_PANE` → `$MY_PANE` (avoid `tmux display-message -p '#{pane_id}'` — `#{}` triggers security heuristic)
-2. SID + Grid 取得: `{{SDD_DIR}}/session/state.yaml` を Read し、`sid` と `grid` セクション (`window_id`, slot pane_ids) から `$SID` と slot pane ID を取得。state.yaml が存在しない場合 → tmux mode を諦め、全 agent を `Bash(run_in_background=true)` で実行 (background fallback)。
-3. Grid 検証: `bash {{SDD_DIR}}/settings/scripts/grid-check.sh {grid.window_id} {all_slot_pane_ids}` — stdout に生存 pane_id を出力、exit 0 = 全 slot 生存, exit 1 = 一部消滅。一部消滅の場合、**Grid を再作成しない** (busy slot で実行中のプロセスを破壊する危険があるため)。idle slot 確定手順: (1) grid-check.sh stdout から生存 pane_id セットを取得 (2) state.yaml の各 slot で `status: idle` のものを抽出 (3) 両者の交差 = 使用可能 idle slot。不足分は `Bash(run_in_background=true)` にフォールバック。
-
-`$TMUX` 未設定の場合はスキップして Step 4 background mode へ。
-
-## Step 4: Parallel Dispatch (3 Fixed + N Dynamic Inspectors)
-
-Apply **One-Shot Command pattern** from `{{SDD_DIR}}/settings/rules/lead/tmux-integration.md`.
-
-3 固定 + N 動的 (N=1-4) = 4-7 Inspector を並行起動する (外部エンジンまたは SubAgent)。
-
-**固定 Inspector** (inspector-flow, inspector-consistency, inspector-compliance):
-- Channel = `sdd-{SID}-review-self-{N}-B{seq}` (`$SID` は Step 3 で取得したセッション固有 ID)
-- Prompt = `$SCOPE_DIR/active/shared-prompt.md` + `$SCOPE_DIR/active/inspector-{name}.md` (Briefer が展開済み)
-- Findings file (成果物) = `$SCOPE_DIR/active/findings-inspector-{name}.yaml`
-
-**動的 Inspector** (inspector-dynamic-{N}-{slug}):
-- Channel = `sdd-{SID}-review-self-d{N}-B{seq}` (d prefix で固定と区別)
-- Prompt = `$SCOPE_DIR/active/shared-prompt.md` + `$SCOPE_DIR/active/inspector-dynamic-{N}-{slug}.md` (Briefer が生成)
-- Findings file (成果物) = `$SCOPE_DIR/active/findings-inspector-dynamic-{N}-{slug}.yaml`
-
-### Engine-Specific Command Construction
-
-Assemble command based on the resolved engine for each stage (`$BRIEFER_ENGINE`, `$INSPECTOR_ENGINE`, `$AUDITOR_ENGINE`). `$TOOLS` が null の場合は全許可モード、設定されている場合はツール制限モード:
-
-全エンジン共通: stdout はリダイレクトしない — pane に応答テキスト / 進捗が流れる。成果物は findings YAML ファイルのみ。完了は task-notification で検出し、成功判定は findings YAML ファイル存在チェックで行う。
-
-各ステージの engine に応じて `${STAGE}_ENGINE_CMD` を組み立てる (例: `$BRIEFER_ENGINE_CMD`, `$INSPECTOR_ENGINE_CMD`, `$AUDITOR_ENGINE_CMD`)。send-keys では Briefer が `active/` に書き出した展開済みファイルを使い、`cat {shared} {active/inspector-{name}.md} | ${STAGE}_ENGINE_CMD` の形でプロンプトを stdin に渡す。
-
-以下 `${STAGE}_MODEL` / `${STAGE}_EFFORT` はそのステージの resolved model / effort。
-
-**codex**:
-```
-npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] [-c model_reasoning_effort='"${STAGE}_EFFORT"'] -
+Output directory: {ACTIVE}
+Template directory: ${CLAUDE_SKILL_DIR}/references/
+Verdicts file: {SCOPE_DIR}/verdicts.yaml
 ```
 
-**claude** (`env -u CLAUDECODE` で Lead セッションからのネスト検出を回避):
-```
-env -u CLAUDECODE CLAUDE_CODE_EFFORT_LEVEL=${STAGE}_EFFORT claude -p - --dangerously-skip-permissions --output-format stream-json --verbose --include-partial-messages [--model ${STAGE}_MODEL] | jq -rjf .sdd/settings/scripts/claude-stream-progress.jq
-```
-ツール制限時: `--dangerously-skip-permissions` を `--allowedTools "$TOOLS"` に置換。
-`jq` が必要 (`brew install jq` / `apt install jq`)。
-進捗表示: ツール名・引数・テキスト応答・コスト/所要時間を pane にリアルタイム表示。
-
-**gemini** (effort 非対応 — 設定ファイル書き換え必須のため除外):
-```
-npx -y @google/gemini-cli -p "Review the project files per the instructions below." --yolo [--model ${STAGE}_MODEL]
-```
-ツール制限時: `--yolo` を `--sandbox` に置換。
-
-`[]` 内は対応する値が設定されている場合のみ付与。
-
-**subagents**: CLI command は不要。Agent ツール (`Agent(subagent_type="general-purpose")`) で dispatch する。
-プロンプトにファイルパスを指示し、SubAgent が自分で Read する（Lead は Read 不要）。
-Model mapping (engines.yaml の model 値 → Agent tool `model` パラメータ):
-- `*spark*` or `*haiku*` を含む → `"haiku"`
-- `*opus*` を含む → `"opus"`
-- その他 → `"sonnet"` (デフォルト)
-Effort mapping (subagents): effort=`high` → プロンプト先頭に `ultrathink` を追加。effort=`medium` → 追加なし。
+Dispatch the Briefer using the resolved engine for the `briefer` stage.
 
-### Dispatch Mode
-
-分岐順序: SubAgent → tmux → background (Briefer/Auditor と統一)。
-
-**SubAgent mode** (`$INSPECTOR_ENGINE == "subagents"`):
-Agent ツールで dispatch。`$TMUX` の有無に関わらずこのモードを使用。Bash 呼び出しゼロ。
-
-固定 Inspector の dispatch:
-`Agent(subagent_type="general-purpose", description="{name} review", model=$INSPECTOR_MODEL_MAPPED, run_in_background=true, prompt="Read .sdd/project/reviews/self/active/shared-prompt.md and .sdd/project/reviews/self/active/inspector-{name}.md, then execute the instructions.")`
-
-動的 Inspector の dispatch:
-`Agent(subagent_type="general-purpose", description="{slug} review", model=$INSPECTOR_MODEL_MAPPED, run_in_background=true, prompt="Read .sdd/project/reviews/self/active/shared-prompt.md and .sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.md, then execute the instructions.")`
+### Dispatch Modes (applies to all stages)
 
-全 Agent (3 固定 + N 動的) を一括 dispatch (単一メッセージで並列発行)。
-
-各 Agent の task-notification で完了を検知。findings YAML ファイル存在チェックは外部エンジンと同一。
+Determine dispatch mode from engine type and environment:
 
-Hold-and-Release は不要 — Agent は完了時に自動的にリソースを解放する。
+**SubAgent mode** (engine = subagents): Dispatch via Agent tool with `run_in_background: true`. Pass the prompt content and instruct the SubAgent to Read the referenced files itself.
 
-**tmux mode** (`$INSPECTOR_ENGINE != "subagents"` かつ `$TMUX` 設定あり):
-各 Bash 呼び出しを `tmux` で開始することで `Bash(tmux *)` パターンにマッチさせ、承認を不要にする。
-
-MultiView スロットに `send-keys` で agent コマンドを投入する (Hold-and-Release パターン)。idle スロットから (3+N) 個選択し、`{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: busy` + `agent`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/{inspector-name} | {$INSPECTOR_MODEL}"`。各 Agent の command chain を投入:
+**tmux mode** (external engine + $TMUX set): Use Pattern B (One-Shot Command) from tmux-integration.md.
+- Assign an idle slot from `session/state.yaml` grid section.
+- Build engine command (see Engine Command Construction below).
+- `tmux send-keys -t {pane_id} '{prompt_delivery} | {engine_cmd}; tmux wait-for -S {channel}' Enter`
+- Update state.yaml slot: status -> busy, agent -> "briefer", engine -> "{engine}", channel -> "{channel}".
+- Wait via `Bash(run_in_background=true)`: `tmux wait-for {channel}`
+- On completion: update state.yaml slot back to idle.
 
-固定 Agent パターン (Briefer が `active/` に展開済みファイルを書き出し済み):
-```
-tmux send-keys -t {slot_pane_id} 'cat {shared} {active/inspector-{name}.md} | {$INSPECTOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-{N}-B{seq}; tmux wait-for sdd-{SID}-close-B{seq}' Enter
-```
+**Background mode** (external engine + no tmux): `Bash(run_in_background=true)` with the engine command. No slot management.
 
-動的 Agent パターン:
-```
-tmux send-keys -t {slot_pane_id} 'cat {shared} {active/inspector-dynamic-N-slug.md} | {$INSPECTOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-d{N}-B{seq}; tmux wait-for sdd-{SID}-close-B{seq}' Enter
-```
+### Engine Command Construction
 
-**tmux throttle**: 全 Agent の send-keys を staggered parallel dispatch で一括発行する。各コマンドに sleep プレフィックスを付けて 0.5 秒刻みでずらし、単一メッセージの並列 Bash 呼び出しで発行する（Lead のターン消費は 1 回）:
-```
-Bash(run_in_background=true): sleep 0.0; tmux send-keys -t {pane1} '...' Enter
-Bash(run_in_background=true): sleep 0.5; tmux send-keys -t {pane2} '...' Enter
-...
-```
-
-dispatch 後、ユーザーにスロット割り当てを報告:
-```
-Dispatched {N} inspectors to tmux slots:
-  slot-{N} ({pane_id}): {agent-name}
-  ...
-```
-
-全 Agent 分の send-keys 完了後:
-1. send-keys ゾンビ確認: `pgrep -fl "tmux send-keys"` → 検出時はユーザーに報告し kill (exit code 1 = ゾンビなし、正常)
-2. 固定 + 動的の全チャネルの `tmux wait-for` を `Bash(run_in_background=true)` で並行発行:
-```
-Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-1-B{seq}
-Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-2-B{seq}
-Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-3-B{seq}
-Bash(run_in_background=true): tmux wait-for sdd-{SID}-review-self-d1-B{seq}
-... (動的 Inspector の数だけ追加)
-```
-各 task-notification で個別に完了を検知。全 Agent 完了まで待つ。TaskOutput は使わない。
-
-パスは変数を使わずインラインで記述する（`Bash(tmux *)` マッチのため）。
-
-**background mode** (上記以外):
-全 Inspector (固定 + 動的) の `cat {shared} {active/inspector-*.md} | {$INSPECTOR_ENGINE_CMD}` を `Bash(run_in_background=true)` で並行実行。各 task-notification で個別に完了を検知。findings YAML はファイル書き出しで取得。
+| Engine | Command Pattern |
+|--------|----------------|
+| codex | `npx -y @openai/codex exec --full-auto -m {model} -c model_reasoning_effort='"{effort}"' -q` |
+| claude | `env -u CLAUDECODE claude -p - --model {model} --output-format stream-json --verbose --dangerously-skip-permissions` piped to `jq -rjf .sdd/settings/scripts/claude-stream-progress.jq` with `CLAUDE_CODE_EFFORT_LEVEL={effort}` env prefix |
+| gemini | `npx -y @google/gemini-cli -p --model {model} --yolo` |
 
-### Inspector Prompts (Templates)
+For codex/claude: prompt is delivered via stdin pipe (`cat {prompt_file} | {engine_cmd}`).
+For gemini: prompt is passed as the last positional argument (read prompt file content and pass inline).
+For subagents with effort=high: include "ultrathink" keyword in prompt.
 
-固定 Inspector のプロンプト内容はテンプレートファイルに定義。動的 Inspector のプロンプトは Briefer が変更分析に基づいて生成する:
+### Briefer Completion
 
-| Agent | Template | Dispatch-ready file |
-|-------|----------|-------------------|
-| Briefer | `$TPL/briefer.md` | (Briefer 自身が実行される) |
-| Flow Integrity | `$TPL/inspector-flow.md` | `active/inspector-flow.md` |
-| Consistency | `$TPL/inspector-consistency.md` | `active/inspector-consistency.md` |
-| Compliance | `$TPL/inspector-compliance.md` | `active/inspector-compliance.md` |
-| Dynamic 1-4 | (Briefer が動的生成) | `active/inspector-dynamic-{N}-{slug}.md` |
-| Auditor | `$TPL/auditor.md` | (プレースホルダーなし) |
-| Builder | `$TPL/builder.md` | (Lead がプレースホルダー展開) |
+After Briefer completes, verify `active/briefer-status.md` does not contain `NO_CHANGES`. If it does, report "No framework changes detected. Nothing to review." and stop.
 
-テンプレートは `.sdd/settings/templates/review-self/` に格納。Briefer が固定 Inspector のテンプレートを読み込み、プレースホルダー (`{{CACHED_OK}}`) を展開して `active/` に書き出す。動的 Inspector のプロンプトは Briefer が変更内容に基づいて `active/` に直接生成する。Lead の dispatch は `active/` のファイルのみ参照する。Auditor テンプレートにはプレースホルダーがないため、パス指示のみで dispatch する。
+Verify `active/shared-prompt.md` exists. Read `active/dynamic-manifest.md` to learn the count and names of dynamic Inspectors.
 
----
+## Step 5: Dispatch Inspectors (Parallel)
 
-## Step 5: Collect Results
+Dispatch all Inspectors in parallel: 3 fixed (flow, consistency, compliance) + N dynamic (from manifest).
 
-全 Agent 完了後 (tmux wait-for / background task / SubAgent — いずれも task-notification で検知):
+Each Inspector receives: `cat {ACTIVE}/shared-prompt.md {ACTIVE}/inspector-{name}.md`
 
-1. 全 Inspector (固定 3 + 動的 N) の findings YAML ファイル存在とファイルサイズを確認 (`ls -la`) → 成功/失敗を判定
-   - 固定: `$SCOPE_DIR/active/findings-inspector-{name}.yaml`
-   - 動的: `$SCOPE_DIR/active/findings-inspector-dynamic-{N}-{slug}.yaml`
-2. **Lead は findings の内容を Read しない**。存在 + サイズ確認のみ（Auditor が読む）
-3. 失敗した Agent (findings YAML 不在またはサイズ 0) → Runtime Escalation Protocol を適用。最終失敗はレポートに注記
+For tmux mode, use staggered parallel dispatch (0.5s intervals) + hold-and-release pattern:
+- Channel per Inspector: `sdd-{SID}-inspector-{name}-B{B_SEQ}`
+- Close channel (shared): `sdd-{SID}-close-B{B_SEQ}`
+- Command chain: `{prompt_delivery} | {engine_cmd}; tmux wait-for -S {channel}; tmux wait-for {close_channel}`
+- Assign slots from state.yaml. If slots insufficient, overflow Inspectors use background mode.
+- Issue all send-keys + wait-for via single batch of `Bash(run_in_background=true)` calls with sleep stagger.
+- Wait for all Inspector channels (task-notification per background wait).
 
-### Inspector Runtime Escalation
+For SubAgent mode: dispatch all via Agent tool with `run_in_background: true`. Each Inspector reads shared-prompt.md and its own inspector prompt file.
 
-`$INSPECTOR_ENGINE != "subagents"` かつ findings YAML 未生成の Inspector がある場合に発動。
+For background mode: dispatch all via `Bash(run_in_background=true)`.
 
-1. 失敗した Inspector のみを対象にリストアップ
-2. 各失敗 Inspector について **Failure Log Capture** (Runtime Escalation Protocol 参照) を実行
-3. Failure Classification → Escalation Logic に従い次の dispatch 先を決定
-4. 失敗 Inspector を新しいレベルで再 dispatch (成功済み Inspector はそのまま)
-   - **tmux/background escalation**: 新レベルの Engine-Specific Command で dispatch
-   - **SubAgent escalation (L0)**: `Agent(subagent_type="general-purpose", description="{name} escalation", run_in_background=true, prompt="Read .sdd/project/reviews/self/active/shared-prompt.md and .sdd/project/reviews/self/active/inspector-{name}.md, then execute the instructions.")`
-5. findings YAML 存在+サイズを再チェック（内容は Read しない）
-6. まだ失敗 → 再度 Step 2 から (次レベルへ escalation、L0 到達まで)
-7. L0 も失敗 → レポートに注記
+### Runtime Escalation (applies to all stages)
 
-`$INSPECTOR_ENGINE == "subagents"` (L0) の場合はフォールバック先がないため、findings YAML 不在は即レポートに注記。
+After a stage completes, check for the expected output file. If missing:
+1. Capture failure output (tmux: capture-pane; background: task output).
+2. Classify failure:
+   - **ENGINE_FAILURE**: API 5xx, rate limit (429), connection error, timeout. Skip same engine, jump to next engine type (codex -> claude L5, claude -> L0).
+   - **LEVEL_FAILURE**: empty output, YAML syntax error, agent produced no findings file. Advance to next level in chain.
+   - Ambiguous -> treat as ENGINE_FAILURE (conservative).
+3. Re-dispatch the failed Inspector with the escalated engine.
+4. Record escalation via `/sdd-log issue` (type: BUG, summary: "Runtime escalation: {inspector} {failure_type} at {level}").
+5. If L0 also fails -> mark Inspector as "did not complete". Auditor proceeds with available findings.
 
-### Health Check (tmux mode, subagents 以外)
+### Inspector Completion
 
-`pgrep -fl "tmux send-keys"` でゾンビ send-keys プロセスを確認 (exit code 1 = ゾンビなし、正常)。検出時:
-- ユーザーに報告（PID、対象 pane、経過時間）
-- ユーザー確認後に `kill {PID}` で除去
-- 原因を Error Handling セクションに記録
+After all Inspectors complete (or fail), verify findings files exist in `active/`:
+- `findings-inspector-flow.yaml`
+- `findings-inspector-consistency.yaml`
+- `findings-inspector-compliance.yaml`
+- `findings-inspector-dynamic-{N}-{slug}.yaml` (per manifest)
 
-### Slot Release
+For tmux mode: release all slots by sending the close channel signal (`tmux wait-for -S {close_channel}`), then update all slot statuses to idle in state.yaml.
 
-SubAgent mode ではスキップ (Agent ツールが自動解放)。tmux mode の場合:
-1. `tmux wait-for -S sdd-{SID}-close-B{seq}` → 全 Agent スロットのブロック解除 (Hold-and-Release)
-2. command chain 完了後、スロットは idle に戻る（再利用可能）
-3. `{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
+## Step 6: Dispatch Auditor
 
-## Step 6: Consolidation (Auditor Agent)
+Read `${CLAUDE_SKILL_DIR}/references/auditor.md` for the full Auditor instructions.
 
-Auditor Agent に統合を委譲する。Lead は dispatch と成否確認のみ。
+Build the Auditor prompt listing the available findings files and the decisions.yaml path.
 
-### Auditor Dispatch
+Dispatch using the resolved engine for the `auditor` stage. Same dispatch mode logic as Step 4.
 
-1. Auditor を dispatch:
-   **SubAgent mode** (`$AUDITOR_ENGINE == "subagents"`):
-   `Agent(subagent_type="general-purpose", description="self-review Auditor", model=$AUDITOR_MODEL_MAPPED, run_in_background=true, prompt="Read .sdd/settings/templates/review-self/auditor.md and execute the instructions.")`
-   task-notification で完了を検知。
-   **tmux mode** (`$TMUX` 設定あり):
-   idle スロットを選択し、`{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: busy` + `agent: auditor`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/auditor | {$AUDITOR_MODEL}"`
-   ```
-   tmux send-keys -t {slot_pane_id} 'cat {$TPL}/auditor.md | {$AUDITOR_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-auditor-B{seq}' Enter
-   ```
-   ユーザーに報告: `Auditor dispatched to slot-{N} ({pane_id})`
-   `Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-auditor-B{seq}` を実行。task-notification で完了を検知。完了後、state.yaml の該当 slot を `status: idle` に更新し、`agent`/`engine`/`channel` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
-   **background mode** (上記以外):
-   `Bash(run_in_background=true)` で `cat $TPL/auditor.md | $AUDITOR_ENGINE_CMD` を実行。task-notification で完了を検知。
-2. 完了後の検証:
-   - `$SCOPE_DIR/active/verdict-auditor.yaml` の存在を確認
-   - 欠損 → Auditor 失敗。Auditor SubAgent フォールバック (下記) を試行
-3. `verdict-auditor.yaml` を Read → Step 7 へ進む
+### Auditor Completion
 
-### Auditor Failure Handling
+Verify `active/verdict-auditor.yaml` exists. Apply runtime escalation if missing.
 
-`$AUDITOR_ENGINE != "subagents"` かつ verdict-auditor.yaml が未生成の場合に発動。
+## Step 7: Lead Supervision
 
-1. **Failure Log Capture** (Runtime Escalation Protocol 参照) を実行
-2. Runtime Escalation Protocol に従いエスカレーション dispatch
-3. SubAgent (L0) の dispatch: `Agent(subagent_type="general-purpose", description="Auditor escalation", run_in_background=true, prompt="Read .sdd/settings/templates/review-self/auditor.md and execute the instructions.")`
-4. L0 も失敗 → "Auditor failed. Manual review required." を報告し、findings YAML ファイルパスを列挙して停止
+Read `active/verdict-auditor.yaml`. Do NOT read individual Inspector findings files -- the Auditor has already synthesized them.
 
-`$AUDITOR_ENGINE == "subagents"` (L0) の場合はフォールバック先がないため、失敗時は即上記メッセージで停止。
+### Second-Pass FP/Defer Judgment
 
-## Step 7: Lead Supervision + User Presentation
+Cross-reference each Auditor finding against:
+- `decisions.yaml`: intentional decisions that explain the finding.
+- Previous `verdicts.yaml` tracked items: already known and tracked.
 
-### 7a Lead 監修
+For each finding, determine:
+- **FP**: finding is explained by a decision or is a known tracked item. Add to `lead_overrides` with action: "eliminate".
+- **Severity reclassify**: finding severity is too high given context. Add to `lead_overrides` with action: "reclassify". Lead may only downgrade severity.
+- **Accept**: finding is valid. Keep as-is.
 
-Auditor の `verdict-auditor.yaml` を入力として以下を実行:
+### A/B Classification Verification
 
-1. **FP 判定**: `decisions.yaml` の `status: active` エントリと突合。意図的決定で説明できる finding → FP。Auditor が見落とした defer/意図的決定を Lead が補完する
-2. **Defer 判定**: 過去に defer 済みの finding が再浮上していないか、decisions.yaml の該当エントリおよび `verdicts.yaml` の `tracked` items を引用して確認
-3. **最終分類 (A/B)**: Auditor の classification を検証し、必要に応じて修正
-4. **verdict.yaml 作成**: Lead のオーバーライドを反映した最終 verdict を `$SCOPE_DIR/active/verdict.yaml` に書き出す (verdict-format.md の Lead Final Verdict スキーマに準拠)
+Review the Auditor's A/B classification for each confirmed finding:
+- **A (auto-fix)**: the fix is unambiguous. Naming typo, missing permission entry, stale count.
+- **B (decision-required)**: design-level change, wide impact, multiple valid approaches.
 
-#### 分類基準
+Adjust classification if the Auditor miscategorized.
 
-**A) 自明な修正** (Auto-fix):
-命名不一致、typo、許可漏れ、example 誤り等、判断不要で正解が一意のもの。
+### Write verdict.yaml
 
-**B) ユーザー判断が必要** (Decision-required):
-pre-existing backlog の対処方針、設計レベルの変更、影響範囲が広い修正。
-→ 各 finding のフィールドを **すべて埋めて** 提示。「どうしますか？」だけで聞かない。
+Write `active/verdict.yaml` following the schema in `.sdd/settings/rules/agent/verdict-format.md` Section 3. Include:
+- `verdict`: GO / CONDITIONAL / NO-GO
+- `counts`: severity counts (updated after Lead overrides)
+- `issues`: confirmed findings with `classification` field (A or B)
+- `lead_overrides`: all FP eliminations and reclassifications with rationale
+- `disposition`: see verdict-format.md Disposition Codes
 
-### 7b ユーザー提示
+### Present to User
 
-**提示テンプレートの全フィールドを省略せず出力すること**。要約テーブルへの圧縮は禁止。
+Present the full verdict to the user with ALL fields expanded. Do not compress into summary tables.
 
-```markdown
-# SDD Framework Self-Review Report
-**Date**: {ISO-8601} | **Engines**: briefer:{$BRIEFER_ENGINE} [{$BRIEFER_MODEL}], insp:{$INSPECTOR_ENGINE} [{$INSPECTOR_MODEL}], aud:{$AUDITOR_ENGINE} [{$AUDITOR_MODEL}], builder:{$BUILDER_ENGINE} [{$BUILDER_MODEL}]
-**Agents**: {dispatched} dispatched ({fixed} fixed + {dynamic} dynamic), {completed} completed
+For **B items**: include `impact`, `options` (if applicable), and `recommendation` for each.
 
-## False Positives Eliminated ({N}件)
+User approves, rejects, or defers each item:
+- `approved` -> will be fixed by Builder
+- `rejected` -> move to `fp_eliminated` (user-confirmed FP)
+- `deferred` -> add to `tracked`, record via `/sdd-log issue` (type: ENHANCEMENT, status: deferred)
 
-| # | Finding | Agent | Reason (decisions.yaml ref) |
-|---|---------|-------|---------------------------|
-| 1 | {概要} | {検出Agent} | {FP理由 — D{seq} 参照 or 実動作確認等} |
+Update `verdict.yaml` with `user_decision` for each item.
 
-## A) 自明な修正 ({N}件) — OK で Builder が修正します
+For **A items**: auto-approved (present for visibility, proceed to Builder without waiting).
 
-| ID | Sev | Location | Summary | Fix |
-|----|-----|----------|---------|-----|
-| A1 | {H/M/L} | {file}:{line} | {何が問題か} | {具体的な修正内容} |
+## Step 8: Dispatch Builder
 
-## B) ユーザー判断が必要 ({N}件)
+Collect all items with `user_decision: approved` (A items auto-approved + user-approved B items). If none, skip to Step 9.
 
-### B1: {title}
-- **Severity**: {C/H/M/L}
-- **Location**: {file}:{line}
-- **Description**: {問題の詳細説明}
-- **Impact**: {影響範囲 — どこに波及するか、どの程度深刻か}
-- **Options**:
-  - (a) {選択肢1} — {トレードオフ}
-  - (b) {選択肢2} — {トレードオフ}
-- **Recommendation**: {推奨する選択肢} — {推奨理由}
+Read `${CLAUDE_SKILL_DIR}/references/builder.md`. Build the Builder prompt by expanding placeholders:
+- `{{DENY_PATTERNS}}`: from engines.yaml
+- `{{FINDINGS}}`: YAML list of approved items (id, location, detail, recommendation)
+- `{{TEST_CMD}}`: empty (framework has no test suite)
+- `{{OUTPUT_PATH}}`: `active/builder-report.yaml`
 
-## Platform Compliance
+Dispatch using the resolved engine for the `builder` stage. Same dispatch mode logic.
 
-| Item | Status | Source |
-|------|--------|--------|
-| {項目} | {OK/OK (cached)/FP (UNCERTAIN)} | {URL or 確認方法} |
-```
+### Builder Completion
 
-### 7c ユーザー判断の受領
+Read `active/builder-report.yaml`. For each item:
+- `result: fixed` -> set `resolution: fixed` in verdict.yaml
+- `result: skipped` -> set `resolution: deferred` in verdict.yaml, record reason
 
-ユーザーの回答を待つ:
-- **A items**: 全承認 / 個別に却下
-- **B items**: 各アイテムに対して approve / defer / reject
-
-却下 (reject) されたアイテムはユーザー確認済み FP として扱う。defer されたアイテムは tracked に追加。
-
-## Step 8: Builder Fix Dispatch
-
-承認されたアイテム (A approved + B approved) が 0 件 → Step 9 へスキップ。
-
-### 8a プロンプト構築
-
-1. 承認済みアイテムを YAML 形式のリストに整形:
-   ```yaml
-   - id: "A1"
-     location: "{file}:{line}"
-     detail: "{what}"
-     fix: "{recommended fix}"
-   ```
-2. `$TPL/builder.md` を Read し、プレースホルダーを展開:
-   - `{{DENY_PATTERNS}}` → `$DENY_PATTERNS`
-   - `{{FINDINGS}}` → 上記整形済みリスト
-   - `{{TEST_CMD}}` → "none" (sync-sdd フレームワークにはテストスイートがないため)
-   - `{{OUTPUT_PATH}}` → `$SCOPE_DIR/active/builder-report.yaml`
-
-### 8b Builder Dispatch
-
-分岐順序: SubAgent → tmux → background (他ステージと統一)。
-
-**SubAgent mode** (`$BUILDER_ENGINE == "subagents"`):
-`Agent(subagent_type="general-purpose", description="Builder fix", model=$BUILDER_MODEL_MAPPED, run_in_background=true, prompt="{展開済みプロンプト}")`
-task-notification で完了を検知。
-
-**tmux mode** (`$BUILDER_ENGINE != "subagents"` かつ `$TMUX` 設定あり):
-idle slot を選択し、`{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: busy` + `agent: builder`/`engine`/`channel` に更新。pane タイトルを更新: `tmux select-pane -t {pane_id} -T "review-self/builder | {$BUILDER_MODEL}"`
-```
-tmux send-keys -t {slot_pane_id} 'cat {展開済みプロンプトファイル} | {$BUILDER_ENGINE_CMD}; tmux wait-for -S sdd-{SID}-review-self-builder-B{seq}' Enter
-```
-`Bash(run_in_background=true)` で `tmux wait-for sdd-{SID}-review-self-builder-B{seq}` を実行。task-notification で完了を検知。完了後、slot を idle に戻し、`agent`/`engine`/`channel`/`url` を除去。pane タイトルをリセット: `tmux select-pane -t {pane_id} -T "sdd-{SID}-slot-{N}"`
-
-**background mode** (上記以外):
-`Bash(run_in_background=true)` で `cat {展開済みプロンプトファイル} | $BUILDER_ENGINE_CMD` を実行。
-
-### 8c Builder 結果確認
-
-1. `$SCOPE_DIR/active/builder-report.yaml` の存在を確認
-2. Read して結果を検証:
-   - `status: complete` → 全アイテム修正成功
-   - `status: partial` → 一部スキップあり — スキップ理由を確認
-3. report の `diff_summary` で変更ファイル一覧と変更量を確認。疑わしい変更がある場合のみ `git diff {file}` で詳細確認
-4. ユーザーに Builder 結果を報告:
-   ```
-   Builder fix complete: {N}/{total} items fixed
-   Skipped: {list with reasons, if any}
-   Files modified: {list}
-   ```
-5. Builder 失敗時 (report.yaml 不在) → Builder SubAgent フォールバック (下記)
-
-### Builder Failure Handling
-
-`$BUILDER_ENGINE != "subagents"` かつ builder-report.yaml 未生成の場合に発動。
-
-1. **Failure Log Capture** (Runtime Escalation Protocol 参照) を実行
-2. Runtime Escalation Protocol に従いエスカレーション dispatch
-3. SubAgent (L0) の dispatch: `Agent(subagent_type="general-purpose", description="Builder fix escalation", run_in_background=true, prompt="{同じ展開済みプロンプト}")`
-4. L0 も失敗 → "Builder fix failed. Manual fix required." を報告し、承認済みアイテムリストを表示
-
-`$BUILDER_ENGINE == "subagents"` (L0) の場合はフォールバック先がないため、失敗時は即上記メッセージ。
+Update verdict.yaml with resolution fields.
 
 ## Step 9: Verdict Persistence
 
-### 9a Persist Results
+### Update verdicts.yaml
 
-1. B{seq} を決定: `$SCOPE_DIR/verdicts.yaml` の最大 `seq` + 1。ファイル不在 → 1
-2. `$SCOPE_DIR/active/verdict.yaml` から severity counts, files, disposition を読む
-3. `$SCOPE_DIR/verdicts.yaml` に batch エントリを append (verdict-format.md §4 Verdict Index スキーマ準拠):
-   ```yaml
-   - seq: {N}
-     type: "self"
-     scope: "framework"
-     date: "{ISO-8601}"              # date +%Y-%m-%dT%H:%M:%S%z
-     version: "{version}"            # .sdd/.version
-     engines:
-       briefer: "{model}"
-       inspectors: "{model}"
-       auditor: "{model}"
-       builder: "{model}"            # optional — omit if no Builder fixes
-     agents:
-       fixed: {N}
-       dynamic: {N}
-       total: {N}
-     counts:
-       C: {n}
-       H: {n}
-       M: {n}
-       L: {n}
-       FP: {n}
-     verdict: "{verdict}"
-     disposition: "{disposition}"
-     tracked: [...]                  # optional — deferred items
-     resolved: [...]                 # optional — resolved from prev batch
-   ```
-   - `tracked` の deferred items は `issues.yaml` にも auto-append (`type: ENHANCEMENT, status: deferred, source: "self B{seq}"`)
-   - `tracked`/`resolved` は該当なしの場合省略
-   - 前バッチに `tracked` がある場合: 今回の findings と突合し、解決されたものを `resolved` に記載
-4. Archive: `$SCOPE_DIR/active/` → `$SCOPE_DIR/B{seq}/`
+Append a new batch entry to `$SCOPE_DIR/verdicts.yaml` following verdict-format.md Section 4:
 
-### 9b handover.md Auto-Draft
-
-コマンド完了後の handover.md auto-draft を実行 (CLAUDE.md Session Persistence セクション参照)。
-
-## Runtime Escalation Protocol
-
-外部エンジンで成果物 (findings YAML / verdict YAML / builder report) が未生成の場合に発動。全ステージ (Briefer / Inspector / Auditor / Builder) で共通。
-
-### Failure Log Capture
-
-成果物不在を検出した時点で、直ちに diagnostic log を保存:
-
-- **ファイル名**: `{scope_dir}/active/failure-{role}-{name}-{engine}-L{level}.log`
-  - 例: `failure-inspector-flow-codex-L3.log`, `failure-auditor-claude-L5.log`
-  - エスカレーション先も失敗した場合にログが上書きされないよう、engine + level をファイル名に含める
-- **tmux mode**: `tmux capture-pane -t {pane_id} -p -S -100` の出力を Write
-- **background mode**: TaskOutput ファイルを Read して Write
-- **SubAgent mode**: Agent result を Write
-- **先頭行**: `timestamp: {ISO-8601}  engine: {engine}  model: {model}  effort: {effort}  level: L{N}  agent: {name}`
-
-### Failure Classification
-
-Failure log の内容から障害タイプを **Lead が判定** する:
-
-**ENGINE_FAILURE** (同一エンジンの上位レベルも同様に失敗する可能性が高い):
-- HTTP 5xx (500, 502, 503, 504)
-- Rate limit / quota exceeded
-- Connection refused / reset / timeout
-- API key invalid / authentication error
-- "service unavailable", "internal server error"
-
-**LEVEL_FAILURE** (エンジンは機能しているが、モデル/effort の変更で解決できる可能性あり):
-- 出力が空 (pane に応答はあるが成果物ファイル未生成)
-- YAML 構文エラー
-- タスク途中終了 (partial output)
-
-**判定不能** (ログが空、エラー情報なし): **ENGINE_FAILURE として扱う** (保守的判断 — 同じエンジンの retry は無駄になる可能性が高い)
-
-### Escalation Logic
-
-```
-ENGINE_FAILURE:
-  codex  (L1/L3/L4) → claude L5     (エンジン変更)
-  claude (L2/L5/L6/L7) → subagents L0  (エンジン変更)
-  subagents (L0)    → 最終失敗
-
-LEVEL_FAILURE:
-  L{N} → L{N+1}    (同一チェーン内で次レベル)
-  L7   → L0        (チェーン末端、subagents fallback)
-  L0   → 最終失敗
-```
-
-新しいレベルの engine/model/effort は engines.yaml `levels.L{N}` から解決し、Engine-Specific Command Construction (Step 4) で新しいコマンドを組み立てる。
-
-### User Reporting
-
-エスカレーション発生時、ユーザーに報告:
-```
-Runtime escalation: {agent-name}
-  L{from} ({engine} {model}) → L{to} ({engine} {model})
-  Reason: {ENGINE_FAILURE|LEVEL_FAILURE} — {key error from log}
-  Log: {failure log path}
-```
-
-Also append to `issues.yaml` (auto-issue):
 ```yaml
-- id: "I{next}"
-  type: "BUG"
-  status: "open"
-  severity: "M"
-  summary: "Runtime escalation: {agent-name} L{from}→L{to} ({ENGINE_FAILURE|LEVEL_FAILURE})"
-  detail: "{key error from log}"
-  source: "sdd-review-self"
-  created_at: "{ISO-8601}"
+- seq: {B_SEQ}
+  type: "self"
+  scope: "framework"
+  date: "{ISO-8601 timestamp via date command}"
+  version: "{contents of .sdd/.version}"
+  engines:
+    briefer: "{actual model used}"
+    inspectors: "{actual model used}"
+    auditor: "{actual model used}"
+    builder: "{actual model used, or omit if no Builder}"
+  agents:
+    fixed: 3
+    dynamic: {N from manifest}
+    total: {3 + N}
+  counts: {from verdict.yaml}
+  verdict: "{from verdict.yaml}"
+  disposition: "{from verdict.yaml}"
+  tracked: {from verdict.yaml, if any}
+  resolved: {from verdict.yaml, if any}
 ```
-If escalation resolves (agent succeeds at new level), update the issue to `status: resolved` with `resolution: "Resolved at L{to}"`.
 
-## Error Handling
+### Archive
 
-- **Engine not installed**: `install_check` が失敗した場合、level chain で次のレベルへ自動エスカレート (Step 1c)。最終的に L0 (subagents) にフォールバック
-- **Claude nesting guard**: `CLAUDECODE` 環境変数が設定されている場合 (Lead セッション内)、claude engine は `env -u CLAUDECODE` で起動する必要がある。これなしでは "cannot be launched inside another Claude Code session" エラーで即座に失敗する
-- **Agent failure**: Runtime Escalation Protocol でエスカレーション。最終失敗はレポートに "Agent {N} ({name}) did not complete." と注記。他の Agent の結果は有効
-- **Timeout**: `$TIMEOUT` 超過時は部分結果があれば findings YAML 存在を確認。なければ Runtime Escalation Protocol を適用
-- **Findings not generated**: Runtime Escalation Protocol を適用。L0 まで失敗 → 該当 Agent を最終失敗扱い。Failure log は `{scope_dir}/active/failure-*.log` に保存
-- **Slot safety**: MultiView スロットは kill しない。command chain 完了で自動 idle 復帰。Timeout 時はスロットの shell に `C-c` を send-keys で停止
-- **SubAgent engine (L0)**: `install_check` は常に成功 (`true`)。Agent ツールの dispatch 失敗はフォールバック先がないため即失敗扱い
-- **No findings**: Report "No issues detected." with confirmation checklist
-- **Briefer failure**: Runtime Escalation Protocol → L0 も失敗 → 停止
-- **Auditor failure**: Runtime Escalation Protocol → L0 も失敗 → findings YAML パス列挙して停止
-- **Builder failure**: Runtime Escalation Protocol → L0 も失敗 → 承認済みアイテムリストを提示して手動修正を依頼
-- **Builder partial**: 一部アイテムをスキップした場合、スキップ理由をユーザーに報告。ユーザーが手動修正するか defer するか判断
+Rename `active/` to `B{B_SEQ}/`:
+```
+mv $SCOPE_DIR/active $SCOPE_DIR/B{B_SEQ}
+```
 
-</instructions>
+### Deferred Items
+
+For any items with `user_decision: deferred`, record each via `/sdd-log issue` if not already recorded in Step 7.
+
+### Auto-Draft Handover
+
+Invoke `/sdd-log flush` then auto-draft `handover.md`:
+1. Read current handover.md
+2. Carry forward: Key Decisions, Warnings, Session Context
+3. Update Immediate Next Action
+4. Append self-review completion to Accomplished
+5. Write with `**Mode**: auto-draft`
+
+Report completion to user with summary: verdict, disposition, counts, batch number.

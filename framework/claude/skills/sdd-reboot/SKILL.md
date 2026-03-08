@@ -1,4 +1,5 @@
 ---
+name: sdd-reboot
 description: Reboot project design from zero (analysis, steering reform, new roadmap + specs on feature branch)
 allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit
 argument-hint: [name] [-y]

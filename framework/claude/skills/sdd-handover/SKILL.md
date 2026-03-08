@@ -55,14 +55,10 @@ Also Glob `.sdd/project/specs/*/spec.yaml` and read any that exist to capture pi
 
 ### Step 3: Flush Pending Session Data
 
-Using the files read in Step 2, scan the conversation history for decisions,
-issues, and knowledge discussed during this session but not yet persisted.
-
-For each unpersisted item:
-1. Determine the next available ID from the file read in Step 2 (e.g., if the
-   last entry is D215, the next is D216)
-2. Append the entry to the appropriate file using Edit (insert at end)
-3. Use ISO_TS from Step 1
+Invoke `/sdd-log flush` to persist any unpersisted decisions, issues, and
+knowledge from Lead's context. This delegates to the sdd-log skill which
+handles ID assignment, schema validation, rerouting, and knowledge FP
+suppression.
 
 This flush ensures nothing is lost before consolidation rewrites the files.
 
@@ -80,7 +76,10 @@ Then process each file in order. Do not create empty archive files — if nothin
 
 1. Identify entries with `status: superseded`
 2. Check for conflicting active decisions on the same topic — if found, ask
-   the user which to keep and mark the other superseded
+   the user which to keep and mark the other superseded. Two decisions
+   conflict when they prescribe mutually exclusive approaches to the same
+   problem (e.g., "use REST" vs "use GraphQL" for the same API). Decisions
+   that refine or extend each other are not conflicts
 3. If any superseded entries exist, write them to
    `.sdd/session/decisions/{ARCHIVE_SLUG}.yaml` with this format:
    ```yaml
@@ -108,17 +107,24 @@ Then process each file in order. Do not create empty archive files — if nothin
 #### 4c: knowledge.yaml
 
 1. **False positive detection**: Review entries and mark any that turned out
-   to be incorrect or no longer applicable as `status: superseded`
+   to be incorrect or no longer applicable as `status: superseded`. Only
+   mark entries when the current session provides clear evidence of
+   invalidity. When in doubt, keep active
 2. **Rules promotion**: If an entry describes a Bash security heuristic
-   pattern not yet documented in
-   `.sdd/settings/rules/lead/bash-security-heuristics.md`, append it to that
-   rules file
+   pattern not yet documented in the rules file, append it. Target file:
+   `framework/claude/sdd/settings/rules/lead/bash-security-heuristics.md`
+   if `framework/claude/` exists (sdd framework repo), otherwise
+   `.sdd/settings/rules/lead/bash-security-heuristics.md`. Note: the
+   `.sdd/` version may be overwritten by `install --force` — the
+   knowledge.yaml entry serves as durable record regardless
 3. **Duplicate detection**: Look for 3+ entries with similar summaries. If
-   found, note them for potential steering codification — mention this to
-   the user in the enrichment dialogue (Step 6)
+   found, present to the user as a steering PROPOSE: recommend codifying
+   the pattern into the relevant steering file. If the user approves,
+   apply the codification
 4. Archive superseded entries to
    `.sdd/session/knowledge/{ARCHIVE_SLUG}.yaml` (same header format as decisions)
-5. Rewrite `.sdd/session/knowledge.yaml` containing only `status: active`
+5. Re-read `.sdd/session/knowledge.yaml` (Step 4b may have appended
+   promoted entries since Step 2). Rewrite containing only `status: active`
    entries
 
 For large entry sets (50+ active entries in any file), summarize by severity
@@ -128,8 +134,8 @@ during user dialogue.
 ### Step 5: Archive Existing Handover
 
 If `.sdd/session/handover.md` exists:
-1. Create the `handovers/` directory if it does not exist
-2. Copy the current handover to `.sdd/session/handovers/{ARCHIVE_SLUG}.md`
+1. Copy the current handover to `.sdd/session/handovers/{ARCHIVE_SLUG}.md`
+   (directory already created in Step 4)
 
 If no handover.md exists, skip this step. The enrichment dialogue still runs
 — the user may want to set session context even for a first handover.
@@ -140,7 +146,7 @@ Present a summary of what was accomplished this session and the consolidation
 results (how many entries archived, any knowledge promoted, any duplicates
 detected for steering codification).
 
-Then ask the user a single compound question covering all enrichment areas:
+Then use the **AskUserQuestion** tool to ask:
 
 > Before I write the handover, anything to add or adjust?
 > - **Key decisions** to highlight or clarify?
@@ -148,8 +154,16 @@ Then ask the user a single compound question covering all enrichment areas:
 > - **Tone/Nuance** (e.g., "experimental mode", "user wants conservative approach")?
 > - **Steering exceptions** (intentional deviations from best practices)?
 > - **Resume instructions** (specific steps beyond what I'll infer from pipeline state)?
->
-> Say "nothing" or "なし" to proceed with defaults.
+
+Options:
+1. **なし** — proceed with defaults
+2. **追加あり** — user provides enrichment via free text
+
+**CRITICAL**: You MUST use the `AskUserQuestion` tool here — do NOT just print
+the question as text output. If you only print text, the user cannot
+distinguish the question from completion output and may `/clear` the session
+before Step 7 writes handover.md. AskUserQuestion is NOT in allowed-tools
+(intentional — it must go through the normal approval flow to display the UI).
 
 Accept both quick dismissals and detailed responses. If the user provides
 enrichment, incorporate it into the appropriate sections.
@@ -220,22 +234,19 @@ Do NOT include `**Mode**: auto-draft` — its absence signals manual polish.
 
 ### Step 8: Commit Proposal
 
-Present the user with three choices:
+Use the **AskUserQuestion** tool to present the user with three choices:
 
 1. **Commit all changes** — all modified files in the working tree
 2. **Commit .sdd/session/ only** — only session data files
 3. **No commit** — leave changes as-is
 
-If the user chooses option 1 or 2, generate an appropriate commit message
-using a heredoc:
+If the user chooses option 1 or 2, stage only the relevant files (specific
+paths, not `git add -A`) and commit using `-m` flags (not heredoc — heredoc
+triggers Bash security heuristics):
 
 ```
-session: {one-line summary of session work}
-
-Co-Authored-By: sync-sdd <noreply@sync-sdd>
+git commit -m "session: {one-line summary of session work}" -m "Co-Authored-By: sync-sdd <noreply@sync-sdd>"
 ```
-
-Stage only the relevant files (specific paths, not `git add -A`) and commit.
 
 ## Edge Cases
 

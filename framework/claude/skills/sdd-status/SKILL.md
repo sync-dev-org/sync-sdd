@@ -1,4 +1,5 @@
 ---
+name: sdd-status
 description: Check progress and analyze downstream impact
 allowed-tools: Read, Glob, Grep
 argument-hint: [feature-name] [--impact]

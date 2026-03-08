@@ -28,10 +28,19 @@
 {intentional deviations from steering best practices — reason + decisions.yaml ref}
 
 ## Accomplished
-{work completed this session}
+### Work Summary (this session)
+{work completed this session — concrete, specific}
+
+### Previous Sessions (carry forward)
+{summary of prior session work — carried forward from previous handover}
 
 ### Modified Files
-{file list}
+{key files changed this session — helps next Lead understand scope}
+
+## Open Issues
+{table of open/deferred issues from issues.yaml: ID | Severity | Summary}
+{only include if issues.yaml has open/deferred entries}
 
 ## Resume Instructions
-{1-3 steps for next session startup}
+1. `/sdd-start`
+{2-3. specific next steps for resuming work}

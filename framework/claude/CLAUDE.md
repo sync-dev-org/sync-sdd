@@ -195,6 +195,8 @@ Lead records decisions to `decisions.yaml` whenever:
 - Revision is initiated (append `(cross-cutting)` for multi-spec revisions)
 - Intentional deviation from steering (prevents review false-positives)
 
+All decision recording uses `/sdd-log decision`. sdd-log handles ID assignment, schema validation, and rerouting.
+
 **Superseded transition**: When recording a new decision that replaces an existing one, set the old decision's `status: superseded`. Triggers:
 - New decision explicitly contradicts or replaces a previous decision
 - User says "変更", "撤回", "取り消し" referencing a prior decision
@@ -231,6 +233,8 @@ Session context is persisted to `{{SDD_DIR}}/session/` for cross-session continu
 | `knowledge.yaml` | Append (auto) | Knowledge from Builder reports, verdicts, Lead |
 | `handovers/` | Archive | Dated copies of handover.md created by `/sdd-handover` |
 | `decisions/` | Archive | Dated archives of pruned decisions.yaml entries from consolidation |
+| `issues/` | Archive | Dated archives of resolved/rejected issues.yaml entries from consolidation |
+| `knowledge/` | Archive | Dated archives of superseded knowledge.yaml entries from consolidation |
 | `state.yaml` | Overwrite (auto) | tmux session state (SID, grid, slots) |
 
 Pipeline state is NOT stored in session — `spec.yaml` is the single source of truth for phase/status. Use `/sdd-status` or scan all `spec.yaml` files to reconstruct pipeline state.
@@ -240,7 +244,7 @@ Pipeline state is NOT stored in session — `spec.yaml` is the single source of 
 handover.md is written in two modes:
 
 **Auto-draft** (after each command completion):
-1. **Flush**: Write any pending decisions to `decisions.yaml`, issues to `issues.yaml`, and knowledge to `knowledge.yaml` that were noted during the command but not yet persisted
+1. **Flush**: Invoke `/sdd-log flush` to persist any pending decisions, issues, and knowledge noted during the command
 2. Read current handover.md (if exists)
 3. Carry forward: Key Decisions, Warnings, Session Context (Tone/Nuance, Steering Exceptions)
 4. Update: Immediate Next Action based on current state
@@ -308,13 +312,16 @@ Templates: `{{SDD_DIR}}/settings/templates/session/{decisions,issues,knowledge}.
 
 | Trigger | File | Notes |
 |---------|------|-------|
-| Command completion (design/impl/review/roadmap/steering) | handover.md auto-draft | Flush pending decisions/knowledge first, then carry forward + update Next Action/Accomplished |
-| `/sdd-handover` | handover.md manual polish, handovers/ archive | Flush + consolidate before write |
-| User decision / steering change / direction change | decisions.yaml | Auto-append |
-| Bug report / feature request / enhancement | issues.yaml | Auto-append |
-| Builder completion (tags > 0) | knowledge.yaml, issues.yaml | Auto-append from builder-report |
-| Verdict confirmed | knowledge.yaml | Auto-append significant findings |
-| Lead operational insight | knowledge.yaml | Auto-append |
+| Command completion | handover.md auto-draft | `/sdd-log flush` → carry forward + update Next Action/Accomplished |
+| `/sdd-handover` | handover.md manual polish | `/sdd-log flush` + consolidate before write |
+| User decision / steering change | decisions.yaml | `/sdd-log decision` |
+| Bug report / feature request | issues.yaml | `/sdd-log issue` |
+| Builder completion (tags > 0) | knowledge.yaml, issues.yaml | `/sdd-log knowledge` or `/sdd-log issue` per tag |
+| Verdict confirmed | knowledge.yaml | `/sdd-log knowledge` — significant findings |
+| STEERING entries | decisions.yaml | `/sdd-log decision` |
+| Deferred review items | issues.yaml | `/sdd-log issue` (type: ENHANCEMENT, status: deferred) |
+| Runtime escalation | issues.yaml | `/sdd-log issue` (type: BUG) |
+| Lead operational insight | knowledge.yaml | `/sdd-log knowledge` |
 
 ### Session Start
 
@@ -323,9 +330,9 @@ On session start (new Claude Code session, conversation compact, `/clear`, or re
 ## Knowledge Auto-Accumulation
 
 - Builder reports learnings with tags: `[KNOWLEDGE]` (→ knowledge.yaml), `[ISSUE]` (→ issues.yaml)
-- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and appends to the appropriate session file
+- Lead extracts tags from builder-report files via targeted Grep (when Builder summary indicates Tags > 0) and records via `/sdd-log knowledge` or `/sdd-log issue` per tag. sdd-log handles rerouting (Builder の型判断は下書き扱い — D121)、ID assignment、FP suppression
 - knowledge.yaml persists across sessions. Duplicate writes are allowed (≥3 similar summary triggers steering PROPOSE at consolidation).
-- **Flush + consolidation** occurs at `/sdd-handover` time (Step 4): flush pending decisions/knowledge/issues, then decisions.yaml `status: superseded` exclusion, issues.yaml resolved/rejected archival with **knowledge promotion** (resolved issue の resolution に再利用可能な知見があれば knowledge.yaml に昇格), knowledge.yaml **curation** (FP 判定 + rules 昇格) + duplicate detection + steering PROPOSE. Pruned entries are archived.
+- **Flush + consolidation** occurs at `/sdd-handover` time: `/sdd-log flush` persists pending items (Step 3), then consolidation (Step 4) handles decisions.yaml `status: superseded` exclusion, issues.yaml resolved/rejected archival with **knowledge promotion** (resolved issue の resolution に再利用可能な知見があれば knowledge.yaml に昇格), knowledge.yaml **curation** (FP 判定 + rules 昇格) + duplicate detection + steering PROPOSE. Pruned entries are archived.
 
 ## Pipeline Stop Protocol
 
@@ -341,12 +348,7 @@ Resume: `/sdd-roadmap run` scans all `spec.yaml` files to rebuild pipeline state
 - **Session Start**: On session start, resume request (e.g., "再開", "continue", "resume"), compact, or `/clear` → use `/sdd-start`. Do NOT attempt manual resume steps.
 - Do not continue or resume non-pipeline tasks after compact/clear unless the user explicitly instructs you to do so.
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end, asking questions only when essential information is missing or critically ambiguous.
-- **Natural Language Memory Triggers**: When user's message contains the following keywords, Lead writes the corresponding entry immediately (no Skill invocation needed):
-  - 「覚えて」「remember」→ knowledge.yaml にエントリを追記 (severity: user が示唆する重要度、なければ `M`)
-  - 「ISSUE」「問題」「インシデント」→ issues.yaml にエントリを追記 (severity: `H`, status: `open`)
-  - 「判断」「decision」「決定」→ decisions.yaml にエントリを追記
-  - Lead はユーザーの発言から summary/detail を抽出してフォーマットする。不足情報があれば簡潔に確認する
-  - **記録が第一**: NL trigger では issues.yaml/decisions.yaml/knowledge.yaml への記録を最優先する。修正や実装は記録完了後に別ステップで行う。記録をスキップして即実装してはならない
+- **記録が第一** (K6): ユーザーメッセージに記録要求が含まれる場合、`/sdd-log` が Skill 発火する。記録完了まで他の作業（修正・実装）を開始してはならない。記録をスキップして即実装は禁止
 - **Review 中のファイル編集禁止**: レビューパイプライン実行中 (Inspector/Auditor が動作中) はレビュー対象ファイルを編集しない。変更指示を受けた場合はレビュー完了後に実行する
 - **Bash パス規則**: settings.json の auto-approve パターンは相対パスで登録されている。Bash コマンドでプロジェクト内のスクリプトを実行する際は常に相対パスを使用する (例: `bash install.sh --local --force`、`bash .sdd/settings/scripts/orphan-detect.sh`)。絶対パスはパターン不一致で承認プロンプトを誘発する
 
@@ -383,7 +385,7 @@ Trunk-based development. main is always HEAD.
 - **Wave completion (multi-spec roadmap)**: After Wave Quality Gate passes, Lead commits directly
 - **Pipeline completion (1-spec roadmap)**: After individual pipeline completes, Lead commits
 - Commit scope: all spec artifacts + implementation changes from the completed work
-- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision) or `reboot: {summary}` (reboot redesign)
+- Commit message format: `Wave {N}: {summary}` (multi-spec) or `{feature}: {summary}` (1-spec roadmap) or `cross-cutting: {summary}` (cross-cutting revision) or `reboot: {summary}` (reboot redesign) or `session: {summary}` (session data commits via `/sdd-handover`)
 - All commits MUST end with `Co-Authored-By: sync-sdd <noreply@sync-sdd>`
 - **README check**: At commit time (wave completion or pipeline completion), verify `README.md` is consistent with current state. Check feature descriptions, counts, architecture, and workflow sections against `steering/` and `CLAUDE.md`. Update if stale. This is in addition to the release-time content review.
 
