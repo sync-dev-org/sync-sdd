@@ -1,0 +1,18 @@
+# Archived from decisions.yaml at 2026-03-09T03:34:26+0900
+# Entries: 2
+entries:
+  - id: "D222"
+    status: "superseded"
+    severity: "M"
+    summary: "sdd-review-self を references/ 自己完結化 — skill 外テンプレート依存を排除"
+    detail: "reforge で全プロンプト素材を framework/claude/skills/sdd-review-self/references/ に新規作成。.sdd/settings/templates/review-self/ への依存を排除。外部インターフェース (engines.yaml, scripts, rules, session data) は共有インフラとして外部参照を維持。skill-reference 標準パターン (${CLAUDE_SKILL_DIR}) を活用"
+    source: "user"
+    created_at: "2026-03-08T14:25:19+0900"
+
+  - id: "D224"
+    status: "superseded"
+    severity: "M"
+    summary: "ヒューリスティクス知識を Briefer 経由で shared-prompt.md に埋め込み Inspector/Auditor に配布"
+    detail: "Inspector/Auditor がセキュリティヒューリスティクス回避パターンを知らないため FP が多発する。Briefer が .sdd/settings/rules/lead/bash-security-heuristics.md を読み込み shared-prompt.md に組み込むことで、全 Inspector + Auditor に自動配布する。原本は rules/lead/ のまま (暫定 — I33 で配置リファクタリング予定)。sdd-review, sdd-forge-skill にも同じ FP 問題があるが、review-self で先行実証する"
+    source: "user"
+    created_at: "2026-03-08T15:47:34+0900"
