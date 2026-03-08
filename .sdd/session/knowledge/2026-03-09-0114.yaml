@@ -1,0 +1,10 @@
+# Archived from knowledge.yaml at 2026-03-09T01:14:00+0900
+# Entries: 1
+entries:
+  - id: "K20"
+    status: "superseded"
+    severity: "M"
+    summary: "Skill→Skill ネスト呼び出しは動作確認済み"
+    detail: "main context で展開される Skill から別の Skill を Skill ツールで呼び出すネスト実行は正常に動作する。sdd-handover から /sdd-log flush を呼び出すなど、Skill 間の委譲パターンに使える"
+    source: "user"
+    created_at: "2026-03-08T06:46:56+0900"

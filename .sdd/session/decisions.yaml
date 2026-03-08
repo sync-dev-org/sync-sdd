@@ -456,3 +456,11 @@ entries:
     detail: "新版のエンジンコマンドテーブルは旧版より簡潔だが機能的に十分。唯一の欠落だった SubAgent model mapping (spark/haiku→haiku, opus→opus, other→sonnet) を I28 修正で追加。I27 を resolve する"
     source: "lead"
     created_at: "2026-03-08T15:47:34+0900"
+
+  - id: "D226"
+    status: "active"
+    severity: "H"
+    summary: "I33 初期判断: .sdd/ 階層再設計 — lib/ 導入"
+    detail: ".sdd/settings/ から scripts/references/rules/templates/profiles を .sdd/lib/ に移動。settings/ は純粋な設定ファイル (engines.yaml 等) のみ残す。lib/ は Skill 標準構造の近似でフレームワークが提供するライブラリ層。指示書関連は .sdd/lib/prompts/ 配下。sdd-log Read-inline 化が lib/ マイグレーション第一弾。prompt ファイルは .sdd/lib/prompts/log/ に配置"
+    source: "user"
+    created_at: "2026-03-09T01:05:34+0900"

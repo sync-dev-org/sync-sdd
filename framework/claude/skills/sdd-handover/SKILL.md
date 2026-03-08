@@ -55,17 +55,12 @@ Also Glob `.sdd/project/specs/*/spec.yaml` and read any that exist to capture pi
 
 ### Step 3: Flush Pending Session Data
 
-Invoke `/sdd-log flush` to persist any unpersisted decisions, issues, and
-knowledge from Lead's context. This delegates to the sdd-log skill which
-handles ID assignment, schema validation, rerouting, and knowledge FP
-suppression.
+Read `.sdd/lib/prompts/log/flush.md` and follow its instructions to persist
+any unpersisted decisions, issues, and knowledge from the current conversation
+context.
 
 This flush ensures nothing is lost before consolidation rewrites the files.
-
-**CRITICAL**: After flush completes, immediately proceed to Step 4 in the
-same response. Do NOT stop or wait for user input between Step 3 and Step 4.
-The Skill tool invocation creates a turn boundary — you must explicitly
-continue the handover flow after the flush result is returned.
+After flush completes, proceed to Step 4.
 
 ### Step 4: Consolidate Session Data
 

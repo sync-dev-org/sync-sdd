@@ -1,0 +1,13 @@
+# Archived from issues.yaml at 2026-03-09T01:14:00+0900
+# Entries: 1
+entries:
+  - id: "I40"
+    type: "BUG"
+    status: "resolved"
+    severity: "H"
+    summary: "Skill ネスト (sdd-handover → sdd-log flush) で Claude Code が stop する — I31 再発"
+    detail: "sdd-handover Step 3 で /sdd-log flush をネスト呼び出しした際、sdd-log 完了時点で Claude Code 自体が停止し、sdd-handover の Step 4 以降が実行されなかった。I31 (sdd-handover の Skill ネスト後停止問題) として前セッションで修正済みとしていたが再発。K20 では「Skill→Skill ネスト呼び出しは動作確認済み」と記録しているが、信頼性に疑問。本セッションでも sdd-handover SKILL.md の CRITICAL 指示 (flush 後に即 Step 4 続行) を違反して停止した。次セッションで以下をリサーチ: (1) Claude Code の Skill ネストの公式サポート状況 (2) 既知の GitHub issues (anthropics/claude-code) (3) コミュニティでの報告・ワークアラウンド (4) Skill ネストの代替設計 (flush をスキル呼び出しではなく inline 実行にする等)"
+    source: "user"
+    resolution: "sdd-log を prompt ファイル化 (.sdd/lib/prompts/log/) し、sdd-handover の Step 3 を Skill ネストから Read-inline に変更。根本原因は Claude Code の confirmed bug (#17351)。K24 に知見記録"
+    created_at: "2026-03-08T19:26:59+0900"
+    resolved_at: "2026-03-09T01:14:00+0900"

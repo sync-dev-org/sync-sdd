@@ -91,6 +91,7 @@ ${BOLD}FRAMEWORK FILES${RESET} (managed by installer):
     .sdd/settings/templates/     Spec/steering templates
     .sdd/settings/profiles/      Language/framework profiles
     .sdd/settings/scripts/       Utility scripts
+    .sdd/lib/                    Framework library (prompts, scripts, etc.)
     .sdd/settings/engines.yaml   Engine configuration (overwritten on --update/--force)
     .sdd/.version                Installed framework version
 
@@ -137,7 +138,8 @@ if [ "$UNINSTALL" = true ]; then
     rm -rf .sdd/settings/rules/ \
            .sdd/settings/templates/ \
            .sdd/settings/profiles/ \
-           .sdd/settings/scripts/
+           .sdd/settings/scripts/ \
+           .sdd/lib/
     rm -f .sdd/.version
     # Also clean old locations (pre-v1.2.0)
     rm -rf .claude/sdd/settings/rules/ \
@@ -538,6 +540,7 @@ install_dir "$SRC/framework/claude/sdd/settings/rules"     ".sdd/settings/rules"
 install_dir "$SRC/framework/claude/sdd/settings/templates"  ".sdd/settings/templates"
 install_dir "$SRC/framework/claude/sdd/settings/profiles"   ".sdd/settings/profiles"
 install_dir "$SRC/framework/claude/sdd/settings/scripts"   ".sdd/settings/scripts"
+install_dir "$SRC/framework/claude/sdd/lib"        ".sdd/lib"
 install_dir "$SRC/framework/claude/agents"     ".claude/agents"
 
 # engines.yaml: framework-managed default (overwritten on every install/update)
@@ -590,12 +593,14 @@ if [ "$UPDATE" = true ] || [ "$FORCE" = true ]; then
     remove_stale ".sdd/settings/templates" "$SRC/framework/claude/sdd/settings/templates"  "*"
     remove_stale ".sdd/settings/profiles"  "$SRC/framework/claude/sdd/settings/profiles"   "*.md"
     remove_stale ".sdd/settings/scripts"   "$SRC/framework/claude/sdd/settings/scripts"    "*"
+    remove_stale ".sdd/lib"   "$SRC/framework/claude/sdd/lib"    "*"
     remove_stale ".claude/agents"    "$SRC/framework/claude/agents"     "sdd-*.md"
 
     # Clean up empty directories left after stale file removal
     find .sdd/settings/templates -depth -type d -empty -delete 2>/dev/null || true
     find .sdd/settings/profiles -depth -type d -empty -delete 2>/dev/null || true
     find .sdd/settings/scripts -depth -type d -empty -delete 2>/dev/null || true
+    find .sdd/lib -depth -type d -empty -delete 2>/dev/null || true
     find .claude/skills -depth -type d -empty -delete 2>/dev/null || true
 fi
 
