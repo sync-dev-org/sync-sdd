@@ -1,17 +1,18 @@
 # Session Handover
-**Generated**: 2026-03-09T16:24:47+0900
+**Generated**: 2026-03-09T17:03:26+0900
 **Branch**: main
-**Session Goal**: リファレンス文書の構造化・精査・更新手順書整備
+**Session Goal**: references/index.yaml 導入 + sdd-review-self リファレンス動的参照化 + 全リファレンス英語統一
 
 ## Direction
 
 ### Immediate Next Action
 1. I57 (pane タイトル復元) を修正 — dispatch/engine.md に slot release 時のタイトル復元追加
 2. D223 (Builder 廃止) を確定 decision 記録
-3. コミット
+3. コミット + install --local --force で動作確認
 
 ### Active Goals
-- **リファレンス文書整備**: references/claude/ にサブフォルダ化完了。3文書を公式ドキュメント+GitHub Issues で全面精査済み。更新手順書も完備。他の領域 (engines.yaml 仕様等) も文書化候補
+- **リファレンス index.yaml**: 導入完了。今後スキルから index.yaml を参照させて、必要なリファレンスの選択を LLM に委ねる設計。sdd-review-self で先行実証済み。sdd-review にも拡張予定 (I41)
+- **sdd-review-self リファレンス動的参照**: Briefer が index.yaml からリファレンス選択 → Inspector/Auditor に配布。auditor-header.md 廃止。Auditor は references_read/ref で判断根拠を報告、Lead が Reference Verification で検証
 - **I33 lib/ マイグレーション**: prompts/log/, prompts/review-self/, prompts/dispatch/, references/ 完了。残り: scripts, rules, templates, profiles
 - **I41 sdd-review 改修**: dispatch/engine.md 参照に改修。sdd-review-self で先行実証済み
 - **I55 issue type 再設計**: GitHub 慣例との整合性検討
@@ -30,18 +31,18 @@
 - D227: sdd-review-self 改修計画 — 7項目の設計決定を包括
 
 **Added this session:**
-- (正式 decision なし。リファレンス文書の構造化・精査は既存 D226/D227 の延長作業)
+- D228: リファレンス文書を全て英語に統一 — トークン効率のため
 
 ### Warnings
-- **リサーチエージェントの報告は鵜呑みにしない**: 本セッションで「CLAUDE.md が SubAgent にも読み込まれる」という誤報告を受けた。公式ドキュメント原文と照合すると SubAgent には渡されない。Agent Team の Teammate についての記述を混同した誤り。リサーチ結果は必ず公式ドキュメント原文 (WebFetch) で裏取りすること
-- **公式ドキュメントも最新とは限らない**: GitHub Issues で公式ドキュメントの記述と実動作の乖離が報告されることがある。更新手順書の「要注意エビデンス」セクションに検証ポイントを記載済み
+- **リサーチエージェントの報告は鵜呑みにしない**: 過去セッションで「CLAUDE.md が SubAgent にも読み込まれる」という誤報告。公式ドキュメント原文と照合すること。更新手順書の「Critical Evidence」セクションに検証ポイント記載済み
+- **公式ドキュメントも最新とは限らない**: GitHub Issues で公式ドキュメントの記述と実動作の乖離が報告されることがある
 - **I57 は UX デグレ**: pane タイトルが busy 表示のまま戻らない
+- **sdd-review-self 未テスト**: 今セッションで briefer/inspector/auditor のリファレンス参照フローを大幅変更したが、実行テスト未実施。次回 self-review で動作確認が必要
 
 ## Session Context
 
 ### Tone and Nuance
-- リファレンス文書は開発の道標。間違った前提で開発すると全てが間違う。公式原文のエビデンスベースで精度を保つ
-- リサーチエージェントの結果だけでなく、公式ドキュメント原文を WebFetch で直接取得して照合する習慣を徹底
+なし
 
 ### Steering Exceptions
 なし
@@ -49,35 +50,38 @@
 ## Accomplished
 
 ### Work Summary (this session)
-1. `.sdd/lib/references/` をサブフォルダ化: `claude/` 以下に Claude Code 仕様文書4件を移動、直下にはフレームワーク全体文書 (`bash-security-heuristics.md`) のみ
-2. `skill-reference-sources.md` を `references/claude/` にコピー
-3. 3つのリファレンス文書を公式ドキュメント + GitHub Issues で全面精査・修正:
-   - **agent-tool-reference.md**: Plan tools 修正、Built-in types 追加 (Bash/statusline-setup/claude-code-guide)、Model aliases 拡充 (default/sonnet[1m]/opusplan)、CLAUDE_CODE_SUBAGENT_MODEL 追加、CLAUDE.md 継承問題解消、Bug #3903 stateReason 修正、Model 優先順位を「推定」明記
-   - **subagent-definition-reference.md**: name 制約修正 ("親ディレクトリ"→"ファイル名")、tools 形式修正、Context セクション公式原文準拠、hooks 追加 (SubagentStart/Stop)、SubAgent 無効化セクション追加
-   - **agent-team-reference.md**: トークンコスト修正 ("3-4x"→"approximately 7x")、teammateMode `tmux` 値追加、推奨チームサイズ追加、Plan Approval 追加、Hooks タイプ制限明記、比較表の CLAUDE.md 残存エラー修正
-4. 3つの更新手順書を新規作成 (agent-tool-sources.md, subagent-definition-sources.md, agent-team-sources.md) — 公式ドキュメント原文引用の「要注意エビデンス」セクション付き
-5. `inspector-compliance.md` のパス更新 (framework/ + install 先)
-6. 全ファイルを framework/ 側にも同期
+1. **references/index.yaml 導入**: `load` 3値 (always/on_demand/explicit) + category/summary/keywords。スキルが index を読んで必要な文書を LLM 判断で選択する設計
+2. **references/ サブディレクトリ再編**: `common/` (load: always) に bash-security-heuristics.md と tmux-integration.md を移動。`claude/` は on_demand/explicit
+3. **sdd-review-self リファレンス動的参照化**:
+   - Briefer: Step 2.5 新設 (index.yaml 参照 → SHARED_REFERENCES + INSPECTOR_REFERENCES)、Step 3.5 新設 (固定 Inspector プロンプトを active/ に展開)
+   - shared-prompt-structure.md: ハードコード参照 → `{SHARED_REFERENCES}` プレースホルダに置換
+   - inspector-compliance.md: Reference Documents セクション (ハードコード参照) を除去
+   - auditor-header.md 廃止: auditor.md が完全静的プロンプトとして自立
+   - Auditor: Step 0 新設 (index.yaml → リファレンス参照)、verdict YAML に `references_read` + per-item `ref` フィールド追加
+   - SKILL.md Step 5: Inspector パスを active/ 統一。Step 6: auditor-header 除去。Step 7: Reference Verification サブステップ新設
+4. **リファレンス文書全英語化** (D228): 8ファイル + index.yaml を日本語→英語。5 SubAgent 並列で実行
+5. パス参照更新: CLAUDE.md, engine.md, inspector-compliance.md, shared-prompt-structure.md, sdd-review SKILL.md
 
 ### Previous Sessions (carry forward)
+- v2.6.0 (session 19): リファレンス文書の構造化・精査・更新手順書整備
 - v2.6.0 (session 18): D227 改修実装 + B47 review + リファレンス文書3件作成
 - v2.6.0 (session 17): D227 改修実装 + B47 review + session consolidation
 - v2.6.0 (session 16): sdd-review-self 改修計画設計 (D227)
 - v2.6.0 (session 15): I40 fix — sdd-log Read-inline化 + .sdd/lib/ 導入
-- v2.6.0 (session 14): B46 テスト実行 + codex/SKILL.md 問題検出
 
 ### Modified Files
-- `.sdd/lib/references/claude/` — サブフォルダ化 (4ファイル移動)
-- `.sdd/lib/references/claude/agent-tool-reference.md` — 全面精査・修正
-- `.sdd/lib/references/claude/subagent-definition-reference.md` — 全面精査・修正
-- `.sdd/lib/references/claude/agent-team-reference.md` — 全面精査・修正
-- `.sdd/lib/references/claude/agent-tool-sources.md` — 新規作成
-- `.sdd/lib/references/claude/subagent-definition-sources.md` — 新規作成
-- `.sdd/lib/references/claude/agent-team-sources.md` — 新規作成
-- `.sdd/lib/references/claude/skill-reference-sources.md` — コピー追加
-- `.sdd/lib/prompts/review-self/inspector-compliance.md` — パス更新
-- `framework/claude/sdd/lib/references/claude/` — 上記全ファイルの framework 同期
-- `framework/claude/sdd/lib/prompts/review-self/inspector-compliance.md` — パス更新
+- `.sdd/lib/references/index.yaml` — 新規作成
+- `.sdd/lib/references/common/bash-security-heuristics.md` — 移動 + 英語化
+- `.sdd/lib/references/common/tmux-integration.md` — rules/lead/ から移動 + 英語化
+- `.sdd/lib/references/claude/*.md` — 全8ファイル英語化
+- `.sdd/lib/prompts/review-self/briefer.md` — Step 2.5, 3, 3.5 改修
+- `.sdd/lib/prompts/review-self/shared-prompt-structure.md` — SHARED_REFERENCES プレースホルダ化
+- `.sdd/lib/prompts/review-self/inspector-compliance.md` — ハードコード参照除去
+- `.sdd/lib/prompts/review-self/auditor.md` — Step 0 + references_read/ref 追加
+- `framework/claude/CLAUDE.md` — tmux-integration パス更新
+- `framework/claude/skills/sdd-review-self/SKILL.md` — Step 5/6/7 改修
+- `framework/claude/skills/sdd-review/SKILL.md` — tmux-integration パス更新
+- `framework/claude/sdd/` — 上記全ファイルの framework 同期
 
 ## Open Issues
 | ID | Sev | Type | Summary |

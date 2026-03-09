@@ -456,3 +456,11 @@ entries:
     detail: "7項目の設計決定を包括: (1) Engine Dispatch と Command Dispatch は別プロンプトに分離。Engine Dispatch は .sdd/lib/prompts/dispatch/engine.md に 1 ファイル自己完結 (resolve+commands+dispatch modes+escalation)。Command Dispatch は別タスク (2) prompt には変数を持たない — 全パスをハードコード。ACTIVE_DIR/TEMPLATE_DIR/VERDICTS_PATH 変数廃止。briefer-header.md 廃止 (3) Briefer を外部エンジンから組み込み SubAgent (Sonnet, run_in_background) に降格。Lead は briefer.md を Read しない (4) references/ 全 6 ファイルを .sdd/lib/prompts/review-self/ に移動、references/ ディレクトリ廃止 (5) compliance キャッシュ (CACHED_OK) 廃止 → .sdd/lib/references/ のリファレンス直読み (bash-security-heuristics.md + skill-reference.md) (6) Briefer 簡素化 — HEURISTICS_CONTENT 埋め込み廃止、deny_patterns 埋め込み廃止、固定 Inspector コピー全廃。Inspector はパス参照で直読み (7) lib/references/ のファイルはコピーで対応、旧ファイルは I33 で削除。プランファイル: .claude/plans/splendid-growing-snowglobe.md"
     source: "user"
     created_at: "2026-03-09T03:35:16+0900"
+
+  - id: "D228"
+    status: "active"
+    severity: "M"
+    summary: "リファレンス文書を全て英語に統一 — トークン効率のため"
+    detail: "references/ 配下の全文書 (8ファイル + index.yaml) を英語に統一。日本語は英語と比べてトークン消費が多い。リファレンス文書は LLM が読むための仕様書であり、トークン効率を優先する"
+    source: "user"
+    created_at: "2026-03-09T17:03:41+0900"

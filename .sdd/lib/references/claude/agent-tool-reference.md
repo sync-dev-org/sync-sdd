@@ -3,142 +3,142 @@
 **Last Updated**: 2026-03-09
 **Sources**: code.claude.com/docs/en/sub-agents, code.claude.com/docs/en/model-config, GitHub anthropics/claude-code
 
-Claude Code の Agent tool で SubAgent を spawn するための仕様リファレンス。`.claude/agents/` のエージェント定義ファイルの仕様は `subagent-definition-reference.md` を参照。
+Specification reference for spawning SubAgents via the Claude Code Agent tool. For the specification of agent definition files in `.claude/agents/`, see `subagent-definition-reference.md`.
 
 ## Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `description` | string | Yes | 3-5 word の短い task 説明 |
-| `prompt` | string | Yes | SubAgent への指示。SubAgent はこれだけを task prompt として受け取る |
-| `subagent_type` | string | No | エージェント種別。Built-in または `.claude/agents/` のカスタム定義名 |
-| `model` | string | No | モデル指定 (下記参照)。省略時は inherit |
-| `run_in_background` | boolean | No | `true` で非同期実行。完了は `task-notification` で自動通知 |
-| `isolation` | string | No | `"worktree"` で git worktree 上のコピーで実行 |
-| `resume` | string | No | 前回の Agent ID を指定して会話を継続 |
+| `description` | string | Yes | Short task description, 3-5 words |
+| `prompt` | string | Yes | Instructions for the SubAgent. The SubAgent receives only this as its task prompt |
+| `subagent_type` | string | No | Agent type. Built-in or custom definition name from `.claude/agents/` |
+| `model` | string | No | Model specification (see below). Defaults to inherit when omitted |
+| `run_in_background` | boolean | No | `true` for async execution. Completion is auto-notified via `task-notification` |
+| `isolation` | string | No | `"worktree"` to execute on a copy in a git worktree |
+| `resume` | string | No | Specify a previous Agent ID to continue the conversation |
 
 ## Built-in Agent Types
 
-| Type | Model | Tools | 用途 |
-|------|-------|-------|------|
-| `general-purpose` | inherit | All | 汎用タスク委譲。省略時のデフォルト |
-| `Explore` | haiku | Read-only (Write/Edit 拒否) | 高速なコードベース探索。thoroughness level: quick/medium/very thorough |
-| `Plan` | inherit | Read-only (Write/Edit 拒否) | plan mode でのコードベース調査 |
-| `Bash` | inherit | (separate context) | ターミナルコマンド実行 |
-| `statusline-setup` | sonnet | (internal) | `/statusline` で status line 設定 |
-| `claude-code-guide` | haiku | (internal) | Claude Code 機能についての質問応答 |
+| Type | Model | Tools | Use Case |
+|------|-------|-------|----------|
+| `general-purpose` | inherit | All | General-purpose task delegation. Default when omitted |
+| `Explore` | haiku | Read-only (Write/Edit denied) | Fast codebase exploration. thoroughness level: quick/medium/very thorough |
+| `Plan` | inherit | Read-only (Write/Edit denied) | Codebase investigation in plan mode |
+| `Bash` | inherit | (separate context) | Terminal command execution |
+| `statusline-setup` | sonnet | (internal) | Status line setup via `/statusline` |
+| `claude-code-guide` | haiku | (internal) | Q&A about Claude Code features |
 
-`subagent_type` 省略時は `general-purpose` が使われる。
+When `subagent_type` is omitted, `general-purpose` is used.
 
 ## Model Control
 
 ### Model Aliases
 
-| Alias | 解決先 | 用途 |
-|-------|--------|------|
-| `sonnet` | claude-sonnet-4-6 (latest Sonnet) | 日常的コーディング |
-| `opus` | claude-opus-4-6 (latest Opus) | 複雑な推論 |
-| `haiku` | claude-haiku-4-5 | 高速・低コスト |
-| `default` | アカウント種別依存 (Max/Team Premium=Opus, Pro/Team Standard=Sonnet) | — |
-| `sonnet[1m]` | Sonnet + 1M token context | 長いセッション |
-| `opusplan` | plan mode=Opus, execution=Sonnet | ハイブリッド |
-| `inherit` | 親会話と同じモデル | model 省略時のデフォルト |
+| Alias | Resolves To | Use Case |
+|-------|-------------|----------|
+| `sonnet` | claude-sonnet-4-6 (latest Sonnet) | Everyday coding |
+| `opus` | claude-opus-4-6 (latest Opus) | Complex reasoning |
+| `haiku` | claude-haiku-4-5 | Fast, low-cost |
+| `default` | Depends on account type (Max/Team Premium=Opus, Pro/Team Standard=Sonnet) | -- |
+| `sonnet[1m]` | Sonnet + 1M token context | Long sessions |
+| `opusplan` | plan mode=Opus, execution=Sonnet | Hybrid |
+| `inherit` | Same model as parent conversation | Default when model is omitted |
 
-Aliases は常に最新バージョンに解決される。特定バージョンに固定するには完全なモデル名 (e.g., `claude-opus-4-6`) を使うか、環境変数で上書きする。
+Aliases always resolve to the latest version. To pin to a specific version, use the full model name (e.g., `claude-opus-4-6`) or override via environment variables.
 
-### 環境変数
+### Environment Variables
 
-| 変数 | 用途 |
-|------|------|
-| `ANTHROPIC_DEFAULT_OPUS_MODEL` | `opus` alias の解決先を上書き |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL` | `sonnet` alias の解決先を上書き |
-| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | `haiku` alias の解決先を上書き |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | 全 SubAgent のモデルを一括指定 |
+| Variable | Use Case |
+|----------|----------|
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Override the resolution target of the `opus` alias |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Override the resolution target of the `sonnet` alias |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Override the resolution target of the `haiku` alias |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | Set the model for all SubAgents at once |
 
-sync-sddにおいては、環境変数によるモデル指定は行わない。
+In sync-sdd, model specification via environment variables is not used.
 
-### dispatch 時の指定
+### Specifying at Dispatch Time
 
 ```
 Agent(model="sonnet", description="...", prompt="...")
 ```
 
-`model` パラメータで dispatch 時にモデルをオーバーライドできる。
+The `model` parameter can override the model at dispatch time.
 
-### 優先順位 (推定)
+### Priority Order (Estimated)
 
-公式ドキュメントに明示的な優先順位の記載はない。以下は各ソースからの推定:
+The official documentation does not explicitly state the priority order. The following is estimated from various sources:
 
-| 優先度 | 方法 | 根拠 |
-|--------|------|------|
-| 1 (最高) | Agent tool `model` パラメータ | dispatch 時に明示指定。#3903/#5456 の workaround として推奨 |
-| 2 | `.claude/agents/` 定義の `model` フィールド | 公式 frontmatter table に記載。default は `inherit` |
-| 3 | `CLAUDE_CODE_SUBAGENT_MODEL` 環境変数 | model-config ページに記載。"The model to use for subagents" |
-| 4 (デフォルト) | inherit | 親会話と同じモデル |
+| Priority | Method | Basis |
+|----------|--------|-------|
+| 1 (Highest) | Agent tool `model` parameter | Explicitly specified at dispatch time. Recommended as a workaround for #3903/#5456 |
+| 2 | `model` field in `.claude/agents/` definition | Listed in the official frontmatter table. Default is `inherit` |
+| 3 | `CLAUDE_CODE_SUBAGENT_MODEL` environment variable | Listed on the model-config page. "The model to use for subagents" |
+| 4 (Default) | inherit | Same model as parent conversation |
 
-### 既知の Issues
+### Known Issues
 
-- **#5456** (CLOSED, DUPLICATE of #3903): Agent 定義の model が無視され Sonnet にフォールバック。v1.0.72 時点の報告
-- **#3903** (CLOSED, NOT_PLANNED): `--model` CLI フラグが sub-task に継承されない。v1.0.53 時点の報告
-- **#27736** (OPEN): Agent 定義の `skills` フィールドが Agent tool の description に表示されないバグ
-- **#32340** (OPEN): SubAgent からの skills 動的呼び出し + nested spawning の feature request (duplicate 判定中)
+- **#5456** (CLOSED, DUPLICATE of #3903): Agent definition's model is ignored, falling back to Sonnet. Reported as of v1.0.72
+- **#3903** (CLOSED, NOT_PLANNED): `--model` CLI flag is not inherited by sub-tasks. Reported as of v1.0.53
+- **#27736** (OPEN): Bug where the `skills` field from agent definitions is not displayed in the Agent tool description
+- **#32340** (OPEN): Feature request for dynamic skill invocation from SubAgents + nested spawning (under duplicate review)
 
-現在のバージョンではこれらの古いバグは修正されている可能性がある。確実にモデルを制御するには dispatch 時の `model` パラメータまたは `CLAUDE_CODE_SUBAGENT_MODEL` 環境変数を推奨。
+These older bugs may have been fixed in current versions. For reliable model control, the `model` parameter at dispatch time or the `CLAUDE_CODE_SUBAGENT_MODEL` environment variable is recommended.
 
-## Context と Communication
+## Context and Communication
 
-- SubAgent は**新しいコンテキストウィンドウ**で起動 — 親の会話履歴を継承しない
-- **公式ドキュメント**: "Subagents receive only this system prompt (plus basic environment details like working directory), not the full Claude Code system prompt." — CLAUDE.md は "full Claude Code system prompt" の一部であり、**SubAgent には渡されない**とされる
-- **注意**: Agent Team の Teammate は CLAUDE.md をロードするが、SubAgent (Agent tool) とは異なる。"CLAUDE.md works normally" は Teammate についての記述
-- **実動作との乖離の可能性**: リサーチで「CLAUDE.md が SubAgent にも読み込まれる」という報告あり。公式ドキュメントと実動作が異なる場合がある。フレームワーク設計では CLAUDE.md 非継承を前提とし、必要なコンテキストは prompt で明示的に渡す
-- `skills` フィールドで指定された Skill の全文が注入される (親の Skill は継承されない)
-- 全 task コンテキストは `prompt` パラメータで渡す
-- 通信は一方向: 親 → SubAgent (prompt)、SubAgent → 親 (return value)
-- 大きな出力は SubAgent がファイルに書き出し、`WRITTEN:{path}` を返す
+- SubAgents start in a **new context window** -- they do not inherit the parent's conversation history
+- **Official documentation**: "Subagents receive only this system prompt (plus basic environment details like working directory), not the full Claude Code system prompt." -- CLAUDE.md is part of the "full Claude Code system prompt" and is **stated to not be passed to SubAgents**
+- **Note**: Agent Team Teammates do load CLAUDE.md, but this is different from SubAgents (Agent tool). "CLAUDE.md works normally" is a statement about Teammates
+- **Possible divergence from actual behavior**: Research reports suggest "CLAUDE.md is also loaded by SubAgents." Official documentation and actual behavior may differ. The framework design assumes CLAUDE.md is NOT inherited, and passes required context explicitly via the prompt
+- Skills specified via the `skills` field have their full text injected (parent Skills are not inherited)
+- All task context is passed via the `prompt` parameter
+- Communication is one-directional: parent -> SubAgent (prompt), SubAgent -> parent (return value)
+- For large outputs, SubAgents write to files and return `WRITTEN:{path}`
 
 ## Background Execution
 
-- `run_in_background: true` で非同期実行
-- **起動前**に Claude Code がツール権限の事前承認プロンプトを表示。起動後は事前承認された権限のみで動作し、未承認操作は自動拒否
-- 完了は `task-notification` で自動通知 — **TaskOutput で polling しない** (#14055 Race Condition)
-- Background SubAgent で権限不足のため失敗した場合、foreground で `resume` して interactive prompts で再試行可能
-- AskUserQuestion の呼び出しは失敗するが SubAgent は続行する
-- `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` で background 機能全体を無効化可能
-- Ctrl+B で実行中の foreground task を background に移行可能
+- `run_in_background: true` for async execution
+- **Before launch**, Claude Code displays a tool permission pre-approval prompt. After launch, the SubAgent operates only with pre-approved permissions; unapproved operations are automatically denied
+- Completion is auto-notified via `task-notification` -- **do not poll with TaskOutput** (#14055 Race Condition)
+- If a background SubAgent fails due to insufficient permissions, it can be resumed in the foreground with `resume` to retry via interactive prompts
+- AskUserQuestion calls fail, but the SubAgent continues
+- `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` can disable the entire background feature
+- Ctrl+B can move a running foreground task to the background
 
-## Resume と Transcript
+## Resume and Transcript
 
-- `resume` パラメータで前回の Agent ID を指定して会話を継続
-- 再開時は full conversation history を保持 (tool calls, results, reasoning 含む)
+- Use the `resume` parameter with a previous Agent ID to continue the conversation
+- On resume, the full conversation history is retained (including tool calls, results, and reasoning)
 - Transcript: `~/.claude/projects/{project}/{sessionId}/subagents/agent-{agentId}.jsonl`
-- 親会話の compaction は SubAgent transcript に影響しない (別ファイル)
-- `cleanupPeriodDays` (default: 30) で自動クリーンアップ
+- Parent conversation compaction does not affect SubAgent transcripts (separate files)
+- `cleanupPeriodDays` (default: 30) for automatic cleanup
 
 ## Auto-Compaction
 
-SubAgent も親会話と同じ auto-compaction をサポート。約 95% capacity で発動。`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` で閾値を変更可能。
+SubAgents support the same auto-compaction as parent conversations. Triggers at approximately 95% capacity. The threshold can be changed with `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`.
 
 ## Limitations
 
-| 制約 | 詳細 |
-|------|------|
-| **Context 分離** | 親の会話履歴なし。公式: system prompt + 環境情報 + prompt のみ (CLAUDE.md は含まれないとされる) |
-| **Nesting 不可** | SubAgent は他の SubAgent を spawn できない。`Agent(type)` を tools に書いても SubAgent 定義では無効 |
-| **Tool override 不可** | dispatch 時にツールリストを変更できない。agent 定義の tools/disallowedTools で制御 |
-| **AskUserQuestion** | foreground: 親に pass-through。background: 呼び出し失敗 (SubAgent は続行) |
-| **Skills 継承なし** | 親の Skill は継承されない。agent 定義の `skills` フィールドで明示指定が必要 |
-| **Memory 非共有** | invocation 間でメモリは共有されない (resume 除く)。`memory` フィールドで永続化は可能 |
+| Limitation | Details |
+|------------|---------|
+| **Context Isolation** | No parent conversation history. Official: only system prompt + environment info + prompt (CLAUDE.md is stated to not be included) |
+| **No Nesting** | SubAgents cannot spawn other SubAgents. Writing `Agent(type)` in tools has no effect in SubAgent definitions |
+| **No Tool Override** | Tool lists cannot be changed at dispatch time. Controlled via tools/disallowedTools in agent definitions |
+| **AskUserQuestion** | Foreground: passed through to parent. Background: call fails (SubAgent continues) |
+| **No Skills Inheritance** | Parent Skills are not inherited. Must be explicitly specified via the `skills` field in agent definitions |
+| **No Shared Memory** | Memory is not shared between invocations (except via resume). Persistence is possible via the `memory` field |
 
 ## Agent Tool vs Agent Team
 
-| 項目 | Agent Tool (SubAgent) | Agent Team |
-|------|----------------------|------------|
-| プラットフォーム | Claude Code CLI | Claude Code CLI (experimental, デフォルト無効) |
-| セッション | 親セッション内の子コンテキスト | 完全に独立した Claude Code インスタンス |
-| 通信 | 一方向 (prompt → result) | 双方向 (message, broadcast) + Shared Task List |
-| 並列 | 1 セッション内で複数 SubAgent | 複数独立セッション |
-| Nesting | 不可 | 不可 (Teammate はサブチーム作成不可) |
-| トークンコスト | 低い (result 要約で返却) | 高い (plan mode で約 7x、一般的に "significantly more") |
-| sync-sdd での利用 | Yes (唯一の手段) | No |
+| Aspect | Agent Tool (SubAgent) | Agent Team |
+|--------|----------------------|------------|
+| Platform | Claude Code CLI | Claude Code CLI (experimental, disabled by default) |
+| Session | Child context within parent session | Fully independent Claude Code instance |
+| Communication | One-directional (prompt -> result) | Bidirectional (message, broadcast) + Shared Task List |
+| Parallelism | Multiple SubAgents within 1 session | Multiple independent sessions |
+| Nesting | Not supported | Not supported (Teammates cannot create sub-teams) |
+| Token Cost | Low (returned as summarized result) | High (approx. 7x in plan mode, generally "significantly more") |
+| Usage in sync-sdd | Yes (the only method) | No |
 
-Agent Team は Claude Code CLI の experimental 機能。Agent SDK (Python/TypeScript) では利用不可 (2026-03 時点)。
+Agent Team is an experimental feature of Claude Code CLI. Not available in Agent SDK (Python/TypeScript) as of 2026-03.

@@ -11,8 +11,18 @@ Your job is to consolidate findings from all Inspector YAML files into a unified
   - `.sdd/project/reviews/self/active/findings-inspector-compliance.yaml`
 - Dynamic Inspector findings: read any `findings-inspector-dynamic-*.yaml` files in `.sdd/project/reviews/self/active/`. These are dynamically-generated inspector outputs focused on change-specific risks. Treat them with the same weight as fixed inspector outputs.
 - Decision history: `.sdd/session/decisions.yaml`
+- Reference index: `.sdd/lib/references/index.yaml`
 
 If a findings file does not exist or is empty, note that agent as "did not complete" and proceed with available findings.
+
+## Step 0: Load Reference Documents
+
+Read `.sdd/lib/references/index.yaml`. Select and read documents relevant to the findings under review:
+- `load: always` — read unconditionally
+- `load: on_demand` — read if findings touch the document's `keywords` (e.g., agent definition findings → read agent-tool-reference.md)
+- `load: explicit` — skip
+
+Use these references to independently verify Inspector findings — confirm or challenge their accuracy against authoritative specifications.
 
 ## Step 1: Extract Findings
 
@@ -64,6 +74,9 @@ Write the consolidated verdict to: `.sdd/project/reviews/self/active/verdict-aud
 verdict: "CONDITIONAL"
 scope: "framework"
 review_type: "self"
+references_read:
+  - "common/bash-security-heuristics.md"
+  - "claude/agent-tool-reference.md"
 counts:
   C: 0
   H: 1
@@ -84,6 +97,7 @@ issues:
     impact: "{why}"
     recommendation: "{how}"
     classification: "A"
+    ref: "common/bash-security-heuristics.md"
   - id: "A2"
     source: "inspector-consistency"
     severity: "M"
@@ -94,20 +108,24 @@ issues:
     impact: "{why}"
     recommendation: "{how}"
     classification: "B"
+    ref: null
 fp_eliminated:
   - source_id: "F3"
     source: "inspector-compliance"
     reason: "{why this is FP}"
+    ref: "claude/skill-reference.md"
 notes: |
   Overall assessment text
 ```
 
 Rules:
 - `verdict`: GO/CONDITIONAL/NO-GO (no SPEC-UPDATE-NEEDED for self-review)
+- `references_read`: list of all reference documents read (paths relative to `.sdd/lib/references/`). Lead uses this to verify Auditor's judgment basis
 - `issues`: only confirmed findings (FPs removed), with A/B classification
 - `id`: Sequential (A1, A2, ...) — Auditor-assigned
 - `classification`: A (auto-fix) or B (decision-required)
-- `fp_eliminated`: include all eliminated items with rationale
+- `ref`: reference document that informed the judgment on this item (relative path, or `null` if judgment was based on general knowledge)
+- `fp_eliminated`: include all eliminated items with rationale and `ref`
 - No `steering` section for self-review
 
 ## Completion

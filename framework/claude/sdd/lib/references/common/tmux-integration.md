@@ -9,25 +9,25 @@ Reusable tmux patterns for Lead orchestration. Lead reads this file on-demand wh
 
 ### Session ID (`$SID`)
 
-同一 tmux サーバー内で複数の sync-sdd セッション（別リポジトリ or 同一リポジトリ）が並行する場合にチャネル名の衝突を防止する。
+Prevents channel name collisions when multiple sync-sdd sessions (different repositories or same repository) run in parallel within the same tmux server.
 
-**生成**: `/sdd-start` Step 6 で `date +%H%M%S` を実行し、出力をそのまま `$SID` とする (例: `104817`)。セッション（プロセス）ごとに一意な値となる。pane ID ベースだと同一 pane での再起動時に前セッションと衝突するため、時刻ベースを使用する。
+**Generation**: Execute `date +%H%M%S` in `/sdd-start` Step 6 and use the output directly as `$SID` (e.g., `104817`). This produces a unique value per session (process). A time-based approach is used because pane ID-based values would collide with a previous session when restarting in the same pane.
 
-**永続化**: SID、window_id、全 pane ID は `{{SDD_DIR}}/session/state.yaml` に記録される。`window_id` は grid が存在するウィンドウを特定するために使用する（orphan 検出・grid 再利用のスコープ制御）。pane タイトルは装飾用 (best-effort) であり、ロジックの依存先ではない。Claude Code は TUI/print 両モードで pane タイトルを上書きするため、タイトルに依存してはならない。
+**Persistence**: SID, window_id, and all pane IDs are recorded in `{{SDD_DIR}}/session/state.yaml`. `window_id` identifies the window where the grid exists (used for orphan detection and grid reuse scoping). Pane titles are decorative (best-effort) and must not be relied upon for logic. Claude Code overwrites pane titles in both TUI and print modes, so titles must not be depended on.
 
-**Lead pane タイトル**: SID 生成直後に `tmux select-pane -T 'sdd-{SID}-lead'` を実行 (best-effort)。Claude Code により上書きされるが、tmux UX のために設定する。
+**Lead pane title**: Immediately after SID generation, execute `tmux select-pane -T 'sdd-{SID}-lead'` (best-effort). Claude Code will overwrite it, but it is set for tmux UX purposes.
 
-**命名規則**: `sdd-{SID}-{purpose}-{identifier}` (例: `sdd-104817-devserver-auth`, `sdd-104817-slot-3`)
+**Naming convention**: `sdd-{SID}-{purpose}-{identifier}` (e.g., `sdd-104817-devserver-auth`, `sdd-104817-slot-3`)
 
 ## Shared Operations
 
 ### List Panes
 
-**Lead からの直接実行は `#{}` ヒューリスティクス誤検出のため不可。** `orphan-detect.sh` 等のヘルパースクリプト経由で実行する。スクリプト内での構文:
+**Cannot be executed directly from Lead due to `#{}` heuristic false detection.** Execute via helper scripts such as `orphan-detect.sh`. Syntax within scripts:
 ```
 tmux list-panes -F '#{pane_title} #{pane_id}'
 ```
-Current window only (default). Use `-t @{window_id}` to target a specific window. `-a` (all windows/sessions) は誤スコープの原因になるため原則使わない。
+Current window only (default). Use `-t @{window_id}` to target a specific window. `-a` (all windows/sessions) should not be used in principle as it causes scope errors.
 
 ### Kill Pane
 ```
@@ -47,11 +47,11 @@ tmux select-pane -t '{pane_id}' -T '{title}'
 
 ## MultiView Layout
 
-セッション開始時に tmux pane グリッドを一括作成し、agent をスロットに動的割り当てするレイアウトモデル。pane の生成・破棄は発生せず、レイアウトは完全に安定する。
+A layout model that batch-creates a tmux pane grid at session start and dynamically assigns agents to slots. No pane creation or destruction occurs, keeping the layout completely stable.
 
 ### Grid Structure
 
-4 象限ベース (2 列 × 2 行)。Lead が左上象限を占有し、残り 3 象限を田の字 (2×2) に細分化して agent スロットに割り当てる。
+Based on 4 quadrants (2 columns x 2 rows). Lead occupies the top-left quadrant, and the remaining 3 quadrants are subdivided into a 2x2 grid each, assigned as agent slots.
 
 ```
 ┌─────────────────────┬──────────┬──────────┐
@@ -68,73 +68,73 @@ tmux select-pane -t '{pane_id}' -T '{title}'
 └──────────┴──────────┴──────────┴──────────┘
 ```
 
-| 項目 | 値 |
+| Item | Value |
 |---|---|
-| Lead サイズ | 120w × 32h |
-| Slot サイズ | 60w × 16h |
+| Lead size | 120w × 32h |
+| Slot size | 60w × 16h |
 | Max slots | 12 |
 
-**Max Lead: 1**。2 Lead 以上は MultiView なしで動作（全 agent が `run_in_background` フォールバック）。
+**Max Lead: 1**. With 2 or more Leads, MultiView is not used (all agents fall back to `run_in_background`).
 
 ### Grid Creation
 
-**Grid の作成・再作成は `/sdd-start` の専任。** 他のスキル (sdd-review, sdd-review-self 等) は Grid を「使うだけ」であり、再作成してはならない — busy slot で実行中のプロセスを破壊する危険がある。slot 不足時は生存 idle slot + `Bash(run_in_background=true)` フォールバックで対応する。
+**Grid creation and recreation is exclusively handled by `/sdd-start`.** Other skills (sdd-review, sdd-review-self, etc.) only "use" the Grid and must never recreate it — doing so risks destroying processes running in busy slots. When slots are insufficient, use surviving idle slots + `Bash(run_in_background=true)` fallback.
 
-`/sdd-start` Step 7 で `$SID` 生成・Lead pane タイトル設定後に実行。
+Executed in `/sdd-start` Step 7 after `$SID` generation and Lead pane title setup.
 
-**一括作成スクリプト**:
+**Batch creation script**:
 ```
 bash .sdd/settings/scripts/multiview-grid.sh $SID $MY_PANE
 ```
-出力: 先頭行 `window_id:{id}` + 続く 12 行 `slot-{N}:{pane_id}` (N = 1-12)。Lead はこの出力を parse して window_id とスロット管理テーブルを構築する。
+Output: first line `window_id:{id}` followed by 12 lines `slot-{N}:{pane_id}` (N = 1-12). Lead parses this output to build the window_id and slot management table.
 
-**スクリプトの処理手順** (参考):
-1. **4 象限分割**: Lead pane を `-v -p 50` (上下) → Lead | BOTTOM。Lead を `-h -p 50` (左右) → Lead | RIGHT
-2. **TR 象限 (S1-S4)**: RIGHT を `-v -p 50` → TR_TOP | TR_BOT。各行を `-h -p 50` で 2 分割
-3. **BL/BR 象限 (S5-S12)**: BOTTOM を `-v -p 50` → BL_TOP | BL_BOT。各行を `-h -p 50` で左右分割し BL/BR を形成。各セルをさらに `-h -p 50` で 2 分割
-4. **タイトル設定**: Lead pane → `sdd-{SID}-lead`、全スロット pane → `sdd-{SID}-slot-{N}` (N = 1-12)
+**Script processing steps** (reference):
+1. **4-quadrant split**: Split Lead pane with `-v -p 50` (top/bottom) → Lead | BOTTOM. Split Lead with `-h -p 50` (left/right) → Lead | RIGHT
+2. **TR quadrant (S1-S4)**: Split RIGHT with `-v -p 50` → TR_TOP | TR_BOT. Split each row with `-h -p 50` into 2
+3. **BL/BR quadrants (S5-S12)**: Split BOTTOM with `-v -p 50` → BL_TOP | BL_BOT. Split each row with `-h -p 50` into left/right to form BL/BR. Further split each cell with `-h -p 50` into 2
+4. **Title setup**: Lead pane → `sdd-{SID}-lead`, all slot panes → `sdd-{SID}-slot-{N}` (N = 1-12)
 
-全スロットは idle shell 状態で待機。Grid Creation 完了後、Lead はスロット一覧 `{slot_number, pane_id, status: idle}` を保持する。
+All slots wait in idle shell state. After Grid Creation completes, Lead holds the slot list `{slot_number, pane_id, status: idle}`.
 
-**検証済み寸法** (240w × 65h terminal): Lead 120w × 32h, Slots 60w × 16h。
+**Verified dimensions** (240w × 65h terminal): Lead 120w × 32h, Slots 60w × 16h.
 
 ### Slot Management
 
-| 操作 | 方法 |
+| Operation | Method |
 |------|------|
 | **Assign** | `tmux send-keys -t {pane_id} '{command}; tmux wait-for -S {channel}' Enter` |
 | **Wait** | `tmux wait-for {channel}` (blocking) |
-| **Release** | 自動 — コマンド完了後 shell が idle に戻る |
-| **Reuse** | idle スロットを次の agent に割り当て |
-| **Overflow** | 12 slots 全て busy → `Bash(run_in_background=true)` にフォールバック |
+| **Release** | Automatic — shell returns to idle after command completes |
+| **Reuse** | Assign idle slot to the next agent |
+| **Overflow** | All 12 slots busy → fall back to `Bash(run_in_background=true)` |
 
-Lead はスロット状態を `{{SDD_DIR}}/session/state.yaml` の `grid` セクションで追跡。`grid.window_id` は grid が存在するウィンドウを示す。slot assign 時に status → busy + 用途に応じた属性 (Pattern B: agent/engine/channel, Pattern A: agent/url) を記入、release 時に status → idle に戻し追加属性を除去する。
+Lead tracks slot state in the `grid` section of `{{SDD_DIR}}/session/state.yaml`. `grid.window_id` indicates the window where the grid exists. On slot assign, update status → busy with purpose-specific attributes (Pattern B: agent/engine/channel, Pattern A: agent/url); on release, revert status → idle and remove additional attributes.
 
 ### Hold-and-Release
 
-複数 agent を完了後に一斉解放するパターン。全 Agent の結果を確認してから次に進みたい場合に使う。
+A pattern for releasing multiple agents simultaneously after all complete. Used when you want to verify all Agent results before proceeding.
 
-**Command chain** (send-keys で投入):
+**Command chain** (submitted via send-keys):
 ```
 {command}; tmux wait-for -S {channel}; tmux wait-for {close-channel}
 ```
-- `{channel}`: Agent 固有の完了シグナル (e.g., `sdd-{SID}-ext-1-B{seq}`)
-- `{close-channel}`: 全 Agent 共有の解放シグナル (e.g., `sdd-{SID}-close-B{seq}`)
+- `{channel}`: Agent-specific completion signal (e.g., `sdd-{SID}-ext-1-B{seq}`)
+- `{close-channel}`: Release signal shared by all Agents (e.g., `sdd-{SID}-close-B{seq}`)
 
 **Lead flow**:
-1. 全 Agent の完了シグナルを待つ
-2. 結果ファイルを読む
-3. `tmux wait-for -S {close-channel}` → 全 pane のブロック解除
-4. Agent command chain 完了 → shell が idle に戻る（スロット再利用可能）
+1. Wait for all Agent completion signals
+2. Read result files
+3. `tmux wait-for -S {close-channel}` → unblock all panes
+4. Agent command chain completes → shell returns to idle (slot reusable)
 
 ## Pattern A: Server Lifecycle
 
-Long-running server in a MultiView スロットで実行。readiness polling 付き。Used for dev servers during web inspector reviews.
+Long-running server executed in a MultiView slot with readiness polling. Used for dev servers during web inspector reviews.
 
 ### Start
-1. **Check for existing server**: `{{SDD_DIR}}/session/state.yaml` の `grid` セクションで `agent: {purpose}-*` の slot を検索。見つかった場合、そのサーバーを再利用 (retry 時にサーバーが前回から動いたまま)。`url` フィールドからサーバー URL を取得。
-2. **Port offset** (parallel instances): state.yaml で他の `agent: {purpose}-*` slot が存在する場合、その `url` フィールドからポート番号を取得し `--port {base+N}` を適用。Skip if the server framework does not support port override.
-3. **Assign slot**: idle スロットを選択し、`send-keys` でサーバーコマンドを投入。`{{SDD_DIR}}/session/state.yaml` の該当 slot を更新:
+1. **Check for existing server**: Search the `grid` section of `{{SDD_DIR}}/session/state.yaml` for slots with `agent: {purpose}-*`. If found, reuse that server (it may still be running from a previous retry). Obtain the server URL from the `url` field.
+2. **Port offset** (parallel instances): If other `agent: {purpose}-*` slots exist in state.yaml, obtain port numbers from their `url` fields and apply `--port {base+N}`. Skip if the server framework does not support port override.
+3. **Assign slot**: Select an idle slot and submit the server command via `send-keys`. Update the corresponding slot in `{{SDD_DIR}}/session/state.yaml`:
    ```yaml
    status: busy
    agent: "{purpose}-{identifier}"
@@ -143,8 +143,8 @@ Long-running server in a MultiView スロットで実行。readiness polling 付
 4. **Poll readiness**: Capture Pane Output, Grep for ready pattern (`ready`, `localhost`, `listening on`). Max 30 seconds, check every 2 seconds.
 
 ### Stop
-1. `tmux send-keys -t {pane_id} C-c` でサーバー停止
-2. `{{SDD_DIR}}/session/state.yaml` の該当 slot を `status: idle` に更新し、`agent`/`url` を除去。
+1. Stop the server with `tmux send-keys -t {pane_id} C-c`
+2. Update the corresponding slot in `{{SDD_DIR}}/session/state.yaml` to `status: idle` and remove `agent`/`url`.
 
 ### Background Mode (no tmux)
 1. Start server via `Bash(run_in_background=true)`. Record PID.
@@ -153,69 +153,69 @@ Long-running server in a MultiView スロットで実行。readiness polling 付
 
 ## Pattern B: One-Shot Command
 
-External CLI runs in a MultiView スロットで実行。native progress display 付き、result captured via file. Used for external tool execution (e.g., external engines).
+External CLI executed in a MultiView slot with native progress display, result captured via file. Used for external tool execution (e.g., external engines).
 
 ### Naming
 
-複数インスタンスが並行する場合、以下を一意にする:
-- **Wait-for channel**: `sdd-{SID}-{purpose}-{identifier}-B{seq}` (e.g., `sdd-5-ext-1-B3`)。`-B{seq}` サフィックスは必須 — 再実行時のチャネル衝突を防止する
-- **Result file**: プロジェクト内のスコープディレクトリに置く。`/tmp` 等のプロジェクト外パスは使わない
+When multiple instances run in parallel, the following must be unique:
+- **Wait-for channel**: `sdd-{SID}-{purpose}-{identifier}-B{seq}` (e.g., `sdd-5-ext-1-B3`). The `-B{seq}` suffix is required — it prevents channel collisions on re-execution
+- **Result file**: Place in a scoped directory within the project. Do not use paths outside the project such as `/tmp`
 
 ### Auto-Approval Pattern
 
-各 Bash 呼び出しを `tmux` で開始すること。settings.json の `Bash(tmux *)` にマッチし承認不要になる。変数代入 (`SD=... &&`) やコマンド置換 (`P1=$(tmux ...)`) をコマンド先頭に置くとパターン不一致で承認を求められる。パスはインラインで記述する。
+Each Bash call must start with `tmux`. This matches `Bash(tmux *)` in settings.json, making approval unnecessary. Placing variable assignments (`SD=... &&`) or command substitutions (`P1=$(tmux ...)`) at the start of the command causes pattern mismatch and triggers approval prompts. Write paths inline.
 
 ### Execute
-1. **Prepare**: `$SID` + 目的固有の識別子から channel / result file path を導出する。結果ファイルはスコープディレクトリ内に配置する。
-2. **Assign slot**: idle スロットを選択し、`send-keys` でコマンドを投入。各呼び出しは `tmux` で開始する（Auto-Approval Pattern）。
+1. **Prepare**: Derive channel / result file path from `$SID` + purpose-specific identifier. Place result files in the scoped directory.
+2. **Assign slot**: Select an idle slot and submit the command via `send-keys`. Each call must start with `tmux` (Auto-Approval Pattern).
    ```
    tmux send-keys -t {slot_pane_id} '{command}; tmux wait-for -S {channel}' Enter
    ```
 3. **Wait for completion**: `tmux wait-for {channel}` (blocking). For parallel dispatch: assign all agents to slots first (step 2), then issue parallel `Bash(run_in_background=true)` for each `tmux wait-for`.
-   - **Staggered Parallel Dispatch**: 複数の `send-keys` や `wait-for` を発行する場合、sleep プレフィックスで 0.5 秒刻みにずらし、単一メッセージの並列 Bash 呼び出しで一括発行する（Lead のターン消費 1 回）:
+   - **Staggered Parallel Dispatch**: When issuing multiple `send-keys` or `wait-for` commands, stagger them with sleep prefixes at 0.5-second intervals, dispatching all at once via parallel Bash calls in a single message (consuming 1 Lead turn):
      ```
      Bash(run_in_background=true): sleep 0.0; tmux send-keys -t {pane1} '...' Enter
      Bash(run_in_background=true): sleep 0.5; tmux send-keys -t {pane2} '...' Enter
      Bash(run_in_background=true): sleep 1.0; tmux send-keys -t {pane3} '...' Enter
      ```
-     tmux は短時間のコマンド連発で詰まることがあるため、stagger が必要。逐次発行 (send-keys → sleep → send-keys) はターンを浪費するので使わない。
-   - **Notification-based completion**: 各 `Bash(run_in_background=true)` の完了は task-notification で個別に検知する。TaskOutput は使わない（#14055 Race Condition 回避 + Lead 非ブロック）。
+     Staggering is necessary because tmux can choke on rapid-fire command bursts. Sequential issuing (send-keys → sleep → send-keys) wastes turns, so avoid it.
+   - **Notification-based completion**: Each `Bash(run_in_background=true)` completion is detected individually via task-notification. Do not use TaskOutput (#14055 Race Condition avoidance + Lead non-blocking).
 4. **Read result file**.
-5. スロットは自動的に idle に戻る。
+5. Slot automatically returns to idle.
 
-Overflow (全スロット busy): `Bash(run_in_background=true)` で実行。結果ファイルは同じスコープディレクトリ内。
+Overflow (all slots busy): Execute with `Bash(run_in_background=true)`. Result files go in the same scoped directory.
 
 ### Template Variable Expansion in send-keys
 
-send-keys 内のコマンドは pane のシェルで実行されるため、Claude Code のセキュリティヒューリスティクス (`$()` / `${}` 禁止) は適用されない。テンプレートファイルのプレースホルダーを動的値で置換して外部エンジンに渡す場合、2つの方式がある:
+Commands inside send-keys execute in the pane's shell, so Claude Code's security heuristics (`$()` / `${}` prohibition) do not apply. When substituting template file placeholders with dynamic values to pass to external engines, there are two approaches:
 
-**方式 A: sed ワンライナー** — 値が単一行のとき最も効率的 (Lead の Read/Write ゼロ)
+**Approach A: sed one-liner** — Most efficient when values are single-line (zero Read/Write from Lead)
 ```
 tmux send-keys -t {pane} 'sed "s|{{PLACEHOLDER}}|{value}|g" template.md | cat shared.md - | ENGINE_CMD; tmux wait-for -S {channel}' Enter
 ```
-- BSD sed (macOS) の `s` コマンドは置換文字列に literal newline を入れられない。**値が単一行の場合のみ使用可**
-- 区切り文字は `|` を使用（値に `/` が含まれうるため）
+- BSD sed (macOS) `s` command cannot include literal newlines in the replacement string. **Use only when values are single-line**
+- Use `|` as delimiter (values may contain `/`)
 
-**方式 B: Briefer 展開** — 値が複数行、または複数テンプレートに同じ値を展開するとき
-1. Briefer がテンプレートを読み込み、プレースホルダーを展開して `active/` に書き出す
-2. Lead の dispatch は全 Inspector 同一パターン: `cat shared active/inspector-{name}.md | ENGINE_CMD`
-3. sed 分岐・改行判定ロジックが不要になり、dispatch が大幅に簡素化される
+**Approach B: Briefer expansion** — When values are multi-line, or the same value is expanded into multiple templates
+1. Briefer reads templates, expands placeholders, and writes to `active/`
+2. Lead's dispatch follows the same pattern for all Inspectors: `cat shared active/inspector-{name}.md | ENGINE_CMD`
+3. Eliminates sed branching and newline detection logic, greatly simplifying dispatch
 
-sdd-review-self は方式 B を採用 (v2.1.2)。方式 A は値が常に単一行であることが保証できるケースで有用。
+sdd-review-self uses Approach B (v2.1.2). Approach A is useful when values are guaranteed to always be single-line.
 
 ### Background Mode (no tmux)
-1. Run command via `Bash()` with appropriate timeout. 結果ファイルは同じスコープディレクトリ内に書き出す。
+1. Run command via `Bash()` with appropriate timeout. Write result files to the same scoped directory.
 2. Progress display is lost; result file is still produced.
 3. Stderr is not suppressed — let errors surface for debugging.
 
 ## Orphan Cleanup
 
-`/sdd-start` Step 7 で、SID 生成・Lead タイトル設定の**後**、Grid Creation の**前**に実行する。
+Executed in `/sdd-start` Step 7 **after** SID generation and Lead title setup, but **before** Grid Creation.
 
-**Primary (state.yaml ベース)**:
-1. `{{SDD_DIR}}/session/state.yaml` を読む (`old_sid`, `grid.window_id`, 全 pane_id を取得)
-2. `bash {{SDD_DIR}}/settings/scripts/orphan-detect.sh primary {window_id} {MY_PANE} {pane_ids...}` を実行。スクリプトは grid の window_id をスコープとして pane 存在確認し、live orphan の pane_id を出力する（`$MY_PANE` は除外済み、window が存在しない場合は空出力）
-3. orphan が見つかった場合、**ユーザーに確認**: 「前セッション (SID: {old_sid}) の {N} 個の pane が Window {window_id} に残っています。kill しますか？」
-4. ユーザーが承認 → Kill Pane。拒否 → skip
+**Primary (state.yaml-based)**:
+1. Read `{{SDD_DIR}}/session/state.yaml` (obtain `old_sid`, `grid.window_id`, all pane_ids)
+2. Execute `bash {{SDD_DIR}}/settings/scripts/orphan-detect.sh primary {window_id} {MY_PANE} {pane_ids...}`. The script checks pane existence scoped to the grid's window_id and outputs live orphan pane_ids (`$MY_PANE` is excluded; empty output if the window does not exist)
+3. If orphans are found, **confirm with user**: "There are {N} panes from the previous session (SID: {old_sid}) remaining in Window {window_id}. Kill them?"
+4. If user approves → Kill Pane. If declined → skip
 
-**Fallback (state.yaml なし)**: タイトルベースで検出。`bash {{SDD_DIR}}/settings/scripts/orphan-detect.sh fallback {MY_PANE} {SID}` を実行。current window の pane で `sdd-` prefix タイトルを持ち、SID が現在と異なるものを出力する (`{pane_id} {title}` 形式)。
+**Fallback (no state.yaml)**: Detect by title. Execute `bash {{SDD_DIR}}/settings/scripts/orphan-detect.sh fallback {MY_PANE} {SID}`. Outputs panes in the current window that have `sdd-` prefix titles with a different SID than the current one (`{pane_id} {title}` format).

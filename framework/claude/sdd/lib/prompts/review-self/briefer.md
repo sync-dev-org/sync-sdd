@@ -37,11 +37,42 @@ framework/claude/sdd/lib/**/*.md
 install.sh
 ```
 
+## Step 2.5: Select Reference Documents
+
+Read `.sdd/lib/references/index.yaml`.
+
+**For shared-prompt (all Inspectors):**
+Collect all entries with `load: always`. These are mandatory references that every Inspector must read. Build `SHARED_REFERENCES` — a list of `Read .sdd/lib/references/{path}` instructions, one per document.
+
+**For per-Inspector selection:**
+Using FOCUS_TARGETS (Step 1) and the change diff, match `on_demand` entries by `keywords` and `summary` relevance to each Inspector's scope:
+- inspector-compliance: platform compliance, agent/skill specs
+- inspector-consistency: cross-file references, path consistency
+- inspector-flow: pipeline flow, dispatch, routing
+
+Build `INSPECTOR_REFERENCES` — a map of `{inspector-name}` → list of `Read .sdd/lib/references/{path}` instructions. Only include documents genuinely relevant to the Inspector's review criteria and the actual changes.
+
+`load: explicit` entries are never selected by the Briefer.
+
 ## Step 3: Write shared-prompt.md
 
-Read the shared-prompt structure definition from `.sdd/lib/prompts/review-self/shared-prompt-structure.md`. Follow that structure exactly, filling in FILE_LIST from Step 2.
+Read the shared-prompt structure definition from `.sdd/lib/prompts/review-self/shared-prompt-structure.md`. Follow that structure exactly, filling in:
+- `{FILE_LIST}` from Step 2
+- `{SHARED_REFERENCES}` from Step 2.5 — replace the placeholder with concrete `Read` instructions for each `load: always` document. Include a brief context line per document (from the index.yaml `summary`).
 
 Write the result to `.sdd/project/reviews/self/active/shared-prompt.md`.
+
+## Step 3.5: Write Fixed Inspector Prompts with References
+
+For each fixed Inspector (flow, consistency, compliance), if INSPECTOR_REFERENCES (Step 2.5) contains entries for that Inspector:
+
+1. Read the source template from `.sdd/lib/prompts/review-self/inspector-{name}.md`
+2. Append a `## Additional Reference Documents` section with the selected `Read` instructions (one per document, with summary context)
+3. Write the expanded prompt to `.sdd/project/reviews/self/active/inspector-{name}.md`
+
+If no per-Inspector references were selected for a given Inspector, copy the source template to `active/` unchanged.
+
+This ensures all Inspector prompts are in `active/` and the dispatch step uses a uniform path pattern.
 
 ## Step 4: Build Dynamic Inspector Prompts
 
@@ -126,6 +157,9 @@ inspector-dynamic-2-{slug}|{one-line description}
 
 Verify all required files exist in `.sdd/project/reviews/self/active/`:
 - shared-prompt.md
+- inspector-flow.md
+- inspector-consistency.md
+- inspector-compliance.md
 - dynamic-manifest.md
 - inspector-dynamic-{N}-{slug}.md (for each N in manifest)
 

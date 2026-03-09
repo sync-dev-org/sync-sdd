@@ -3,13 +3,13 @@
 **Last Updated**: 2026-03-09
 **Sources**: code.claude.com/docs/en/sub-agents, sync-sdd agent definitions (5 agents)
 
-`.claude/agents/` にエージェント定義ファイルを配置するための仕様リファレンス。Agent tool (dispatch 側) の仕様は `agent-tool-reference.md` を参照。
+Specification reference for placing agent definition files in `.claude/agents/`. For the Agent tool (dispatch side) specification, see `agent-tool-reference.md`.
 
 ## File Format
 
 Location: `.claude/agents/{name}.md`
 
-YAML frontmatter + Markdown body。ファイル名（拡張子除く）が `subagent_type` の値になる。
+YAML frontmatter + Markdown body. The filename (without extension) becomes the `subagent_type` value.
 
 ```yaml
 ---
@@ -20,10 +20,10 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 background: true
 ---
 
-Markdown body = SubAgent のシステムプロンプト。
+Markdown body = SubAgent's system prompt.
 ```
 
-セッション開始時にロードされる。手動でファイルを追加した場合、セッション再起動または `/agents` で即時ロード可能。
+Loaded at session startup. If files are added manually, they can be immediately loaded by restarting the session or using `/agents`.
 
 ## Frontmatter Fields
 
@@ -31,129 +31,129 @@ Markdown body = SubAgent のシステムプロンプト。
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | 一意な識別子。小文字 + ハイフンのみ。ファイル名（拡張子除く）と一致させる |
-| `description` | string | 用途と使用条件。Claude が auto-delegation の判定に使う。詳しく書くほど適切に委譲される |
+| `name` | string | Unique identifier. Lowercase + hyphens only. Must match the filename (without extension) |
+| `description` | string | Purpose and usage conditions. Claude uses this for auto-delegation decisions. The more detailed, the more appropriately tasks are delegated |
 
 ### Model / Execution
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `model` | string | `inherit` | `sonnet`, `opus`, `haiku`, `inherit`。inherit = 親会話と同じモデル |
-| `background` | boolean | `false` | `true` で非同期実行をデフォルト化 |
-| `maxTurns` | integer | なし | 最大ターン数。超過で停止 |
-| `isolation` | string | なし | `worktree` で git worktree 上のコピーで実行。変更なしなら自動クリーンアップ |
+| `model` | string | `inherit` | `sonnet`, `opus`, `haiku`, `inherit`. inherit = same model as parent conversation |
+| `background` | boolean | `false` | `true` makes asynchronous execution the default |
+| `maxTurns` | integer | none | Maximum number of turns. Stops when exceeded |
+| `isolation` | string | none | `worktree` runs on a git worktree copy. Auto-cleanup if no changes |
 
-**model の注意点**: agent 定義の `model` は動作するが、確実に制御するには dispatch 側の Agent tool `model` パラメータまたは `CLAUDE_CODE_SUBAGENT_MODEL` 環境変数を使う方が安全。詳細は `agent-tool-reference.md` の Model Control セクション参照。
+**Note on model**: The `model` field in agent definitions works, but for reliable control it is safer to use the Agent tool's `model` parameter on the dispatch side or the `CLAUDE_CODE_SUBAGENT_MODEL` environment variable. See the Model Control section in `agent-tool-reference.md` for details.
 
 ### Tools / Permissions
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `tools` | string | all (全ツール継承) | カンマ区切り (e.g., `Read, Glob, Grep, Bash`)。CLI JSON では配列 |
-| `disallowedTools` | string | なし | 拒否リスト (denylist)。inherited/specified から除去 |
-| `permissionMode` | string | `default` | 下記参照 |
+| `tools` | string | all (inherits all tools) | Comma-separated (e.g., `Read, Glob, Grep, Bash`). Array in CLI JSON |
+| `disallowedTools` | string | none | Denylist. Removes from inherited/specified tools |
+| `permissionMode` | string | `default` | See below |
 
-**Agent(type) syntax in tools**: `claude --agent` でメインスレッドとして動作するエージェントの場合、`tools: Agent(worker, researcher), Read, Bash` のように spawn 可能な SubAgent 種別を制限できる。`Agent` のみ (括弧なし) なら全種別許可。`Agent` を tools から除外すると SubAgent spawn 不可。**この制限はメインスレッドのみに適用** — SubAgent は他の SubAgent を spawn できないため、SubAgent 定義では `Agent(type)` は無効。
+**Agent(type) syntax in tools**: For agents running as the main thread via `claude --agent`, you can restrict spawnable SubAgent types like `tools: Agent(worker, researcher), Read, Bash`. `Agent` alone (without parentheses) allows all types. Excluding `Agent` from tools prevents SubAgent spawning. **This restriction applies only to the main thread** — since SubAgents cannot spawn other SubAgents, `Agent(type)` is ineffective in SubAgent definitions.
 
 **Permission Modes:**
 
-| Mode | 動作 |
-|------|------|
-| `default` | 通常の承認プロンプト |
-| `acceptEdits` | ファイル編集を自動承認 |
-| `dontAsk` | 承認プロンプトを自動拒否 (allowed tools は動作) |
-| `bypassPermissions` | 全チェックをスキップ。**注意: 親が bypassPermissions の場合、SubAgent で上書き不可** |
-| `plan` | 読み取り専用モード |
+| Mode | Behavior |
+|------|----------|
+| `default` | Normal approval prompts |
+| `acceptEdits` | Auto-approves file edits |
+| `dontAsk` | Auto-denies approval prompts (allowed tools still work) |
+| `bypassPermissions` | Skips all checks. **Note: If the parent has bypassPermissions, SubAgent cannot override it** |
+| `plan` | Read-only mode |
 
-**AskUserQuestion**: foreground SubAgent では親に pass-through される。background SubAgent では呼び出し失敗 (SubAgent は続行)。
+**AskUserQuestion**: In foreground SubAgents, it is passed through to the parent. In background SubAgents, the call fails (SubAgent continues).
 
 ### Advanced
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `skills` | list | なし | 起動時に SubAgent のコンテキストに全文注入する Skill。親の Skill は継承されない |
-| `memory` | string | なし | 永続メモリスコープ (下記参照) |
-| `mcpServers` | string/object | なし | サーバー名 (既存設定参照) またはインライン定義 (name: config) |
-| `hooks` | object | なし | ライフサイクルフック (下記参照) |
+| `skills` | list | none | Skills whose full content is injected into the SubAgent's context at startup. Parent's Skills are not inherited |
+| `memory` | string | none | Persistent memory scope (see below) |
+| `mcpServers` | string/object | none | Server name (references existing config) or inline definition (name: config) |
+| `hooks` | object | none | Lifecycle hooks (see below) |
 
-**skills の既知バグ (#27736, OPEN)**: Plugin 経由の agent 定義で `skills` フィールドが Agent tool の description に表示されない。Skill の内容自体は注入されるが、親セッションの Tool UI に表示されない。
+**Known bug with skills (#27736, OPEN)**: In agent definitions via Plugin, the `skills` field does not appear in the Agent tool's description. The Skill content itself is injected, but it is not displayed in the parent session's Tool UI.
 
-**memory スコープ:**
+**memory scopes:**
 
-| Scope | Location | 用途 |
-|-------|----------|------|
-| `user` | `~/.claude/agent-memory/<name>/` | 全プロジェクト共通の学習 (推奨デフォルト) |
-| `project` | `.claude/agent-memory/<name>/` | プロジェクト固有 (VCS 共有可) |
-| `local` | `.claude/agent-memory-local/<name>/` | プロジェクト固有 (VCS 共有不可) |
+| Scope | Location | Purpose |
+|-------|----------|---------|
+| `user` | `~/.claude/agent-memory/<name>/` | Cross-project learning (recommended default) |
+| `project` | `.claude/agent-memory/<name>/` | Project-specific (shareable via VCS) |
+| `local` | `.claude/agent-memory-local/<name>/` | Project-specific (not shareable via VCS) |
 
-memory 有効時: system prompt にメモリディレクトリの読み書き指示が追加され、`MEMORY.md` の先頭 200 行がコンテキストに注入される。**Read, Write, Edit ツールが自動的に有効化される** (tools で制限していても)。
+When memory is enabled: read/write instructions for the memory directory are added to the system prompt, and the first 200 lines of `MEMORY.md` are injected into the context. **Read, Write, Edit tools are automatically enabled** (even if restricted via tools).
 
-**hooks (SubAgent 定義内):**
+**hooks (in SubAgent definitions):**
 
-SubAgent のアクティブ中のみ実行されるフック。サポートイベント:
+Hooks that execute only while the SubAgent is active. Supported events:
 
-| Event | Matcher | 用途 |
-|-------|---------|------|
-| `PreToolUse` | Tool name | ツール実行前のバリデーション |
-| `PostToolUse` | Tool name | ツール実行後の処理 (lint 等) |
-| `Stop` | (none) | SubAgent 完了時。実行時に `SubagentStop` に変換される |
+| Event | Matcher | Purpose |
+|-------|---------|---------|
+| `PreToolUse` | Tool name | Validation before tool execution |
+| `PostToolUse` | Tool name | Post-execution processing (linting, etc.) |
+| `Stop` | (none) | On SubAgent completion. Converted to `SubagentStop` at runtime |
 
-**hooks (settings.json 側):**
+**hooks (in settings.json):**
 
-プロジェクトレベルで SubAgent ライフサイクルに反応するフック:
+Project-level hooks that react to SubAgent lifecycle events:
 
-| Event | Matcher | 用途 |
-|-------|---------|------|
-| `SubagentStart` | Agent type name | SubAgent 開始時 |
-| `SubagentStop` | Agent type name | SubAgent 完了時 |
+| Event | Matcher | Purpose |
+|-------|---------|---------|
+| `SubagentStart` | Agent type name | On SubAgent start |
+| `SubagentStop` | Agent type name | On SubAgent completion |
 
 ## Markdown Body (System Prompt)
 
-frontmatter の後の Markdown がそのまま SubAgent のシステムプロンプトになる。
+The Markdown after the frontmatter becomes the SubAgent's system prompt as-is.
 
-SubAgent が受け取るコンテキスト (公式ドキュメント準拠):
-1. この system prompt (agent 定義の Markdown body)
+Context received by the SubAgent (per official documentation):
+1. This system prompt (Markdown body of the agent definition)
 2. Basic environment details (working directory)
-3. `skills` フィールドで指定された Skill の全文
-4. `memory` の MEMORY.md (有効時)
+3. Full content of Skills specified in the `skills` field
+4. `memory`'s MEMORY.md (when enabled)
 
-**受け取らないもの:**
-- 親の full Claude Code system prompt (CLAUDE.md を含む)
-- 親の会話履歴
+**Not received:**
+- Parent's full Claude Code system prompt (including CLAUDE.md)
+- Parent's conversation history
 
-> **注意**: 公式ドキュメントは "Subagents receive only this system prompt (plus basic environment details), not the full Claude Code system prompt" と記述。CLAUDE.md が読み込まれるのは Agent Team の Teammate であり、SubAgent ではない。実動作が異なる可能性もあるが、フレームワーク設計では CLAUDE.md 非継承を前提とする。
+> **Note**: The official documentation states "Subagents receive only this system prompt (plus basic environment details), not the full Claude Code system prompt." CLAUDE.md is loaded for Agent Team Teammates, not SubAgents. While actual behavior may differ, the framework design assumes CLAUDE.md is not inherited.
 
-### 設計指針
+### Design Guidelines
 
-- **自己完結**: 親の会話履歴を参照できないため、必要な情報はすべて prompt で受け取る前提で書く
-- **出力最小化**: result は簡潔に。大きな出力はファイルに書き出し `WRITTEN:{path}` を返す
-- **ツール制約との整合**: `tools` フィールドで制限したツール以外を指示しない
+- **Self-contained**: Since the parent's conversation history cannot be referenced, write assuming all necessary information is received via the prompt
+- **Minimize output**: Results should be concise. Write large outputs to files and return `WRITTEN:{path}`
+- **Align with tool constraints**: Do not instruct use of tools beyond those restricted in the `tools` field
 
 ## Discovery Paths (Priority Order)
 
 | Location | Scope | Priority |
 |----------|-------|----------|
-| `--agents` CLI フラグ (JSON) | セッション限定 | 1 (最高) |
-| `.claude/agents/` | プロジェクトレベル (VCS 管理対象) | 2 |
-| `~/.claude/agents/` | ユーザーレベル (全プロジェクト共通) | 3 |
-| Plugin の `agents/` ディレクトリ | Plugin 有効範囲 | 4 (最低) |
+| `--agents` CLI flag (JSON) | Session-only | 1 (highest) |
+| `.claude/agents/` | Project-level (VCS-managed) | 2 |
+| `~/.claude/agents/` | User-level (shared across all projects) | 3 |
+| Plugin's `agents/` directory | Plugin scope | 4 (lowest) |
 
-同名の定義が複数ある場合、高い優先度の定義が勝つ。`/agents` コマンドで override 状態を確認可能。`claude agents` で CLI からリスト表示。
+When multiple definitions share the same name, the higher priority definition wins. Use the `/agents` command to check override status. Use `claude agents` to list from CLI.
 
-## Agent Tool との関係
+## Relationship with Agent Tool
 
-| 項目 | Agent 定義ファイル | Agent tool パラメータ |
+| Item | Agent Definition File | Agent Tool Parameter |
 |------|-------------------|---------------------|
-| model | `model: sonnet` (定義時) | `model: "sonnet"` (dispatch 時) |
-| 優先度 | Agent tool 側が優先 | — |
-| tools | 定義時に固定 | override 不可 |
-| prompt | system prompt (常に適用) | task prompt (invocation ごとに異なる) |
+| model | `model: sonnet` (at definition time) | `model: "sonnet"` (at dispatch time) |
+| Priority | Agent tool side takes precedence | — |
+| tools | Fixed at definition time | Cannot be overridden |
+| prompt | system prompt (always applied) | task prompt (varies per invocation) |
 
-dispatch 時に `subagent_type` で定義を指定すると、定義の system prompt + Agent tool の task prompt が組み合わされる。
+When specifying a definition with `subagent_type` at dispatch time, the definition's system prompt and the Agent tool's task prompt are combined.
 
-## 特定の SubAgent の無効化
+## Disabling Specific SubAgents
 
-`settings.json` の `permissions.deny` で特定の SubAgent (built-in 含む) を無効化できる:
+Specific SubAgents (including built-in ones) can be disabled via `permissions.deny` in `settings.json`:
 
 ```json
 {
@@ -165,12 +165,12 @@ dispatch 時に `subagent_type` で定義を指定すると、定義の system p
 
 CLI: `claude --disallowedTools "Agent(Explore)"`
 
-## sync-sdd の Agent 定義一覧
+## sync-sdd Agent Definition List
 
-| Name | Model | Tools | Tier | 用途 |
-|------|-------|-------|------|------|
-| `sdd-analyst` | opus | Read, Glob, Grep, Write, Edit, WebSearch, WebFetch | T2 | ゼロベース再設計 |
-| `sdd-architect` | opus | Read, Glob, Grep, Write, Edit, WebSearch, WebFetch | T2 | 設計生成 |
-| `sdd-builder` | sonnet | Read, Glob, Grep, Write, Edit, Bash | T3 | TDD 実装 |
-| `sdd-taskgenerator` | sonnet | Read, Glob, Grep, Write | T3 | タスク分解 |
-| `sdd-conventions-scanner` | sonnet | Read, Glob, Grep, Write | T3 | コードベースパターンスキャン |
+| Name | Model | Tools | Tier | Purpose |
+|------|-------|-------|------|---------|
+| `sdd-analyst` | opus | Read, Glob, Grep, Write, Edit, WebSearch, WebFetch | T2 | Zero-based redesign |
+| `sdd-architect` | opus | Read, Glob, Grep, Write, Edit, WebSearch, WebFetch | T2 | Design generation |
+| `sdd-builder` | sonnet | Read, Glob, Grep, Write, Edit, Bash | T3 | TDD implementation |
+| `sdd-taskgenerator` | sonnet | Read, Glob, Grep, Write | T3 | Task decomposition |
+| `sdd-conventions-scanner` | sonnet | Read, Glob, Grep, Write | T3 | Codebase pattern scanning |

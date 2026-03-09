@@ -78,29 +78,29 @@ When updating, verify the sync-sdd agent list section matches actual files in fr
 6. **hooks**: New events may be added. Check hooks reference page
 7. **Discovery paths**: New locations or priority changes
 8. **Agent(type) syntax**: Restrictions on which agents can spawn which — this is main-thread only
-9. **CLAUDE.md 継承**: `agent-tool-sources.md` の「要注意エビデンス」参照。SubAgent に CLAUDE.md が渡されるか否かは要継続検証
+9. **CLAUDE.md inheritance**: See "Critical Evidence" in `agent-tool-sources.md`. Whether CLAUDE.md is passed to SubAgents requires ongoing verification
 
 ---
 
-## 要注意エビデンス
+## Critical Evidence
 
-### SubAgent が受け取るコンテキスト
+### Context Received by SubAgents
 
-**公式ドキュメント原文** (sub-agents ページ):
+**Official documentation excerpt** (sub-agents page):
 > "Subagents receive **only this system prompt** (plus basic environment details like working directory), **not the full Claude Code system prompt.**"
 
-この "this system prompt" は agent 定義の Markdown body を指す。CLAUDE.md は "full Claude Code system prompt" の一部。
+Here "this system prompt" refers to the Markdown body of the agent definition. CLAUDE.md is part of the "full Claude Code system prompt".
 
-詳細は `agent-tool-sources.md` の「要注意エビデンス」セクション参照。
+For details, see the "Critical Evidence" section in `agent-tool-sources.md`.
 
-### hooks のタイプ制限
+### Hooks Type Restrictions
 
-**公式ドキュメント原文** (hooks ページ, "Prompt-based hooks" セクション末尾):
+**Official documentation excerpt** (hooks page, end of "Prompt-based hooks" section):
 
-全4タイプ (`command`, `http`, `prompt`, `agent`) をサポートするイベント:
+Events supporting all 4 types (`command`, `http`, `prompt`, `agent`):
 > PostToolUse, PostToolUseFailure, PreToolUse, Stop, SubagentStop, **TaskCompleted**, UserPromptSubmit
 
-`command` のみサポートするイベント:
+Events supporting `command` only:
 > ConfigChange, Notification, PreCompact, SessionEnd, SessionStart, SubagentStart, **TeammateIdle**, WorktreeCreate, WorktreeRemove
 
-→ agent-team-reference.md の TeammateIdle/TaskCompleted のタイプ制限記述はこのエビデンスに基づく。
+-> The type restriction descriptions for TeammateIdle/TaskCompleted in agent-team-reference.md are based on this evidence.

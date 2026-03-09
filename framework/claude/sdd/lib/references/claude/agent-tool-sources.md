@@ -77,41 +77,41 @@ On each update, verify these specific claims which are most likely to change:
 4. **Background behavior**: Permission pre-approval model may evolve
 5. **CLAUDE_CODE_SUBAGENT_MODEL**: Behavior may change. Check model-config env vars table
 6. **Agent Team comparison**: Agent Team is experimental — may become stable or get new capabilities
-7. **CLAUDE.md 継承**: 下記「要注意エビデンス」参照
+7. **CLAUDE.md inheritance**: See "Critical Evidence" below
 
 ---
 
-## 要注意エビデンス
+## Critical Evidence
 
-### SubAgent の Context に CLAUDE.md は含まれるか
+### Does SubAgent Context Include CLAUDE.md?
 
-**結論 (2026-03-09)**: 公式ドキュメントに基づけば **含まれない**。
+**Conclusion (2026-03-09)**: Based on official documentation, **it does not**.
 
-**公式ドキュメント原文** (sub-agents ページ, "Write subagent files" セクション):
+**Official documentation excerpt** (sub-agents page, "Write subagent files" section):
 > "The body becomes the system prompt that guides the subagent's behavior. **Subagents receive only this system prompt (plus basic environment details like working directory), not the full Claude Code system prompt.**"
 
-CLAUDE.md は Claude Code の system prompt の一部であり、"full Claude Code system prompt" に含まれる。
+CLAUDE.md is part of the Claude Code system prompt and is included in the "full Claude Code system prompt".
 
-**対照: Agent Team (Teammate)** (agent-teams ページ, "Context and communication" セクション):
+**Contrast: Agent Team (Teammate)** (agent-teams page, "Context and communication" section):
 > "Each teammate has its own context window. When spawned, a teammate loads the same project context as a regular session: **CLAUDE.md, MCP servers, and skills.**"
 > "**CLAUDE.md works normally**: teammates read CLAUDE.md files from their working directory."
 
-→ CLAUDE.md ロードが明記されているのは **Teammate のみ**。SubAgent については明記されていない。
+-> CLAUDE.md loading is explicitly documented **only for Teammates**. It is not documented for SubAgents.
 
-**リサーチエージェントの誤報**: 2026-03-09 のリサーチエージェントが「SubAgent にも CLAUDE.md が読み込まれる」と報告したが、これは Teammate についての記述を SubAgent に混同した誤り。
+**Research agent misreport**: A research agent on 2026-03-09 reported that "CLAUDE.md is also loaded for SubAgents", but this was an error that confused the Teammate description with SubAgent behavior.
 
-**実動作の乖離可能性**: 公式ドキュメントの記述と実際の動作が異なる場合がある (Claude Code は活発に開発中)。次回更新時に実機テストで検証することを推奨。
+**Possible divergence from actual behavior**: Official documentation and actual behavior may differ (Claude Code is under active development). Verification through hands-on testing is recommended during the next update.
 
-**フレームワーク設計への影響**: sync-sdd は CLAUDE.md 非継承を前提として設計されている (SubAgent dispatch 時に必要なコンテキストを prompt で明示的に渡す)。この前提が正しい限り、影響はない。
+**Impact on framework design**: sync-sdd is designed with the assumption that CLAUDE.md is NOT inherited (necessary context is explicitly passed via the prompt when dispatching SubAgents). As long as this assumption holds, there is no impact.
 
-### Model 優先順位は公式に未定義
+### Model Priority Is Not Officially Defined
 
-**結論 (2026-03-09)**: agent-tool-reference.md の優先順位表は推定。
+**Conclusion (2026-03-09)**: The priority table in agent-tool-reference.md is estimated.
 
-公式ドキュメントには model の優先順位を明示する表や記述がない。以下の情報から推定:
-- Agent 定義の `model` フィールド: frontmatter table に記載、default は `inherit`
-- `CLAUDE_CODE_SUBAGENT_MODEL`: model-config ページの環境変数テーブルに "The model to use for subagents" と記載
-- dispatch 時の `model` パラメータ: Agent tool の built-in パラメータとして存在 (実際の動作から確認)
-- #3903/#5456: Agent 定義の model が無視される報告 → dispatch 時パラメータが確実という推奨の根拠
+Official documentation does not contain a table or description explicitly defining model priority. It is inferred from the following information:
+- Agent definition `model` field: listed in the frontmatter table, default is `inherit`
+- `CLAUDE_CODE_SUBAGENT_MODEL`: documented in the model-config page's environment variables table as "The model to use for subagents"
+- `model` parameter at dispatch time: exists as a built-in parameter of the Agent tool (confirmed from actual behavior)
+- #3903/#5456: Reports that the agent definition's model is ignored — basis for the recommendation that the dispatch-time parameter is reliable
 
-次回更新時に公式ドキュメントに優先順位の明示が追加されていないか確認すること。
+Verify during the next update whether official documentation has added an explicit priority definition.

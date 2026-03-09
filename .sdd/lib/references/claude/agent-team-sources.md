@@ -10,8 +10,8 @@ This file documents the information sources and research procedure used to creat
 
 1. Check the "Last Updated" date in `agent-team-reference.md`. If older than ~1 month, update is recommended.
 2. For each source below, visit the URL and check for changes since the last update.
-3. **特に重要**: Agent Team は Experimental。stable 化、新機能追加、breaking changes が起きやすい。Status が "experimental" から変わっていないか必ず確認
-4. Check GitHub Issues for open bugs — Agent Team は活発にバグ報告がある
+3. **Critical**: Agent Team is Experimental. Stabilization, new feature additions, and breaking changes are likely. Always verify whether the status has changed from "experimental"
+4. Check GitHub Issues for open bugs — Agent Team has active bug reports
 5. Update `agent-team-reference.md` content and its "Last Updated" date.
 6. Update this file's "Last Verified" dates for each source.
 
@@ -73,41 +73,41 @@ Key fact: Agent Team is CLI-only. Agent SDK uses `query()` for subagents but has
 6. **Agent SDK**: Agent Team may become available in SDK. Check blog/docs for announcements
 7. **Per-teammate model**: Currently not supported at spawn time (#32110). May be added
 8. **Display modes**: Split panes restrictions (VS Code, Windows Terminal, Ghostty) — may change
-9. **Teammate の CLAUDE.md ロード**: 下記エビデンス参照。SubAgent との差異に注意
+9. **Teammate CLAUDE.md loading**: See evidence below. Note the difference from SubAgent behavior
 
 ---
 
-## 要注意エビデンス
+## Critical Evidence
 
-### Teammate と SubAgent の Context 差異
+### Context Difference Between Teammates and SubAgents
 
-Agent Team の Teammate は SubAgent (Agent tool) とは異なるコンテキストモデルを持つ。
+Agent Team Teammates have a different context model from SubAgents (Agent tool).
 
-**Teammate (Agent Team)** — 公式 agent-teams ページ:
+**Teammate (Agent Team)** — official agent-teams page:
 > "Each teammate has its own context window. When spawned, a teammate loads the same project context as a regular session: **CLAUDE.md, MCP servers, and skills.**"
 
-**SubAgent (Agent tool)** — 公式 sub-agents ページ:
+**SubAgent (Agent tool)** — official sub-agents page:
 > "Subagents receive **only this system prompt** (plus basic environment details like working directory), **not the full Claude Code system prompt.**"
 
-→ CLAUDE.md をロードするのは **Teammate のみ**。SubAgent は CLAUDE.md を受け取らない (公式ドキュメント準拠)。
+-> CLAUDE.md loading is documented **only for Teammates**. SubAgents do not receive CLAUDE.md (per official documentation).
 
-この差異は比較表 (SubAgent vs Agent Team) の Context 行に反映済み。更新時に混同しないよう注意。
+This difference is reflected in the Context row of the comparison table (SubAgent vs Agent Team). Take care not to confuse them during updates.
 
-### トークンコスト
+### Token Cost
 
-**公式 costs ページ原文**:
+**Official costs page excerpt**:
 > "Agent teams use **approximately 7x** more tokens than standard sessions when teammates run in plan mode"
 
-**公式 agent-teams ページ原文**:
+**Official agent-teams page excerpt**:
 > "Agent teams use **significantly more** tokens than a single session."
 
-→ "3-4x" という数値は公式ドキュメントに存在しない。"approximately 7x" は plan mode 限定の数値。
+-> The figure "3-4x" does not exist in official documentation. "approximately 7x" is a figure specific to plan mode.
 
-### Hooks タイプ制限
+### Hooks Type Restrictions
 
-**公式 hooks ページ原文** (全4タイプサポート vs command のみ):
+**Official hooks page excerpt** (all 4 types supported vs command only):
 
-- **TaskCompleted**: 全4タイプ (`command`, `http`, `prompt`, `agent`)
-- **TeammateIdle**: `command` のみ
+- **TaskCompleted**: all 4 types (`command`, `http`, `prompt`, `agent`)
+- **TeammateIdle**: `command` only
 
-エビデンス: hooks ページの "Prompt-based hooks" セクション末尾のイベント分類リスト。
+Evidence: The event classification list at the end of the "Prompt-based hooks" section on the hooks page.

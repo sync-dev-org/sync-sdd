@@ -53,8 +53,8 @@ Verify `active/shared-prompt.md` exists. Read `active/dynamic-manifest.md` to le
 
 Dispatch all Inspectors in parallel: 3 fixed (flow, consistency, compliance) + N dynamic (from manifest).
 
-Each Inspector receives its prompt via stdin pipe:
-- Fixed: `cat .sdd/project/reviews/self/active/shared-prompt.md .sdd/lib/prompts/review-self/inspector-{name}.md`
+Each Inspector receives its prompt via stdin pipe (all prompts are in `active/` — Briefer writes fixed and dynamic Inspector prompts there):
+- Fixed: `cat .sdd/project/reviews/self/active/shared-prompt.md .sdd/project/reviews/self/active/inspector-{name}.md`
 - Dynamic: `cat .sdd/project/reviews/self/active/shared-prompt.md .sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.md`
 
 Follow `.sdd/lib/prompts/dispatch/engine.md` Section 3 (Dispatch Modes) for the resolved inspector engine.
@@ -87,13 +87,11 @@ For tmux mode: release all slots by sending the close channel signal (`tmux wait
 
 ## Step 6: Dispatch Auditor
 
-Lead does NOT read the Auditor template.
-
-Build a prompt header listing the available findings file paths and the `.sdd/session/decisions.yaml` path. Write to `active/auditor-header.md`.
+Lead does NOT read the Auditor template. The Auditor prompt is fully static — all input paths (findings files, decisions.yaml) are hardcoded in `auditor.md`.
 
 Dispatch the Auditor using the resolved engine for the `auditor` stage, following `.sdd/lib/prompts/dispatch/engine.md` Section 3:
-- **SubAgent mode**: Pass the header content inline + instruct it to `Read .sdd/lib/prompts/review-self/auditor.md and follow its instructions`.
-- **tmux/background mode**: `cat .sdd/project/reviews/self/active/auditor-header.md .sdd/lib/prompts/review-self/auditor.md | {engine_cmd}`
+- **SubAgent mode**: instruct it to `Read .sdd/lib/prompts/review-self/auditor.md and follow its instructions`.
+- **tmux/background mode**: `cat .sdd/lib/prompts/review-self/auditor.md | {engine_cmd}`
 
 ### Auditor Completion
 
@@ -103,11 +101,16 @@ Verify `active/verdict-auditor.yaml` exists. If missing, read `.sdd/lib/prompts/
 
 Read `active/verdict-auditor.yaml`. Do NOT read individual Inspector findings files -- the Auditor has already synthesized them.
 
+### Reference Verification
+
+Read `.sdd/lib/references/index.yaml`. Check the Auditor's `references_read` list — verify the Auditor consulted appropriate references for its findings. For findings with a `ref` field, Lead may selectively read the cited reference to confirm the Auditor's reasoning. Lead's own session context (decisions, knowledge, prior reviews) takes precedence over Auditor's reference-based judgment when they conflict.
+
 ### Second-Pass FP/Defer Judgment
 
 Cross-reference each Auditor finding against:
 - `decisions.yaml`: intentional decisions that explain the finding.
 - Previous `verdicts.yaml` tracked items: already known and tracked.
+- Auditor's `ref` citations: verify the reference actually supports the finding's severity and recommendation.
 
 For each finding, determine:
 - **FP**: finding is explained by a decision or is a known tracked item. Add to `lead_overrides` with action: "eliminate".

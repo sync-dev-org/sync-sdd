@@ -9,11 +9,6 @@ Verify that SDD framework agents, skills, and Agent tool usage comply with Claud
 - framework/claude/settings.json
 - framework/claude/CLAUDE.md (SubAgent dispatch sections only)
 
-## Reference Documents
-Read for compliance context:
-- .sdd/lib/references/common/bash-security-heuristics.md
-- .sdd/lib/references/claude/skill-reference.md
-
 ## Review Criteria
 1. Agent YAML frontmatter: valid model (sonnet/opus/haiku), valid tools list, description present
 2. Skills frontmatter: description, allowed-tools, argument-hint format

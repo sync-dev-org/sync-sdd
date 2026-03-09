@@ -32,11 +32,9 @@ notes: |
 
 Report findings in Japanese.
 
-## Claude Code Bash Security Heuristics
+## Reference Documents
 
-The SDD framework intentionally uses Bash patterns that work around Claude Code's security heuristic detection. These are NOT bugs — do NOT flag them as issues.
-
-Read `.sdd/lib/references/common/bash-security-heuristics.md` for the full list of known heuristic patterns and their workarounds.
+{SHARED_REFERENCES — Briefer inserts `Read` instructions for `load: always` documents from index.yaml}
 
 ## PROHIBITED COMMANDS (MUST NEVER execute)
 
