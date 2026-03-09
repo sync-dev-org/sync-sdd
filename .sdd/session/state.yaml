@@ -1,49 +1,43 @@
-sid: "170634"
-created_at: "2026-03-09T17:07:15+0900"
+sid: "014825"
+created_at: "2026-03-10T01:49:22+0900"
 lead:
   pane_id: "%1"
   window_id: "@0"
-escalation:
-  review-self:
-    inspectors: L5
 grid:
   window_id: "@0"
   slot-1:
-    pane_id: "%973"
-    status: busy
-    agent: "auditor"
-    engine: "claude"
-    channel: "sdd-170634-auditor-B48"
+    pane_id: "%985"
+    status: idle
   slot-2:
-    pane_id: "%975"
+    pane_id: "%987"
     status: idle
   slot-3:
-    pane_id: "%974"
+    pane_id: "%986"
     status: idle
   slot-4:
-    pane_id: "%976"
+    pane_id: "%988"
     status: idle
   slot-5:
-    pane_id: "%972"
+    pane_id: "%984"
     status: idle
   slot-6:
-    pane_id: "%980"
+    pane_id: "%992"
     status: idle
   slot-7:
-    pane_id: "%977"
+    pane_id: "%989"
     status: idle
   slot-8:
-    pane_id: "%981"
+    pane_id: "%993"
     status: idle
   slot-9:
-    pane_id: "%978"
+    pane_id: "%990"
     status: idle
   slot-10:
-    pane_id: "%982"
+    pane_id: "%994"
     status: idle
   slot-11:
-    pane_id: "%979"
+    pane_id: "%991"
     status: idle
   slot-12:
-    pane_id: "%983"
+    pane_id: "%995"
     status: idle

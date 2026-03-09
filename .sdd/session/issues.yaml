@@ -111,10 +111,10 @@ entries:
 
   - id: "I59"
     type: "BUG"
-    status: "open"
+    status: "deferred"
     severity: "M"
     summary: "Briefer SubAgent が Sonnet ではなく Opus で起動している"
-    detail: "SKILL.md Step 4 で model: sonnet を指定しているが、Agent tool dispatch 時に model パラメータが渡されていない。Agent tool の subagent_type を使わない汎用 dispatch では、Lead の Opus モデルがそのまま継承される。D227 で Briefer を SubAgent に降格した際のモデル指定漏れ"
+    detail: "Agent tool の model パラメータが v2.1.69 で tool スキーマから削除されたリグレッション (#31311, #31027)。SKILL.md Step 4 の model: sonnet 指定は正しいが、現環境 (v2.1.71) では渡せない。Anthropic collaborator が v2.1.72 での修正を明言 (#31027)。SKILL.md 変更不要 — バージョンアップで自動解決"
     source: "user"
     created_at: "2026-03-09T17:27:27+0900"
 

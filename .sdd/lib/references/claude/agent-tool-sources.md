@@ -1,6 +1,6 @@
 # Agent Tool Reference — Sources and Update Procedure
 
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-10
 
 This file documents the information sources and research procedure used to create `agent-tool-reference.md`. When the reference guide becomes stale, follow this procedure to update it.
 
@@ -31,18 +31,24 @@ This file documents the information sources and research procedure used to creat
 | Hooks reference | https://code.claude.com/docs/en/hooks | 2026-03-09 |
 | CLI reference | https://code.claude.com/docs/en/cli-reference | 2026-03-09 |
 
-Key facts: Agent tool parameters are not directly documented as a parameter table — they are inferred from the built-in tool definition and usage patterns. Built-in agent types are listed under "Built-in subagents". Model aliases are on the model-config page.
+Key facts: The hooks.md PreToolUse section documents Agent tool input fields (prompt, description, subagent_type, model) but the actual tool schema exposed to the LLM may differ. As of v2.1.69+, `model` was removed from the tool schema (#31311, #31027). Built-in agent types are listed under "Built-in subagents". Model aliases are on the model-config page.
 
 ### GitHub Issues (Active Monitoring)
 
-| Issue | Topic | Last Verified |
-|-------|-------|--------------|
-| #5456 | Agent definition model ignored (CLOSED, DUPLICATE) | 2026-03-09 |
-| #3903 | --model not inherited by sub-tasks (CLOSED, NOT_PLANNED) | 2026-03-09 |
-| #27736 | skills field not rendered in Agent tool description (OPEN) | 2026-03-09 |
-| #32340 | Skills invocation + nested spawning feature request (OPEN) | 2026-03-09 |
+| Issue | Topic | Status | Last Verified |
+|-------|-------|--------|--------------|
+| #31311 | Agent tool `model` parameter silently ignored in v2.1.69+ (regression) | OPEN | 2026-03-10 |
+| #31027 | Agent tool schema missing `model` parameter. v2.1.66 vs v2.1.69 schema comparison | OPEN | 2026-03-10 |
+| #18873 | `model` parameter returns 404 / blocks cost-optimized workflows. Since v2.1.12 | OPEN | 2026-03-10 |
+| #5456 | Agent definition model ignored (CLOSED, DUPLICATE of #3903) | CLOSED | 2026-03-09 |
+| #3903 | --model not inherited by sub-tasks (CLOSED, NOT_PLANNED) | CLOSED | 2026-03-09 |
+| #27736 | skills field not rendered in Agent tool description | OPEN | 2026-03-09 |
+| #32340 | Skills invocation + nested spawning feature request | OPEN | 2026-03-09 |
 
-Search query for new issues: `gh search issues --repo anthropics/claude-code "subagent OR agent definition OR agent tool" --sort updated --limit 20`
+Search queries for new issues:
+- `gh search issues --repo anthropics/claude-code "subagent OR agent definition OR agent tool" --sort updated --limit 20`
+- `gh search issues --repo anthropics/claude-code "subagent model" --sort updated --limit 10`
+- `gh search issues --repo anthropics/claude-code "Agent tool model" --sort updated --limit 10`
 
 ### Release Tracking
 
@@ -104,14 +110,36 @@ CLAUDE.md is part of the Claude Code system prompt and is included in the "full 
 
 **Impact on framework design**: sync-sdd is designed with the assumption that CLAUDE.md is NOT inherited (necessary context is explicitly passed via the prompt when dispatching SubAgents). As long as this assumption holds, there is no impact.
 
+### Agent Tool `model` Parameter History
+
+**Conclusion (2026-03-10)**: The `model` parameter is documented but broken/removed.
+
+**Timeline:**
+- **v1.0.53-v1.0.72**: #3903/#5456 report model not inherited by sub-tasks
+- **v2.1.12+**: #18873 reports `model` parameter broken (short name → 404, full ID → validation error)
+- **v2.1.66**: `model` present in tool schema (documented in #31027 with full schema comparison)
+- **v2.1.68**: `model` reported as working briefly (#31311 author)
+- **v2.1.69**: `model` removed from tool schema (#31311 regression, #31027)
+- **v2.1.71**: Confirmed absent from tool schema (hands-on verification 2026-03-10)
+- **v2.1.72**: Fix confirmed by Anthropic collaborator (wolffiex) in #31027. Regression was refactor oversight — old path removed (`void 0` hardcoded in resolver override slot), new path (`getAgentModel` + feature flag) not yet enabled. Binary analysis by community (#31027 comment) confirms resolver function intact
+- **hooks.md**: Still lists `model` in PreToolUse Agent input table (docs lag behind implementation)
+
+**Hands-on verification (2026-03-10, v2.1.71):**
+- Tool schema provided to LLM has `additionalProperties: false` with 6 properties: description, prompt, subagent_type, run_in_background, isolation, resume. No `model`.
+- Agent definition frontmatter `model` field works: sdd-builder (`model: sonnet`) → API call uses `claude-sonnet-4-6` (verified via SubAgent transcript jsonl)
+- Built-in types verified: general-purpose → opus (inherit), Explore → haiku, Plan → opus (inherit), statusline-setup → sonnet, claude-code-guide → haiku
+
+**Practical impact**: For model control, use agent definition frontmatter (`model: sonnet` in `.claude/agents/*.md`). The dispatch-time `model` parameter is not available.
+
 ### Model Priority Is Not Officially Defined
 
-**Conclusion (2026-03-09)**: The priority table in agent-tool-reference.md is estimated.
+**Conclusion (2026-03-10)**: Updated based on hands-on verification.
 
-Official documentation does not contain a table or description explicitly defining model priority. It is inferred from the following information:
-- Agent definition `model` field: listed in the frontmatter table, default is `inherit`
-- `CLAUDE_CODE_SUBAGENT_MODEL`: documented in the model-config page's environment variables table as "The model to use for subagents"
-- `model` parameter at dispatch time: exists as a built-in parameter of the Agent tool (confirmed from actual behavior)
-- #3903/#5456: Reports that the agent definition's model is ignored — basis for the recommendation that the dispatch-time parameter is reliable
+The priority table in agent-tool-reference.md is based on verified behavior:
+1. Agent definition `model` field: **verified working** (sdd-builder → sonnet confirmed via transcript)
+2. `CLAUDE_CODE_SUBAGENT_MODEL`: documented but not verified in this environment
+3. Default (inherit): **verified working** (general-purpose → parent model confirmed)
 
-Verify during the next update whether official documentation has added an explicit priority definition.
+Agent tool `model` parameter: **not available** as of v2.1.69+ (removed from schema).
+
+Verify during the next update whether the `model` parameter has been restored to the tool schema.

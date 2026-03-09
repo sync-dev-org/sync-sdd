@@ -1,20 +1,19 @@
 # Session Handover
-**Generated**: 2026-03-10T01:37:20+0900
+**Generated**: 2026-03-10T02:49:05+0900
 **Branch**: main
-**Session Goal**: B48 self-review + I57 fix + sdd-review-self 関連 issue 棚卸し
+**Session Goal**: Agent tool model パラメータ検証 + sdd-review-self 関連 issue 整理
 
 ## Direction
 
 ### Immediate Next Action
-1. コミット（B48 self-review fixes + session data）
-2. I58 設計 — sdd-review-self スコープ指定モード（I45/I60 包含）
+1. v2.1.72 リリース確認 → Agent tool `model` パラメータ復活を実機検証
+2. I58 設計着手 — sdd-review-self スコープ指定モード (I45/I60 包含)
 
 ### Active Goals
 - **I58 スコープ指定モード**: 特定スキル/設定/リファレンスを起点に Briefer が芋蔓式にリストアップ。Inspector プロンプトも汎用化 (I60)。FILE_LIST 再帰収集 (I45) も包含
-- **I59 Briefer SubAgent model 指定**: Agent tool の general-purpose で model パラメータが有効か実機検証が必要
-- **I33 lib/ マイグレーション**: prompts/log, prompts/review-self, prompts/dispatch, references 完了。残り: scripts, rules, templates, profiles
+- **I59 Briefer model**: v2.1.72 でスキーマに `model` 復活予定。SKILL.md 変更不要 — バージョンアップで自動解決
+- **I33 lib/ マイグレーション**: 残り: scripts, rules, templates, profiles
 - **I41 sdd-review 改修**: dispatch/engine.md 参照に改修
-- **codex ENGINE_FAILURE (I66)**: B48 で codex L4 が全滅。原因未特定
 
 ### Key Decisions
 **Continuing from previous sessions:**
@@ -28,13 +27,10 @@
 - D227: sdd-review-self 改修計画 — 7項目の設計決定を包括
 - D228: リファレンス文書を全て英語に統一
 
-**Added this session:**
-- D223 確定: sdd-review-self Builder 廃止 → Lead 直接修正（B47 実運用確認済み）
-
 ### Warnings
-- **リサーチエージェントの報告は鵜呑みにしない**: 公式ドキュメント原文と照合すること
-- **公式ドキュメントも最新とは限らない**: GitHub Issues で乖離が報告されることがある
-- **codex ENGINE_FAILURE**: B48 で codex L4 全滅。sticky escalation で L5 に記録済み。次セッション sdd-start でリセットされるが、codex 不安定の可能性あり
+- **リサーチエージェントの報告は鵜呑みにしない**: 公式ドキュメント原文と照合すること。本セッションでも agent-tool-reference.md の `model` 記載が実環境と乖離していた
+- **公式ドキュメントも最新とは限らない**: hooks.md に `model` パラメータが記載されているが実際のスキーマからは削除済み
+- **Agent tool model リグレッション (K27)**: v2.1.69 で tool スキーマから `model` 削除。v2.1.72 で修正予定 (#31027 wolffiex)。修正後に I59 の動作確認が必要
 - **tmux wait-for close channel は 1:1 (K25)**: 複数 pane が同じ close channel を待つと waiter 数分の signal が必要
 - **send-keys の task-notification は配信完了のみ (K26)**: Inspector 完了検知には別途 wait-for が必要
 
@@ -49,39 +45,26 @@
 ## Accomplished
 
 ### Work Summary (this session)
-1. **D223 確定記録** — Builder 廃止を confirmed (B47 実運用実績)
-2. **I57 修正** — dispatch/engine.md に slot release 時の pane タイトル復元追加
-3. **B48 self-review 完了** — codex L4 ENGINE_FAILURE → claude L5 escalation。7 Inspector (3 fixed + 4 dynamic) 全成功
-   - 28 confirmed issues: 8H, 6M, 13L, 2FP
-   - 24 items fixed: 旧テンプレート除去 (A5/A6/A13/A17-A19), SKILL.md.bak1 削除 (A28), CLAUDE.md builder stage 除去 (A7) + Auditor tier 修正 (A21), frontmatter name/allowed-tools (A8/A20/A24), cross-cutting routing 誤配線修正 (A3/A16), verdict-format batches: 修正 (A4), engines.yaml briefer stage 除去 (A11), codex -m→--model 統一 (A12), README agent 説明更新 (A15), sdd-steering ステップ番号修正 (A22), briefer-status 検証修正 (A23), index.yaml keywords 改善 (A26/A27), install.sh lib/ 追記 (A29), dynamic Inspector on_demand refs (A9)
-   - 4 items deferred → I62-I65
-4. **新規 issue 6件**: I58 (スコープ指定モード), I59 (Briefer model), I60 (Inspector 汎用化), I61 (compliance 検索過剰), I62-I65 (B48 deferred), I66 (codex ENGINE_FAILURE)
-5. **新規 knowledge 2件**: K25 (close channel 1:1), K26 (send-keys notification)
+1. **Agent tool `model` パラメータ実機検証** — 全 7 パラメータを general-purpose で網羅テスト。`model` が tool スキーマに存在しないことを確認
+2. **原因特定** — GitHub issues #31311, #31027, #18873 から v2.1.69 リグレッションと判明。バイナリ解析で resolver の override スロットに `void 0` がハードコードされていることが判明
+3. **v2.1.72 修正確認** — Anthropic collaborator (wolffiex) が #31027 で修正明言
+4. **リファレンス文書更新** — agent-tool-reference.md (Parameters, Model Control, Known Issues), agent-tool-sources.md (GitHub Issues, Parameter History, verification results)
+5. **I59 更新** — status: deferred, detail を v2.1.69 リグレッションに修正
+6. **K27 記録** — Agent tool model リグレッションの知見
 
 ### Previous Sessions (carry forward)
+- v2.6.0 (session 21): B48 self-review fixes + I57 fix + D223 確定 + session handover
 - v2.6.0 (session 20): references/index.yaml + sdd-review-self リファレンス動的参照 + 全文書英語化
 - v2.6.0 (session 19): リファレンス文書の構造化・精査・更新手順書整備
-- v2.6.0 (session 18): D227 改修実装 + B47 review + リファレンス文書3件作成
 
 ### Modified Files
-- `framework/claude/CLAUDE.md` — builder stage 除去, Auditor tier 修正
-- `framework/claude/skills/sdd-review-self/SKILL.md` — allowed-tools カンマ区切り, briefer-status 修正
-- `framework/claude/skills/sdd-review-self/SKILL.md.bak1` — 削除
-- `framework/claude/skills/sdd-publish-setup/SKILL.md` — name 追加
-- `framework/claude/skills/sdd-forge-skill/SKILL.md` — allowed-tools 追加
-- `framework/claude/skills/sdd-handover/SKILL.md` — allowed-tools カンマ区切り
-- `framework/claude/skills/sdd-log/SKILL.md` — allowed-tools カンマ区切り
-- `framework/claude/skills/sdd-roadmap/SKILL.md` — cross-cutting を Review に追加
-- `framework/claude/skills/sdd-roadmap/refs/revise.md` — cross-check → cross-cutting 修正
-- `framework/claude/skills/sdd-steering/SKILL.md` — ステップ番号修正
-- `framework/claude/sdd/settings/templates/review-self/` — ディレクトリ削除
-- `framework/claude/sdd/settings/engines.yaml` — review-self briefer stage 除去
-- `framework/claude/sdd/settings/rules/agent/verdict-format.md` — batches: 除去
-- `framework/claude/sdd/lib/prompts/dispatch/engine.md` — -m→--model, pane タイトル復元
-- `framework/claude/sdd/lib/prompts/review-self/briefer.md` — dynamic Inspector refs
-- `framework/claude/sdd/lib/references/index.yaml` — keywords 改善
-- `README.md` — agent 説明更新
-- `install.sh` — lib/ 追記
+- `framework/claude/sdd/lib/references/claude/agent-tool-reference.md` — model パラメータ経緯追記, Priority Order 実テストベースに更新, Known Issues 追加
+- `framework/claude/sdd/lib/references/claude/agent-tool-sources.md` — GitHub Issues 追加, Parameter History 新設, 検索クエリ追加
+- `.sdd/lib/references/claude/agent-tool-reference.md` — install 先同期
+- `.sdd/lib/references/claude/agent-tool-sources.md` — install 先同期
+- `.sdd/session/issues.yaml` — I59 updated (deferred)
+- `.sdd/session/knowledge.yaml` — K27 added
+- `.sdd/session/state.yaml` — 新セッション Grid
 
 ## Open Issues
 | ID | Sev | Type | Summary |
@@ -89,12 +72,12 @@
 | **I45** | **H** | ENH | Briefer FILE_LIST がスキルディレクトリを再帰的に収集していない |
 | **I58** | **H** | FEAT | sdd-review-self スコープ指定モード追加 |
 | **I60** | **H** | ENH | 固定 Inspector プロンプトを汎用化 |
-| **I62** | **H** | ENH | Router が review impl --cross-cutting を一貫して扱っていない (B48-A1) |
-| **I63** | **H** | ENH | Dispatch loop が auto-fix 前に batch 確定・退避 (B48-A2) |
-| I59 | M | BUG | Briefer SubAgent が Sonnet ではなく Opus で起動 |
+| **I62** | **H** | ENH | Router が review impl --cross-cutting を一貫して扱っていない |
+| **I63** | **H** | ENH | Dispatch loop が auto-fix 前に batch 確定・退避 |
+| I59 | M | BUG | Briefer SubAgent が Opus で起動 (v2.1.72 待ち) |
 | I61 | M | ENH | inspector-compliance が検索しすぎ |
-| I64 | M | ENH | Lookahead 依存 design 差し戻し時に旧 GO 無効化しない (B48-A10) |
-| I65 | M | ENH | --update 時 .claude/skills/ stale クリーンアップなし (B48-A14) |
+| I64 | M | ENH | Lookahead 依存 design 差し戻し時に旧 GO 無効化しない |
+| I65 | M | ENH | --update 時 .claude/skills/ stale クリーンアップなし |
 | I66 | M | BUG | codex L4 ENGINE_FAILURE (B48) |
 | I29 | M | ENH | jq 可用性チェックを sdd-start に移動 |
 | I32 | M | BUG | sdd-start がセキュリティヒューリスティクスを踏む |
@@ -105,9 +88,9 @@
 | I55 | M | ENH | issues.yaml type フィールド再設計 |
 | I56 | M | ENH | verdicts.yaml 仕様精査 |
 | I18 | M | ENH | session データ SQLite 化検討 |
-| I10 | L | ENH | ConventionsScanner issues.yaml 未参照 (deferred) |
+| I10 | L | ENH | ConventionsScanner issues.yaml 未参照 |
 
 ## Resume Instructions
 1. `/sdd-start` でセッション開始
-2. コミット（未コミットの B48 fixes + session data）
-3. I58 設計着手 — I45/I59/I60/I61 を包含したスコープ指定モードの設計
+2. `claude --version` で v2.1.72 確認 → I59 動作検証
+3. I58 設計着手 (sdd-review-self スコープ指定モード)

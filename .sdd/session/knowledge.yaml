@@ -149,3 +149,11 @@ entries:
     detail: "tmux send-keys は即座に返るため、Bash(run_in_background) の task-notification は send-keys の配信完了を示すだけ。Inspector の実行完了を検知するには、別途 tmux wait-for {channel} を Bash(run_in_background) で発行する必要がある"
     source: "B48 runtime"
     created_at: "2026-03-10T01:37:37+0900"
+
+  - id: "K27"
+    status: "active"
+    severity: "H"
+    summary: "Agent tool の model パラメータは v2.1.69 でスキーマから削除された (リグレッション、v2.1.72 で修正予定)"
+    detail: "Agent tool の model パラメータは公式ドキュメント (hooks.md PreToolUse) に記載されているが、v2.1.69 で tool スキーマから削除された (#31311, #31027)。それ以前 (v2.1.12+) も short name → 404, full ID → validation error で壊れていた (#18873)。バイナリ解析 (#31027) で resolver 関数は健在だが override スロットに void 0 がハードコードされていると判明。Anthropic collaborator (wolffiex) が v2.1.72 での修正を明言。現時点でのモデル制御は agent 定義 frontmatter のみ有効"
+    source: "実機検証 + GitHub issues #31311/#31027/#18873"
+    created_at: "2026-03-10T02:49:20+0900"

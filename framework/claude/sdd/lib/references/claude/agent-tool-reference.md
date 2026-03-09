@@ -1,6 +1,6 @@
 # Claude Code Agent Tool Reference
 
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-10
 **Sources**: code.claude.com/docs/en/sub-agents, code.claude.com/docs/en/model-config, GitHub anthropics/claude-code
 
 Specification reference for spawning SubAgents via the Claude Code Agent tool. For the specification of agent definition files in `.claude/agents/`, see `subagent-definition-reference.md`.
@@ -12,10 +12,11 @@ Specification reference for spawning SubAgents via the Claude Code Agent tool. F
 | `description` | string | Yes | Short task description, 3-5 words |
 | `prompt` | string | Yes | Instructions for the SubAgent. The SubAgent receives only this as its task prompt |
 | `subagent_type` | string | No | Agent type. Built-in or custom definition name from `.claude/agents/` |
-| `model` | string | No | Model specification (see below). Defaults to inherit when omitted |
 | `run_in_background` | boolean | No | `true` for async execution. Completion is auto-notified via `task-notification` |
 | `isolation` | string | No | `"worktree"` to execute on a copy in a git worktree |
 | `resume` | string | No | Specify a previous Agent ID to continue the conversation |
+
+**Note on `model` parameter**: The official documentation (hooks.md PreToolUse Agent input) lists `model` as an optional parameter. However, it was removed from the tool schema in v2.1.69 (#31311 regression). Even before removal, it was broken — short names returned 404, full model IDs were rejected by validation (#18873, reported since v2.1.12). As of v2.1.71, the parameter cannot be specified at dispatch time. Use agent definition frontmatter or `CLAUDE_CODE_SUBAGENT_MODEL` environment variable instead. The v2.1.66 schema (documented in #31027) included `model`, `name`, `team_name`, `mode`, and `max_turns` in addition to the current parameters.
 
 ## Built-in Agent Types
 
@@ -59,31 +60,29 @@ In sync-sdd, model specification via environment variables is not used.
 
 ### Specifying at Dispatch Time
 
-```
-Agent(model="sonnet", description="...", prompt="...")
-```
+**Not available as of v2.1.71.** The `model` parameter was removed from the Agent tool schema in v2.1.69 (#31311). Even when present in the schema (v2.1.66-v2.1.68), it was broken due to model name resolution failures (#18873). The official documentation (hooks.md) still lists `model` as a parameter, but this does not reflect the current tool schema. **Fix confirmed for v2.1.72** (#31027).
 
-The `model` parameter can override the model at dispatch time.
+### Priority Order (Verified v2.1.71)
 
-### Priority Order (Estimated)
+| Priority | Method | Status |
+|----------|--------|--------|
+| 1 (Highest) | `model` field in `.claude/agents/` definition | **Working.** Verified: sdd-builder (`model: sonnet`) dispatches to claude-sonnet-4-6 |
+| 2 | `CLAUDE_CODE_SUBAGENT_MODEL` environment variable | Documented. Not verified in this environment |
+| 3 (Default) | inherit | **Working.** general-purpose inherits parent model (Opus) |
 
-The official documentation does not explicitly state the priority order. The following is estimated from various sources:
-
-| Priority | Method | Basis |
-|----------|--------|-------|
-| 1 (Highest) | Agent tool `model` parameter | Explicitly specified at dispatch time. Recommended as a workaround for #3903/#5456 |
-| 2 | `model` field in `.claude/agents/` definition | Listed in the official frontmatter table. Default is `inherit` |
-| 3 | `CLAUDE_CODE_SUBAGENT_MODEL` environment variable | Listed on the model-config page. "The model to use for subagents" |
-| 4 (Default) | inherit | Same model as parent conversation |
+Agent tool `model` parameter is excluded from this table — it does not exist in the current schema.
 
 ### Known Issues
 
+- **#31311** (OPEN, regression): Agent tool `model` parameter silently ignored in v2.1.69+. Parameter removed from tool schema
+- **#31027** (OPEN): Agent tool schema missing `model` parameter. Documents v2.1.66 vs v2.1.69 schema comparison
+- **#18873** (OPEN): `model` parameter returns 404 for short names, validation error for full IDs. Reported since v2.1.12
 - **#5456** (CLOSED, DUPLICATE of #3903): Agent definition's model is ignored, falling back to Sonnet. Reported as of v1.0.72
 - **#3903** (CLOSED, NOT_PLANNED): `--model` CLI flag is not inherited by sub-tasks. Reported as of v1.0.53
 - **#27736** (OPEN): Bug where the `skills` field from agent definitions is not displayed in the Agent tool description
 - **#32340** (OPEN): Feature request for dynamic skill invocation from SubAgents + nested spawning (under duplicate review)
 
-These older bugs may have been fixed in current versions. For reliable model control, the `model` parameter at dispatch time or the `CLAUDE_CODE_SUBAGENT_MODEL` environment variable is recommended.
+For reliable model control, use the `model` field in agent definition frontmatter. The Agent tool `model` parameter has a long history of bugs and is currently unavailable. **Fix confirmed for v2.1.72** by Anthropic collaborator (wolffiex) in #31027 — the regression was a refactor oversight (old path removed, new path not yet enabled). The resolver function is intact; restoring requires re-adding `model` to the Zod schema and passing it to the resolver's override slot.
 
 ## Context and Communication
 
