@@ -1,0 +1,99 @@
+scope: "inspector-dynamic-3-install-lib-coverage"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "update-hygiene"
+    location: "install.sh:583-591"
+    summary: "`--update` 時に .claude/skills/ 配下のファイル単位の stale クリーンアップが行われない"
+    detail: |
+      `remove_stale` は `.claude/skills/sdd-*/` ディレクトリの存在確認のみで、
+      既存 sdd-* ディレクトリ配下から削除・移動された補助ファイルは残留する。
+      例: `framework/claude/skills/sdd-review-self/SKILL.md.bak1` が
+      ソースに存在する限り配布され、削除後も `--update` では除去されない。
+      他の install 対象 (`.sdd/settings/rules`, `.sdd/lib` 等) は
+      `remove_stale` でファイル単位のクリーンアップが実施されているが、
+      `.claude/skills/` は対象外となっている。
+    impact: |
+      skill 配下の参照文書や補助ファイルの移設がクリーンに反映されず、
+      更新後のインストール先に旧指示や旧参照が残留する。
+      `lib/` への移行のような構造変更時に、旧ファイルを誤って参照するリスクがある。
+    recommendation: |
+      `.claude/skills/sdd-*/` 配下に対してもソースとの差分でファイル単位の
+      `remove_stale` を実行するか、`*.bak*` などの一時ファイルを
+      配布対象から明示的に除外してください。
+
+  - id: "F2"
+    severity: "L"
+    category: "packaging"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1:146"
+    summary: "旧パス `settings/rules/lead/tmux-integration.md` を参照するバックアップファイルが配布対象に含まれる"
+    detail: |
+      `framework/claude/skills/sdd-review-self/SKILL.md.bak1` が
+      `{{SDD_DIR}}/settings/rules/lead/tmux-integration.md` を参照したまま残存している。
+      `install.sh` の `install_dir` (line 465) は拡張子を問わず再帰コピーするため、
+      このファイルは fresh install で `.claude/skills/sdd-review-self/SKILL.md.bak1`
+      としてインストール先に配布される。
+    impact: |
+      主経路の `SKILL.md` は新しい `.sdd/lib/references/common/tmux-integration.md`
+      を正しく参照するため即時の機能停止はないが、インストール成果物の中に
+      削除済みパスを指すファイルが残り、調査時の誤読やファイル走査ベースの
+      補助ツールの誤検出を招く。
+    recommendation: |
+      バックアップファイルをリポジトリから削除するか、
+      installer 側で `*.bak*` を配布対象から除外してください。
+
+  - id: "F3"
+    severity: "L"
+    category: "documentation"
+    location: "install.sh:619"
+    summary: "インストール完了サマリの `.sdd/` 説明テキストに `lib/` への言及がない"
+    detail: |
+      install.sh の完了サマリ (line 619) は
+        .sdd/                Rules, templates, profiles, scripts
+      と表示するが `lib` の記載がない。
+      一方、`--help` の FRAMEWORK FILES セクション (line 94) には
+        .sdd/lib/                    Framework library (prompts, scripts, etc.)
+      が明記されており、表示が不整合。実際のインストール動作には影響しない。
+    impact: |
+      ユーザーが完了サマリを見て `.sdd/lib/` がインストールされたか否かを
+      確認できず、ヘルプとの不整合で誤解を招く可能性がある。
+    recommendation: |
+      line 619 の表示文字列を
+        .sdd/                Rules, templates, profiles, scripts, lib
+      に変更するか、別行で `.sdd/lib/` を追記する。
+
+notes: |
+  ## 調査サマリ
+
+  ### install.sh の lib/ カバレッジ — PASS
+
+  - line 543: `install_dir "$SRC/framework/claude/sdd/lib" ".sdd/lib"`
+    `find -type f` で再帰コピー。prompts/ (log/, dispatch/, review-self/) および
+    references/ (common/, claude/) の全ファイル + index.yaml が対象。
+  - line 596: `remove_stale ".sdd/lib" ... "*"` で stale クリーンアップ済み。
+  - line 603: `find .sdd/lib -depth -type d -empty -delete` で空ディレクトリも削除。
+  - line 142: アンインストール時 `rm -rf .sdd/lib/` で正しく削除。
+
+  ### tmux-integration.md の移動 — PASS
+
+  - アクティブなフレームワークファイルで旧パス `settings/rules/lead/tmux-integration.md`
+    を参照しているのは `.bak1` ファイルのみ (F2 で報告)。
+  - CLAUDE.md / sdd-review/SKILL.md / lib/prompts/dispatch/engine.md は
+    すべて新パス `.sdd/lib/references/common/tmux-integration.md` を参照。
+  - `--update` 実行時: `remove_stale ".sdd/settings/rules" ... "*.md"` により
+    旧 `settings/rules/lead/tmux-integration.md` がインストール先に残っても除去される。
+
+  ### engines.yaml の変更 — PASS
+
+  - line 547: `cp "$SRC/.../engines.yaml" ".sdd/settings/engines.yaml"` でフルコピー。
+    毎回上書きされるため 2 行削除の変更も安全に反映される。
+  - runtime での参照 (engine.md): `roles.{ROLE_NAME}.stages.{stage}.start_level` を
+    参照するが、現行 engines.yaml にすべてのキーが存在する。
+
+  ### ランタイムパスマッピング — PASS
+
+  - SKILL.md 群が参照する `.sdd/lib/prompts/**` および `.sdd/lib/references/**`
+    のすべてのパスが framework ソースに存在し、`install_dir` でコピーされる。
+  - `lib/references/index.yaml` も `find -type f` でキャッチされる。
+  - `shared-prompt-structure.md` は `briefer.md` から参照されており、
+    両ファイルとも `lib/prompts/review-self/` に存在する。

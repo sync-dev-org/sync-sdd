@@ -1,0 +1,114 @@
+scope: "inspector-dynamic-1-reference-index-integrity"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "reference-dispatch"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:65"
+    summary: "on_demand 参照が動的 Inspector には配布されず、固定 Inspector のみに限定されている"
+    detail: |
+      briefer.md Step 2.5 で INSPECTOR_REFERENCES を構築しているが、
+      Step 3.5 の適用先は固定 Inspector（flow/consistency/compliance）のみ。
+      Step 4（Dynamic Inspector Prompt 生成）では INSPECTOR_REFERENCES への言及がなく、
+      動的 Inspector は load: always の SHARED_REFERENCES のみを受け取る。
+      動的 Inspector が agent/skill 変更をレビューする場合でも、
+      agent-tool-reference.md や skill-reference.md などの on_demand 参照は受け取れない。
+    impact: |
+      変更差分から追加リスクを深掘りする動的 Inspector が仕様参照なしで判断し、
+      誤検知や見逃しが発生する可能性がある。
+      今回のレビュー対象（reference/index.yaml 導入）はまさに agent/skill 仕様の
+      参照体系に関する変更であり、この欠落が直接影響する。
+    recommendation: |
+      案 (a): Step 4 でも動的 Inspector ごとに INSPECTOR_REFERENCES を解決して
+      "## Additional Reference Documents" セクションを注入する（Step 3.5 と同様）。
+      案 (b): Step 4 の dynamic prompt 生成ガイドに「変更内容に応じて関連 on_demand 参照の
+      Read 指示を直接埋め込む」旨を追記し、Briefer に裁量を持たせる。
+
+  - id: "F2"
+    severity: "M"
+    category: "分類不整合"
+    location: "framework/claude/sdd/lib/references/index.yaml:45"
+    summary: "agent-team-reference.md が主要リファレンスとして唯一 explicit に分類されている"
+    detail: |
+      index.yaml 内の主要リファレンス（-reference.md）の load 分類:
+      - agent-tool-reference.md: on_demand ✓
+      - subagent-definition-reference.md: on_demand ✓
+      - skill-reference.md: on_demand ✓
+      - agent-team-reference.md: explicit ← 例外
+      ソース/手順文書（-sources.md 系）が explicit なのは適切だが、
+      agent-team-reference.md は -sources.md ではなく主要仕様リファレンスである。
+      また lib/references/ 配下で agent-team-reference.md を明示的に読む
+      skill/prompt は現在見当たらない（参照されない死蔵状態）。
+    impact: |
+      briefer.md Step 2.5 は explicit を "never selected" と明記しているため、
+      Agent Team 関連変更がレビュー対象になっても Inspector は仕様を自動参照できない。
+      意図的設計（Agent Team は experimental で通常不要）の可能性もあるが、
+      その根拠が index.yaml にコメントされていない。
+    recommendation: |
+      (a) 意図的なら index.yaml に理由を明記する
+          （例: "experimental機能のため、変更時はスキルから明示的にロードすること"）。
+      (b) 意図的でなければ on_demand に変更し、keywords によるマッチングを有効にする。
+
+  - id: "F3"
+    severity: "L"
+    category: "メタデータ余剰"
+    location: "framework/claude/sdd/lib/references/index.yaml:9-19"
+    summary: "always エントリに keywords が定義されているが briefer の選択ロジックでは未使用"
+    detail: |
+      index.yaml ヘッダーコメントは "load: on_demand — read when keywords match the task" と定義。
+      briefer.md Step 2.5 は always エントリを無条件に全 Inspector に含め、keywords でのフィルタを行わない。
+      しかし bash-security-heuristics.md (line 9) と tmux-integration.md (line 15) の
+      always エントリにも keywords 配列が定義されている（合計 17 キーワード）。
+      これらは Briefer の選択アルゴリズムで消費されない。
+    impact: |
+      動作上の問題はないが、keywords の意味が曖昧になり、
+      index.yaml を読む開発者が混乱する可能性がある。
+      また explicit エントリ（5件）の keywords も同様に Briefer から参照されない。
+    recommendation: |
+      ヘッダーコメントに以下を追記して用途を明確化する:
+      "keywords: primarily used for on_demand matching; on always/explicit entries, serves as human-readable topic index only"
+      または always/explicit エントリから keywords を除去してスキーマを簡素化する。
+
+  - id: "F4"
+    severity: "L"
+    category: "keyword-quality"
+    location: "framework/claude/sdd/lib/references/index.yaml:21,34"
+    summary: "on_demand エントリの keywords に汎用語が含まれ参照選択の精度が低下しうる"
+    detail: |
+      agent-tool-reference.md の keywords: [agent, subagent, dispatch, model, background, built-in, tool]
+      subagent-definition-reference.md の keywords: [subagent, agent-definition, frontmatter, yaml, tools, model, hooks]
+      "agent", "subagent", "model", "tools" は両エントリに重複し、かつ広範な文脈にマッチしやすい汎用語。
+      Briefer は keywords と summary の両方を使って選択するため完全な誤選択は避けられるが、
+      discrimination（識別力）は低い。
+    impact: |
+      機能停止ではなく精度の問題。関係ない Inspector に余分な参照が注入される可能性がある。
+      index の動的選択という設計意図を弱める。
+    recommendation: |
+      agent-tool-reference.md: [subagent_type, run_in_background, model-alias, built-in-types] のように
+      API 引数名など識別力の高いキーワードを優先する。
+      subagent-definition-reference.md: [agents-dir, yaml-frontmatter, hooks, allowed-tools] のように
+      定義ファイル固有の語を使う。
+
+notes: |
+  ## 検証サマリー
+
+  ### Investigation Focus 1: パス解決
+  index.yaml の全 10 エントリのパスが lib/references/ 配下に実在することを確認。
+  Glob で取得した実ファイル 10 件（index.yaml 除く）とすべて一致。未登録・欠損なし。
+
+  ### Investigation Focus 2: load 値の一致
+  briefer.md Step 2.5 が期待する 3 値（always/on_demand/explicit）と index.yaml の使用値が完全一致。
+  - always (2): bash-security-heuristics.md, tmux-integration.md
+  - on_demand (3): agent-tool-reference.md, subagent-definition-reference.md, skill-reference.md
+  - explicit (5): *-sources.md 系 4 件 + agent-team-reference.md
+
+  ### Investigation Focus 3: on_demand keywords の充実度
+  3 エントリすべて非空の keywords 配列あり。F4 の精度指摘はあるが機能的には問題なし。
+
+  ### Investigation Focus 4: briefer Step 2.5 の 3 カテゴリ処理
+  - always → SHARED_REFERENCES（全 Inspector 必須）: 正常 ✓
+  - on_demand → INSPECTOR_REFERENCES（fixed Inspector per-keyword matching）: 正常だが dynamic Inspector への未配布が F1 ✗
+  - explicit → "never selected by the Briefer": 正常 ✓
+
+  ### Investigation Focus 5: 未登録ファイル
+  lib/references/ 配下の Markdown 参照文書 10 件はすべて index.yaml に登録済み。
+  index.yaml 自体（レジストリ）は登録不要。未登録ファイルなし ✓

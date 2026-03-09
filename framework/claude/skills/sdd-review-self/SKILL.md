@@ -2,7 +2,7 @@
 name: sdd-review-self
 description: "Framework self-review for sync-sdd development repo. Runs automated code quality review using external engines (Codex CLI, Claude Code headless, Gemini CLI) or SubAgents against framework/ directory. Use this skill for self-review, framework review, review-self, quality check on framework files, code review of SDD framework, verify framework consistency, check framework compliance, audit framework changes, run self-review pipeline."
 argument-hint: "[--inspector-engine E] [--auditor-engine E] [--inspector-model M] [--auditor-model M] [--inspector-effort low|medium|high] [--auditor-effort low|medium|high] [--timeout N]"
-allowed-tools: Read Write Edit Glob Grep Bash Agent
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 ---
 
 # sdd-review-self
@@ -45,7 +45,7 @@ Dispatch via Agent tool with `model: "sonnet"` and `run_in_background: true`:
 
 ### Briefer Completion
 
-After Briefer completes, verify `.sdd/project/reviews/self/active/briefer-status.md` does not contain `NO_CHANGES`. If it does, report "No framework changes detected. Nothing to review." and stop.
+After Briefer completes, verify `.sdd/project/reviews/self/active/briefer-status.md` does not exist, or if it exists, does not contain `NO_CHANGES`. If it contains `NO_CHANGES`, report "No framework changes detected. Nothing to review." and stop.
 
 Verify `active/shared-prompt.md` exists. Read `active/dynamic-manifest.md` to learn the count and names of dynamic Inspectors.
 

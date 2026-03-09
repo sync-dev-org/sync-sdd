@@ -10,7 +10,7 @@ description: >-
   This is the manual-polish mode — richer than auto-draft because it
   consolidates session data, archives stale entries, and incorporates user
   dialogue for tone, nuance, and resume instructions.
-allowed-tools: Read Write Edit Glob Grep Bash
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
 # sdd-handover

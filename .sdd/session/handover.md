@@ -1,22 +1,20 @@
 # Session Handover
-**Generated**: 2026-03-09T17:03:26+0900
+**Generated**: 2026-03-10T01:37:20+0900
 **Branch**: main
-**Session Goal**: references/index.yaml 導入 + sdd-review-self リファレンス動的参照化 + 全リファレンス英語統一
+**Session Goal**: B48 self-review + I57 fix + sdd-review-self 関連 issue 棚卸し
 
 ## Direction
 
 ### Immediate Next Action
-1. I57 (pane タイトル復元) を修正 — dispatch/engine.md に slot release 時のタイトル復元追加
-2. D223 (Builder 廃止) を確定 decision 記録
-3. コミット + install --local --force で動作確認
+1. コミット（B48 self-review fixes + session data）
+2. I58 設計 — sdd-review-self スコープ指定モード（I45/I60 包含）
 
 ### Active Goals
-- **リファレンス index.yaml**: 導入完了。今後スキルから index.yaml を参照させて、必要なリファレンスの選択を LLM に委ねる設計。sdd-review-self で先行実証済み。sdd-review にも拡張予定 (I41)
-- **sdd-review-self リファレンス動的参照**: Briefer が index.yaml からリファレンス選択 → Inspector/Auditor に配布。auditor-header.md 廃止。Auditor は references_read/ref で判断根拠を報告、Lead が Reference Verification で検証
-- **I33 lib/ マイグレーション**: prompts/log/, prompts/review-self/, prompts/dispatch/, references/ 完了。残り: scripts, rules, templates, profiles
-- **I41 sdd-review 改修**: dispatch/engine.md 参照に改修。sdd-review-self で先行実証済み
-- **I55 issue type 再設計**: GitHub 慣例との整合性検討
-- **I56 verdicts.yaml 精査**: スキーマ・役割・session data との分担
+- **I58 スコープ指定モード**: 特定スキル/設定/リファレンスを起点に Briefer が芋蔓式にリストアップ。Inspector プロンプトも汎用化 (I60)。FILE_LIST 再帰収集 (I45) も包含
+- **I59 Briefer SubAgent model 指定**: Agent tool の general-purpose で model パラメータが有効か実機検証が必要
+- **I33 lib/ マイグレーション**: prompts/log, prompts/review-self, prompts/dispatch, references 完了。残り: scripts, rules, templates, profiles
+- **I41 sdd-review 改修**: dispatch/engine.md 参照に改修
+- **codex ENGINE_FAILURE (I66)**: B48 で codex L4 が全滅。原因未特定
 
 ### Key Decisions
 **Continuing from previous sessions:**
@@ -26,18 +24,19 @@
 - D197: Level chain 設計 L1-L7+L0
 - D214: sdd-log スキル
 - D220: NL trigger 廃止 + 全記録パスを /sdd-log 経由に統一
-- D223: sdd-review-self Builder 廃止 → Lead 直接修正 (B47 で動作確認済み、確定待ち)
 - D226: I33 初期判断 — .sdd/ 階層再設計で lib/ 導入
 - D227: sdd-review-self 改修計画 — 7項目の設計決定を包括
+- D228: リファレンス文書を全て英語に統一
 
 **Added this session:**
-- D228: リファレンス文書を全て英語に統一 — トークン効率のため
+- D223 確定: sdd-review-self Builder 廃止 → Lead 直接修正（B47 実運用確認済み）
 
 ### Warnings
-- **リサーチエージェントの報告は鵜呑みにしない**: 過去セッションで「CLAUDE.md が SubAgent にも読み込まれる」という誤報告。公式ドキュメント原文と照合すること。更新手順書の「Critical Evidence」セクションに検証ポイント記載済み
-- **公式ドキュメントも最新とは限らない**: GitHub Issues で公式ドキュメントの記述と実動作の乖離が報告されることがある
-- **I57 は UX デグレ**: pane タイトルが busy 表示のまま戻らない
-- **sdd-review-self 未テスト**: 今セッションで briefer/inspector/auditor のリファレンス参照フローを大幅変更したが、実行テスト未実施。次回 self-review で動作確認が必要
+- **リサーチエージェントの報告は鵜呑みにしない**: 公式ドキュメント原文と照合すること
+- **公式ドキュメントも最新とは限らない**: GitHub Issues で乖離が報告されることがある
+- **codex ENGINE_FAILURE**: B48 で codex L4 全滅。sticky escalation で L5 に記録済み。次セッション sdd-start でリセットされるが、codex 不安定の可能性あり
+- **tmux wait-for close channel は 1:1 (K25)**: 複数 pane が同じ close channel を待つと waiter 数分の signal が必要
+- **send-keys の task-notification は配信完了のみ (K26)**: Inspector 完了検知には別途 wait-for が必要
 
 ## Session Context
 
@@ -50,57 +49,65 @@
 ## Accomplished
 
 ### Work Summary (this session)
-1. **references/index.yaml 導入**: `load` 3値 (always/on_demand/explicit) + category/summary/keywords。スキルが index を読んで必要な文書を LLM 判断で選択する設計
-2. **references/ サブディレクトリ再編**: `common/` (load: always) に bash-security-heuristics.md と tmux-integration.md を移動。`claude/` は on_demand/explicit
-3. **sdd-review-self リファレンス動的参照化**:
-   - Briefer: Step 2.5 新設 (index.yaml 参照 → SHARED_REFERENCES + INSPECTOR_REFERENCES)、Step 3.5 新設 (固定 Inspector プロンプトを active/ に展開)
-   - shared-prompt-structure.md: ハードコード参照 → `{SHARED_REFERENCES}` プレースホルダに置換
-   - inspector-compliance.md: Reference Documents セクション (ハードコード参照) を除去
-   - auditor-header.md 廃止: auditor.md が完全静的プロンプトとして自立
-   - Auditor: Step 0 新設 (index.yaml → リファレンス参照)、verdict YAML に `references_read` + per-item `ref` フィールド追加
-   - SKILL.md Step 5: Inspector パスを active/ 統一。Step 6: auditor-header 除去。Step 7: Reference Verification サブステップ新設
-4. **リファレンス文書全英語化** (D228): 8ファイル + index.yaml を日本語→英語。5 SubAgent 並列で実行
-5. パス参照更新: CLAUDE.md, engine.md, inspector-compliance.md, shared-prompt-structure.md, sdd-review SKILL.md
+1. **D223 確定記録** — Builder 廃止を confirmed (B47 実運用実績)
+2. **I57 修正** — dispatch/engine.md に slot release 時の pane タイトル復元追加
+3. **B48 self-review 完了** — codex L4 ENGINE_FAILURE → claude L5 escalation。7 Inspector (3 fixed + 4 dynamic) 全成功
+   - 28 confirmed issues: 8H, 6M, 13L, 2FP
+   - 24 items fixed: 旧テンプレート除去 (A5/A6/A13/A17-A19), SKILL.md.bak1 削除 (A28), CLAUDE.md builder stage 除去 (A7) + Auditor tier 修正 (A21), frontmatter name/allowed-tools (A8/A20/A24), cross-cutting routing 誤配線修正 (A3/A16), verdict-format batches: 修正 (A4), engines.yaml briefer stage 除去 (A11), codex -m→--model 統一 (A12), README agent 説明更新 (A15), sdd-steering ステップ番号修正 (A22), briefer-status 検証修正 (A23), index.yaml keywords 改善 (A26/A27), install.sh lib/ 追記 (A29), dynamic Inspector on_demand refs (A9)
+   - 4 items deferred → I62-I65
+4. **新規 issue 6件**: I58 (スコープ指定モード), I59 (Briefer model), I60 (Inspector 汎用化), I61 (compliance 検索過剰), I62-I65 (B48 deferred), I66 (codex ENGINE_FAILURE)
+5. **新規 knowledge 2件**: K25 (close channel 1:1), K26 (send-keys notification)
 
 ### Previous Sessions (carry forward)
+- v2.6.0 (session 20): references/index.yaml + sdd-review-self リファレンス動的参照 + 全文書英語化
 - v2.6.0 (session 19): リファレンス文書の構造化・精査・更新手順書整備
 - v2.6.0 (session 18): D227 改修実装 + B47 review + リファレンス文書3件作成
-- v2.6.0 (session 17): D227 改修実装 + B47 review + session consolidation
-- v2.6.0 (session 16): sdd-review-self 改修計画設計 (D227)
-- v2.6.0 (session 15): I40 fix — sdd-log Read-inline化 + .sdd/lib/ 導入
 
 ### Modified Files
-- `.sdd/lib/references/index.yaml` — 新規作成
-- `.sdd/lib/references/common/bash-security-heuristics.md` — 移動 + 英語化
-- `.sdd/lib/references/common/tmux-integration.md` — rules/lead/ から移動 + 英語化
-- `.sdd/lib/references/claude/*.md` — 全8ファイル英語化
-- `.sdd/lib/prompts/review-self/briefer.md` — Step 2.5, 3, 3.5 改修
-- `.sdd/lib/prompts/review-self/shared-prompt-structure.md` — SHARED_REFERENCES プレースホルダ化
-- `.sdd/lib/prompts/review-self/inspector-compliance.md` — ハードコード参照除去
-- `.sdd/lib/prompts/review-self/auditor.md` — Step 0 + references_read/ref 追加
-- `framework/claude/CLAUDE.md` — tmux-integration パス更新
-- `framework/claude/skills/sdd-review-self/SKILL.md` — Step 5/6/7 改修
-- `framework/claude/skills/sdd-review/SKILL.md` — tmux-integration パス更新
-- `framework/claude/sdd/` — 上記全ファイルの framework 同期
+- `framework/claude/CLAUDE.md` — builder stage 除去, Auditor tier 修正
+- `framework/claude/skills/sdd-review-self/SKILL.md` — allowed-tools カンマ区切り, briefer-status 修正
+- `framework/claude/skills/sdd-review-self/SKILL.md.bak1` — 削除
+- `framework/claude/skills/sdd-publish-setup/SKILL.md` — name 追加
+- `framework/claude/skills/sdd-forge-skill/SKILL.md` — allowed-tools 追加
+- `framework/claude/skills/sdd-handover/SKILL.md` — allowed-tools カンマ区切り
+- `framework/claude/skills/sdd-log/SKILL.md` — allowed-tools カンマ区切り
+- `framework/claude/skills/sdd-roadmap/SKILL.md` — cross-cutting を Review に追加
+- `framework/claude/skills/sdd-roadmap/refs/revise.md` — cross-check → cross-cutting 修正
+- `framework/claude/skills/sdd-steering/SKILL.md` — ステップ番号修正
+- `framework/claude/sdd/settings/templates/review-self/` — ディレクトリ削除
+- `framework/claude/sdd/settings/engines.yaml` — review-self briefer stage 除去
+- `framework/claude/sdd/settings/rules/agent/verdict-format.md` — batches: 除去
+- `framework/claude/sdd/lib/prompts/dispatch/engine.md` — -m→--model, pane タイトル復元
+- `framework/claude/sdd/lib/prompts/review-self/briefer.md` — dynamic Inspector refs
+- `framework/claude/sdd/lib/references/index.yaml` — keywords 改善
+- `README.md` — agent 説明更新
+- `install.sh` — lib/ 追記
 
 ## Open Issues
 | ID | Sev | Type | Summary |
 |----|-----|------|---------|
-| **I45** | **H** | ENH | Briefer FILE_LIST に refs/*.md 未収集 (deferred) |
-| **I57** | **M** | BUG | tmux slot 解放時に pane タイトルが元に戻らない |
+| **I45** | **H** | ENH | Briefer FILE_LIST がスキルディレクトリを再帰的に収集していない |
+| **I58** | **H** | FEAT | sdd-review-self スコープ指定モード追加 |
+| **I60** | **H** | ENH | 固定 Inspector プロンプトを汎用化 |
+| **I62** | **H** | ENH | Router が review impl --cross-cutting を一貫して扱っていない (B48-A1) |
+| **I63** | **H** | ENH | Dispatch loop が auto-fix 前に batch 確定・退避 (B48-A2) |
+| I59 | M | BUG | Briefer SubAgent が Sonnet ではなく Opus で起動 |
+| I61 | M | ENH | inspector-compliance が検索しすぎ |
+| I64 | M | ENH | Lookahead 依存 design 差し戻し時に旧 GO 無効化しない (B48-A10) |
+| I65 | M | ENH | --update 時 .claude/skills/ stale クリーンアップなし (B48-A14) |
+| I66 | M | BUG | codex L4 ENGINE_FAILURE (B48) |
 | I29 | M | ENH | jq 可用性チェックを sdd-start に移動 |
 | I32 | M | BUG | sdd-start がセキュリティヒューリスティクスを踏む |
-| I33 | M | ENH | .sdd/settings/ 階層再設計 (lib/ マイグレーション中) |
+| I33 | M | ENH | lib/ マイグレーション残り |
 | I39 | M | FEAT | knowledge システム拡張 |
 | I41 | M | ENH | sdd-review を dispatch/engine.md 参照に改修 |
-| I42 | M | FEAT | Command Dispatch 汎用プロンプト作成 |
-| I55 | M | ENH | issues.yaml type フィールド GitHub 慣例再設計 |
+| I42 | M | FEAT | Command Dispatch 汎用プロンプト |
+| I55 | M | ENH | issues.yaml type フィールド再設計 |
 | I56 | M | ENH | verdicts.yaml 仕様精査 |
 | I18 | M | ENH | session データ SQLite 化検討 |
-| I10 | L | ENH | ConventionsScanner が issues.yaml を参照しない (deferred) |
+| I10 | L | ENH | ConventionsScanner issues.yaml 未参照 (deferred) |
 
 ## Resume Instructions
 1. `/sdd-start` でセッション開始
-2. I57 を修正 (dispatch/engine.md に pane タイトル復元追加)
-3. D223 確定を decision 記録
-4. コミット
+2. コミット（未コミットの B48 fixes + session data）
+3. I58 設計着手 — I45/I59/I60/I61 を包含したスコープ指定モードの設計

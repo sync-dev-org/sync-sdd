@@ -1,0 +1,260 @@
+scope: "inspector-compliance"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-publish-setup/SKILL.md:1"
+    summary: "sdd-publish-setup SKILL.md is missing the `name` field"
+    detail: >
+      The SKILL.md frontmatter contains only `description` and `allowed-tools`.
+      The `name` field is absent. Per official Claude Code docs (code.claude.com/docs/en/skills),
+      `name` is optional and falls back to directory name when omitted, but this
+      skill is inconsistent with all other 11 SDD skills that explicitly declare
+      `name`. The agentskills.io open standard (which Claude Code follows) lists
+      `name` as required. The fallback directory name `sdd-publish-setup` matches
+      the settings.json `Skill(sdd-publish-setup)` entry, so runtime behavior is
+      currently correct. Risk arises on rename or cross-platform use.
+    impact: >
+      Inconsistency with the rest of the SDD skill corpus (11/12 skills declare name).
+      If the directory is renamed, the slash-command will silently change without a
+      frontmatter name anchor. Cross-platform tools (Codex, Gemini) that require
+      `name` as mandatory will break.
+    recommendation: >
+      Add `name: sdd-publish-setup` to the frontmatter of
+      framework/claude/skills/sdd-publish-setup/SKILL.md.
+
+  - id: "F2"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md:1"
+    summary: "sdd-forge-skill SKILL.md is missing `allowed-tools` field despite Agent/Bash usage"
+    detail: >
+      sdd-forge-skill does not declare `allowed-tools`, while it dispatches SubAgents
+      via `Agent()` with `run_in_background: true` (SKILL.md lines 77, 170, 260, 308)
+      and runs Bash for long-running processes (lines 274, 350). All other SDD skills
+      that use Agent or Bash declare `allowed-tools` explicitly. Without this field,
+      tool access relies on the session-level `defaultMode: acceptEdits`, but the
+      skill's tool requirements are invisible from the frontmatter — violating the
+      principle of explicit capability declaration. The skill also lacks `argument-hint`
+      (minor, as not all skills declare it).
+    impact: >
+      Tool access is implicit. In restricted profiles or when the skill is distributed
+      via plugins, required tools may not be pre-approved, causing unexpected approval
+      prompts or silent denials during forge-skill execution.
+    recommendation: >
+      Add `allowed-tools: Agent, Bash, Read, Write, Edit, Glob, Grep` to
+      framework/claude/skills/sdd-forge-skill/SKILL.md frontmatter to make tool
+      requirements explicit and consistent with other SDD skills.
+
+  - id: "F3"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:13"
+    summary: "Inconsistent `allowed-tools` delimiter: space-separated in 3 skills, comma-separated in 9"
+    detail: >
+      Three skills use space-separated `allowed-tools` format, nine use comma-separated.
+      Space-separated files: sdd-handover (`Read Write Edit Glob Grep Bash`),
+      sdd-log (`Bash Read Edit Write Glob`), sdd-review-self (`Read Write Edit Glob Grep Bash Agent`).
+      Comma-separated files: all other 9 SDD skills.
+      Official Claude Code docs example: `allowed-tools: Read, Grep, Glob` (comma-separated).
+      Claude Code accepted both formats after adding YAML-list support. The agentskills.io
+      standard specifies space-delimited. Both are functionally accepted by Claude Code,
+      but the corpus is visually inconsistent.
+    impact: >
+      Cosmetic inconsistency within the skill corpus. No functional impact on Claude Code.
+      Maintainers editing one style may not realize both exist. Third-party validators
+      expecting only one format may flag the inconsistency.
+    recommendation: >
+      Standardize `allowed-tools` to comma-separated format across all SKILL.md files
+      to match the Claude Code official documentation examples and ensure consistency.
+      Files to update: sdd-handover, sdd-log, sdd-review-self.
+
+  - id: "F4"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:4"
+    summary: "`Skill` listed in `allowed-tools` is not documented as a valid internal tool name"
+    detail: >
+      sdd-roadmap (`allowed-tools: Agent, Bash, Glob, Grep, Read, Write, Edit, Skill`)
+      and sdd-steering (`allowed-tools: Bash, Glob, Grep, Read, Write, Edit, Skill`)
+      both include `Skill` as a tool name in `allowed-tools`.
+      Official Claude Code documentation (code.claude.com/docs/en/skills,
+      code.claude.com/docs/en/permissions) lists `Skill` as a permission rule specifier
+      used in settings.json (`Skill(commit)`, `Skill(deploy *)`), not as an internal
+      tool name for `allowed-tools`. The documented internal tools are: Read, Write,
+      Edit, Bash, Glob, Grep, Agent, WebSearch, WebFetch, etc. Per the skill spec,
+      unknown tool names in `allowed-tools` are silently ignored.
+    impact: >
+      If `Skill` is not a recognized tool name, the declaration is silently ignored.
+      Skill-to-skill invocation (sdd-roadmap invoking sdd-review via `/sdd-review`)
+      likely works because skills run in the main conversation context where all skills
+      are available. However, the `Skill` entry in `allowed-tools` provides no actual
+      pre-approval benefit if it is not a valid tool name.
+    recommendation: >
+      Verify whether `Skill` is a recognized tool name in Claude Code `allowed-tools`.
+      If not functional, remove it from sdd-roadmap and sdd-steering `allowed-tools`.
+      Skill invocation from within a skill context is governed by the main session
+      permission settings (settings.json `Skill(...)` entries), not by `allowed-tools`.
+
+compliance:
+  - target: "agent-frontmatter-model-field"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      All 5 agent definitions use valid model values: `sonnet` (sdd-builder,
+      sdd-taskgenerator, sdd-conventions-scanner) and `opus` (sdd-analyst, sdd-architect).
+      Official docs confirm valid values are sonnet, opus, haiku, inherit.
+
+  - target: "agent-frontmatter-required-fields"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      Official docs state only `name` and `description` are required. All 5 agent
+      definitions have both. Names match filenames (without .md extension) in all cases.
+
+  - target: "agent-frontmatter-tools-field"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      All 5 agents use comma-separated `tools`. Tools listed (Read, Glob, Grep, Write,
+      Edit, Bash, WebSearch, WebFetch) are all standard Claude Code internal tools.
+
+  - target: "agent-frontmatter-background-field"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      All 5 agents declare `background: true`. Official docs confirm this is a valid
+      optional field: "Set to true to always run this subagent as a background task."
+
+  - target: "agent-tool-subagent_type-parameter"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      Skills use subagent_type matching agent definition names (sdd-analyst, sdd-architect,
+      sdd-builder, sdd-taskgenerator, sdd-conventions-scanner). Official docs confirm
+      agent types are resolved from .claude/agents/ by filename. All referenced types
+      exist as agent files or are built-in (general-purpose).
+
+  - target: "agent-tool-general-purpose-builtin"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      `general-purpose` used in sdd-review is a documented built-in: "Claude Code
+      includes built-in subagents like Explore, Plan, and general-purpose." No agent
+      definition file needed. settings.json correctly excludes Agent(general-purpose)
+      from allow list per task spec (built-ins excluded from this check).
+
+  - target: "agent-tool-run_in_background-parameter"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      All Agent dispatches in skills use run_in_background=true, consistent with
+      CLAUDE.md mandate and platform docs. Background agents have pre-approved
+      permissions and receive task-notification on completion.
+
+  - target: "settings-json-permission-format"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/permissions"
+    notes: >
+      settings.json uses Skill(name) and Agent(name) format in the allow array.
+      Official docs confirm: permission rules follow format Tool or Tool(specifier).
+      Agent(my-custom-agent) and Skill(commit) are documented examples.
+
+  - target: "settings-json-skill-coverage"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/settings"
+    notes: >
+      All 12 skills in framework/claude/skills/sdd-*/SKILL.md have corresponding
+      Skill(name) entries in settings.json allow list. No orphan entries (entries
+      without corresponding files) detected.
+
+  - target: "settings-json-agent-coverage"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/settings"
+    notes: >
+      All 5 custom agents in framework/claude/agents/sdd-*.md have corresponding
+      Agent(name) entries in settings.json allow list. No orphan entries detected.
+      Built-in types (general-purpose) are correctly not listed.
+
+  - target: "skill-frontmatter-name-field"
+    status: "UNCERTAIN"
+    citation: "https://code.claude.com/docs/en/skills"
+    notes: >
+      Official Claude Code docs say `name` is optional with directory-name fallback.
+      The agentskills.io standard (which Claude Code claims to follow) lists `name`
+      as required. Filed as F1 (M severity) for the one missing instance
+      (sdd-publish-setup) due to corpus inconsistency rather than hard platform failure.
+
+  - target: "skill-frontmatter-allowed-tools-delimiter"
+    status: "UNCERTAIN"
+    citation: "https://code.claude.com/docs/en/skills"
+    notes: >
+      Official docs show comma-separated format. Changelog notes YAML-list support was
+      added. agentskills.io standard specifies space-delimited. Both formats appear
+      accepted. Filed as F3 (L severity) for corpus inconsistency.
+
+  - target: "skill-allowed-tools-Skill-as-tool-name"
+    status: "UNCERTAIN"
+    citation: "https://code.claude.com/docs/en/skills"
+    notes: >
+      `Skill` appears in allowed-tools for sdd-roadmap and sdd-steering. Not documented
+      as a valid internal tool name (only as a permission rule specifier). Unknown tool
+      names are silently ignored per spec. Filed as F4 (L severity).
+
+  - target: "ask-user-question-excluded-from-allowed-tools"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      No skill declares AskUserQuestion in allowed-tools. Framework CLAUDE.md and
+      multiple skills explicitly warn against it. Official docs confirm background
+      subagents auto-deny AskUserQuestion. Compliant throughout the corpus.
+
+  - target: "agent-nesting-limitation"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      No agent definition instructs SubAgents to spawn other SubAgents. Official docs
+      state subagents cannot spawn other subagents. All dispatch is correctly routed
+      through Lead (main conversation). Compliant.
+
+  - target: "agent-websearch-webfetch-tools"
+    status: "OK"
+    citation: "https://code.claude.com/docs/en/sub-agents"
+    notes: >
+      sdd-analyst and sdd-architect declare WebSearch, WebFetch in tools. These are
+      standard Claude Code internal tools. No settings.json permission entry needed
+      for agent-scoped tool grants (tools field controls this, not settings.json allow).
+
+notes: |
+  Review performed: 2026-03-09
+  Sources:
+    https://code.claude.com/docs/en/sub-agents
+    https://code.claude.com/docs/en/skills
+    https://code.claude.com/docs/en/permissions
+    https://code.claude.com/docs/en/settings
+    .sdd/lib/references/claude/agent-tool-reference.md
+    .sdd/lib/references/claude/subagent-definition-reference.md
+    .sdd/lib/references/claude/skill-reference.md
+
+  Agent definitions verified (5 total — all pass required-field and model checks):
+    sdd-analyst:             model=opus, background=true, tools=7 (includes WebSearch/WebFetch)
+    sdd-architect:           model=opus, background=true, tools=7 (includes WebSearch/WebFetch)
+    sdd-builder:             model=sonnet, background=true, tools=6
+    sdd-taskgenerator:       model=sonnet, background=true, tools=4
+    sdd-conventions-scanner: model=sonnet, background=true, tools=4
+
+  Skills verified (12 total):
+    sdd-roadmap:      name=OK, desc=OK, tools=comma+Skill(uncertain, F4), arg-hint=OK
+    sdd-steering:     name=OK, desc=OK, tools=comma+Skill(uncertain, F4), arg-hint=OK
+    sdd-status:       name=OK, desc=OK, tools=comma, arg-hint=OK
+    sdd-start:        name=OK, desc=OK, tools=comma, arg-hint=absent(OK)
+    sdd-handover:     name=OK, desc=OK, tools=space(F3), arg-hint=absent(OK)
+    sdd-log:          name=OK, desc=OK, tools=space(F3), arg-hint=OK
+    sdd-reboot:       name=OK, desc=OK, tools=comma, arg-hint=OK
+    sdd-release:      name=OK, desc=OK, tools=comma, arg-hint=OK
+    sdd-review:       name=OK, desc=OK, tools=comma, arg-hint=OK
+    sdd-review-self:  name=OK, desc=OK, tools=space(F3), arg-hint=OK
+    sdd-forge-skill:  name=OK, desc=OK, allowed-tools=ABSENT(F2), arg-hint=absent(OK)
+    sdd-publish-setup: name=ABSENT(F1), desc=OK, tools=comma, arg-hint=absent(OK)
+
+  settings.json: defaultMode=acceptEdits, 12 Skill() + 5 Agent() entries, all verified against files.

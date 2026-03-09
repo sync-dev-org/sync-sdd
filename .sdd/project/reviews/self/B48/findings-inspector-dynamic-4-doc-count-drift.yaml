@@ -1,0 +1,47 @@
+scope: "inspector-dynamic-4-doc-count-drift"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "documentation-drift"
+    location: "README.md:15"
+    summary: "README の agent 説明が実在する 5 つの agent profile 構成と一致していない"
+    detail: "`framework/claude/agents/sdd-*.md` を確認すると agent file は `sdd-analyst`、`sdd-architect`、`sdd-builder`、`sdd-conventions-scanner`、`sdd-taskgenerator` の 5 件だった。一方 README は冒頭説明と Architecture 節で Auditor / Inspector / Prep agent を agent 側の説明に含め、実在する ConventionsScanner を落としている。"
+    impact: "README 上では件数だけ見ると 5 のままでも、どの 5 つを指すのかが実装とずれる。利用者が `.claude/agents/sdd-*.md` と README を照合した際に、存在しない profile を探したり、ConventionsScanner の役割を見落としたりする。"
+    recommendation: "README の agent 説明を実ファイルに合わせて `Analyst / Architect / TaskGenerator / Builder / ConventionsScanner` に更新し、Auditor / Inspector / Briefer は template-driven review role として別枠で説明する。`Prep agent` という表現も `Briefer` に統一する。"
+  - id: "F2"
+    severity: "L"
+    category: "documentation-drift"
+    location: "framework/claude/CLAUDE.md:404"
+    summary: "CLAUDE.md が builder を engines.yaml の level-chain stage と説明している"
+    detail: "`framework/claude/sdd/settings/engines.yaml` の `roles` を確認すると、`start_level` を持つ stage は `review-self` / `review` ともに `briefer`、`inspectors`、`auditor` の 3 つだけで、`builder` stage は定義されていない。"
+    impact: "engine 設定の読者が Builder にも同じ level-chain 設定が存在すると誤認し、設定追加や調査時に存在しないキーを探すことになる。"
+    recommendation: "CLAUDE.md の該当文から `builder` を削除するか、Builder にも実際の role/stage 設定を追加して説明と実装を一致させる。"
+notes: |
+  検証結果（全数値クレームを実ファイルと照合）:
+
+  1. コマンド数: CLAUDE.md "Commands (12)" = 実ファイル 12 件 ✓
+     (sdd-publish-setup, sdd-forge-skill, sdd-status, sdd-start, sdd-steering,
+      sdd-reboot, sdd-release, sdd-roadmap, sdd-log, sdd-handover,
+      sdd-review, sdd-review-self)
+
+  2. エージェント数: README "5 agent profiles" = 実ファイル 5 件 ✓
+     (sdd-analyst, sdd-architect, sdd-builder, sdd-conventions-scanner, sdd-taskgenerator)
+     ※ただし F1 で指摘のとおり、README の説明内容が実ファイル構成と乖離。
+
+  3. レビューテンプレート: README "21 review templates" = 実ファイル 21 件 ✓
+     inspector 17 (design×5, impl固定×5, impl条件×3, dead-code×4)
+     + auditor 1 + briefer 1 + brief 2 (auditor-brief, inspector-brief)
+
+  4. Inspector 説明の整合性: CLAUDE.md の
+     "5 design, 5 impl +1 e2e +2 web (impl only; e2e/web are conditional), 4 dead-code"
+     = 実テンプレートファイルと一致 ✓
+
+  5. review-self テンプレート: 6 件 (inspector×3 + auditor + briefer + builder)
+     CLAUDE.md "3 fixed (flow/consistency/compliance)" と一致 ✓
+     明示的な合計件数クレームは存在しない。
+
+  6. engines.yaml level chain: CLAUDE.md テーブル L0-L7 = engines.yaml 定義と完全一致 ✓
+
+  F2 の根拠となる engines.yaml roles 定義を確認:
+    review-self: stages=[briefer, inspectors, auditor] — builder なし
+    review:      stages=[briefer, inspectors, auditor] — builder なし

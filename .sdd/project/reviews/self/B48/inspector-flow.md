@@ -42,3 +42,7 @@ Read ALL files listed in the shared prompt.
    AGENT:inspector-flow
    ISSUES: <number of issues found>
    WRITTEN:.sdd/project/reviews/self/active/findings-inspector-flow.yaml
+
+## Additional Reference Documents
+
+Read `.sdd/lib/references/claude/agent-tool-reference.md` — Agent tool specification: subagent_type, model, run_in_background, built-in types, model aliases.

@@ -1,7 +1,7 @@
 # Reference Document Index
 # Skills read this index to select relevant reference documents by topic.
 # Paths are relative to .sdd/lib/references/
-# load: always    — unconditionally read (common/ documents)
+# load: always    — unconditionally read (common/ documents). keywords on always entries serve as human-readable topic index only.
 # load: on_demand — read when keywords match the task
 # load: explicit  — read only when a skill/prompt explicitly names this document
 
@@ -22,7 +22,7 @@ entries:
     category: platform
     load: on_demand
     summary: "Agent tool specification — subagent_type, model, run_in_background, built-in types, model aliases"
-    keywords: [agent, subagent, dispatch, model, background, built-in, tool]
+    keywords: [subagent_type, run_in_background, model-alias, built-in-types, agent-dispatch]
 
   - path: claude/agent-tool-sources.md
     category: procedure
@@ -34,7 +34,7 @@ entries:
     category: platform
     load: on_demand
     summary: "SubAgent definition file (.claude/agents/*.md) YAML frontmatter specification — model, tools, description, hooks"
-    keywords: [subagent, agent-definition, frontmatter, yaml, tools, model, hooks]
+    keywords: [agents-dir, yaml-frontmatter, agent-definition, hooks, subagent-model, subagent-tools]
 
   - path: claude/subagent-definition-sources.md
     category: procedure

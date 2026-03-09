@@ -30,7 +30,7 @@ For each resolved engine (codex/claude/gemini), run the `install_check` command 
 
 | Engine | Command Pattern |
 |--------|----------------|
-| codex | `npx -y @openai/codex exec --full-auto -m {model} -c model_reasoning_effort='"{effort}"' -` |
+| codex | `npx -y @openai/codex exec --full-auto --model {model} -c model_reasoning_effort='"{effort}"' -` |
 | claude | `env -u CLAUDECODE claude -p - --model {model} --output-format stream-json --verbose --dangerously-skip-permissions` piped to `jq -rjf .sdd/settings/scripts/claude-stream-progress.jq` with `CLAUDE_CODE_EFFORT_LEVEL={effort}` env prefix (use `env` command for prefix) |
 | gemini | `npx -y @google/gemini-cli -p --model {model} --yolo` |
 | subagents | Map model name: names containing "spark" or "haiku" → `"haiku"`, "opus" → `"opus"`, otherwise → `"sonnet"`. With effort=high: include "ultrathink" keyword in prompt. |

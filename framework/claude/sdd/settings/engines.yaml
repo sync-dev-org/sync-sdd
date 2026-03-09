@@ -96,8 +96,6 @@ roles:
   review-self:
     timeout: 900
     stages:
-      briefer:
-        start_level: L1
       inspectors:
         start_level: L4
       auditor:

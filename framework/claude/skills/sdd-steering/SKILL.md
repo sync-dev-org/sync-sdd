@@ -58,7 +58,7 @@ Execute full steering creation:
    - Record user's Vision from dialogue
    - Set initial Success Criteria and Anti-Goals
 9. Present summary (include which profile was applied, if any)
-11. **Publish pipeline offer** (Python profile only):
+10. **Publish pipeline offer** (Python profile only):
     If the selected profile is `python`, ask the user if they plan to publish this package to PyPI. If yes, run the following pre-flight checks before invoking `/sdd-publish-setup`:
 
     a. **Git remote**: `git remote get-url origin` — if no remote, inform user and skip (publish setup requires a GitHub remote)

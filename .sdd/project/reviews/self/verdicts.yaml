@@ -1,3 +1,39 @@
+- seq: 48
+  type: "self"
+  scope: "framework"
+  date: "2026-03-09T22:36:57+0900"
+  version: "2.6.0"
+  engines:
+    briefer: "claude-opus-4-6 (SubAgent)"
+    inspectors: "claude-sonnet-4-6 (L5 escalation from codex L4)"
+    auditor: "claude-sonnet-4-6 (L5)"
+    builder: "lead (D223)"
+  agents:
+    fixed: 3
+    dynamic: 4
+    total: 7
+  counts:
+    C: 0
+    H: 8
+    M: 6
+    L: 13
+    FP: 2
+  verdict: "CONDITIONAL"
+  disposition: "CONDITIONAL-FIXED"
+  notes: "B48 — codex L4 ENGINE_FAILURE → claude L5。24 items fixed (旧テンプレート除去, frontmatter, cross-cutting routing, index.yaml keywords, etc)。5 items deferred (A1/A2 cross-cutting routing, A10 lookahead, A14 stale cleanup)。A9 (dynamic inspector refs) approved+fixed。"
+  tracked:
+    - id: "A1"
+      severity: "H"
+      summary: "Router が review impl --cross-cutting を一貫して扱っていない"
+    - id: "A2"
+      severity: "H"
+      summary: "Dispatch loop が auto-fix 判定前に review batch を確定・退避"
+    - id: "A10"
+      severity: "M"
+      summary: "Lookahead spec の依存 design 差し戻し時に旧 GO を無効化しない"
+    - id: "A14"
+      severity: "M"
+      summary: "--update 時に .claude/skills/ のファイル単位 stale クリーンアップがない"
 - seq: 47
   type: "self"
   scope: "framework"

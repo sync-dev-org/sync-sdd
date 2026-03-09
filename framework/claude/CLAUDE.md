@@ -12,7 +12,7 @@ Spec-Driven Development framework for AI-DLC (AI Development Life Cycle)
 
 ```
 Tier 1: Command  ─── Lead ─────────────────────── (Lead, Opus)
-Tier 2: Brain    ─── Analyst / Architect / Auditor ─────── (SubAgent, Opus)
+Tier 2: Brain    ─── Analyst / Architect / Auditor ─────── (SubAgent, Opus/Sonnet)
 Tier 3: Execute  ─── TaskGenerator / Builder / Inspector / ConventionsScanner ─── (SubAgent ×N, Sonnet)
 ```
 
@@ -401,7 +401,7 @@ Unified YAML schema for all review pipeline outputs. Full specification: `{{SDD_
 
 ## Review Engine Level Chain
 
-Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stage (briefer, inspectors, auditor, builder) has a `start_level` resolved from a global level chain:
+Review engines are configured via `{{SDD_DIR}}/settings/engines.yaml`. Each stage (briefer, inspectors, auditor) has a `start_level` resolved from a global level chain:
 
 | Level | Engine | Model | Effort |
 |-------|--------|-------|--------|

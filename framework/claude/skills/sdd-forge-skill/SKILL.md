@@ -1,6 +1,7 @@
 ---
 name: sdd-forge-skill
 description: "Create, rebuild, improve, evaluate, compare, and optimize AI agent skills. Use this skill whenever the user wants to make a skill, create a skill, turn something into a skill, improve a skill, edit a skill, fix a skill, reforge a skill, rebuild a skill from scratch, regenerate a skill, test a skill, run evals, benchmark a skill, compare skill versions, check if a new version is better, optimize a skill description, or improve skill triggering. Covers the full skill lifecycle from idea to polished, tested, well-triggering skill."
+allowed-tools: Agent, Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # Skill Forge

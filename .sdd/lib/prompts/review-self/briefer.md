@@ -140,6 +140,7 @@ WRITTEN:.sdd/project/reviews/self/active/findings-inspector-dynamic-{N}-{slug}.y
 - Do NOT duplicate fixed Inspector scope: flow integrity (inspector-flow), cross-file consistency (inspector-consistency), platform compliance (inspector-compliance) are already covered.
 - Each dynamic Inspector should have a narrow, well-defined focus — broad "check everything" prompts produce low signal.
 - Keep each prompt concise (under 200 words excluding the Output section).
+- For each dynamic Inspector, resolve per-Inspector references from INSPECTOR_REFERENCES (Step 2.5) based on the Inspector's focus area. If relevant `on_demand` references exist, append an `## Additional Reference Documents` section (same format as Step 3.5) to the dynamic Inspector prompt.
 
 ## Step 5: Write Manifest and Verify
 

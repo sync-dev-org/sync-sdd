@@ -27,15 +27,9 @@ Use web search to verify Claude Code official specs for:
 Use this tri-state system for each compliance item:
 - **OK**: verified present in official docs. Cite the source URL.
 - **NG**: verified absent AND explicitly contradicted by official docs. You MUST cite the specific documentation URL that contradicts it.
-- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as: `UNCERTAIN|category|location|description`. Lead will make final determination.
+- **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as UNCERTAIN. Lead will make final determination.
 
 CRITICAL: "Not found in web search" does not mean "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
-
-## Cached Verifications (skip web search for these -- already verified recently)
-{{CACHED_OK}}
-
-For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
-For non-cached items: perform full web search verification.
 
 Include compliance items in the YAML `compliance` section (see output format below). Do NOT output a separate Markdown table.
 
@@ -68,7 +62,7 @@ Include compliance items in the YAML `compliance` section (see output format bel
    - `id`: Sequential (F1, F2, ...)
    - `severity`: C/H/M/L
    - `issues`: empty list `[]` if no findings
-   - `compliance`: ALWAYS emitted (for caching). Status: OK/NG/UNCERTAIN
+   - `compliance`: ALWAYS emitted. Status: OK/NG/UNCERTAIN
    - `UNCERTAIN` items are NOT reported as issues — Lead makes final determination
 
 2. After writing, print to stdout:
@@ -76,3 +70,11 @@ Include compliance items in the YAML `compliance` section (see output format bel
    AGENT:inspector-compliance
    ISSUES: <number of issues found>
    WRITTEN:.sdd/project/reviews/self/active/findings-inspector-compliance.yaml
+
+## Additional Reference Documents
+
+Read `.sdd/lib/references/claude/agent-tool-reference.md` — Agent tool specification: subagent_type, model, run_in_background, built-in types, model aliases.
+
+Read `.sdd/lib/references/claude/subagent-definition-reference.md` — SubAgent definition file (.claude/agents/*.md) YAML frontmatter specification: model, tools, description, hooks.
+
+Read `.sdd/lib/references/claude/skill-reference.md` — Agent Skills specification: SKILL.md format, frontmatter, description, allowed-tools, triggering.

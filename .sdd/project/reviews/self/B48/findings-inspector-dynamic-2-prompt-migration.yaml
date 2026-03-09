@@ -1,0 +1,24 @@
+scope: "inspector-dynamic-2-prompt-migration"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "stale-distribution"
+    location: "install.sh:540"
+    summary: "install.sh が移行前フローの review-self テンプレート群を引き続き配布している"
+    detail: "`install.sh` は `framework/claude/sdd/settings/templates` を丸ごと `.sdd/settings/templates` にコピーしています。ところが `framework/claude/sdd/settings/templates/review-self/briefer.md:7,26-30,74-90` は依然として `.sdd/settings/templates/review-self/` と `framework/claude/skills/sdd-*/refs/*.md` を前提にした旧フローを保持しており、現行の正規実行経路である `.sdd/lib/prompts/review-self/` ベース実装と食い違っています。"
+    impact: "インストール先に obsolete な prompt 群が残り続けるため、運用者や将来のレビューが旧パスを正規ルートと誤認しやすくなります。加えて現行 Briefer は `framework/claude/sdd/settings/templates/**/*.md` を FILE_LIST に含めるため、死蔵テンプレートが今後の self-review 入力にも混入します。"
+    recommendation: "`framework/claude/sdd/settings/templates/review-self/` を配布対象から外すか、全ファイルを `.sdd/lib/prompts/review-self/` へ誘導する薄いスタブに置き換えてください。少なくとも `install.sh` で当該ディレクトリをコピーしないようにして、prompt の正本を `lib/prompts` に一本化すべきです。"
+  - id: "F2"
+    severity: "L"
+    category: "orphan-artifact"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1:76"
+    summary: "配布対象に `SKILL.md.bak1` が残り、削除済み builder と旧 prompt 配置を案内している"
+    detail: "`framework/claude/skills/sdd-review-self/SKILL.md.bak1` は `$TPL = .sdd/settings/templates/review-self` を定義し、`briefer.md` / `auditor.md` / `builder.md` を旧テンプレート配置から dispatch する手順を残しています（例: `:76`, `:100`, `:128`, `:276-278`, `:330`, `:352`）。`install.sh:456-459,465` は `framework/claude/skills` 配下の全ファイルを `.claude/skills` にコピーするため、このバックアップ断片も利用者環境へ配布されます。"
+    impact: "現行ランタイムは `SKILL.md` だけを使うため直ちに壊れませんが、grep・手動調査・将来の保守で obsolete な手順が混ざり、移行が完了しているという前提を崩します。"
+    recommendation: "`framework/claude/skills/sdd-review-self/SKILL.md.bak1` を削除するか、少なくとも `install.sh` の `install_dir` で `*.bak*` を除外してください。バックアップを残す必要があるなら配布ツリー外へ退避すべきです。"
+notes: |
+  確認できた範囲では、現行の実行経路自体は新パスへ移行済みです。
+  - `framework/claude/skills/sdd-review-self/SKILL.md:44,93-94,146,199,204` は `.sdd/lib/prompts/review-self/` と `.sdd/lib/prompts/log/` を参照しています。
+  - `framework/claude/skills/sdd-log/SKILL.md:28,32` は `.sdd/lib/prompts/log/{record,flush}.md` を参照しています。
+  - `framework/claude/skills/sdd-handover/SKILL.md:58` の flush 呼び出しも新 `lib/prompts/log/` に揃っています。
+  - `framework/claude` 配下では、旧 `skills/sdd-review-self/references/` 文字列は検出されず、`framework/claude/skills/sdd-review-self/references/` ディレクトリも存在しません。

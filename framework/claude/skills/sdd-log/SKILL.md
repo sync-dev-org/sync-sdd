@@ -1,7 +1,7 @@
 ---
 name: sdd-log
 description: "Record decisions, issues, and knowledge to session YAML files (.sdd/session/). Use this skill whenever the user wants to log, record, track, or remember something. Triggers: /sdd-log, issue, 問題, バグ, bug, 機能, feature, 改善, enhancement, 判断, 決定, decision, 覚えて, remember, knowledge, record, log, track, 登録, 記録. Subcommands: decision, issue, knowledge, resolve, update, flush. Make sure to use this skill for ANY request to record project decisions, report bugs or issues, track feature requests, store knowledge or learnings, resolve issues, or flush unpersisted session data to YAML files."
-allowed-tools: Bash Read Edit Write Glob
+allowed-tools: Bash, Read, Edit, Write, Glob
 argument-hint: "decision|issue|knowledge|resolve|update|flush <args>"
 ---
 

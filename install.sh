@@ -617,7 +617,7 @@ printf "${BOLD}Installed:${RESET}\n"
 echo "  .claude/skills/      $(find .claude/skills -name 'SKILL.md' -path '*/sdd-*/*' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  .claude/agents/      $(find .claude/agents -name 'sdd-*.md' 2>/dev/null | wc -l | tr -d ' ') agent profiles"
 echo "  .claude/CLAUDE.md    Framework instructions (marker-managed)"
-echo "  .sdd/                Rules, templates, profiles, scripts"
+echo "  .sdd/                Rules, templates, profiles, scripts, lib"
 if [ "$NEW_VERSION" != "0.0.0" ]; then
     echo "  Version:             ${NEW_VERSION}"
 fi

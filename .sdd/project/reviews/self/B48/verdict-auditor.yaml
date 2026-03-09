@@ -1,0 +1,421 @@
+verdict: "CONDITIONAL"
+scope: "framework"
+review_type: "self"
+references_read:
+  - "common/bash-security-heuristics.md"
+  - "common/tmux-integration.md"
+  - "claude/agent-tool-reference.md"
+  - "claude/skill-reference.md"
+counts:
+  C: 0
+  H: 9
+  M: 6
+  L: 14
+  FP: 1
+files:
+  - "framework/claude/skills/sdd-roadmap/SKILL.md"
+  - "framework/claude/skills/sdd-roadmap/refs/run.md"
+  - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md.bak1"
+  - "framework/claude/sdd/settings/templates/review-self/briefer.md"
+  - "framework/claude/sdd/settings/templates/review-self/auditor.md"
+  - "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md"
+  - "framework/claude/sdd/settings/templates/review-self/inspector-compliance.md"
+  - "framework/claude/sdd/settings/templates/review-self/builder.md"
+  - "framework/claude/CLAUDE.md"
+  - "framework/claude/skills/sdd-publish-setup/SKILL.md"
+  - "framework/claude/skills/sdd-forge-skill/SKILL.md"
+  - "framework/claude/skills/sdd-steering/SKILL.md"
+  - "framework/claude/skills/sdd-handover/SKILL.md"
+  - "framework/claude/skills/sdd-log/SKILL.md"
+  - "framework/claude/sdd/lib/prompts/review-self/briefer.md"
+  - "framework/claude/sdd/lib/prompts/dispatch/engine.md"
+  - "framework/claude/sdd/lib/references/index.yaml"
+  - "framework/claude/sdd/settings/engines.yaml"
+  - "README.md"
+  - "install.sh"
+issues:
+  - id: "A1"
+    source: "inspector-flow"
+    severity: "H"
+    category: "router-dispatch"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:24"
+    summary: "Router が `review impl --cross-cutting` を全体スコープ review として一貫して扱っていない"
+    detail: "Detect Mode では `review impl --cross-cutting {specs}` を受理しているが、Single-Spec Roadmap Ensure の whole-scope 例外リスト、no-roadmap 時の BLOCK 条件、Execution Reference の Review 委譲説明には `--cross-cutting` が含まれていない。"
+    impact: "単独の `/sdd-roadmap review impl --cross-cutting ...` が spec enrollment チェックや 1-spec 自動生成系の分岐に吸い込まれ、Cross-Cutting review へ安定して到達できない。Router dispatch completeness と phase-independent routing が崩れる。"
+    recommendation: "Single-Spec Roadmap Ensure の例外一覧と no-roadmap BLOCK 条件に `review impl --cross-cutting` を追加し、Execution Reference でも `/sdd-review impl --cross-cutting {specs} --id {cc_id}` への直接委譲を明記する。"
+    classification: "B"
+    ref: null
+
+  - id: "A2"
+    source: "inspector-flow"
+    severity: "H"
+    category: "verdict-persistence"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:147"
+    summary: "Dispatch loop が auto-fix 判定前に review batch を確定・退避しており verdict.yaml 更新手順と両立しない"
+    detail: "AUDITOR-COMPLETE では verdicts.yaml 追記と active→B{seq} archive を完了させるが、直後の Phase Handler は NO-GO/SPEC-UPDATE-NEEDED で verdict.yaml の user_decision/resolution/disposition 更新と再 archive を要求する。verdict-format の正規フローではこれらの更新は archive 前に active/ 内で完了していなければならない。"
+    impact: "run パイプラインの NO-GO/SPEC-UPDATE auto-fix で更新対象の active/verdict.yaml が既に退避済みとなり、verdict.yaml と verdicts.yaml の内容が乖離する。Verdict persistence と auto-fix loop の監査証跡が壊れる。"
+    recommendation: "dispatch-loop 用には sdd-review の persistence/archive を遅延させ、Phase Handler で disposition と resolution を確定してから verdicts.yaml 追記と archive を 1 回だけ実行する。standalone review と run pipeline で Step 9 の責務を分離する。"
+    classification: "B"
+    ref: null
+
+  - id: "A3"
+    source: "inspector-flow"
+    severity: "H"
+    category: "revise-routing"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:265"
+    summary: "Cross-Cutting revise の再試行先が cross-cutting review ではなく cross-check review に誤配線されている"
+    detail: "Step 9 は最初に `/sdd-review impl --cross-cutting {spec1,spec2,...} --id {CC_ID}` を実行すると定義するが、NO-GO と SPEC-UPDATE-NEEDED の両分岐では 'cross-check review' と記載されている。cross-check は wave QG 専用の別スコープ。"
+    impact: "修正後の再レビューが Cross-Cutting revise の専用スコープから wave cross-check 系フローへ逸脱し、Single-Spec/Cross-Cutting mode の切り替えと escalation path が壊れる。"
+    recommendation: "Step 9 の再試行先を一貫して `/sdd-review impl --cross-cutting {specs} --id {CC_ID}` に統一し、cross-check は Wave QG 専用であることを明示する。"
+    classification: "A"
+    ref: null
+
+  - id: "A4"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "schema-mismatch"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:165"
+    summary: "self-review の verdicts.yaml 書式例が verdict-format.md の `batches:` ルート定義と矛盾している"
+    detail: "self-review SKILL.md は top-level の `- seq:` を append する例を示しているが、verdict-format.md は verdicts.yaml を `batches:` 配下の配列として定義している。max(seq values) の読み取り手順も batches: ルートを前提としない。"
+    impact: "verdict 履歴の追記と再読込が自己矛盾し、batches[].seq を前提にする実装や将来の自動化が壊れる。"
+    recommendation: "sdd-review-self の read/write 手順を `batches[].seq` に統一し、例示 YAML も `batches:` ルート付きに修正する。"
+    classification: "A"
+    ref: null
+
+  - id: "A5"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "protocol-drift"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:23"
+    summary: "self-review Briefer の settings template が現行 lib prompt と別プロトコルのまま残っている"
+    detail: "旧 template は `framework/claude/skills/sdd-*/refs/*.md` と `settings/rules/*.md` を収集し CACHED_OK を展開する手順を持つ。現行 lib prompt は `lib/prompts/review-self/` と `lib/references/index.yaml` を前提にしている。現行 Briefer は settings/templates/**/*.md を FILE_LIST に含めるため、旧 template が self-review 入力に混入する。"
+    impact: "旧 template 経由では収集対象ファイル・参照文書・固定 Inspector prompt 生成方法が現行フローと異なり、self-review の入力集合が安定しない。"
+    recommendation: "Briefer のソースオブトゥルースを lib prompt に一本化し、settings/templates/review-self/ を配布対象から除外するか lib prompt へのスタブに置き換える。"
+    classification: "A"
+    ref: null
+
+  - id: "A6"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "protocol-drift"
+    location: "framework/claude/sdd/settings/templates/review-self/auditor.md:4"
+    summary: "旧 Auditor template は Lead 監修で必須の reference 監査項目を出力しない"
+    detail: "旧 template には reference index 入力、`references_read`、issue-level `ref`、FP 用 `ref` がない。現行 lib prompt は reference index 読み込みと `references_read`/`ref` を必須出力として定義しており、self-review SKILL.md もその検証を要求している。"
+    impact: "旧 template から生成された verdict-auditor.yaml では Lead の reference 検証手順が成立せず、Auditor 判断の根拠監査ができない。"
+    recommendation: "Auditor template を lib prompt と同じ入出力契約に合わせるか、旧 template 参照経路を完全に廃止する (A5 と合わせて settings/templates/review-self/ を一括整理推奨)。"
+    classification: "A"
+    ref: null
+
+  - id: "A7"
+    source: "inspector-consistency+inspector-dynamic-4-doc-count-drift"
+    severity: "H"
+    category: "value-mismatch"
+    location: "framework/claude/CLAUDE.md (Review Engine Level Chain section)"
+    summary: "CLAUDE.md が engine level chain のステージに 'builder' を列挙しているが engines.yaml に builder ステージは存在しない"
+    detail: "CLAUDE.md: 'Each stage (briefer, inspectors, auditor, builder) has a start_level resolved from a global level chain'. engines.yaml の roles.review と roles.review-self 配下の stage は briefer/inspectors/auditor の 3 つのみ。builder stage は engines.yaml に定義されていない (dynamic-4 F2 でも同一事実を確認)。"
+    impact: "builder が engine level chain 対象であるという誤った前提を与え、engines.yaml の拡張方針や設定の理解を誤らせる。"
+    recommendation: "CLAUDE.md の stage リストから 'builder' を除去する。"
+    classification: "A"
+    ref: null
+
+  - id: "A8"
+    source: "inspector-consistency+inspector-compliance"
+    severity: "H"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-publish-setup/SKILL.md:1"
+    summary: "sdd-publish-setup だけ SKILL frontmatter の必須 `name` を欠いている"
+    detail: "frontmatter は `description` と `allowed-tools` しか持たない。agentskills.io 標準では `name` は必須フィールドで、他の 11 スキルはすべて明示的に `name` を宣言している。ディレクトリ名フォールバックで現時点の Claude Code 動作は正しいが、cross-platform ツール (Codex, Gemini) や rename 時にリスクが生じる。"
+    impact: "Skill の識別子が frontmatter と参照元で分離し、メタデータ検証や discovery が実装依存になる。"
+    recommendation: "frontmatter に `name: sdd-publish-setup` を追加する。"
+    classification: "A"
+    ref: "claude/skill-reference.md"
+
+  - id: "A9"
+    source: "inspector-dynamic-1-reference-index-integrity"
+    severity: "H"
+    category: "reference-dispatch"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:65"
+    summary: "on_demand 参照が動的 Inspector には配布されず、固定 Inspector のみに限定されている"
+    detail: "briefer.md Step 2.5 で INSPECTOR_REFERENCES を構築するが、Step 3.5 の適用先は固定 Inspector (flow/consistency/compliance) のみ。Step 4 (Dynamic Inspector Prompt 生成) では INSPECTOR_REFERENCES への言及がなく、動的 Inspector は load: always の SHARED_REFERENCES のみを受け取る。"
+    impact: "動的 Inspector が agent/skill 変更をレビューする場合でも agent-tool-reference.md や skill-reference.md などの on_demand 参照を受け取れず、誤検知や見逃しが発生する。今回のレビュー (reference/index.yaml 導入) はまさにこの欠落が直接影響するケース。"
+    recommendation: "Step 4 でも動的 Inspector ごとに INSPECTOR_REFERENCES を解決して Additional Reference Documents セクションを注入する (Step 3.5 と同様)。または dynamic prompt 生成ガイドに変更内容に応じた on_demand 参照の Read 指示を直接埋め込む旨を追記する。"
+    classification: "B"
+    ref: "claude/skill-reference.md"
+
+  - id: "A10"
+    source: "inspector-flow"
+    severity: "M"
+    category: "phase-gate"
+    location: "framework/claude/skills/sdd-roadmap/refs/run.md:162"
+    summary: "Lookahead spec の依存 design 差し戻し時に既存の Design Review 合格を無効化しない"
+    detail: "staleness guard は lookahead spec の phase/version_refs.design/last_phase_action を初期化するが、既存の design review batch を無効扱いにする条件を定義していない。Design Review readiness は 'latest batch が absent または NO-GO なら再レビュー対象' と判定するが、staleness guard 後も旧依存 design に対する GO verdict が残り得る。"
+    impact: "lookahead spec が旧依存 design に対する GO review を保持したまま新 design へ進み、mandatory な Design Review を飛ばして Implementation readiness を満たせる。Phase gate consistency が崩れる。"
+    recommendation: "staleness guard で lookahead spec の最新 design review batch を無効化するか、readiness 判定を version_refs.design と verdict batch の設計版整合まで比較する方式に変更する。"
+    classification: "B"
+    ref: null
+
+  - id: "A11"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "dead-config"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:18"
+    summary: "review-self の Briefer は固定 SubAgent と書かれているのに engines.yaml では可変ステージとして残っている"
+    detail: "self-review skill は STAGES を inspectors/auditor に限定し Briefer を model: sonnet の固定 SubAgent として dispatch する (D227)。engines.yaml は review-self でも --briefer-engine と briefer start_level が有効であるかのように記述している。"
+    impact: "briefer 用 override や level chain を変更しても self-review では効かず、設定変更点が死んだまま残る。"
+    recommendation: "review-self で briefer override を正式サポートするか、engines.yaml から review-self の briefer stage エントリを除去またはコメントアウトする。"
+    classification: "A"
+    ref: null
+
+  - id: "A12"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "value-mismatch"
+    location: "framework/claude/sdd/lib/prompts/dispatch/engine.md (Section 2)"
+    summary: "codex モデル指定フラグが engine.md では '-m'、sdd-review SKILL.md では '--model' と不一致"
+    detail: "engine.md Section 2 のコマンド例: `npx -y @openai/codex exec --full-auto -m {model} ...`. sdd-review SKILL.md Engine-Specific Command Construction: `npx -y @openai/codex exec --full-auto [--model ${STAGE}_MODEL] ...`. 短縮形 `-m` と長形式 `--model` が混在している。"
+    impact: "将来の Codex CLI バージョンでエイリアス廃止時に片方が壊れる可能性がある。"
+    recommendation: "`--model` に統一する (明示的で読みやすい)。engine.md と sdd-review SKILL.md 両方を更新する。"
+    classification: "A"
+    ref: null
+
+  - id: "A13"
+    source: "inspector-dynamic-2-prompt-migration"
+    severity: "M"
+    category: "stale-distribution"
+    location: "install.sh:540"
+    summary: "install.sh が移行前フローの review-self テンプレート群を引き続き配布している"
+    detail: "install.sh は `framework/claude/sdd/settings/templates` を丸ごと `.sdd/settings/templates` にコピーしているが、`settings/templates/review-self/` は現行 lib prompt ベース実装と食い違う旧フローを保持している。現行 Briefer は `settings/templates/**/*.md` を FILE_LIST に含めるため、死蔵テンプレートが self-review 入力にも混入する。"
+    impact: "インストール先に obsolete な prompt 群が残り、旧パスを正規ルートと誤認しやすくなる。"
+    recommendation: "`framework/claude/sdd/settings/templates/review-self/` を install.sh の配布対象から除外するか、lib prompts へ誘導するスタブに置き換える。A5/A6/A17/A18/A19 と合わせて一括整理を推奨。"
+    classification: "A"
+    ref: null
+
+  - id: "A14"
+    source: "inspector-dynamic-3-install-lib-coverage"
+    severity: "M"
+    category: "update-hygiene"
+    location: "install.sh:583-591"
+    summary: "`--update` 時に .claude/skills/ 配下のファイル単位の stale クリーンアップが行われない"
+    detail: "`remove_stale` は `.claude/skills/sdd-*/` ディレクトリの存在確認のみで、既存 sdd-* ディレクトリ配下から削除・移動された補助ファイルは残留する。他の install 対象 (.sdd/settings/rules, .sdd/lib 等) は remove_stale でファイル単位クリーンアップが実施されているが .claude/skills/ は対象外。"
+    impact: "skill 配下の参照文書や補助ファイルの移設がクリーンに反映されず、更新後のインストール先に旧指示や旧参照が残留する。"
+    recommendation: "`.claude/skills/sdd-*/` 配下に対してもソースとの差分でファイル単位の remove_stale を実行するか、`*.bak*` などの一時ファイルを配布対象から明示的に除外する。"
+    classification: "B"
+    ref: null
+
+  - id: "A15"
+    source: "inspector-dynamic-4-doc-count-drift"
+    severity: "M"
+    category: "documentation-drift"
+    location: "README.md:15"
+    summary: "README の agent 説明が実在する 5 つの agent profile 構成と一致していない"
+    detail: "実在 agents: sdd-analyst, sdd-architect, sdd-builder, sdd-conventions-scanner, sdd-taskgenerator の 5 件。README は Auditor/Inspector/Prep agent を agent 側の説明に含め ConventionsScanner を落としている。"
+    impact: "利用者が .claude/agents/sdd-*.md と README を照合した際に、存在しない profile を探したり ConventionsScanner の役割を見落としたりする。"
+    recommendation: "README の agent 説明を実ファイルに合わせて Analyst/Architect/TaskGenerator/Builder/ConventionsScanner に更新し、Auditor/Inspector/Briefer は template-driven review role として別枠で説明する。Prep agent という表現も Briefer に統一する。"
+    classification: "A"
+    ref: null
+
+  - id: "A16"
+    source: "inspector-flow"
+    severity: "L"
+    category: "read-clarity"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:106"
+    summary: "Router の Review 説明に `cross-cutting` の ref 読み順と委譲先が明示されていない"
+    detail: "Execution Reference の Review 行は design/impl/dead-code/--cross-check/--wave のみを列挙しており、Detect Mode で受理する `review impl --cross-cutting` や `refs/revise.md` Step 9 からの cross-cutting review 再入との関係が読めない。"
+    impact: "Router がいつ refs/revise.md を読み、いつ /sdd-review へ直接委譲するのかが追いにくく、flow maintenance 時に cross-cutting review の経路を誤って修正しやすい。"
+    recommendation: "Execution Reference に `review impl --cross-cutting {specs}` を追加し、standalone review と revise からの再入の双方が /sdd-review へ委譲されることを明示する。"
+    classification: "A"
+    ref: null
+
+  - id: "A17"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "output-contract"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-consistency.md:18"
+    summary: "旧 consistency template が `xrefs` セクションを定義せず cross-reference matrix を表現できない"
+    detail: "旧 template は cross-reference matrix を含めるとだけ書くが YAML 例に `xrefs` が存在しない。現行 lib prompt は `xrefs` セクションと OK/MISSING_PATH_PREFIX/MISSING_RELATIVE_TARGET/UNDEFINED_REFERENCE の status 列挙を定義している。"
+    impact: "旧 prompt から生成された findings は cross-reference matrix を欠落させ、consistency review の主要成果物が不完全になる。"
+    recommendation: "A13 の settings/templates/review-self/ 一括整理の一環として除去する。"
+    classification: "A"
+    ref: null
+
+  - id: "A18"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "output-contract"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-compliance.md:34"
+    summary: "旧 compliance template が廃止済みの `{{CACHED_OK}}` プレースホルダーに依存している"
+    detail: "旧 template は `{{CACHED_OK}}` と cache 再利用手順を要求するが、現行 lib prompt と Briefer はこれを生成しない。"
+    impact: "旧フローを使うと未展開プレースホルダーが prompt に残るか、現行実装に存在しない cache protocol を前提に判断してしまう。"
+    recommendation: "A13 の settings/templates/review-self/ 一括整理の一環として除去する。"
+    classification: "A"
+    ref: null
+
+  - id: "A19"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "dead-end"
+    location: "framework/claude/sdd/settings/templates/review-self/builder.md:1"
+    summary: "self-review 用 Builder fix template が未参照のまま残っている"
+    detail: "D223 の決定により review-self は Lead が直接修正し verdicts に `builder: lead` を書く。にもかかわらず review-self/builder.md は 'Builder in fix mode' を定義したままで現行フローから参照されない。"
+    impact: "self-review がまだ Builder fix mode を持つように見え、保守時の判断を誤らせる。"
+    recommendation: "A13 の settings/templates/review-self/ 一括整理の一環として削除する。"
+    classification: "A"
+    ref: null
+
+  - id: "A20"
+    source: "inspector-consistency+inspector-compliance"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-forge-skill/SKILL.md (frontmatter)"
+    summary: "sdd-forge-skill が `allowed-tools` を欠いている"
+    detail: "他の 11 スキルはすべて frontmatter に `allowed-tools` を持つ。sdd-forge-skill のみ未定義で、Agent (run_in_background: true) と Bash を含む複数のツールを使用するにもかかわらずデフォルトのフルツールアクセスになる。"
+    impact: "tool access が暗黙的。restricted profile や plugin 配布時に必要ツールが事前承認されず予期しない承認プロンプトが発生する可能性がある。"
+    recommendation: "frontmatter に `allowed-tools: Agent, Bash, Read, Write, Edit, Glob, Grep` を追加する。"
+    classification: "A"
+    ref: "claude/skill-reference.md"
+
+  - id: "A21"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "value-mismatch"
+    location: "framework/claude/CLAUDE.md (3-Tier Hierarchy table)"
+    summary: "CLAUDE.md tier table が Auditor を Opus と記載しているが、デフォルトエンジンは Sonnet (L5)"
+    detail: "CLAUDE.md: 'T2: Analyst / Architect / Auditor — (SubAgent, Opus)'. engines.yaml auditor start_level: L5 = claude-sonnet-4-6。Auditor が Opus になるのは L6/L7 または L0 へのエスカレーション時のみ。Analyst と Architect はエージェント定義で model: opus が固定されているため Opus が正しい。"
+    impact: "Auditor のモデル期待値が誤解され、review 品質見積もりが狂う可能性がある。"
+    recommendation: "tier table の Auditor モデル注記を 'Sonnet (default L5; Opus at L6+)' に修正する。"
+    classification: "A"
+    ref: null
+
+  - id: "A22"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "documentation"
+    location: "framework/claude/skills/sdd-steering/SKILL.md"
+    summary: "sdd-steering SKILL.md のステップ番号に欠番がある (9→11、10 が欠落)"
+    detail: "create/update フロー内のサブステップが 5, 5a, 6, 7, 8, 9, 11 となっており、10 が存在しない。"
+    impact: "軽微な文書整合性の問題。参照時に混乱を招く可能性がある。"
+    recommendation: "ステップ番号を連番に修正する。"
+    classification: "A"
+    ref: null
+
+  - id: "A23"
+    source: "inspector-consistency"
+    severity: "L"
+    category: "protocol-ambiguity"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md (Step 4)"
+    summary: "briefer-status.md の正常系検証手順が曖昧 (ファイル不存在時の振る舞いが未定義)"
+    detail: "briefer.md は NO_CHANGES ケースのみ briefer-status.md を書く。正常系ではファイルを生成しない。SKILL.md Step 4 は 'verify briefer-status.md does not contain NO_CHANGES' と書くが、ファイルが存在しない場合の扱いが不明確。"
+    impact: "実装者がファイル不存在を異常と誤解する可能性がある。"
+    recommendation: "Step 4 を 'verify briefer-status.md does not exist, or if it exists, does not contain NO_CHANGES' に更新する。"
+    classification: "A"
+    ref: null
+
+  - id: "A24"
+    source: "inspector-compliance"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-handover/SKILL.md:13"
+    summary: "allowed-tools の区切り文字がスペースとカンマで不統一 (3件スペース、9件カンマ)"
+    detail: "スペース区切り: sdd-handover, sdd-log, sdd-review-self。カンマ区切り: 他 9 スキル。agentskills.io 標準はスペース区切りを指定するが、Claude Code 公式ドキュメント例はカンマ区切り。両形式とも機能上は受け入れられる。"
+    impact: "コーパス内の視覚的不整合。サードパーティバリデータが問題を報告する可能性。"
+    recommendation: "コーパス全体をカンマ区切りに統一する (Claude Code 公式ドキュメント例に準拠)。更新対象: sdd-handover, sdd-log, sdd-review-self。"
+    classification: "A"
+    ref: "claude/skill-reference.md"
+
+  - id: "A25"
+    source: "inspector-compliance"
+    severity: "L"
+    category: "skill-frontmatter"
+    location: "framework/claude/skills/sdd-roadmap/SKILL.md:4"
+    summary: "`Skill` が allowed-tools に列挙されているが有効な内部ツール名かどうか不明"
+    detail: "sdd-roadmap と sdd-steering の allowed-tools に `Skill` が含まれる。公式ドキュメントは `Skill` を settings.json のパーミッション rule specifier として説明しており、allowed-tools の内部ツール名としては文書化されていない。skill-reference.md も `Skill` を内部ツール名として列挙していない。未知のツール名は silently ignored される。"
+    impact: "skill-to-skill 呼び出しは main context で動作するためランタイム上の問題はないが、allowed-tools での `Skill` 宣言が pre-approval の実効性を持たない可能性がある。"
+    recommendation: "`Skill` が有効な内部ツール名かどうかを公式ドキュメントで確認し、有効でなければ sdd-roadmap と sdd-steering の allowed-tools から除去する。"
+    classification: "B"
+    ref: "claude/skill-reference.md"
+
+  - id: "A26"
+    source: "inspector-dynamic-1-reference-index-integrity"
+    severity: "L"
+    category: "dead-metadata"
+    location: "framework/claude/sdd/lib/references/index.yaml:9-19"
+    summary: "always エントリに keywords が定義されているが briefer の選択ロジックでは未使用"
+    detail: "index.yaml ヘッダーは 'on_demand — read when keywords match' と定義するが、always エントリ (bash-security-heuristics.md, tmux-integration.md) にも keywords 配列が定義されている (合計 17 キーワード)。これらは Briefer の選択アルゴリズムで消費されない。"
+    impact: "動作上の問題はないが keywords の意味が曖昧になり、index.yaml を読む開発者が混乱する可能性がある。"
+    recommendation: "ヘッダーコメントに 'keywords on always/explicit entries serve as human-readable topic index only' を追記するか、always エントリから keywords を除去してスキーマを簡素化する。"
+    classification: "A"
+    ref: null
+
+  - id: "A27"
+    source: "inspector-dynamic-1-reference-index-integrity"
+    severity: "L"
+    category: "keyword-quality"
+    location: "framework/claude/sdd/lib/references/index.yaml:21,34"
+    summary: "on_demand エントリの keywords に汎用語が含まれ参照選択の精度が低下しうる"
+    detail: "agent-tool-reference.md と subagent-definition-reference.md の keywords に 'agent', 'subagent', 'model', 'tools' が重複して含まれ、広範な文脈にマッチしやすい汎用語になっている。Briefer は keywords と summary の両方を使って選択するため完全な誤選択は避けられるが識別力は低い。"
+    impact: "機能停止ではなく精度の問題。関係ない Inspector に余分な参照が注入される可能性がある。"
+    recommendation: "API 引数名など識別力の高いキーワードを優先する (例: agent-tool → subagent_type/run_in_background/model-alias/built-in-types、subagent-definition → agents-dir/yaml-frontmatter/hooks/allowed-tools)。"
+    classification: "A"
+    ref: null
+
+  - id: "A28"
+    source: "inspector-dynamic-2-prompt-migration+inspector-dynamic-3-install-lib-coverage"
+    severity: "L"
+    category: "orphan-artifact"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md.bak1:1"
+    summary: "SKILL.md.bak1 が配布対象に含まれ旧パス・旧 template 配置を参照している"
+    detail: "SKILL.md.bak1 は $TPL = .sdd/settings/templates/review-self を定義し、削除済みの builder.md と旧 template 配置から dispatch する手順を残している。また旧パス settings/rules/lead/tmux-integration.md も参照している。install.sh は .claude/skills 配下の全ファイルを再帰コピーするためこのファイルも配布される。"
+    impact: "grep・手動調査・将来の保守で obsolete な手順が混ざり、移行完了の前提が崩れる。"
+    recommendation: "SKILL.md.bak1 をリポジトリから削除する。A14 の --update stale cleanup 対応と合わせて実施推奨。"
+    classification: "A"
+    ref: null
+
+  - id: "A29"
+    source: "inspector-dynamic-3-install-lib-coverage"
+    severity: "L"
+    category: "documentation"
+    location: "install.sh:619"
+    summary: "インストール完了サマリの `.sdd/` 説明テキストに `lib/` への言及がない"
+    detail: "install.sh の完了サマリは '.sdd/ Rules, templates, profiles, scripts' と表示するが lib の記載がない。--help の FRAMEWORK FILES セクションには '.sdd/lib/ Framework library (prompts, scripts, etc.)' が明記されており不整合。"
+    impact: "ユーザーが完了サマリを見て .sdd/lib/ がインストールされたか確認できず、ヘルプとの不整合で誤解を招く可能性がある。"
+    recommendation: "line 619 の表示文字列を '.sdd/ Rules, templates, profiles, scripts, lib' に変更するか、別行で .sdd/lib/ を追記する。"
+    classification: "A"
+    ref: null
+
+fp_eliminated:
+  - source_id: "F2"
+    source: "inspector-dynamic-1-reference-index-integrity"
+    reason: "D40（AgentTeam 不採用）により agent-team-reference.md を explicit に分類しているのは意図的設計。sync-sdd は AgentTeam を不採用とする決定があり、agent-team 関連変更は通常発生しない。explicit 分類は正しい。index.yaml にコメントで理由を残すことは任意の改善だが FP として除外する。"
+    ref: null
+
+notes: |
+  ## 総合評価
+
+  全 7 Inspector (fixed 3 + dynamic 4) の findings を統合。29 件確定、FP 1 件除外。
+
+  ### CONDITIONAL 判定の根拠
+
+  H findings 9 件を確認したが、NO-GO とせず CONDITIONAL とした理由:
+  1. CRITICAL (基本フロー遮断) は 0 件
+  2. H のうち A5/A6 (旧 template 二重定義) は現行 SKILL.md が lib/prompts/ を参照するため通常運用への直接影響は限定的
+  3. H のうち A7/A8 (CLAUDE.md 誤記・name 欠落) は docs/frontmatter の整合性問題で操作的ブロッカーではない
+  4. 実際の動作ブロッカーは A1-A3 (cross-cutting routing) と A9 (dynamic inspector refs) だが、cross-cutting は特定パスのみで通常の single-spec/wave フローは影響なし
+
+  ### 主要クラスター
+
+  **Cluster 1 — Cross-Cutting routing bugs (A1, A2, A3):**
+  revise Step 9 の cross-check 誤配線 (A3) は即 A 修正可能。Router の cross-cutting 扱い (A1) と verdict persistence ordering (A2) は B 判断が必要。
+
+  **Cluster 2 — legacy settings/templates/review-self/ (A5, A6, A13, A17, A18, A19):**
+  settings/templates/review-self/ ディレクトリ全体を配布対象から除外することで一括解決可能。lib/prompts/ が正本。
+
+  **Cluster 3 — install.sh update hygiene (A13, A14, A28):**
+  SKILL.md.bak1 削除 (A28) と install.sh の *.bak* 除外が近道。--update stale cleanup (A14) はより広範な設計判断。
+
+  **Cluster 4 — doc/metadata drift (A7, A8, A15, A21, A22):**
+  すべて auto-fix 可能。CLAUDE.md の builder stage 誤記と Auditor Opus 誤記は同一ファイル内で同時修正推奨。
+
+  **Cluster 5 — reference index quality (A9, A26, A27):**
+  A9 (dynamic inspector への on_demand refs 未配布) が最も影響大。briefer.md の Step 4 改修が必要。

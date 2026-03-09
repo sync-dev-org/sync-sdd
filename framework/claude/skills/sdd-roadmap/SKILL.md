@@ -103,7 +103,7 @@ After mode detection and roadmap ensure, Read the reference file for the detecte
 
 - **Design** → Read `refs/design.md`
 - **Impl** → Read `refs/impl.md`
-- **Review** (design, impl, dead-code, --cross-check, --wave) → Standalone invocation: delegate to `/sdd-review` skill. Pass the review arguments directly (e.g., `Skill(skill="sdd-review", args="design {feature}")`). The `/sdd-review` skill handles engine resolution, Inspector dispatch, Auditor synthesis, and verdict persistence. Dispatch-loop context (`run`): reviews are decomposed into sub-phases per `refs/run.md` §Review Decomposition — Lead executes sdd-review steps directly within the dispatch loop for Spec Stagger. For auto-fix loops and Wave QG, see `refs/run.md`.
+- **Review** (design, impl, dead-code, --cross-check, --wave, --cross-cutting) → Standalone invocation: delegate to `/sdd-review` skill. Pass the review arguments directly (e.g., `Skill(skill="sdd-review", args="design {feature}")`). The `/sdd-review` skill handles engine resolution, Inspector dispatch, Auditor synthesis, and verdict persistence. Dispatch-loop context (`run`): reviews are decomposed into sub-phases per `refs/run.md` §Review Decomposition — Lead executes sdd-review steps directly within the dispatch loop for Spec Stagger. For auto-fix loops and Wave QG, see `refs/run.md`.
 - **Run** → Read `refs/run.md`
 - **Revise** → Read `refs/revise.md`
 - **Create / Update / Delete** → Read `refs/crud.md`

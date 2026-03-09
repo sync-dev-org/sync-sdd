@@ -213,8 +213,7 @@ Replaces `verdicts.md`. One per review scope directory.
 ### Schema
 
 ```yaml
-batches:
-  - seq: 1                     # Batch number (monotonic)
+- seq: 1                       # Batch number (monotonic)
     type: "impl"               # design/impl/dead-code/self/cross-check/cross-cutting
     scope: "{feature}"         # Feature name or scope identifier
     date: "2026-03-07T10:30:45+0900"  # ISO-8601, local timezone
