@@ -1,17 +1,17 @@
 # Session Handover
-**Generated**: 2026-03-09T15:49:32+0900
+**Generated**: 2026-03-09T16:24:47+0900
 **Branch**: main
-**Session Goal**: D227 sdd-review-self 改修実装 + B47 review + リファレンス文書整備
+**Session Goal**: リファレンス文書の構造化・精査・更新手順書整備
 
 ## Direction
 
 ### Immediate Next Action
-1. リファレンス文書整備を続行 — 後の issue 対応・マイグレーションに必要な基盤文書
-2. I57 (pane タイトル復元) を修正 — dispatch/engine.md に slot release 時のタイトル復元追加
-3. D223 (Builder 廃止) を確定 decision 記録
+1. I57 (pane タイトル復元) を修正 — dispatch/engine.md に slot release 時のタイトル復元追加
+2. D223 (Builder 廃止) を確定 decision 記録
+3. コミット
 
 ### Active Goals
-- **リファレンス文書整備**: agent-tool-reference.md, subagent-definition-reference.md, agent-team-reference.md 作成済み。他の領域 (Skill 仕様、engines.yaml 仕様等) も文書化の候補
+- **リファレンス文書整備**: references/claude/ にサブフォルダ化完了。3文書を公式ドキュメント+GitHub Issues で全面精査済み。更新手順書も完備。他の領域 (engines.yaml 仕様等) も文書化候補
 - **I33 lib/ マイグレーション**: prompts/log/, prompts/review-self/, prompts/dispatch/, references/ 完了。残り: scripts, rules, templates, profiles
 - **I41 sdd-review 改修**: dispatch/engine.md 参照に改修。sdd-review-self で先行実証済み
 - **I55 issue type 再設計**: GitHub 慣例との整合性検討
@@ -30,20 +30,18 @@
 - D227: sdd-review-self 改修計画 — 7項目の設計決定を包括
 
 **Added this session:**
-- エスカレーション（異常系）を engine.md から分離し escalation.md に独立
-- Agent tool の `model` パラメータの存在を確認 — dispatch 時にモデル指定可能 (既知バグ #5456 で agent 定義の model は無視される場合あり)
+- (正式 decision なし。リファレンス文書の構造化・精査は既存 D226/D227 の延長作業)
 
 ### Warnings
-- **agent 定義の追加は重大な仕様変更** — 本セッションで sdd-briefer.md を無断作成し revert した教訓。新しい agent 定義は必ず decision 記録 + ユーザー承認を経ること
-- **Agent tool の model パラメータ**: リサーチで「存在しない」と誤結論→再調査で「存在する」に修正。リファレンス文書のリサーチ結果は鵜呑みにせず、ユーザーの実体験と矛盾する場合は再調査すること
+- **リサーチエージェントの報告は鵜呑みにしない**: 本セッションで「CLAUDE.md が SubAgent にも読み込まれる」という誤報告を受けた。公式ドキュメント原文と照合すると SubAgent には渡されない。Agent Team の Teammate についての記述を混同した誤り。リサーチ結果は必ず公式ドキュメント原文 (WebFetch) で裏取りすること
+- **公式ドキュメントも最新とは限らない**: GitHub Issues で公式ドキュメントの記述と実動作の乖離が報告されることがある。更新手順書の「要注意エビデンス」セクションに検証ポイントを記載済み
 - **I57 は UX デグレ**: pane タイトルが busy 表示のまま戻らない
 
 ## Session Context
 
 ### Tone and Nuance
-- ユーザーは設計議論を重視する。選択肢を提示する前に十分な議論・分析を行うこと
-- AskUserQuestion は入力しづらいため、テキストベースの議論を優先し、最終確認のみ AskUserQuestion を使う
-- リファレンス文書整備は issue 対応・マイグレーションの基盤作業として優先
+- リファレンス文書は開発の道標。間違った前提で開発すると全てが間違う。公式原文のエビデンスベースで精度を保つ
+- リサーチエージェントの結果だけでなく、公式ドキュメント原文を WebFetch で直接取得して照合する習慣を徹底
 
 ### Steering Exceptions
 なし
@@ -51,36 +49,35 @@
 ## Accomplished
 
 ### Work Summary (this session)
-**前半 (/clear 前):**
-1. D227 改修を全面実装 (10ファイル新規作成 + SKILL.md 全面書き換え + references/ 削除)
-2. B47 self-review 実行・完了 (codex L4 全 Inspector 成功、4件 auto-fix)
-3. 11件の review-self issue resolve + 5件 FP rejected 記録
-4. 新規 issue 6件起票 (I43/I45/I55/I56/I57 + I44 rejected)
-5. Consolidation: issues.yaml 17件 archived
-
-**後半 (/clear 後):**
-6. I43 修正: SKILL.md Step 4 に `model: "sonnet"` 追加
-7. リファレンス文書 3件作成:
-   - `agent-tool-reference.md` — Agent tool (dispatch 側) パラメータ、model 制御、制限
-   - `subagent-definition-reference.md` — `.claude/agents/` 定義ファイルの仕様
-   - `agent-team-reference.md` — Agent Team (experimental) アーキテクチャ、制限
-8. sdd-briefer.md 無断作成 → revert (教訓記録)
-9. subagent-reference.md 作成 → 削除 (Agent tool と agent 定義を混同していたため)
+1. `.sdd/lib/references/` をサブフォルダ化: `claude/` 以下に Claude Code 仕様文書4件を移動、直下にはフレームワーク全体文書 (`bash-security-heuristics.md`) のみ
+2. `skill-reference-sources.md` を `references/claude/` にコピー
+3. 3つのリファレンス文書を公式ドキュメント + GitHub Issues で全面精査・修正:
+   - **agent-tool-reference.md**: Plan tools 修正、Built-in types 追加 (Bash/statusline-setup/claude-code-guide)、Model aliases 拡充 (default/sonnet[1m]/opusplan)、CLAUDE_CODE_SUBAGENT_MODEL 追加、CLAUDE.md 継承問題解消、Bug #3903 stateReason 修正、Model 優先順位を「推定」明記
+   - **subagent-definition-reference.md**: name 制約修正 ("親ディレクトリ"→"ファイル名")、tools 形式修正、Context セクション公式原文準拠、hooks 追加 (SubagentStart/Stop)、SubAgent 無効化セクション追加
+   - **agent-team-reference.md**: トークンコスト修正 ("3-4x"→"approximately 7x")、teammateMode `tmux` 値追加、推奨チームサイズ追加、Plan Approval 追加、Hooks タイプ制限明記、比較表の CLAUDE.md 残存エラー修正
+4. 3つの更新手順書を新規作成 (agent-tool-sources.md, subagent-definition-sources.md, agent-team-sources.md) — 公式ドキュメント原文引用の「要注意エビデンス」セクション付き
+5. `inspector-compliance.md` のパス更新 (framework/ + install 先)
+6. 全ファイルを framework/ 側にも同期
 
 ### Previous Sessions (carry forward)
+- v2.6.0 (session 18): D227 改修実装 + B47 review + リファレンス文書3件作成
 - v2.6.0 (session 17): D227 改修実装 + B47 review + session consolidation
 - v2.6.0 (session 16): sdd-review-self 改修計画設計 (D227)
 - v2.6.0 (session 15): I40 fix — sdd-log Read-inline化 + .sdd/lib/ 導入
 - v2.6.0 (session 14): B46 テスト実行 + codex/SKILL.md 問題検出
-- v2.6.0 (session 13): I28 修正実装 (7項目) + D223 Builder 廃止
 
 ### Modified Files
-- `framework/claude/skills/sdd-review-self/SKILL.md` — model: sonnet 追加
-- `framework/claude/sdd/lib/references/agent-tool-reference.md` — 新規作成
-- `framework/claude/sdd/lib/references/subagent-definition-reference.md` — 新規作成
-- `framework/claude/sdd/lib/references/agent-team-reference.md` — 新規作成
-- `framework/claude/sdd/settings/engines.yaml` — builder stage 削除 (前半)
-- `README.md` — agent count 修正で 5→6→5 に戻した
+- `.sdd/lib/references/claude/` — サブフォルダ化 (4ファイル移動)
+- `.sdd/lib/references/claude/agent-tool-reference.md` — 全面精査・修正
+- `.sdd/lib/references/claude/subagent-definition-reference.md` — 全面精査・修正
+- `.sdd/lib/references/claude/agent-team-reference.md` — 全面精査・修正
+- `.sdd/lib/references/claude/agent-tool-sources.md` — 新規作成
+- `.sdd/lib/references/claude/subagent-definition-sources.md` — 新規作成
+- `.sdd/lib/references/claude/agent-team-sources.md` — 新規作成
+- `.sdd/lib/references/claude/skill-reference-sources.md` — コピー追加
+- `.sdd/lib/prompts/review-self/inspector-compliance.md` — パス更新
+- `framework/claude/sdd/lib/references/claude/` — 上記全ファイルの framework 同期
+- `framework/claude/sdd/lib/prompts/review-self/inspector-compliance.md` — パス更新
 
 ## Open Issues
 | ID | Sev | Type | Summary |
@@ -100,7 +97,6 @@
 
 ## Resume Instructions
 1. `/sdd-start` でセッション開始
-2. リファレンス文書整備を続行 — 他の領域 (Skill 仕様、engines.yaml 仕様等) の文書化候補を検討
-3. I57 を修正 (dispatch/engine.md に pane タイトル復元追加)
-4. D223 確定を decision 記録
-5. コミット
+2. I57 を修正 (dispatch/engine.md に pane タイトル復元追加)
+3. D223 確定を decision 記録
+4. コミット
