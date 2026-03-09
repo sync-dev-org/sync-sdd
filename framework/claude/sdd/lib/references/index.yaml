@@ -1,0 +1,67 @@
+# Reference Document Index
+# Skills read this index to select relevant reference documents by topic.
+# Paths are relative to .sdd/lib/references/
+# load: always    — unconditionally read (common/ documents)
+# load: on_demand — read when keywords match the task
+# load: explicit  — read only when a skill/prompt explicitly names this document
+
+entries:
+  - path: common/bash-security-heuristics.md
+    category: platform
+    load: always
+    summary: "Claude Code Bash セキュリティヒューリスティクス回避ガイド — 承認プロンプトを回避するパターンと代替手段"
+    keywords: [bash, security, heuristics, approval, settings.json, allow-list, tmux, shell]
+
+  - path: common/tmux-integration.md
+    category: platform
+    load: always
+    summary: "tmux 統合パターン — MultiView Grid, Slot Management, Pattern A (Server Lifecycle), Pattern B (One-Shot Command), Orphan Cleanup"
+    keywords: [tmux, pane, grid, slot, multiview, server, one-shot, orphan, send-keys, wait-for]
+
+  - path: claude/agent-tool-reference.md
+    category: platform
+    load: on_demand
+    summary: "Agent tool の仕様 — subagent_type, model, run_in_background, built-in types, model aliases"
+    keywords: [agent, subagent, dispatch, model, background, built-in, tool]
+
+  - path: claude/agent-tool-sources.md
+    category: procedure
+    load: explicit
+    summary: "agent-tool-reference.md の更新手順 — 公式ドキュメント原文引用と要注意エビデンス"
+    keywords: [update, sources, agent-tool]
+
+  - path: claude/subagent-definition-reference.md
+    category: platform
+    load: on_demand
+    summary: "SubAgent 定義ファイル (.claude/agents/*.md) の YAML frontmatter 仕様 — model, tools, description, hooks"
+    keywords: [subagent, agent-definition, frontmatter, yaml, tools, model, hooks]
+
+  - path: claude/subagent-definition-sources.md
+    category: procedure
+    load: explicit
+    summary: "subagent-definition-reference.md の更新手順 — 公式ドキュメント原文引用と要注意エビデンス"
+    keywords: [update, sources, subagent-definition]
+
+  - path: claude/agent-team-reference.md
+    category: platform
+    load: explicit
+    summary: "Agent Team (experimental) の仕様 — teammateMode, cost, plan approval, limitations"
+    keywords: [agent-team, teammate, experimental, cost, plan, multi-agent]
+
+  - path: claude/agent-team-sources.md
+    category: procedure
+    load: explicit
+    summary: "agent-team-reference.md の更新手順 — 公式ドキュメント原文引用と要注意エビデンス"
+    keywords: [update, sources, agent-team]
+
+  - path: claude/skill-reference.md
+    category: platform
+    load: on_demand
+    summary: "Agent Skills の仕様 — SKILL.md 形式, frontmatter, description, allowed-tools, triggering"
+    keywords: [skill, SKILL.md, frontmatter, description, triggering, allowed-tools]
+
+  - path: claude/skill-reference-sources.md
+    category: procedure
+    load: explicit
+    summary: "skill-reference.md の更新手順 — 公式ドキュメント原文引用と要注意エビデンス"
+    keywords: [update, sources, skill-reference]

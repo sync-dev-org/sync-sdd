@@ -49,7 +49,7 @@ Dispatch via Agent tool with `run_in_background: true`. Pass the prompt content 
 
 ### tmux Mode (external engine + $TMUX set)
 
-Use Pattern B (One-Shot Command) from `.sdd/settings/rules/lead/tmux-integration.md`.
+Use Pattern B (One-Shot Command) from `.sdd/lib/references/common/tmux-integration.md`.
 
 1. Assign an idle slot from `.sdd/session/state.yaml` grid section.
 2. Set pane title: `tmux select-pane -t {pane_id} -T '{agent_label} | {model}'` (best-effort, decoration only).

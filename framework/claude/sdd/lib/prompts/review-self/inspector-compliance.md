@@ -11,7 +11,7 @@ Verify that SDD framework agents, skills, and Agent tool usage comply with Claud
 
 ## Reference Documents
 Read for compliance context:
-- .sdd/lib/references/bash-security-heuristics.md
+- .sdd/lib/references/common/bash-security-heuristics.md
 - .sdd/lib/references/claude/skill-reference.md
 
 ## Review Criteria

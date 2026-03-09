@@ -36,7 +36,7 @@ Report findings in Japanese.
 
 The SDD framework intentionally uses Bash patterns that work around Claude Code's security heuristic detection. These are NOT bugs — do NOT flag them as issues.
 
-Read `.sdd/lib/references/bash-security-heuristics.md` for the full list of known heuristic patterns and their workarounds.
+Read `.sdd/lib/references/common/bash-security-heuristics.md` for the full list of known heuristic patterns and their workarounds.
 
 ## PROHIBITED COMMANDS (MUST NEVER execute)
 
