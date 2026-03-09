@@ -58,7 +58,7 @@ Use Pattern B (One-Shot Command) from `.sdd/lib/references/common/tmux-integrati
 5. Verify delivery: `pgrep -fl "tmux send-keys"` (exit 1 = normal). If residual process detected: report PID and kill — target pane did not accept the command.
 6. Update `state.yaml` slot: status → busy, agent → `"{agent_label}"`, engine → `"{engine}"`, channel → `"{channel}"`.
 7. Wait via `Bash(run_in_background=true)`: `tmux wait-for {channel}`
-8. On completion: update `state.yaml` slot back to idle (remove agent/engine/channel fields).
+8. On completion: restore pane title `tmux select-pane -t {pane_id} -T 'sdd-{SID}-slot-{N}'` and update `state.yaml` slot back to idle (remove agent/engine/channel fields).
 
 ### Background Mode (external engine + no tmux)
 
