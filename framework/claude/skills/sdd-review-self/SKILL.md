@@ -40,8 +40,7 @@ Determine `B_SEQ`: read `{SCOPE_DIR}/verdicts.yaml`. If it exists, next seq = ma
 
 The Briefer is dispatched as a **SubAgent** (not an external engine). Lead does NOT read the Briefer prompt — the SubAgent reads it itself.
 
-Dispatch via Agent tool with `run_in_background: true`:
-- model: sonnet
+Dispatch via Agent tool with `model: "sonnet"` and `run_in_background: true`:
 - Prompt: `Read .sdd/lib/prompts/review-self/briefer.md and follow its instructions exactly. Write all output files to .sdd/project/reviews/self/active/.`
 
 ### Briefer Completion

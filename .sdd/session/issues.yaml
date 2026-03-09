@@ -73,15 +73,6 @@ entries:
     source: "user"
     created_at: "2026-03-09T03:35:16+0900"
 
-  - id: "I43"
-    type: "BUG"
-    status: "open"
-    severity: "M"
-    summary: "sdd-review-self Briefer dispatch で model: sonnet が指定されていない可能性"
-    detail: "SKILL.md Step 4 で Agent tool の schema に model パラメータがない。general-purpose SubAgent のデフォルトは Opus。Briefer 用 agent 定義の追加を検討"
-    source: "user"
-    created_at: "2026-03-09T04:01:12+0900"
-
   - id: "I45"
     type: "ENHANCEMENT"
     status: "deferred"

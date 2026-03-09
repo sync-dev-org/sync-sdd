@@ -1,0 +1,10 @@
+# Archived from issues.yaml at 2026-03-09T15:49:32+0900
+# Entries: 1
+entries:
+  - id: "I43"
+    type: "BUG"
+    status: "resolved"
+    severity: "M"
+    summary: "sdd-review-self Briefer dispatch で model: sonnet が指定されていない可能性"
+    resolution: "Agent tool に model パラメータが存在することを再調査で確認。SKILL.md Step 4 に model: sonnet を追加。agent-tool-reference.md を新規作成"
+    resolved_at: "2026-03-09T15:36:42+0900"
