@@ -1,0 +1,30 @@
+scope: "inspector-dynamic-2-path-migration"
+issues:
+  - id: "F1"
+    severity: "M"
+    category: "migration-residue"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:7"
+    summary: "配布テンプレート側に旧 review-self パス設計が残っている"
+    detail: "このテンプレートはまだ `.sdd/settings/templates/review-self/` を固定の参照元として案内し、`framework/claude/skills/sdd-*/refs/*.md` の旧パスも含んでいます。さらに 90-98 行では固定 Inspector をテンプレートから生成する旧フローを指示しており、移行後の `lib/prompts/review-self/` ベース実装と食い違っています。"
+    impact: "runtime の SKILL.md は新しい `.sdd/lib/prompts/...` を見ていますが、install.sh が templates ツリーを配布するため、インストール済み環境に旧フローの“別の正解”が残ります。将来の保守や再利用時に旧パスへ戻す誤修正を誘発します。"
+    recommendation: "`settings/templates/review-self/briefer.md` を `lib/prompts/review-self/briefer.md` と同じ設計に更新するか、review-self 用テンプレートを配布対象から外して単一の参照元を `lib/prompts/` に統一してください。"
+  - id: "F2"
+    severity: "M"
+    category: "prompt-contract-drift"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-compliance.md:34"
+    summary: "compliance テンプレートが削除済み前処理 `{{CACHED_OK}}` をまだ要求している"
+    detail: "このテンプレートは 34-38 行で `{{CACHED_OK}}` キャッシュ挿入を前提にしていますが、新しい Briefer は固定 Inspector テンプレート生成自体を行わず、`lib/prompts/review-self/inspector-compliance.md` にも同ブロックはありません。移行済みの prompt 契約とテンプレート契約が分岐しています。"
+    impact: "テンプレート層を参照した実装や将来の更新作業が、すでに廃止されたキャッシュ前処理を必要だと誤認します。結果として、review-self の compliance prompt だけ旧仕様へ戻る回帰が起きえます。"
+    recommendation: "`settings/templates/review-self/inspector-compliance.md` を `lib/prompts/review-self/inspector-compliance.md` に合わせて更新し、`{{CACHED_OK}}` 前提を削除してください。テンプレートを残すなら他の review-self テンプレートも同時に同期が必要です。"
+  - id: "F3"
+    severity: "L"
+    category: "cross-reference"
+    location: "framework/claude/sdd/lib/prompts/dispatch/engine.md:42"
+    summary: "`engine.md` から `escalation.md` への逆参照がなく、dispatch 参照関係が片方向になっている"
+    detail: "`escalation.md` 56 行は `engine.md` Section 3 を参照していますが、`engine.md` 側には runtime failure 時に `.sdd/lib/prompts/dispatch/escalation.md` を読む案内がありません。利用者が `engine.md` だけを起点に dispatch 仕様を追うと、失敗時フローの補助文書に到達できません。"
+    impact: "実装は直ちに壊れませんが、dispatch 文書の探索性が落ち、移行後の dispatch 仕様を読む側が正常系しか把握できない状態になります。今回の確認条件で求められた相互参照も満たしていません。"
+    recommendation: "`engine.md` の Dispatch Modes 末尾か冒頭に、出力欠落や runtime failure 時は `.sdd/lib/prompts/dispatch/escalation.md` を参照する旨を 1 行追加してください。"
+notes: |
+  指定された新しい lib prompt 群では、`{SKILL_DIR}`、`{TEMPLATE_DIR}`、`{ACTIVE_DIR}`、`{VERDICTS_PATH}` の残存参照は確認できませんでした。
+  `framework/claude/skills/sdd-review-self/SKILL.md:45` の Briefer dispatch は `.sdd/lib/prompts/review-self/briefer.md` を読み、出力先も `.sdd/project/reviews/self/active/` で Briefer 本文と一致しています。
+  `framework/claude/sdd/lib/prompts/dispatch/escalation.md:56` から `engine.md` への参照は正しい一方、逆方向だけが欠けています。

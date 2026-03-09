@@ -1,0 +1,34 @@
+scope: "inspector-dynamic-3-briefer-divergence"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "scope-coverage"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:28"
+    summary: "Briefer の FILE_LIST が `refs/` 配下を収集せず、主要 skill reference を self-review scope から落としている"
+    detail: "旧版 Step 2 にあった `framework/claude/skills/sdd-*/refs/*.md` が新版では `framework/claude/skills/sdd-*/references/*.md` に置き換わっている。しかし現行 repo には `framework/claude/skills/sdd-roadmap/refs/*.md` と `framework/claude/skills/sdd-reboot/refs/reboot.md` が残っており、fixed Inspectors は shared-prompt の FILE_LIST を全読みにするため、これらの実体指示が review 対象から外れる。"
+    impact: "flow/consistency review が roadmap/reboot の本体フローを見ないまま verdict を作るため、dispatch・phase gate・参照整合性の欠陥を見逃しうる。"
+    recommendation: "Step 2 の glob に `framework/claude/skills/sdd-*/refs/*.md` を戻すか、`refs/` と `references/` の両方を収集する形に修正する。"
+  - id: "F2"
+    severity: "M"
+    category: "stale-scope"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:32"
+    summary: "Briefer が obsolete な `settings/templates/review-self` を現行 lib prompt と同時に review scope へ含めている"
+    detail: "Step 2 は `framework/claude/sdd/settings/templates/**/*.md` を一括で FILE_LIST に入れるが、`settings/templates/review-self/briefer.md` は依然として `CACHED_OK` 構築と `active/inspector-{name}.md` 生成を指示し、`settings/templates/review-self/inspector-compliance.md` も `{{CACHED_OK}}` を保持している。一方で `framework/claude/skills/sdd-review-self/SKILL.md` Step 5 は fixed Inspectors を `.sdd/lib/prompts/review-self/inspector-{name}.md` から直接 dispatch しており、template 側は runtime source of truth ではない。"
+    impact: "Inspectors が現行仕様と死んだ仕様を同時に読み込むため、runtime では起きない divergence を継続的に検出し、self-review の判断ノイズを増やす。"
+    recommendation: "`settings/templates/review-self/` を lib 版に同期するか削除し、少なくとも Briefer の FILE_LIST から同ディレクトリを除外して review 対象を現行 runtime 定義に寄せる。"
+  - id: "F3"
+    severity: "L"
+    category: "documentation-drift"
+    location: "framework/claude/sdd/lib/prompts/review-self/shared-prompt-structure.md:3"
+    summary: "shared-prompt structure の説明が SubAgent dispatch を反映していない"
+    detail: "同ファイルは shared prompt が常に `cat shared-prompt.md inspector-{name}.md` で前置されると説明しているが、`framework/claude/skills/sdd-review-self/SKILL.md` Step 5 の SubAgent mode では各 Inspector が `shared-prompt.md` と個別 prompt を別々に読む運用になっている。"
+    impact: "現在の runtime を直接壊しはしないが、dispatch 仕様の理解や将来の prompt 改修で『常に cat 連結される』という誤前提を残す。"
+    recommendation: "説明文を dispatch mode ごとに分け、tmux/background は `cat` 連結、SubAgent は 2 ファイルを個別 Read と明記する。"
+notes: |
+  `deny_patterns` と Bash security heuristics の inline 展開が消えた点自体は、現行の shared-prompt-structure.md が
+  `.sdd/settings/engines.yaml` と `.sdd/lib/references/bash-security-heuristics.md` を直接読むよう指示しており、
+  SKILL.md Step 5 の fixed Inspector dispatch でも shared-prompt.md が必ず渡されるため、機能欠落は確認しなかった。
+
+  また、旧版 Step 5 の compliance cache / SCOPE_DIR 導出と Step 6 の fixed prompt 書き出しは、
+  現行 SKILL.md が fixed Inspectors を lib prompt から直接 dispatch する設計へ移行したことで不要になっており、
+  Briefer SubAgent への Step 4 dispatch prompt も現行 hardcoded path 設計には十分な文脈を与えている。

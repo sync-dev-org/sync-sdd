@@ -1,6 +1,8 @@
 # shared-prompt.md Structure
 
-The Briefer writes this file to `active/shared-prompt.md`. It is prepended to every Inspector prompt via `cat shared-prompt.md inspector-{name}.md`.
+The Briefer writes this file to `active/shared-prompt.md`. It is delivered to each Inspector in one of two ways depending on the dispatch mode:
+- **tmux/background mode**: prepended via `cat shared-prompt.md inspector-{name}.md | {engine_cmd}`
+- **SubAgent mode**: Inspector reads `shared-prompt.md` and its own prompt file as two separate Read operations
 
 ## Template
 
@@ -34,8 +36,9 @@ Report findings in Japanese.
 
 The SDD framework intentionally uses Bash patterns that work around Claude Code's security heuristic detection. These are NOT bugs — do NOT flag them as issues.
 
-{HEURISTICS_CONTENT — from .sdd/settings/rules/lead/bash-security-heuristics.md}
+Read `.sdd/lib/references/bash-security-heuristics.md` for the full list of known heuristic patterns and their workarounds.
 
 ## PROHIBITED COMMANDS (MUST NEVER execute)
-{deny_patterns — one pattern per line, from engines.yaml}
+
+Read the `deny_patterns` section from `.sdd/settings/engines.yaml` for the list of prohibited commands.
 ```

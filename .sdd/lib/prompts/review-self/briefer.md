@@ -3,20 +3,19 @@
 You are a briefer for the SDD Framework self-review pipeline.
 Your job is to construct prompt files that 3 fixed Inspectors + 1-4 dynamic Inspectors will consume.
 
-## Paths
+## Paths (hardcoded)
 
-These paths are provided by Lead at dispatch time:
-- Output directory: (provided as ACTIVE_DIR)
-- Template directory: (provided as TEMPLATE_DIR — the references/ directory of this skill)
-- Verdicts file: (provided as VERDICTS_PATH)
-- Engines config: .sdd/settings/engines.yaml
+- Output directory: `.sdd/project/reviews/self/active/`
+- Verdicts file: `.sdd/project/reviews/self/verdicts.yaml`
+- Engines config: `.sdd/settings/engines.yaml`
+- Shared-prompt structure: `.sdd/lib/prompts/review-self/shared-prompt-structure.md`
 
 ## Step 1: Collect Change Context
 
 1. Determine commit range: Run `git log --oneline HEAD | wc -l` to get total commit count. Use `min(count, 10)` as the range. Then run: `git diff HEAD~{range}..HEAD --stat -- framework/ install.sh`
 2. Run: `git diff HEAD -- framework/ install.sh` (uncommitted changes)
 3. If no committed changes AND no uncommitted diffs (including when `framework/` does not exist):
-   Write `NO_CHANGES` to `{ACTIVE_DIR}/briefer-status.md` and stop immediately. This skill targets the sync-sdd framework repo only — if `framework/` is absent, this is not the right repo.
+   Write `NO_CHANGES` to `.sdd/project/reviews/self/active/briefer-status.md` and stop immediately. This skill targets the sync-sdd framework repo only — if `framework/` is absent, this is not the right repo.
 4. Analyze changes and create FOCUS_TARGETS: 3-5 bullet points summarizing the key changes.
 
 ## Step 2: Collect File List
@@ -34,50 +33,17 @@ framework/claude/sdd/settings/templates/**/*.md
 framework/claude/sdd/settings/templates/**/*.yaml
 framework/claude/sdd/settings/scripts/*
 framework/claude/sdd/settings/engines.yaml
+framework/claude/sdd/lib/**/*.md
 install.sh
 ```
 
-## Step 3: Read Deny Patterns
+## Step 3: Write shared-prompt.md
 
-Read `.sdd/settings/engines.yaml` and extract the `deny_patterns` list.
+Read the shared-prompt structure definition from `.sdd/lib/prompts/review-self/shared-prompt-structure.md`. Follow that structure exactly, filling in FILE_LIST from Step 2.
 
-## Step 3b: Read Security Heuristics
+Write the result to `.sdd/project/reviews/self/active/shared-prompt.md`.
 
-Read `.sdd/settings/rules/lead/bash-security-heuristics.md` and store the content as HEURISTICS_CONTENT. This document describes Claude Code platform constraints that the framework intentionally works around — Inspectors must not flag these patterns as issues.
-
-## Step 4: Write shared-prompt.md
-
-Read the shared-prompt structure definition from `{TEMPLATE_DIR}/shared-prompt-structure.md`. Follow that structure exactly, filling in FILE_LIST and deny_patterns from the preceding steps.
-
-Write the result to `{ACTIVE_DIR}/shared-prompt.md`.
-
-## Step 5: Build Compliance Cache
-
-1. Read the verdicts file at VERDICTS_PATH.
-2. Find the latest batch with `type: "self"` within the last 7 days — use `batches[].seq` and `batches[].date` fields.
-3. If found:
-   a. Read the archived findings: `{SCOPE_DIR}/B{seq}/findings-inspector-compliance.yaml` (derive SCOPE_DIR from VERDICTS_PATH by removing the filename).
-   b. Extract items from the `compliance:` section.
-   c. For each item, run `git log --since="{review date}" --oneline -- {relevant files}` to check for changes.
-   d. Items with no file changes since review -> keep as cached. Format each as: `{item}: OK (cached from B{seq})`
-   e. Items with file changes -> remove from cache (will be re-verified).
-4. If not found or older than 7 days: use `No cached items.`
-
-Store the result as CACHED_OK.
-
-## Step 6: Build Fixed Inspector Prompts
-
-Read each fixed Inspector template from `{TEMPLATE_DIR}/`. Replace placeholders with collected values and write dispatch-ready prompts to `{ACTIVE_DIR}/`:
-
-| Template | Output | Placeholders |
-|----------|--------|-------------|
-| `inspector-flow.md` | `{ACTIVE_DIR}/inspector-flow.md` | (none) |
-| `inspector-consistency.md` | `{ACTIVE_DIR}/inspector-consistency.md` | (none) |
-| `inspector-compliance.md` | `{ACTIVE_DIR}/inspector-compliance.md` | `{{CACHED_OK}}` -> CACHED_OK value from Step 5 |
-
-For templates with no placeholders, copy the content as-is.
-
-## Step 7: Build Dynamic Inspector Prompts
+## Step 4: Build Dynamic Inspector Prompts
 
 Using FOCUS_TARGETS (Step 1) and the git diff output, identify 1-4 risk axes that the fixed Inspectors (flow/consistency/compliance) do not adequately cover. These are change-specific risks that require targeted investigation.
 
@@ -94,7 +60,7 @@ Consider these categories (select only those relevant to the actual changes):
 
 ### Prompt Generation
 
-For each risk axis, write a focused Inspector prompt to `{ACTIVE_DIR}/inspector-dynamic-{N}-{slug}.md` where N is 1-based and slug is a 2-3 word kebab-case identifier (e.g., `cross-ref-integrity`, `template-migration`).
+For each risk axis, write a focused Inspector prompt to `.sdd/project/reviews/self/active/inspector-dynamic-{N}-{slug}.md` where N is 1-based and slug is a 2-3 word kebab-case identifier (e.g., `cross-ref-integrity`, `template-migration`).
 
 Each dynamic Inspector prompt follows this structure:
 
@@ -114,7 +80,7 @@ You are a targeted change reviewer for the SDD Framework self-review.
 {List of specific file paths relevant to this risk axis}
 
 ## Output
-Write YAML findings to: {ACTIVE_DIR}/findings-inspector-dynamic-{N}-{slug}.yaml
+Write YAML findings to: .sdd/project/reviews/self/active/findings-inspector-dynamic-{N}-{slug}.yaml
 
 YAML format:
 scope: "inspector-dynamic-{N}-{slug}"
@@ -134,7 +100,7 @@ After writing, print to stdout:
 EXT_REVIEW_COMPLETE
 AGENT:inspector-dynamic-{N}
 ISSUES: <number of issues found>
-WRITTEN:{ACTIVE_DIR}/findings-inspector-dynamic-{N}-{slug}.yaml
+WRITTEN:.sdd/project/reviews/self/active/findings-inspector-dynamic-{N}-{slug}.yaml
 ```
 
 ### Constraints
@@ -144,11 +110,11 @@ WRITTEN:{ACTIVE_DIR}/findings-inspector-dynamic-{N}-{slug}.yaml
 - Each dynamic Inspector should have a narrow, well-defined focus — broad "check everything" prompts produce low signal.
 - Keep each prompt concise (under 200 words excluding the Output section).
 
-## Step 8: Write Manifest and Verify
+## Step 5: Write Manifest and Verify
 
 ### Dynamic Manifest
 
-Write `{ACTIVE_DIR}/dynamic-manifest.md`:
+Write `.sdd/project/reviews/self/active/dynamic-manifest.md`:
 ```
 DYNAMIC_COUNT:{N}
 inspector-dynamic-1-{slug}|{one-line description}
@@ -158,17 +124,14 @@ inspector-dynamic-2-{slug}|{one-line description}
 
 ### Verification
 
-Verify all required files exist in `{ACTIVE_DIR}/`:
+Verify all required files exist in `.sdd/project/reviews/self/active/`:
 - shared-prompt.md
-- inspector-flow.md
-- inspector-consistency.md
-- inspector-compliance.md
 - dynamic-manifest.md
 - inspector-dynamic-{N}-{slug}.md (for each N in manifest)
 
 Print to stdout:
 ```
 EXT_BRIEFER_COMPLETE
-FILES: shared-prompt.md, inspector-flow.md, inspector-consistency.md, inspector-compliance.md
+FILES: shared-prompt.md
 DYNAMIC: {N} (inspector-dynamic-1-{slug}, ...)
 ```

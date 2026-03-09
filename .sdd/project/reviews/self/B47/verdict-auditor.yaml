@@ -1,0 +1,219 @@
+verdict: "CONDITIONAL"
+scope: "framework"
+review_type: "self"
+counts:
+  C: 0
+  H: 3
+  M: 4
+  L: 3
+  FP: 10
+files:
+  - "framework/claude/sdd/lib/prompts/review-self/briefer.md"
+  - "framework/claude/skills/sdd-review-self/SKILL.md"
+  - "framework/claude/skills/sdd-roadmap/refs/revise.md"
+  - "framework/claude/skills/sdd-review/SKILL.md"
+  - "framework/claude/sdd/settings/engines.yaml"
+  - "framework/claude/sdd/lib/prompts/dispatch/engine.md"
+  - "framework/claude/sdd/lib/prompts/review-self/shared-prompt-structure.md"
+issues:
+  - id: "A1"
+    source: "inspector-flow+inspector-dynamic-3-briefer-divergence"
+    severity: "H"
+    category: "scope-coverage"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:28"
+    summary: "Briefer の FILE_LIST が refs/ 配下を収集せず、roadmap/reboot の本体フローが self-review scope から外れている"
+    detail: |
+      lib 版 briefer は `framework/claude/skills/sdd-*/references/*.md` を収集するが、
+      `framework/claude/skills/sdd-*/refs/*.md` を含まない。現行 repo には
+      `framework/claude/skills/sdd-roadmap/refs/*.md` と
+      `framework/claude/skills/sdd-reboot/refs/reboot.md` が存在し、
+      fixed Inspectors が shared-prompt の FILE_LIST を全読みする前提に基づくため、
+      これらの実体指示が review 対象から外れる。生成済み shared-prompt.md でも roadmap refs は未掲載。
+    impact: "inspector-flow が Router→refs dispatch、Wave QG、revise mode 判定を読めないまま判定し、flow review が false negative になり得る。"
+    recommendation: "FILE_LIST の glob に `framework/claude/skills/sdd-*/refs/*.md` を追加し、`references/` と `refs/` の両方を収集する形に修正する。"
+    classification: "A"
+
+  - id: "A2"
+    source: "inspector-flow"
+    severity: "H"
+    category: "verdict-persistence"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:163"
+    summary: "self-review の verdicts.yaml 永続化が batches: ルートを使わず、verdict-format.md §4 スキーマと乖離している"
+    detail: |
+      Step 9 の例はトップレベル配列 `- seq: ...` を append する形だが、
+      verdict-format.md §4 は `batches:` 配下に batch を追加するスキーマ。
+      Step 3 の `max(seq values)` 取得も flat list 前提で、
+      通常 review と互換なインデックス走査になっていない。
+    impact: "self-review の batch 採番、tracked/resolved 参照、将来の resume/集計処理が review 系と別実装になり、verdict persistence の一貫性が壊れる。"
+    recommendation: "self-review も `batches:` ルートを前提に読み書きし、Step 3 と Step 9 を verdict-format.md §4 と同じスキーマに合わせる。"
+    classification: "B"
+
+  - id: "A3"
+    source: "inspector-consistency"
+    severity: "H"
+    category: "protocol-consistency"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md:22"
+    summary: "briefer engine resolution 引数が残存しているが、実行時は SubAgent 固定で engine 解決が機能しない"
+    detail: |
+      SKILL.md Step 1-2 は `--briefer-engine/--briefer-model/--briefer-effort` を受け取り
+      dispatch/engine.md に従って briefer の engine 解決を行うよう記述されているが、
+      Step 4 では briefer を `model: sonnet` の SubAgent として固定 dispatch している。
+      D227 で briefer SubAgent 降格が決定済みだが dead code cleanup が未実施。
+    impact: "briefer 用 override と level chain の説明が実動作と一致せず、設定変更や障害切り分けで無効な経路を追うことになる。"
+    recommendation: "D227 の決定に従い、`--briefer-engine/--briefer-model/--briefer-effort` 引数と engine 解決記述を SKILL.md から削除し、SubAgent 固定設計に統一する。engines.yaml の briefer stage 設定も合わせて削除する。"
+    classification: "A"
+
+  - id: "A4"
+    source: "inspector-dynamic-3-briefer-divergence"
+    severity: "M"
+    category: "stale-scope"
+    location: "framework/claude/sdd/lib/prompts/review-self/briefer.md:32"
+    summary: "Briefer が obsolete な settings/templates/review-self/** を FILE_LIST に含め、陳腐化コンテンツを review scope に混入させている"
+    detail: |
+      FILE_LIST は `framework/claude/sdd/settings/templates/**/*.md` を一括収集するが、
+      `settings/templates/review-self/briefer.md` は CACHED_OK 構築と
+      `active/inspector-{name}.md` 生成を指示する旧フロー、
+      `inspector-compliance.md` も `{{CACHED_OK}}` を保持。
+      現行 SKILL.md は fixed Inspectors を `lib/prompts/review-self/` から直接 dispatch しており、
+      template 側は runtime source of truth ではない。
+    impact: "Inspectors が現行仕様と死んだ仕様を同時に読み込み、runtime では起きない divergence を継続的に検出し、self-review の判断ノイズを増やす。"
+    recommendation: "`settings/templates/review-self/` を削除するまでの間、少なくとも Briefer の FILE_LIST から同ディレクトリを除外して review 対象を現行 runtime 定義に寄せる。"
+    classification: "A"
+
+  - id: "A5"
+    source: "inspector-consistency"
+    severity: "M"
+    category: "dead-config"
+    location: "framework/claude/sdd/settings/engines.yaml:105"
+    summary: "review-self の builder stage 設定が engines.yaml に残存しているが、現行 SKILL は builder を起動せず Lead Fix に置き換わっている"
+    detail: |
+      engines.yaml は `roles.review-self.stages.builder.start_level` を持ち、
+      CLAUDE.md でも review engine chain を briefer/inspectors/auditor/builder の 4 stage と説明している。
+      一方、現行 SKILL.md Step 2 は STAGES を `briefer, inspectors, auditor` に限定し、
+      Step 8 は Lead Fix として Lead が直接修正するため builder dispatch 経路が存在しない。
+      D223 で builder 廃止決定済み。
+    impact: "未使用 stage が設定と説明に残り続け、将来の変更で builder 用 override や template を誤って再接続するリスクがある。"
+    recommendation: "D223 の決定を確定として、`engines.yaml` の `roles.review-self.stages.builder` エントリと CLAUDE.md の 4 stage 説明を削除する。"
+    classification: "A"
+
+  - id: "A6"
+    source: "inspector-flow"
+    severity: "M"
+    category: "revise-flow"
+    location: "framework/claude/skills/sdd-roadmap/refs/revise.md:77"
+    summary: "Single-Spec revise の review verdict handling が抽象的すぎて NO-GO/SPEC-UPDATE-NEEDED ループを実行定義できない"
+    detail: |
+      Part A Step 5 は Design Review/Impl Review の後処理を
+      `Handle verdict per CLAUDE.md counter limits` とだけ記し、
+      run.md Phase Handlers が持つ再 dispatch、phase reset、archive、
+      retry/spec_update 上限到達時の選択肢を展開していない。
+      Cross-Cutting 側 Step 8-9 はより具体的だが、Single-Spec 側だけ実行手順が省略されている。
+    impact: "revise の単一 spec 経路で、NO-GO や SPEC-UPDATE-NEEDED 発生時の再設計・再実装・ユーザー escalation の扱いが実装者依存になり、mode 間で挙動がずれる。"
+    recommendation: "Part A に run.md Phase Handlers 相当の明示的 substeps を追加し、NO-GO/SPEC-UPDATE-NEEDED ごとの state mutation、counter 更新、上限到達時の選択肢、Cross-Cutting 再昇格条件を規定する。"
+    classification: "B"
+
+  - id: "A7"
+    source: "inspector-compliance"
+    severity: "M"
+    category: "spec-compliance"
+    location: "framework/claude/skills/sdd-review-self/SKILL.md, framework/claude/skills/sdd-handover/SKILL.md, framework/claude/skills/sdd-log/SKILL.md"
+    summary: "allowed-tools セパレータがスペース区切りで、公式ドキュメントのカンマ区切り形式と一致していない"
+    detail: |
+      公式 Claude Code Skills ドキュメントの allowed-tools 例は
+      `allowed-tools: Read, Grep, Glob` (カンマ+スペース区切り) を示している。
+      上記 3 ファイルはスペース区切りを使用しており、公式フォーマットと異なる。
+      Web search で公式ドキュメントを確認したが、スペース区切りが有効かどうかは明記されていない
+      (citation: https://code.claude.com/docs/en/slash-commands)。
+    impact: "現在は動作している可能性があるが、Claude Code のパーサーが将来カンマ区切りを厳格化した場合、これらのスキルで tool permission が機能しなくなるリスクがある。"
+    recommendation: "3 ファイルの allowed-tools をカンマ+スペース区切り (`Read, Grep, ...`) に統一する。"
+    classification: "A"
+
+  - id: "A8"
+    source: "inspector-dynamic-2-path-migration"
+    severity: "L"
+    category: "cross-reference"
+    location: "framework/claude/sdd/lib/prompts/dispatch/engine.md:42"
+    summary: "engine.md から escalation.md への逆参照がなく、dispatch 参照関係が片方向になっている"
+    detail: |
+      escalation.md:56 は engine.md Section 3 を参照しているが、
+      engine.md 側には runtime failure 時に escalation.md を読む案内がない。
+      engine.md だけを起点に dispatch 仕様を追うと、失敗時フローの補助文書に到達できない。
+    impact: "実装は直ちに壊れないが、dispatch 文書の探索性が落ち、dispatch 仕様を読む側が正常系しか把握できない状態になる。"
+    recommendation: "engine.md の適切な箇所に、runtime failure 時は `dispatch/escalation.md` を参照する旨を 1 行追加する。"
+    classification: "A"
+
+  - id: "A9"
+    source: "inspector-flow"
+    severity: "L"
+    category: "cross-check-mode"
+    location: "framework/claude/skills/sdd-review/SKILL.md:166"
+    summary: "--cross-check standalone review の永続化 path/type が verdict-format.md の wave cross-check と揃っていない"
+    detail: |
+      `/sdd-roadmap review design|impl --cross-check` は公開されているが、
+      sdd-review はその scope を `project/reviews/cross-check/` に保存し、
+      type 正規化も `impl --wave N` にしか適用していない。
+      verdict-format.md は cross-check を wave-scope の verdicts.yaml として定義しており、
+      standalone cross-check の保存先/種別が未定義。
+    impact: "同じ cross-check 系 review でも参照先と batch type が分岐し、resume・集計・tracked item 再参照で見落としが出る。"
+    recommendation: "`--cross-check` を正式サポートするなら verdict-format.md に専用 scope を追加し type を正規化する。不要なら公開引数を削除する。"
+    classification: "B"
+
+  - id: "A10"
+    source: "inspector-dynamic-3-briefer-divergence"
+    severity: "L"
+    category: "documentation-drift"
+    location: "framework/claude/sdd/lib/prompts/review-self/shared-prompt-structure.md:3"
+    summary: "shared-prompt-structure.md の説明が SubAgent dispatch を反映せず cat 連結前提になっている"
+    detail: |
+      同ファイルは shared prompt が常に `cat shared-prompt.md inspector-{name}.md` で前置されると説明しているが、
+      現行 SKILL.md Step 5 の SubAgent mode では各 Inspector が `shared-prompt.md` と
+      個別 prompt を別々に Read する運用になっている。
+    impact: "dispatch 仕様の理解や将来の prompt 改修で「常に cat 連結される」という誤前提を残す。"
+    recommendation: "説明文を dispatch mode ごとに分け、SubAgent mode では 2 ファイルを個別 Read すると明記する。"
+    classification: "A"
+
+fp_eliminated:
+  - source_id: "dynamic-1-F1"
+    source: "inspector-dynamic-1-stale-duplicates"
+    reason: "install.sh の review-self テンプレート配布は D227 item 7 + I33 で追跡済みの deferred 作業。Briefer が stale templates を読む active harm 側は A4 として個別捕捉済み。"
+  - source_id: "dynamic-1-F2"
+    source: "inspector-dynamic-1-stale-duplicates"
+    reason: "旧 briefer テンプレートの stale content は D227/I33 で追跡済みの migration 作業。pre-existing, deferred。"
+  - source_id: "dynamic-1-F3"
+    source: "inspector-dynamic-1-stale-duplicates"
+    reason: "旧 inspector/auditor テンプレートの乖離は D227/I33 で追跡済みの migration 作業。pre-existing, deferred。"
+  - source_id: "dynamic-1-F4"
+    source: "inspector-dynamic-1-stale-duplicates"
+    reason: "builder.md + orphaned inspector-flow.md の dead files は D227/I33 で追跡済みの cleanup 作業。pre-existing, deferred。"
+  - source_id: "consistency-F3"
+    source: "inspector-consistency"
+    reason: "template 版 briefer の FILE_LIST が lib 版より狭いのは migration 過渡期の状態。D227/I33 deferred。pre-existing, deferred。"
+  - source_id: "consistency-F4"
+    source: "inspector-consistency"
+    reason: "template 版 briefer の compliance cache 手順は D227 item 5 (CACHED_OK 廃止) + I33 (template 削除) で追跡済み。pre-existing, deferred。"
+  - source_id: "consistency-F5"
+    source: "inspector-consistency"
+    reason: "template 版 inspector-consistency の xrefs スキーマ欠如は D227/I33 で追跡済みの template deletion 作業。pre-existing, deferred。"
+  - source_id: "dynamic-2-F1"
+    source: "inspector-dynamic-2-path-migration"
+    reason: "dynamic-1-F2 と同一ファイル・同一問題 (briefer.md:7 の旧パス設計)。D227/I33 deferred として一括処理。"
+  - source_id: "dynamic-2-F2"
+    source: "inspector-dynamic-2-path-migration"
+    reason: "dynamic-1-F3 と同一問題 (compliance template の {{CACHED_OK}})。D227 item 5 + I33 deferred として一括処理。"
+  - source_id: "dynamic-3-F1"
+    source: "inspector-dynamic-3-briefer-divergence"
+    reason: "inspector-flow-F1 と同一の問題 (briefer.md refs/ 欠落)。A1 として統合済み。"
+
+notes: |
+  今回の self-review は D227 (sdd-review-self 改修計画) の実装直後スナップショット。lib/ 移行が進行中のため、
+  template 系の stale issues の多くは D227/I33 で追跡済みの deferred 作業として FP 処理した。
+
+  H-level 3 件の性質:
+  - A1 (H, A): Briefer refs/ 欠落 — glob 1 行追加で即修正可能
+  - A2 (H, B): verdicts.yaml batches: スキーマ不整合 — review/self-review 統一スキーマの設計判断が必要
+  - A3 (H, A): briefer engine dead code — D227 決定に基づく cleanup、コード削除のみ
+
+  最大の懸念は A2。self-review と通常 review の verdicts.yaml 互換性が未解決のまま、
+  self-review の verdict tracking が review と異なる実装になるリスクがある。
+  A1/A3/A4/A5/A7 は auto-fix (A 分類) で一括処理可能。
+  A6/A9 は設計判断 (B 分類) が必要。

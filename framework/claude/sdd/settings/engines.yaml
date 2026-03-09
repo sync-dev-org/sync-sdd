@@ -102,8 +102,6 @@ roles:
         start_level: L4
       auditor:
         start_level: L5
-      builder:
-        start_level: L5
   review:
     timeout: 1200
     stages:

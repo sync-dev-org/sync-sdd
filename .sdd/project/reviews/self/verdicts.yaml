@@ -1,3 +1,30 @@
+- seq: 47
+  type: "self"
+  scope: "framework"
+  date: "2026-03-09T11:52:26+0900"
+  version: "2.6.0"
+  engines:
+    briefer: "claude-opus-4-6 (SubAgent)"
+    inspectors: "gpt-5.4 (codex L4)"
+    auditor: "claude-sonnet-4-6 (L5)"
+    builder: "lead (D223)"
+  agents:
+    fixed: 3
+    dynamic: 3
+    total: 6
+  counts:
+    C: 0
+    H: 1
+    M: 1
+    L: 2
+    FP: 15
+  verdict: "CONDITIONAL"
+  disposition: "CONDITIONAL-FIXED"
+  notes: "D227 改修後初回レビュー (sdd-review-self スコープ限定)。codex L4 で全 Inspector 成功。4 items fixed, 1 deferred (I45), 5 FP (scope外/過渡的)。"
+  tracked:
+    - id: "A1"
+      severity: "H"
+      summary: "Briefer FILE_LIST に refs/*.md 未収集 (I45 deferred)"
 - seq: 46
   type: "self"
   scope: "framework"

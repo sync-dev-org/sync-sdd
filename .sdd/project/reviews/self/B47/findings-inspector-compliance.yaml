@@ -1,0 +1,75 @@
+scope: "inspector-compliance"
+issues: []
+compliance:
+  - target: "agent-frontmatter-required-fields"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+  - target: "agent-frontmatter-model-values"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+  - target: "agent-frontmatter-background-field"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+  - target: "agent-frontmatter-tools-field"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+  - target: "skills-frontmatter-description"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/skills"
+  - target: "skills-frontmatter-allowed-tools"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/skills"
+  - target: "skills-frontmatter-argument-hint"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/skills"
+  - target: "skills-frontmatter-name-default"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/skills"
+  - target: "skills-allowed-tools-separator"
+    status: "UNCERTAIN"
+    citation: ""
+  - target: "agent-tool-subagent_type"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-typescript"
+  - target: "agent-tool-model-parameter"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-typescript"
+  - target: "agent-tool-run_in_background"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-typescript"
+  - target: "settings-permission-agent-format"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/permissions"
+  - target: "settings-permission-skill-format"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/skills"
+  - target: "settings-permission-default-mode"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/permissions"
+  - target: "general-purpose-built-in"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+  - target: "subagent-nesting-constraint"
+    status: "OK"
+    citation: "https://docs.anthropic.com/en/docs/claude-code/sub-agents"
+notes: |
+  公式仕様と照合した範囲では、Claude Code プラットフォーム仕様に対する明確な NG は確認されませんでした。
+
+  確認対象:
+  - agent 定義 5 件
+  - skill 定義 12 件
+  - framework/claude/settings.json
+  - framework/claude/CLAUDE.md の SubAgent dispatch 記述
+
+  検証結果の要点:
+  - agent frontmatter の `description`、`model`、`tools`、`background` は公式 Sub Agents ドキュメントの範囲内です。
+  - agent 側の `model` は `sonnet` / `opus` のみで、いずれも公式に記載された有効値です。
+  - skill frontmatter の `description`、`allowed-tools`、`argument-hint` は公式 Skills ドキュメントに存在します。
+  - `framework/claude/skills/sdd-publish-setup/SKILL.md` は `name` を省略していますが、公式 Skills ドキュメントでは未指定時にディレクトリ名を使う挙動が示されています。
+  - `settings.json` の `Skill(...)` / `Agent(...)` エントリは実在する skill / agent と一致しており、`general-purpose` は built-in subagent のため個別ファイル不要という扱いと整合しています。
+  - custom subagent 定義側は `Agent` tool を持たず、公式ドキュメントの「subagent は別の subagent を spawn できない」という制約にも反していません。
+
+  UNCERTAIN:
+  - `allowed-tools` の区切り形式は、公式ドキュメント例ではカンマ区切りが中心ですが、実装側ファイルにはスペース区切りも混在しています。
+  - 該当箇所は `framework/claude/skills/sdd-review-self/SKILL.md`、`framework/claude/skills/sdd-handover/SKILL.md`、`framework/claude/skills/sdd-log/SKILL.md` です。
+  - 公式ドキュメント上、スペース区切りが明示的に有効とも無効とも確認できなかったため、NG ではなく UNCERTAIN としました。

@@ -1,0 +1,47 @@
+scope: "inspector-dynamic-1-stale-duplicates"
+issues:
+  - id: "F1"
+    severity: "H"
+    category: "migration-completeness"
+    location: "install.sh:540"
+    summary: "review-self テンプレート群が移行後も installer から配布され続けている"
+    detail: "現行の self-review 実行経路は `framework/claude/skills/sdd-review-self/SKILL.md:45,58,96-97` のとおり `.sdd/lib/prompts/review-self/` を正規参照しており、`settings/templates/review-self/` は実行に使われていません。にもかかわらず `install.sh:540` は `.sdd/settings/templates` を丸ごとコピーし、`install.sh:593` はその配下をソース基準で保持するため、孤立した review-self テンプレート群が全インストール先に残存します。さらに正規 Briefer は `framework/claude/sdd/lib/prompts/review-self/briefer.md:32` で `settings/templates/**/*.md` を FILE_LIST に含めるため、残留した死蔵ファイルが今後の self-review 入力にも混入します。"
+    impact: "プロンプト抽出移行が実質的に未完了のままになり、ユーザー環境へ不要ファイルを継続配布します。review-self 自身も非実行系の古いテンプレートを読んでしまうため、誤検知やレビュー方針のドリフトを招きます。"
+    recommendation: "`framework/claude/sdd/settings/templates/review-self/` を配布対象から外し、リポジトリ上の review-self テンプレート群も削除してください。`settings/templates` の包括コピーを維持する必要があるなら、少なくとも `review-self/` を install/remove_stale の対象外にしてください。"
+  - id: "F2"
+    severity: "M"
+    category: "stale-duplicate"
+    location: "framework/claude/sdd/settings/templates/review-self/briefer.md:7"
+    summary: "旧 briefer テンプレートが削除済みテンプレート駆動フローを今も説明している"
+    detail: "`framework/claude/sdd/settings/templates/review-self/briefer.md` は依然として `Template directory: .sdd/settings/templates/review-self/` を前提にし、`refs/*.md` と `rules/*.md` の旧グロブ、deny_patterns の埋め込み手順、compliance cache 構築、固定 Inspector テンプレート展開を指示しています（例: `:26-33`, `:36-98`）。一方、正規版 `framework/claude/sdd/lib/prompts/review-self/briefer.md` は共有構造 `shared-prompt-structure.md` を読み込み、固定 Inspector の組み立てや cache 展開を行わない別フローに更新済みです。"
+    impact: "このファイルを手動実行したり、将来参照先を誤って戻した場合、現行 skill と矛盾する shared prompt / inspector prompt を生成し、レビュー手順が破綻します。"
+    recommendation: "このファイルを削除してください。互換性のために残す必要があるなら、中身を保守せず『正規版は `.sdd/lib/prompts/review-self/briefer.md`』とだけ示す薄いスタブに置き換えるべきです。"
+  - id: "F3"
+    severity: "M"
+    category: "stale-duplicate"
+    location: "framework/claude/sdd/settings/templates/review-self/inspector-compliance.md:30"
+    summary: "inspector/auditor の残留テンプレート群も正規 prompt から既に乖離している"
+    detail: "`settings/templates/review-self/inspector-consistency.md:18-41` には正規版に追加された `xrefs` 出力要件がなく、`settings/templates/review-self/inspector-compliance.md:30-38` は削除済みの `{{CACHED_OK}}` 前提と旧 UNCERTAIN 表記を保持したまま `bash-security-heuristics.md` / `skill-reference.md` の参照を欠いています。`settings/templates/review-self/auditor.md:21-49` も表現と運用前提が旧版のままです。現行 skill はこれらを参照していないため、ディレクトリ全体が『使われないのに内容だけ古い』状態です。"
+    impact: "このディレクトリは安全なフォールバックではなく、誤用時に現行パイプラインと違う YAML 形式や判定基準を出力します。保守対象が二重化しているため、今後も差分が広がり続けます。"
+    recommendation: "残留している `inspector-consistency.md` / `inspector-compliance.md` / `auditor.md` を削除し、正規 prompt を `lib/prompts/review-self/` に一本化してください。どうしても複製を残すなら、自動生成で byte-level 同期を保証する必要があります。"
+  - id: "F4"
+    severity: "L"
+    category: "dead-file"
+    location: "framework/claude/sdd/settings/templates/review-self/builder.md:1"
+    summary: "`builder.md` と重複 `inspector-flow.md` が未参照のまま templates 配下に残っている"
+    detail: "`rg` では現行コード・ドキュメントから `review-self/builder.md` への参照は見つからず、`framework/claude/sdd/settings/templates/review-self/inspector-flow.md` は正規版と byte-identical ですが到達経路がありません。どちらも `install.sh` の templates 一括コピーで配布されるだけの死蔵ファイルです。"
+    impact: "直ちに挙動は壊しませんが、どの prompt ツリーが正本なのかを曖昧にし、今後の保守や調査コストを増やします。"
+    recommendation: "`framework/claude/sdd/settings/templates/review-self/` から未参照ファイルを整理し、review-self prompt の正本を `framework/claude/sdd/lib/prompts/review-self/` のみにしてください。"
+notes: |
+  比較結果:
+  - briefer.md: diverged/stale
+  - inspector-flow.md: identical だが orphaned duplicate
+  - inspector-consistency.md: diverged/stale
+  - inspector-compliance.md: diverged/stale
+  - auditor.md: diverged/stale
+  - builder.md: lib 側の対応物なし、かつ参照なし
+
+  現行参照の確認結果:
+  - `framework/claude/skills/sdd-review-self/SKILL.md` は Briefer / fixed Inspectors / Auditor すべてで `.sdd/lib/prompts/review-self/` を参照する
+  - バックアップファイルを除くと、`.sdd/settings/templates/review-self/` への現行参照は template briefer 自身の自己参照しか見つからない
+  - `install.sh` だけが review-self テンプレート群を継続配布している

@@ -9,6 +9,11 @@ Verify that SDD framework agents, skills, and Agent tool usage comply with Claud
 - framework/claude/settings.json
 - framework/claude/CLAUDE.md (SubAgent dispatch sections only)
 
+## Reference Documents
+Read for compliance context:
+- .sdd/lib/references/bash-security-heuristics.md
+- .sdd/lib/references/skill-reference.md
+
 ## Review Criteria
 1. Agent YAML frontmatter: valid model (sonnet/opus/haiku), valid tools list, description present
 2. Skills frontmatter: description, allowed-tools, argument-hint format
@@ -30,12 +35,6 @@ Use this tri-state system for each compliance item:
 - **UNCERTAIN**: not found in search results, or search results are ambiguous. Do NOT report as NG. Report as UNCERTAIN. Lead will make final determination.
 
 CRITICAL: "Not found in web search" does not mean "Non-compliant". Official documentation may be incomplete or not indexed. When in doubt, use UNCERTAIN.
-
-## Cached Verifications (skip web search for these -- already verified recently)
-{{CACHED_OK}}
-
-For cached items: only check if the relevant file has changed. If unchanged, mark as "OK (cached)".
-For non-cached items: perform full web search verification.
 
 Include compliance items in the YAML `compliance` section (see output format below). Do NOT output a separate Markdown table.
 
@@ -68,7 +67,7 @@ Include compliance items in the YAML `compliance` section (see output format bel
    - `id`: Sequential (F1, F2, ...)
    - `severity`: C/H/M/L
    - `issues`: empty list `[]` if no findings
-   - `compliance`: ALWAYS emitted (for caching). Status: OK/NG/UNCERTAIN
+   - `compliance`: ALWAYS emitted. Status: OK/NG/UNCERTAIN
    - `UNCERTAIN` items are NOT reported as issues — Lead makes final determination
 
 2. After writing, print to stdout:
