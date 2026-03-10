@@ -1,15 +1,15 @@
-# Claude Code SubAgent Definition Reference
+# Claude Code Subagent File Reference
 
-**Last Updated**: 2026-03-09
-**Sources**: code.claude.com/docs/en/sub-agents, sync-sdd agent definitions (5 agents)
+**Last Updated**: 2026-03-10
+**Sources**: code.claude.com/docs/en/sub-agents, sync-sdd agent definitions (5 agents), hands-on verification (v2.1.72)
 
-Specification reference for placing agent definition files in `.claude/agents/`. For the Agent tool (dispatch side) specification, see `agent-tool-reference.md`.
+Specification reference for subagent files (`.claude/agents/*.md`). Official name: **"Subagent files"** (公式ドキュメントでの呼称). For the Agent tool (dispatch side) specification, see `agent-tool-reference.md`.
 
 ## File Format
 
-Location: `.claude/agents/{name}.md`
+Location: `.claude/agents/{filename}.md`
 
-YAML frontmatter + Markdown body. The filename (without extension) becomes the `subagent_type` value.
+YAML frontmatter + Markdown body. The `name` field in frontmatter becomes the `subagent_type` value used for dispatch. The filename is only used for file discovery — it does NOT determine the `subagent_type`. If `name` differs from the filename, the `name` field takes precedence.
 
 ```yaml
 ---
@@ -23,33 +23,35 @@ background: true
 Markdown body = SubAgent's system prompt.
 ```
 
-Loaded at session startup. If files are added manually, they can be immediately loaded by restarting the session or using `/agents`.
+Loaded at session startup. Files added during a session are NOT recognized until session restart or `/agents` reload (verified: test definitions placed during session were absent from available agents list until restart).
 
 ## Frontmatter Fields
 
 ### Required
 
+Both fields are required — omitting either causes the definition to fail to load (verified: file is silently ignored, not listed in available agents).
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Unique identifier. Lowercase + hyphens only. Must match the filename (without extension) |
+| `name` | string | Unique identifier. This value becomes the `subagent_type` for dispatch. Does NOT need to match the filename (verified: `name: different-name-from-filename` in `test-name-mismatch.md` works, dispatched via `subagent_type: "different-name-from-filename"`) |
 | `description` | string | Purpose and usage conditions. Claude uses this for auto-delegation decisions. The more detailed, the more appropriately tasks are delegated |
 
 ### Model / Execution
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `model` | string | `inherit` | `sonnet`, `opus`, `haiku`, `inherit`. inherit = same model as parent conversation |
-| `background` | boolean | `false` | `true` makes asynchronous execution the default |
-| `maxTurns` | integer | none | Maximum number of turns. Stops when exceeded |
-| `isolation` | string | none | `worktree` runs on a git worktree copy. Auto-cleanup if no changes |
+| `model` | string | `inherit` | `sonnet`, `opus`, `haiku`, `inherit`. Verified: `haiku` → claude-haiku-4-5-20251001. inherit = same model as parent conversation |
+| `background` | boolean | `false` | `true` makes asynchronous execution the default. Verified: Agent tool auto-launches in background without explicit `run_in_background` parameter |
+| `maxTurns` | integer | none | Maximum number of agentic turns (tool uses). Verified: `maxTurns: 1` stops after 1 tool use |
+| `isolation` | string | none | `worktree` runs on a git worktree copy at `.claude/worktrees/agent-{id}`. Auto-cleanup if no changes |
 
-**Note on model**: The `model` field in agent definitions works, but for reliable control it is safer to use the Agent tool's `model` parameter on the dispatch side or the `CLAUDE_CODE_SUBAGENT_MODEL` environment variable. See the Model Control section in `agent-tool-reference.md` for details.
+All fields in this section verified via hands-on testing (v2.1.72). See `agent-tool-reference.md` Model Control section for priority order when both definition and dispatch-time `model` are specified.
 
 ### Tools / Permissions
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `tools` | string | all (inherits all tools) | Comma-separated (e.g., `Read, Glob, Grep, Bash`). Array in CLI JSON |
+| `tools` | string or list | all (inherits all tools) | Comma-separated string (e.g., `Read, Glob, Grep, Bash`) or YAML array format. Both verified working. Tools not listed are denied to the SubAgent |
 | `disallowedTools` | string | none | Denylist. Removes from inherited/specified tools |
 | `permissionMode` | string | `default` | See below |
 
@@ -61,7 +63,7 @@ Loaded at session startup. If files are added manually, they can be immediately 
 |------|----------|
 | `default` | Normal approval prompts |
 | `acceptEdits` | Auto-approves file edits |
-| `dontAsk` | Auto-denies approval prompts (allowed tools still work) |
+| `dontAsk` | Auto-denies approval prompts (allowed tools still work). Verified working |
 | `bypassPermissions` | Skips all checks. **Note: If the parent has bypassPermissions, SubAgent cannot override it** |
 | `plan` | Read-only mode |
 
@@ -174,3 +176,20 @@ CLI: `claude --disallowedTools "Agent(Explore)"`
 | `sdd-builder` | sonnet | Read, Glob, Grep, Write, Edit, Bash | T3 | TDD implementation |
 | `sdd-taskgenerator` | sonnet | Read, Glob, Grep, Write | T3 | Task decomposition |
 | `sdd-conventions-scanner` | sonnet | Read, Glob, Grep, Write | T3 | Codebase pattern scanning |
+
+## Hands-on Verification Summary (v2.1.72)
+
+| Test | Definition | Result |
+|------|-----------|--------|
+| name omitted | `test-no-name.md` | **Load failure** — silently ignored, not in available agents |
+| description omitted | `test-no-desc.md` | **Load failure** — silently ignored, not in available agents |
+| name + description only | `test-minimal.md` | **Success** — all other fields optional |
+| name ≠ filename | `test-name-mismatch.md` (name: `different-name-from-filename`) | **name field is subagent_type**, not filename |
+| `model: haiku` | `test-full.md` | **claude-haiku-4-5-20251001** |
+| `tools: Read, Glob, Grep` (CSV) | `test-full.md` | **Write denied** — tools restriction works |
+| `tools:` YAML array | `test-tools-array.md` | **Write denied** — array format also works |
+| `background: true` | `test-full.md` | **Auto background launch** without explicit `run_in_background` |
+| `isolation: worktree` | `test-full.md` | **CWD = `.claude/worktrees/agent-{id}`** |
+| `maxTurns: 1` | `test-maxturns.md` | **Stopped after 1 tool use** |
+| `permissionMode: dontAsk` | `test-full.md` | **Working** — unapproved tools auto-denied |
+| Session reload required | All test-* files | **Confirmed** — files added mid-session not recognized until restart |

@@ -30,17 +30,17 @@ entries:
     summary: "Update procedure for agent-tool-reference.md — official documentation excerpts and critical evidence"
     keywords: [update, sources, agent-tool]
 
-  - path: claude/subagent-definition-reference.md
+  - path: claude/subagent-file-reference.md
     category: platform
     load: on_demand
-    summary: "SubAgent definition file (.claude/agents/*.md) YAML frontmatter specification — model, tools, description, hooks"
-    keywords: [agents-dir, yaml-frontmatter, agent-definition, hooks, subagent-model, subagent-tools]
+    summary: "Subagent file (.claude/agents/*.md) YAML frontmatter specification — model, tools, description, hooks"
+    keywords: [agents-dir, yaml-frontmatter, subagent-file, hooks, subagent-model, subagent-tools]
 
-  - path: claude/subagent-definition-sources.md
+  - path: claude/subagent-file-sources.md
     category: procedure
     load: explicit
-    summary: "Update procedure for subagent-definition-reference.md — official documentation excerpts and critical evidence"
-    keywords: [update, sources, subagent-definition]
+    summary: "Update procedure for subagent-file-reference.md — official documentation excerpts and critical evidence"
+    keywords: [update, sources, subagent-file]
 
   - path: claude/agent-team-reference.md
     category: platform
