@@ -157,3 +157,11 @@ entries:
     detail: "v2.1.69 で tool スキーマから削除されたリグレッション (#31311, #31027)。v2.1.72 で修正確認済み。model: sonnet → claude-sonnet-4-6、model: haiku → claude-haiku-4-5 で正常動作。Agent 定義 frontmatter の model 指定も引き続き有効"
     source: "実機検証 (v2.1.72)"
     created_at: "2026-03-10T11:29:10+0900"
+
+  - id: "K28"
+    status: "active"
+    severity: "H"
+    summary: "公式ドキュメントは ground truth ではない — リファレンス更新時は実環境での網羅テストが必須"
+    detail: "公式ドキュメントにはドキュメント更新遅れ、意図された動作と実際の動作の乖離、純粋な誤記がある。GitHub Issues もステータスが実態を反映していない (OPEN のまま修正済み等)。SubAgent の自己申告するモデル名も信頼できない (frontmatter を読んで答えている可能性)。transcript jsonl の message.model で実際の API 呼び出しを確認すべき。リファレンス文書の全ての記載は実環境で検証しなければならない"
+    source: "v2.1.72 検証セッション"
+    created_at: "2026-03-10T12:27:15+0900"
