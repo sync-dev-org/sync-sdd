@@ -19,7 +19,7 @@ Lead's dispatch prompt contains:
 ### Gather Context
 
 1. Read project context files if paths are provided — these reveal the project's conventions and decision history. They are read-only; never modify them.
-2. Read `references/skill-reference.md` from the forge resources path. This is your primary reference for skill structure, the agentskills.io standard, platform-specific implementations (Claude Code, Codex CLI, Gemini CLI), cross-platform compatibility, and writing best practices.
+2. Read `references/skill-authoring.md` from the forge resources path. This is your primary reference for skill structure, the agentskills.io standard, platform-specific implementations (Claude Code, Codex CLI, Gemini CLI), cross-platform compatibility, and writing best practices.
 3. Read `references/schemas.md` from the forge resources path if you need eval/grading JSON schemas.
 4. If improve mode: read the existing SKILL.md thoroughly before changing anything.
 5. Never browse other skills in `.claude/skills/` — they may be unpolished and will bias your output toward imitation rather than fresh design.

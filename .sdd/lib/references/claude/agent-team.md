@@ -6,7 +6,7 @@
 
 An experimental feature that coordinates multiple independent Claude Code sessions as a team. Fundamentally different architecture from the Agent tool (SubAgent).
 
-For SubAgent (Agent tool) specifications, see `agent-tool-reference.md`. For subagent files, see `subagent-file-reference.md`.
+For SubAgent (Agent tool) specifications, see `agent-tool.md`. For subagent files, see `subagent-file.md`.
 
 ## Activation
 

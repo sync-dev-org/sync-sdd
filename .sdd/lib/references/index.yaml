@@ -12,13 +12,19 @@ entries:
     summary: "Claude Code Bash security heuristics avoidance guide — patterns and alternatives to avoid approval prompts"
     keywords: [bash, security, heuristics, approval, settings.json, allow-list, tmux, shell]
 
+  - path: common/bash-security-heuristics-sources.md
+    category: procedure
+    load: explicit
+    summary: "Test cases and verification procedure for bash-security-heuristics.md — 163 cases, re-test runbook"
+    keywords: [update, sources, bash, security, heuristics, test-cases, verification]
+
   - path: common/tmux-integration.md
     category: platform
     load: always
     summary: "tmux integration patterns — MultiView Grid, Slot Management, Pattern A (Server Lifecycle), Pattern B (One-Shot Command), Orphan Cleanup"
     keywords: [tmux, pane, grid, slot, multiview, server, one-shot, orphan, send-keys, wait-for]
 
-  - path: claude/agent-tool-reference.md
+  - path: claude/agent-tool.md
     category: platform
     load: on_demand
     summary: "Agent tool specification — subagent_type, model, run_in_background, built-in types, model aliases"
@@ -27,10 +33,10 @@ entries:
   - path: claude/agent-tool-sources.md
     category: procedure
     load: explicit
-    summary: "Update procedure for agent-tool-reference.md — official documentation excerpts and critical evidence"
+    summary: "Update procedure for agent-tool.md — official documentation excerpts and critical evidence"
     keywords: [update, sources, agent-tool]
 
-  - path: claude/subagent-file-reference.md
+  - path: claude/subagent-file.md
     category: platform
     load: on_demand
     summary: "Subagent file (.claude/agents/*.md) YAML frontmatter specification — model, tools, description, hooks"
@@ -39,10 +45,10 @@ entries:
   - path: claude/subagent-file-sources.md
     category: procedure
     load: explicit
-    summary: "Update procedure for subagent-file-reference.md — official documentation excerpts and critical evidence"
+    summary: "Update procedure for subagent-file.md — official documentation excerpts and critical evidence"
     keywords: [update, sources, subagent-file]
 
-  - path: claude/agent-team-reference.md
+  - path: claude/agent-team.md
     category: platform
     load: explicit
     summary: "Agent Team (experimental) specification — teammateMode, cost, plan approval, limitations"
@@ -51,17 +57,17 @@ entries:
   - path: claude/agent-team-sources.md
     category: procedure
     load: explicit
-    summary: "Update procedure for agent-team-reference.md — official documentation excerpts and critical evidence"
+    summary: "Update procedure for agent-team.md — official documentation excerpts and critical evidence"
     keywords: [update, sources, agent-team]
 
-  - path: claude/skill-reference.md
+  - path: claude/skill-authoring.md
     category: platform
     load: on_demand
     summary: "Agent Skills specification — SKILL.md format, frontmatter, description, allowed-tools, triggering"
     keywords: [skill, SKILL.md, frontmatter, description, triggering, allowed-tools]
 
-  - path: claude/skill-reference-sources.md
+  - path: claude/skill-authoring-sources.md
     category: procedure
     load: explicit
-    summary: "Update procedure for skill-reference.md — official documentation excerpts and critical evidence"
-    keywords: [update, sources, skill-reference]
+    summary: "Update procedure for skill-authoring.md — official documentation excerpts and critical evidence"
+    keywords: [update, sources, skill-authoring]

@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-08
 **Spec Basis**: agentskills.io (living document, no formal version)
-**Sources**: See `skill-reference-sources.md` for full source list and update procedure.
+**Sources**: See `skill-authoring-sources.md` for full source list and update procedure.
 
 This guide covers the Agent Skills specification, platform-specific implementations, cross-platform compatibility, and best practices for skill authoring. It is the primary reference for the Skill Writer SubAgent.
 

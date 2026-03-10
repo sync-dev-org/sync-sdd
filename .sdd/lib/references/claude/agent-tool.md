@@ -3,7 +3,7 @@
 **Last Updated**: 2026-03-10
 **Sources**: code.claude.com/docs/en/sub-agents, code.claude.com/docs/en/model-config, GitHub anthropics/claude-code
 
-Specification reference for spawning SubAgents via the Claude Code Agent tool. For the specification of agent definition files in `.claude/agents/`, see `subagent-file-reference.md`.
+Specification reference for spawning SubAgents via the Claude Code Agent tool. For the specification of agent definition files in `.claude/agents/`, see `subagent-file.md`.
 
 ## Parameters
 

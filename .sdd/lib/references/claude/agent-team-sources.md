@@ -2,17 +2,17 @@
 
 **Last Updated**: 2026-03-09
 
-This file documents the information sources and research procedure used to create `agent-team-reference.md`. When the reference guide becomes stale, follow this procedure to update it.
+This file documents the information sources and research procedure used to create `agent-team.md`. When the reference guide becomes stale, follow this procedure to update it.
 
 ---
 
 ## Update Procedure
 
-1. Check the "Last Updated" date in `agent-team-reference.md`. If older than ~1 month, update is recommended.
+1. Check the "Last Updated" date in `agent-team.md`. If older than ~1 month, update is recommended.
 2. For each source below, visit the URL and check for changes since the last update.
 3. **Critical**: Agent Team is Experimental. Stabilization, new feature additions, and breaking changes are likely. Always verify whether the status has changed from "experimental"
 4. Check GitHub Issues for open bugs — Agent Team has active bug reports
-5. Update `agent-team-reference.md` content and its "Last Updated" date.
+5. Update `agent-team.md` content and its "Last Updated" date.
 6. Update this file's "Last Verified" dates for each source.
 
 ---

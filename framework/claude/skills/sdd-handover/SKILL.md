@@ -140,38 +140,11 @@ If `.sdd/session/handover.md` exists:
 If no handover.md exists, skip this step. The enrichment dialogue still runs
 — the user may want to set session context even for a first handover.
 
-### Step 6: User Enrichment Dialogue
+### Step 6: Session Summary
 
 Present a summary of what was accomplished this session and the consolidation
 results (how many entries archived, any knowledge promoted, any duplicates
-detected for steering codification).
-
-Then use the **AskUserQuestion** tool to ask:
-
-> Before I write the handover, anything to add or adjust?
-> - **Key decisions** to highlight or clarify?
-> - **Warnings** for the next session?
-> - **Tone/Nuance** (e.g., "experimental mode", "user wants conservative approach")?
-> - **Steering exceptions** (intentional deviations from best practices)?
-> - **Resume instructions** (specific steps beyond what I'll infer from pipeline state)?
-
-Options:
-1. **なし** — proceed with defaults
-2. **追加あり** — user provides enrichment via free text
-
-**CRITICAL**: You MUST use the `AskUserQuestion` tool here — do NOT just print
-the question as text output. If you only print text, the user cannot
-distinguish the question from completion output and may `/clear` the session
-before Step 7 writes handover.md. AskUserQuestion is NOT in allowed-tools
-(intentional — it must go through the normal approval flow to display the UI).
-
-Accept both quick dismissals and detailed responses. If the user provides
-enrichment, incorporate it into the appropriate sections.
-
-Tone and Nuance is intentionally ephemeral — it captures the user's current
-working style and session-specific preferences. Permanent behavioral rules
-belong in knowledge.yaml or CLAUDE.md, not in the handover's Tone/Nuance
-section.
+detected for steering codification). Then proceed to Step 7.
 
 ### Step 7: Work Commit Proposal
 

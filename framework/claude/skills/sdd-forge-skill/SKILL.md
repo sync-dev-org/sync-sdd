@@ -383,8 +383,8 @@ Direct the user to the resulting `.skill` file.
 - `${CLAUDE_SKILL_DIR}/references/analyzer.md` — post-hoc analysis + benchmark analysis instructions
 - `${CLAUDE_SKILL_DIR}/references/grader.md` — assertion grading instructions
 - `${CLAUDE_SKILL_DIR}/references/schemas.md` — JSON schema definitions for the eval pipeline
-- `${CLAUDE_SKILL_DIR}/references/skill-reference.md` — comprehensive skill authoring guide
-- `${CLAUDE_SKILL_DIR}/references/skill-reference-sources.md` — reference guide update procedure
+- `${CLAUDE_SKILL_DIR}/references/skill-authoring.md` — comprehensive skill authoring guide
+- `${CLAUDE_SKILL_DIR}/references/skill-authoring-sources.md` — reference guide update procedure
 
 ## Constraints
 

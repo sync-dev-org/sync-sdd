@@ -2,16 +2,16 @@
 
 **Last Updated**: 2026-03-08
 
-This file documents the information sources and research procedure used to create `skill-reference.md`. When the reference guide becomes stale, follow this procedure to update it.
+This file documents the information sources and research procedure used to create `skill-authoring.md`. When the reference guide becomes stale, follow this procedure to update it.
 
 ---
 
 ## Update Procedure
 
-1. Check the "Last Updated" date in `skill-reference.md`. If older than ~1 month, update is recommended.
+1. Check the "Last Updated" date in `skill-authoring.md`. If older than ~1 month, update is recommended.
 2. For each source below, visit the URL and check for changes since the last update.
 3. Pay special attention to: new frontmatter fields, discovery path changes, breaking changes, new platform features.
-4. Update `skill-reference.md` content and its "Last Updated" date.
+4. Update `skill-authoring.md` content and its "Last Updated" date.
 5. Update this file's "Last Verified" dates for each source.
 
 ---

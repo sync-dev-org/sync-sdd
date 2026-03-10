@@ -3,7 +3,7 @@
 **Last Updated**: 2026-03-10
 **Sources**: code.claude.com/docs/en/sub-agents, sync-sdd agent definitions (5 agents), hands-on verification (v2.1.72)
 
-Specification reference for subagent files (`.claude/agents/*.md`). Official name: **"Subagent files"** (公式ドキュメントでの呼称). For the Agent tool (dispatch side) specification, see `agent-tool-reference.md`.
+Specification reference for subagent files (`.claude/agents/*.md`). Official name: **"Subagent files"** (公式ドキュメントでの呼称). For the Agent tool (dispatch side) specification, see `agent-tool.md`.
 
 ## File Format
 
@@ -45,7 +45,7 @@ Both fields are required — omitting either causes the definition to fail to lo
 | `maxTurns` | integer | none | Maximum number of agentic turns (tool uses). Verified: `maxTurns: 1` stops after 1 tool use |
 | `isolation` | string | none | `worktree` runs on a git worktree copy at `.claude/worktrees/agent-{id}`. Auto-cleanup if no changes |
 
-All fields in this section verified via hands-on testing (v2.1.72). See `agent-tool-reference.md` Model Control section for priority order when both definition and dispatch-time `model` are specified.
+All fields in this section verified via hands-on testing (v2.1.72). See `agent-tool.md` Model Control section for priority order when both definition and dispatch-time `model` are specified.
 
 ### Tools / Permissions
 

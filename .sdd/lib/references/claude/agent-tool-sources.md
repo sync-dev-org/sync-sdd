@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-10
 
-This file documents the information sources and research procedure used to create `agent-tool-reference.md`. When the reference guide becomes stale, follow this procedure to update it.
+This file documents the information sources and research procedure used to create `agent-tool.md`. When the reference guide becomes stale, follow this procedure to update it.
 
 ---
 
@@ -10,12 +10,12 @@ This file documents the information sources and research procedure used to creat
 
 **Principle**: Official documentation and GitHub Issues are starting points, not ground truth. Docs lag behind implementation, contain inaccuracies, and may describe intended behavior rather than actual behavior. GitHub Issues may remain OPEN after fixes are shipped. **Every claim in the reference must be verified against the real environment.**
 
-1. Check the "Last Updated" date in `agent-tool-reference.md`. If older than ~1 month, update is recommended.
+1. Check the "Last Updated" date in `agent-tool.md`. If older than ~1 month, update is recommended.
 2. For each source below, visit the URL and check for changes since the last update.
 3. Pay special attention to: new parameters, new built-in agent types, model alias changes, new environment variables, breaking changes to nesting/context/background behavior.
 4. Check GitHub Issues for open bugs that contradict official docs (docs can lag behind actual behavior). **Do not assume an issue's status reflects reality** — issues may be OPEN after a fix ships, or CLOSED while the bug persists.
 5. **Run hands-on verification against the real environment** (see Verification Procedures below). This step is mandatory — do not skip it in favor of trusting docs or issue statuses.
-6. Update `agent-tool-reference.md` content and its "Last Updated" date. Mark each claim as verified or unverified.
+6. Update `agent-tool.md` content and its "Last Updated" date. Mark each claim as verified or unverified.
 7. Update this file's "Last Verified" dates for each source.
 8. Record verification results in the "Hands-on Verification" sections below.
 
@@ -191,7 +191,7 @@ CLAUDE.md is part of the Claude Code system prompt and is included in the "full 
 
 **Conclusion (2026-03-10)**: Updated based on hands-on verification (v2.1.72).
 
-The priority table in agent-tool-reference.md is based on verified behavior:
+The priority table in agent-tool.md is based on verified behavior:
 1. Dispatch-time `model` parameter: **verified working (v2.1.72+)** — `sonnet` → claude-sonnet-4-6, `haiku` → claude-haiku-4-5
 2. Agent definition `model` field: **verified working** (sdd-builder → sonnet confirmed via transcript)
 3. `CLAUDE_CODE_SUBAGENT_MODEL`: documented but not verified in this environment

@@ -19,7 +19,7 @@ If a findings file does not exist or is empty, note that agent as "did not compl
 
 Read `.sdd/lib/references/index.yaml`. Select and read documents relevant to the findings under review:
 - `load: always` — read unconditionally
-- `load: on_demand` — read if findings touch the document's `keywords` (e.g., agent definition findings → read agent-tool-reference.md)
+- `load: on_demand` — read if findings touch the document's `keywords` (e.g., agent definition findings → read agent-tool.md)
 - `load: explicit` — skip
 
 Use these references to independently verify Inspector findings — confirm or challenge their accuracy against authoritative specifications.
@@ -76,7 +76,7 @@ scope: "framework"
 review_type: "self"
 references_read:
   - "common/bash-security-heuristics.md"
-  - "claude/agent-tool-reference.md"
+  - "claude/agent-tool.md"
 counts:
   C: 0
   H: 1
@@ -113,7 +113,7 @@ fp_eliminated:
   - source_id: "F3"
     source: "inspector-compliance"
     reason: "{why this is FP}"
-    ref: "claude/skill-reference.md"
+    ref: "claude/skill-authoring.md"
 notes: |
   Overall assessment text
 ```

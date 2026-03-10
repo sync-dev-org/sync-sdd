@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-09
 
-This file documents the information sources and research procedure used to create `subagent-file-reference.md`. When the reference guide becomes stale, follow this procedure to update it.
+This file documents the information sources and research procedure used to create `subagent-file.md`. When the reference guide becomes stale, follow this procedure to update it.
 
 ---
 
@@ -10,12 +10,12 @@ This file documents the information sources and research procedure used to creat
 
 **Principle**: Official documentation and GitHub Issues are starting points, not ground truth. Docs lag behind implementation, contain inaccuracies, and may describe intended behavior rather than actual behavior. **Every claim in the reference must be verified against the real environment.**
 
-1. Check the "Last Updated" date in `subagent-file-reference.md`. If older than ~1 month, update is recommended.
+1. Check the "Last Updated" date in `subagent-file.md`. If older than ~1 month, update is recommended.
 2. For each source below, visit the URL and check for changes since the last update.
 3. Pay special attention to: new frontmatter fields, discovery path changes, permission mode changes, new hooks events, memory behavior changes.
 4. Check GitHub Issues for open bugs that affect subagent files.
 5. **Run hands-on verification against the real environment** (see Verification Procedures below). This step is mandatory — do not skip it in favor of trusting docs.
-6. Update `subagent-file-reference.md` content and its "Last Updated" date. Mark each claim as verified or unverified.
+6. Update `subagent-file.md` content and its "Last Updated" date. Mark each claim as verified or unverified.
 7. Update this file's "Last Verified" dates for each source.
 8. Record verification results in the reference's "Hands-on Verification Summary" section.
 
@@ -159,4 +159,4 @@ Events supporting all 4 types (`command`, `http`, `prompt`, `agent`):
 Events supporting `command` only:
 > ConfigChange, Notification, PreCompact, SessionEnd, SessionStart, SubagentStart, **TeammateIdle**, WorktreeCreate, WorktreeRemove
 
--> The type restriction descriptions for TeammateIdle/TaskCompleted in agent-team-reference.md are based on this evidence.
+-> The type restriction descriptions for TeammateIdle/TaskCompleted in agent-team.md are based on this evidence.
