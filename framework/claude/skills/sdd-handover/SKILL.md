@@ -173,10 +173,48 @@ working style and session-specific preferences. Permanent behavioral rules
 belong in knowledge.yaml or CLAUDE.md, not in the handover's Tone/Nuance
 section.
 
-### Step 7: Generate handover.md
+### Step 7: Work Commit Proposal
+
+Before generating handover.md, propose committing the session's work changes.
+This ensures handover.md's Immediate Next Action and Resume Instructions
+accurately reflect the post-commit state.
+
+1. Run `git status` and `git diff --name-only` to identify uncommitted changes
+2. Separate changes into logical commit units. Group by:
+   - Feature/topic (e.g., "reference docs update", "skill fix", "session data")
+   - Independence (changes that make sense as a standalone commit)
+   - Exclude `.sdd/session/` files — these are committed separately in Step 9
+3. If uncommitted work changes exist, use **AskUserQuestion** to present
+   the proposed commit groups:
+
+   > Session work を以下の粒度でコミットしますか？
+   > - **Commit A**: {description} ({file list})
+   > - **Commit B**: {description} ({file list})
+   > - ...
+
+   Options:
+   1. **はい、提案通りコミット** — execute all proposed commits
+   2. **まとめて 1 コミット** — single commit for all work changes
+   3. **コミットしない** — skip, leave uncommitted
+
+4. If user approves, execute each commit using `-m` flags (not heredoc):
+   ```
+   git add {specific files}
+   git commit -m "{scope}: {summary}" -m "Co-Authored-By: sync-sdd <noreply@sync-sdd>"
+   ```
+
+5. If no uncommitted work changes exist (clean tree except session data),
+   skip this step silently
+
+### Step 8: Generate handover.md
 
 Write `.sdd/session/handover.md` using this structure (template reference:
-`.sdd/settings/templates/session/handover.md`):
+`.sdd/settings/templates/session/handover.md`).
+
+**IMPORTANT**: Immediate Next Action and Resume Instructions must reflect the
+current git state at this point. If all work was committed in Step 7, do NOT
+write "commit pending changes" as a next action. If the user declined to
+commit in Step 7, mention the uncommitted changes in Resume Instructions.
 
 ```markdown
 # Session Handover
@@ -232,21 +270,21 @@ Lead should be able to resume without reading the full conversation history.
 
 Do NOT include `**Mode**: auto-draft` — its absence signals manual polish.
 
-### Step 8: Commit Proposal
+### Step 9: Session Data Commit
 
-Use the **AskUserQuestion** tool to present the user with three choices:
+After handover.md is written, commit session data as a separate commit:
 
-1. **Commit all changes** — all modified files in the working tree
-2. **Commit .sdd/session/ only** — only session data files
-3. **No commit** — leave changes as-is
+1. Stage only `.sdd/session/` files (handover.md, decisions.yaml, issues.yaml,
+   knowledge.yaml, state.yaml, and any archive files created during
+   consolidation)
+2. Commit:
+   ```
+   git add .sdd/session/
+   git commit -m "session: handover + session data" -m "Co-Authored-By: sync-sdd <noreply@sync-sdd>"
+   ```
 
-If the user chooses option 1 or 2, stage only the relevant files (specific
-paths, not `git add -A`) and commit using `-m` flags (not heredoc — heredoc
-triggers Bash security heuristics):
-
-```
-git commit -m "session: {one-line summary of session work}" -m "Co-Authored-By: sync-sdd <noreply@sync-sdd>"
-```
+This ensures handover.md is always committed (not lost) and session data forms
+its own atomic commit separate from work changes.
 
 ## Edge Cases
 
